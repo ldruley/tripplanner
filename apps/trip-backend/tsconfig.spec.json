@@ -2,15 +2,14 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "types": []
+    "module": "commonjs",
+    "moduleResolution": "node10",
+    "types": ["jest", "node"]
   },
-  "files": ["src/main.ts"],
-  "include": ["src/**/*.d.ts"],
-  "exclude": [
+  "include": [
     "jest.config.ts",
     "src/**/*.test.ts",
     "src/**/*.spec.ts",
-    "**/*.stories.ts",
-    "**/*.stories.js"
+    "src/**/*.d.ts"
   ]
 }
