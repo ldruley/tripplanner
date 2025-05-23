@@ -1,10 +1,12 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {FormControl, ReactiveFormsModule} from '@angular/forms';
 
 @Component({
-  selector: 'app-register-form',
-  imports: [CommonModule],
+  selector: 'auth-register-form',
+  imports: [ReactiveFormsModule],
   templateUrl: './register-form.component.html',
   styleUrl: './register-form.component.css',
 })
-export class RegisterFormComponent {}
+export class RegisterFormComponent {
+  name = new FormControl('');
+}
