@@ -23,6 +23,7 @@ node_modules
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+.vscode
 
 # misc
 /.sass-cache
@@ -33,6 +34,7 @@ npm-debug.log
 yarn-error.log
 testem.log
 /typings
+storybook-static
 
 # System Files
 .DS_Store
@@ -44,3 +46,10 @@ Thumbs.db
 .github/instructions/nx.instructions.md
 
 .angular
+
+# Enviroment
+.env
+.env.production
+.env.development
+.env.local
+
