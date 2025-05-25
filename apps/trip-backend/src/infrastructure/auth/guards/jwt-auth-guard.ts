@@ -3,10 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  private supabaseClient;
+  private supabase;
 
   constructor() {
-    this.supabaseClient = createClient(
+    this.supabase = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
@@ -22,18 +22,13 @@ export class JwtAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const token = request.extractTokenFromHeader(request);
 
+    if (!token) throw new UnauthorizedException('No token provided');
 
-    if (!token) {
-      throw new UnauthorizedException('No token provided');
-    }
+    const { data: { user }, error } = await this.supabase.auth.getUser(token);
 
-    const { data, error } = await this.supabaseClient.auth.getUser(token);
+    if (error || !user) throw new UnauthorizedException('Invalid token');
 
-    if (error || !data.user) {
-      throw new UnauthorizedException('Invalid token');
-    }
-
-    request.user = data.user;
+    request.user = user
     return true;
   }
 
