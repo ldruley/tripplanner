@@ -32,6 +32,11 @@
         },
         "production": {
           "buildTarget": "trip-backend:build:production"
+        },
+        "debug": {
+          "buildTarget": "trip-backend:build:development",
+          "inspect": true,
+          "runtimeArgs": [ "-r", "ts-node/register" ]
         }
       }
     },
