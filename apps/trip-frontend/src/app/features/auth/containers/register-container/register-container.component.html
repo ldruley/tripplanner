@@ -1,0 +1,16 @@
+<div class="register-container">
+  <div class="register-content">
+    <!-- Brand/Logo Section -->
+    <div class="brand-section">
+      <h1 class="brand-title">Trip Planner</h1>
+      <p class="brand-subtitle">Create your account to start planning amazing trips.</p>
+    </div>
+
+    <!-- Registration Form -->
+    <app-register-form
+      [isLoading]="(isLoading$ | async) || false"
+      [error]="(error$ | async)"
+      (registerSubmit)="handleRegister($event)">
+    </app-register-form>
+  </div>
+</div>

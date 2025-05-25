@@ -1,0 +1,23 @@
+:host {
+  display: block;
+}
+
+.register-container {
+  @apply min-h-screen bg-gray-100 flex items-center justify-center p-4;
+}
+
+.register-content {
+  @apply w-full max-w-md;
+}
+
+.brand-section {
+  @apply text-center mb-8;
+}
+
+.brand-title {
+  @apply text-4xl font-bold text-blue-600 mb-2;
+}
+
+.brand-subtitle {
+  @apply text-gray-600;
+}
