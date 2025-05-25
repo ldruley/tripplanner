@@ -6,7 +6,19 @@
     "types": ["node"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "target": "es2021"
+    "target": "es2021",
+    "plugins": [
+      {
+        "name": "@nestjs/swagger",
+        "options": {
+          "classValidatorShim": true,
+          "introspectComments": true,
+          "controllerFilenameSuffix": [".controller.ts"],
+          "dtoFilenameSuffix": [".dto.ts", ".entity.ts"],
+          "controllerKeyOfComment": "summary",
+        }
+      },
+    ]
   },
   "include": ["src/**/*.ts"],
   "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]
