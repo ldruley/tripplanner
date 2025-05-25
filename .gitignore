@@ -52,4 +52,7 @@ Thumbs.db
 .env.production
 .env.development
 .env.local
+apps/web/src/environments/environment.development.ts
 
+vite.config.*.timestamp*
+vitest.config.*.timestamp*
