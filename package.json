@@ -9,7 +9,12 @@
     "supabase:reset": "supabase db reset",
     "supabase:pull": "supabase db pull",
     "supabase:push": "supabase db push",
-    "supabase:types": "supabase gen types typescript --local > libs/shared/types/src/lib/supabase.ts"
+    "supabase:types": "supabase gen types typescript --local > libs/shared/types/src/lib/supabase.ts",
+    "db:generate": "nx run prisma:db:generate",
+    "db:push": "nx run prisma:db:push",
+    "db:pull": "nx run prisma:db:pull",
+    "db:migrate": "nx run prisma:db:migrate",
+    "db:studio": "nx run prisma:db:studio"
   },
   "private": true,
   "dependencies": {
@@ -24,14 +29,17 @@
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^10.0.2",
     "@nestjs/platform-express": "^10.0.2",
+    "@prisma/client": "^6.8.2",
     "@supabase/supabase-js": "^2.49.8",
     "axios": "^1.6.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "dot-env": "^0.0.1",
+    "prisma": "^6.8.2",
     "reflect-metadata": "^0.1.13",
     "rxjs": "~7.8.0",
     "supabase": "^2.23.4",
+    "tsx": "^4.19.4",
     "zone.js": "~0.15.0"
   },
   "devDependencies": {

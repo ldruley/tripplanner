@@ -18,7 +18,11 @@ export default [
         'error',
         {
           enforceBuildableLibDependency: true,
-          allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?js$'],
+          allow: [
+            '^\\./.*',
+            '^\\.\\./',
+            '^.*/eslint(\\.base)?\\.config\\.[cm]?js$',
+          ],
           depConstraints: [
             {
               sourceTag: '*',
