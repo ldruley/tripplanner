@@ -16,6 +16,14 @@ async function bootstrap() {
     .setDescription('Backend API for Trip Planner Frontend')
     .setVersion('0.1')
     .addTag('trip')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+    'jwt',
+    )
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);

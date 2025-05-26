@@ -41,6 +41,8 @@ export class ProfileController {
   }
 
   @Get()
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Get profiles with filtering and pagination',
     description: 'Retrieve a paginated list of profiles with optional filtering by search, role, and status'

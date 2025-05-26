@@ -14,7 +14,8 @@
     "db:push": "nx run prisma:db:push",
     "db:pull": "nx run prisma:db:pull",
     "db:migrate": "nx run prisma:db:migrate",
-    "db:studio": "nx run prisma:db:studio"
+    "db:studio": "nx run prisma:db:studio",
+    "token:admin": "node generate-token.js"
   },
   "private": true,
   "dependencies": {
@@ -36,6 +37,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "dot-env": "^0.0.1",
+    "jsonwebtoken": "^9.0.2",
     "openapi3-ts": "^4.4.0",
     "prisma": "^6.8.2",
     "redis": "^5.1.0",
