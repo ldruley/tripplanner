@@ -99,7 +99,8 @@
         "typecheckTargetName": "typecheck",
         "buildDepsTargetName": "build-deps",
         "watchDepsTargetName": "watch-deps"
-      }
+      },
+      "exclude": ["libs/shared/types", "libs/shared/prisma"]
     }
   ],
   "generators": {

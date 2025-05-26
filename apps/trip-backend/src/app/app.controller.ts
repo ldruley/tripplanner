@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
-import { DatabaseService } from '@trip-planner/prisma';
+import { DatabaseService } from '../../../../libs/shared/prisma/src';
 
 @Controller()
 export class AppController {
@@ -39,7 +39,7 @@ export class AppController {
         count: profileCount,
         timestamp: new Date().toISOString(),
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         profilesTable: 'error',
         error: error.message,

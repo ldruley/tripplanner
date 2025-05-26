@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { PrismaModule } from '@trip-planner/prisma';
+import { PrismaModule } from '../../../../libs/shared/prisma/src';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ProfilesModule } from '../domain/profile/profiles.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AppService } from './app.service';
       ],
     }),
     PrismaModule,
+    ProfilesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
