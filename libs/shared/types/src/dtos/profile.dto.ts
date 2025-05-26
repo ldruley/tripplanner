@@ -1,21 +1,21 @@
 import { createZodDto } from '@anatine/zod-nestjs';
 import {
-  createProfileSchema, errorResponseSchema, profileQuerySchema,
-  profileResponseSchema,
-  profileSchema, profilesListResponseSchema,
-  updateProfileSchema
+  CreateProfileSchema, ErrorResponseSchema, ProfileQuerySchema,
+  ProfileResponseSchema,
+  ProfileSchema, ProfilesListResponseSchema,
+  UpdateProfileSchema
 } from '../schemas/profile.schema';
 
-export class ProfileDto extends createZodDto(profileSchema) {}
+export class ProfileDto extends createZodDto(ProfileSchema) {}
 
-export class CreateProfileDto extends createZodDto(createProfileSchema) {}
+export class CreateProfileDto extends createZodDto(CreateProfileSchema) {}
 
-export class UpdateProfileDto extends createZodDto(updateProfileSchema) {}
+export class UpdateProfileDto extends createZodDto(UpdateProfileSchema) {}
 
-export class ProfileResponseDto extends createZodDto(profileResponseSchema) {}
+export class ProfileResponseDto extends createZodDto(ProfileResponseSchema) {}
 
-export class ProfilesListResponseDto extends createZodDto(profilesListResponseSchema) {}
+export class ProfilesListResponseDto extends createZodDto(ProfilesListResponseSchema) {}
 
-export class ProfileQueryDto extends createZodDto(profileQuerySchema) {}
+export class ProfileQueryDto extends createZodDto(ProfileQuerySchema) {}
 
-export class ErrorResponseDto extends createZodDto(errorResponseSchema) {}
+export class ErrorResponseDto extends createZodDto(ErrorResponseSchema) {}
