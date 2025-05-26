@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, PrismaService } from '@trip-planner/prisma';
+import { toPrismaUpdateInput, toProfileDto, toProfileDtoArray } from '../mappers/profile.mapper';
 
 import { PrismaClient } from '@trip-planner/prisma';
 import { ProfileRepository } from './profile.repository';
@@ -23,8 +24,7 @@ export class PrismaProfileRepository implements ProfileRepository {
       return null;
     }
 
-    return {
-      ...result };
+    return result ? toProfileDto(result) : null;
   }
 
   async findByEmail(email: string, client?: PrismaClient): Promise<Profile | null> {
@@ -36,17 +36,17 @@ export class PrismaProfileRepository implements ProfileRepository {
     if(!result) {
       return null;
     }
-    return {
-      ...result };
+
+    return result ? toProfileDto(result) : null;
   }
 
   async update(id: string, data: UpdateProfile, client?: PrismaClient): Promise<Profile> {
     const prismaClient = this.getClient(client);
+    const updateInput = toPrismaUpdateInput(data);
+
     return prismaClient.profiles.update({
       where: { id },
-      data: {
-        ...data,
-        updated_at: new Date() }
+      data: updateInput,
     });
   }
 
@@ -63,16 +63,6 @@ export class PrismaProfileRepository implements ProfileRepository {
       where: { id }
     });
     return count > 0;
-  }
-
-  async updateLastSignIn(id: string, client?: PrismaClient): Promise<void> {
-    const prismaClient = this.getClient(client);
-    await prismaClient.profiles.update({
-      where: { id },
-      data: {
-        last_sign_in_at: new Date(),
-        updated_at: new Date() }
-    });
   }
 
   async findMany(query: ProfileQuery, client?: PrismaClient): Promise<{
@@ -116,11 +106,11 @@ export class PrismaProfileRepository implements ProfileRepository {
     ]);
 
     return {
-      profiles,
+      profiles: toProfileDtoArray(profiles),
       total,
       page,
       limit,
-      total_pages: Math.ceil(total / limit)
+      total_pages: Math.ceil(total / limit),
     };
   }
 }
