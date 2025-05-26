@@ -330,19 +330,20 @@ model users {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model profiles {
-  id              String    @id @db.Uuid
-  email           String    @unique
-  first_name      String?
-  last_name       String?
-  display_name    String?
-  avatar_url      String?
-  role            String?   @default("user")
-  status          String?   @default("active")
-  metadata        Json?     @default("{}")
-  last_sign_in_at DateTime? @db.Timestamptz(6)
-  created_at      DateTime? @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime? @default(now()) @db.Timestamptz(6)
-  users           users     @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                   String    @id @db.Uuid
+  email                String    @unique
+  first_name           String?
+  last_name            String?
+  display_name         String?
+  avatar_url           String?
+  role                 String?   @default("user")
+  status               String?   @default("active")
+  metadata             Json?     @default("{}")
+  last_sign_in_at      DateTime? @db.Timestamptz(6)
+  created_at           DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime? @default(now()) @db.Timestamptz(6)
+  onboarding_completed Boolean?  @default(false)
+  users                users     @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@schema("public")
 }

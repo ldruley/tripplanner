@@ -5,5 +5,48 @@
   "projectType": "library",
   "tags": [],
   "// targets": "to see all targets run: nx show project prisma --web",
-  "targets": {}
+  "targets": {
+    "db:generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prisma generate",
+        "cwd": "libs/shared/prisma"
+      }
+    },
+    "db:push": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prisma db push",
+        "cwd": "libs/shared/prisma"
+      }
+    },
+    "db:pull": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prisma db pull",
+        "cwd": "libs/shared/prisma"
+      }
+    },
+    "db:migrate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prisma migrate dev",
+        "cwd": "libs/shared/prisma"
+      }
+    },
+    "db:studio": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prisma studio",
+        "cwd": "libs/shared/prisma"
+      }
+    },
+    "db:reset": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prisma migrate reset --force",
+        "cwd": "libs/shared/prisma"
+      }
+    }
+  }
 }
