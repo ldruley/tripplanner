@@ -18,15 +18,45 @@
 }
 
 .logo {
+  .app-title-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      opacity: 0.8;
+    }
+
+    &:focus {
+      outline: 2px solid #3b82f6;
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+  }
+
   .app-title {
     margin: 0;
     font-size: 1.5rem;
     font-weight: 700;
     color: #1f2937;
+    pointer-events: none;
   }
 }
 
 .nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.home-section {
+  padding-right: 1rem;
+  border-right: 1px solid #e5e7eb;
+}
+
+.auth-section {
   display: flex;
   gap: 0.75rem;
   align-items: center;
@@ -43,6 +73,41 @@
   }
 
   .nav-actions {
+    gap: 0.75rem;
+  }
+
+  .home-section {
+    padding-right: 0.75rem;
+  }
+
+  .auth-section {
     gap: 0.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .nav-actions {
+    gap: 0.5rem;
+  }
+
+  .home-section {
+    padding-right: 0.5rem;
+  }
+
+  .auth-section {
+    gap: 0.375rem;
+  }
+
+  /* Stack buttons vertically on very small screens if needed */
+  .auth-section {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .app-title-btn {
+    transition: none;
   }
 }
