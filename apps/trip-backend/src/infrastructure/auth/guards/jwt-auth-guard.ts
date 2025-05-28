@@ -1,8 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from "@nestjs/common";
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, Logger } from "@nestjs/common";
 import { createClient } from '@supabase/supabase-js';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
+  private readonly logger = new Logger(JwtAuthGuard.name);
   private supabase;
 
   constructor() {
@@ -25,15 +26,37 @@ export class JwtAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
+    this.logger.debug(`Incoming request: ${request.method} ${request.url}`);
+    this.logger.debug(`Request headers: ${JSON.stringify(request.headers)}`);
 
-    if (!token) throw new UnauthorizedException('No token provided');
+    this.logger.debug(`Authorization header: ${request.headers.authorization}`);
+    this.logger.debug(`Extracted token: ${token ? 'present' : 'missing'}`);
 
-    const { data: { user }, error } = await this.supabase.auth.getUser(token);
+    if (!token) {
+      this.logger.warn('No token provided in Authorization header');
+      throw new UnauthorizedException('No token provided');
+    }
 
-    if (error || !user) throw new UnauthorizedException('Invalid token');
+    try {
+      const { data: { user }, error } = await this.supabase.auth.getUser(token);
 
-    request.user = user
-    return true;
+      if (error) {
+        this.logger.warn(`Supabase auth error: ${error.message}`);
+        throw new UnauthorizedException('Invalid token');
+      }
+
+      if (!user) {
+        this.logger.warn('No user found for the provided token');
+        throw new UnauthorizedException('Invalid token');
+      }
+
+      this.logger.debug(`User authenticated: ${user.id}`);
+      request.user = user;
+      return true;
+    } catch (error: any) {
+      this.logger.error(`Authentication failed: ${error.message}`);
+      throw new UnauthorizedException('Invalid token');
+    }
   }
 
   /**
@@ -42,7 +65,25 @@ export class JwtAuthGuard implements CanActivate {
    * @returns The JWT token if present, otherwise undefined.
    */
   private extractTokenFromHeader(request: any): string | undefined {
-    const [type, token] = request.headers.authorization?.split(' ') ?? [];
-    return type === 'Bearer' ? token : undefined;
+    const authHeader = request.headers.authorization;
+
+    if (!authHeader) {
+      this.logger.debug('No authorization header found');
+      return undefined;
+    }
+
+    const [type, token] = authHeader.split(' ');
+
+    if (type !== 'Bearer') {
+      this.logger.debug(`Invalid authorization type: ${type}`);
+      return undefined;
+    }
+
+    if (!token) {
+      this.logger.debug('No token found after Bearer');
+      return undefined;
+    }
+
+    return token;
   }
 }

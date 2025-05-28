@@ -11,6 +11,11 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.enableCors({
+    origin: ['http://localhost:4200', 'http://127.0.0.1:4200'],
+    credentials: true,
+  });
+
   const config = new DocumentBuilder()
     .setTitle('Trip Planner API')
     .setDescription('Backend API for Trip Planner Frontend')
@@ -21,12 +26,27 @@ async function bootstrap() {
         type: 'http',
         scheme: 'bearer',
         bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
       },
-    'jwt',
+      'jwt',
     )
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory);
+  SwaggerModule.setup('api', app, documentFactory, {
+    swaggerOptions: {
+      persistAuthorization: true, // Keep auth between page refreshes
+      securityDefinitions: {
+        bearer: {
+          type: 'apiKey',
+          name: 'Authorization',
+          in: 'header',
+          description: 'JWT Authorization header using the Bearer scheme. Example: "Bearer {token}"'
+        }
+      }
+    }
+  });
 
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);

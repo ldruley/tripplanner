@@ -17,6 +17,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiQuery,
+  ApiSecurity,
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ProfileService } from '../services/profile.service';
@@ -32,7 +33,7 @@ import { JwtAuthGuard } from '../../../infrastructure/auth/guards/jwt-auth-guard
 
 @ApiTags('profiles')
 @Controller('profiles')
-@ApiBearerAuth()
+@ApiBearerAuth('jwt')
 @UseGuards(JwtAuthGuard)
 export class ProfileController {
   private readonly logger = new Logger(ProfileController.name);
@@ -41,8 +42,6 @@ export class ProfileController {
   }
 
   @Get()
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Get profiles with filtering and pagination',
     description: 'Retrieve a paginated list of profiles with optional filtering by search, role, and status'
