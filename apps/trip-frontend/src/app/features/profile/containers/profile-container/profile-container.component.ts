@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -30,16 +30,25 @@ export class ProfileContainerComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
-  public readonly profileState = this.profileService.profileState$;
+  public readonly profile$ = this.profileService.profile$;
+  public readonly loading$ = this.profileService.loading$;
+  public readonly error$ = this.profileService.error$;
+  public readonly isEditing$ = this.profileService.isEditing$;
+
   public readonly toastMessage = signal<string | null>(null);
 
-  ngOnInit(): void {
-    if(!this.authService.isAuthenticated()) {
-      this.router.navigate(['/auth/login']);
-      return;
-    }
+  constructor() {
+    // Use effect to handle auth state changes reactively
+    effect(() => {
+      if (!this.authService.isAuthenticated()) {
+        this.router.navigate(['/auth/login']);
+        return;
+      }
+    });
+  }
 
-    if(!this.profileState().profile) {
+  ngOnInit(): void {
+    if(!this.profile$) {
       this.profileService.refreshProfile();
     }
   }
