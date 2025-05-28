@@ -25,6 +25,11 @@ export class JwtAuthGuard implements CanActivate {
    */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
+
+    if (request.method === 'OPTIONS') {
+        return true;
+      }
+
     const token = this.extractTokenFromHeader(request);
     this.logger.debug(`Incoming request: ${request.method} ${request.url}`);
     this.logger.debug(`Request headers: ${JSON.stringify(request.headers)}`);
