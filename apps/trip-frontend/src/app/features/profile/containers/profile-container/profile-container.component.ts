@@ -37,16 +37,6 @@ export class ProfileContainerComponent implements OnInit {
 
   public readonly toastMessage = signal<string | null>(null);
 
-  constructor() {
-    // Use effect to handle auth state changes reactively
-    effect(() => {
-      if (!this.authService.isAuthenticated()) {
-        this.router.navigate(['/auth/login']);
-        return;
-      }
-    });
-  }
-
   ngOnInit(): void {
     if(!this.profile$) {
       this.profileService.refreshProfile();

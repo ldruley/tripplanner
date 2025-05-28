@@ -69,7 +69,7 @@ export class AuthService {
         this.sessionSubject.next(session);
 
         if (event === 'SIGNED_IN') {
-          this.router.navigate(['/dashboard']);
+          this.handleSuccessfulLogin();
         } else if (event === 'SIGNED_OUT') {
           this.router.navigate(['/auth/login']);
         }
@@ -82,6 +82,18 @@ export class AuthService {
       });
     }
   }
+
+  private handleSuccessfulLogin(): void {
+      // Check for return URL in query params
+      const urlParams = new URLSearchParams(window.location.search);
+      const returnUrl = urlParams.get('returnUrl');
+
+      if (returnUrl && returnUrl !== '/auth/login') {
+        this.router.navigateByUrl(returnUrl);
+      } else {
+        this.router.navigate(['/dashboard']);
+      }
+    }
 
   async signIn(credentials: LoginCredentials): Promise<{ success: boolean; error?: string }> {
     this.setLoading(true);
