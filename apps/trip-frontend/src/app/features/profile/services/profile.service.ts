@@ -72,7 +72,7 @@ export class ProfileService {
           this.error.set(null);
         }),
         switchMap((payload) =>
-          this.http.put<ProfileApiResponse>('http://localhost:3000/api/profiles/me', payload).pipe(
+          this.http.put<ProfileApiResponse>('http://127.0.0.1:3000/api/profiles/me', payload).pipe(
             tap((res) => {
               this.profile.set(res.data);
               this.cacheTimestamp.set(Date.now());
@@ -97,7 +97,7 @@ export class ProfileService {
           this.error.set(null);
         }),
         switchMap(() =>
-          this.http.get<ProfileApiResponse>('http://localhost:3000/api/profiles/me').pipe(
+          this.http.get<ProfileApiResponse>('http://127.0.0.1:3000/api/profiles/me').pipe(
             tap((res) => {
               console.log('✅ Response received:', res);
               this.profile.set(res.data);
