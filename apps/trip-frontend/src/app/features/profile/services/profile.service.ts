@@ -72,7 +72,7 @@ export class ProfileService {
           this.error.set(null);
         }),
         switchMap((payload) =>
-          this.http.put<ProfileApiResponse>('/api/profiles/me', payload).pipe(
+          this.http.put<ProfileApiResponse>('http://localhost:3000/api/profiles/me', payload).pipe(
             tap((res) => {
               this.profile.set(res.data);
               this.cacheTimestamp.set(Date.now());
@@ -92,16 +92,19 @@ export class ProfileService {
     this.refreshTrigger$
       .pipe(
         tap(() => {
+          console.log('🔄 Profile refresh triggered');
           this.isLoading.set(true);
           this.error.set(null);
         }),
         switchMap(() =>
-          this.http.get<ProfileApiResponse>('/api/profiles/me').pipe(
+          this.http.get<ProfileApiResponse>('http://localhost:3000/api/profiles/me').pipe(
             tap((res) => {
+              console.log('✅ Response received:', res);
               this.profile.set(res.data);
               this.cacheTimestamp.set(Date.now());
             }),
             catchError((err) => {
+              console.error('❌ HTTP Error:', err);
               this.error.set(this.getErrorMessage(err));
               return of(null);
             }),

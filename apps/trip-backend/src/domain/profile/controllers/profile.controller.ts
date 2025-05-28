@@ -30,6 +30,7 @@ import {
   ErrorResponseDto,
 } from '@trip-planner/types';
 import { JwtAuthGuard } from '../../../infrastructure/auth/guards/jwt-auth-guard';
+import { CurrentUser } from '../../../infrastructure/auth/decorators/current-user.decorator';
 
 @ApiTags('profiles')
 @Controller('profiles')
@@ -40,6 +41,75 @@ export class ProfileController {
 
   constructor(private readonly profileService: ProfileService) {
   }
+  @Get('me')
+    @ApiOperation({
+      summary: 'Get current user profile',
+      description: 'Retrieve the profile of the currently authenticated user'
+    })
+    @ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Current user profile retrieved successfully',
+      type: ProfileResponseDto,
+    })
+    @ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'Profile not found',
+      type: ErrorResponseDto,
+    })
+    @ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'User not authenticated',
+      type: ErrorResponseDto,
+    })
+    async getCurrentUserProfile(@CurrentUser() user: any) {
+      this.logger.debug(`GET /profiles/me - User: ${user.id}`);
+
+      const profile = await this.profileService.findById(user.id);
+      return {
+        success: true,
+        data: profile,
+        message: 'Profile retrieved successfully'
+      };
+    }
+
+    @Put('me')
+    @ApiOperation({
+      summary: 'Update current user profile',
+      description: 'Update the profile of the currently authenticated user'
+    })
+    @ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Profile updated successfully',
+      type: ProfileResponseDto,
+    })
+    @ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description: 'Invalid input data',
+      type: ErrorResponseDto,
+    })
+    @ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'Profile not found',
+      type: ErrorResponseDto,
+    })
+    @ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'User not authenticated',
+      type: ErrorResponseDto,
+    })
+    async updateCurrentUserProfile(
+      @CurrentUser() user: any,
+      @Body() updateProfileDto: UpdateProfileDto
+    ) {
+      this.logger.debug(`PUT /profiles/me - User: ${user.id} - Data: ${JSON.stringify(updateProfileDto)}`);
+
+      const profile = await this.profileService.update(user.id, updateProfileDto);
+      return {
+        success: true,
+        data: profile,
+        message: 'Profile updated successfully'
+      };
+    }
 
   @Get()
   @ApiOperation({

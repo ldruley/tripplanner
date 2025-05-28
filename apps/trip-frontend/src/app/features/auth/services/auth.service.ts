@@ -34,6 +34,8 @@ export class AuthService {
   });
 
   public authState$ = this.authStateSubject.asObservable();
+  private sessionSubject = new BehaviorSubject<any>(null);
+  public session$ = this.sessionSubject.asObservable();
 
   constructor() {
     this.supabase = createClient(
@@ -54,6 +56,8 @@ export class AuthService {
         error: null
       });
 
+      this.sessionSubject.next(session);
+
       // Listen for auth changes
       this.supabase.auth.onAuthStateChange((event, session) => {
         this.authStateSubject.next({
@@ -61,6 +65,8 @@ export class AuthService {
           loading: false,
           error: null
         });
+
+        this.sessionSubject.next(session);
 
         if (event === 'SIGNED_IN') {
           this.router.navigate(['/dashboard']);
@@ -148,6 +154,10 @@ export class AuthService {
 
   getCurrentUser(): User | null {
     return this.authStateSubject.value.user;
+  }
+
+  getCurrentSession() {
+    return this.sessionSubject.value;
   }
 
   isAuthenticated(): boolean {

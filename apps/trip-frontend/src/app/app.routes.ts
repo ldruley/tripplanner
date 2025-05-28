@@ -33,5 +33,12 @@ export const appRoutes: Route[] = [
       import('./features/dashboard/components/dashboard/dashboard.component').then(m => m.DashboardComponent),
     title: 'Dashboard - Trip Planner'
     //TODO: Add auth guard here when implemented
-  }
+  },
+  {
+      path: 'profile',
+      loadComponent: () =>
+        import('./features/profile/containers/profile-container/profile-container.component').then(m => m.ProfileContainerComponent),
+      title: 'Profile Settings - Trip Planner'
+      //TODO: Add auth guard here when implemented
+    }
 ];
