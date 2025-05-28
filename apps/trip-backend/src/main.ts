@@ -10,7 +10,16 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { Request, Response, NextFunction } from 'express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: true });
+  const app = await NestFactory.create(AppModule, {
+    cors: {
+      origin: 'http://localhost:4200',
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      credentials: true,
+      preflightContinue: false, // Important: don't continue to next middleware for OPTIONS
+      optionsSuccessStatus: 204, // Success status for OPTIONS
+    }
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Trip Planner API')
@@ -32,7 +41,7 @@ async function bootstrap() {
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory, {
     swaggerOptions: {
-      persistAuthorization: true, // Keep auth between page refreshes
+      persistAuthorization: true,
       securityDefinitions: {
         bearer: {
           type: 'apiKey',
@@ -44,20 +53,23 @@ async function bootstrap() {
     }
   });
 
+  // Enhanced request timing middleware
   app.use((req: Request, res: Response, next: NextFunction) => {
     const start = Date.now();
 
+    // Log incoming request immediately
+    Logger.debug(`📥 ${req.method} ${req.originalUrl}`, 'RequestStart');
+
     res.on('finish', () => {
       const duration = Date.now() - start;
-      Logger.log(`${req.method} ${req.originalUrl} - ${duration}ms`, 'RequestTiming');
+      const statusColor = res.statusCode >= 400 ? '🔴' : '🟢';
+      Logger.log(`${statusColor} ${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`, 'RequestTiming');
     });
 
+    // Fast path for OPTIONS - should be handled by CORS above, but just in case
     if (req.method === 'OPTIONS') {
-      res.setHeader('Access-Control-Allow-Origin', 'http://localhost:4200');
-      res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
-      return res.sendStatus(204);
+      const duration = Date.now() - start;
+      Logger.debug(`⚡ OPTIONS handled in ${duration}ms`, 'FastOptions');
     }
 
     next();
@@ -69,6 +81,9 @@ async function bootstrap() {
   await app.listen(port);
   Logger.log(
     `🚀 Application is running on: http://localhost:${port}/${globalPrefix}`
+  );
+  Logger.log(
+    `📚 Swagger docs available at: http://localhost:${port}/api`
   );
 }
 
