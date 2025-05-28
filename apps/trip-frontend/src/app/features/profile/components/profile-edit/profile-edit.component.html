@@ -1,0 +1,192 @@
+<div class="profile-edit">
+  <!-- Header -->
+  <div class="edit-header">
+    <h2 class="text-xl font-semibold text-gray-900 mb-2">Edit Profile</h2>
+    <p class="text-gray-600 mb-6">Update your personal information and preferences.</p>
+  </div>
+
+  <!-- Form -->
+  <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="edit-form">
+    <!-- Avatar Section -->
+    <div class="form-section">
+      <h3 class="section-title">Profile Picture</h3>
+      <div class="avatar-edit-section">
+        <div class="current-avatar">
+          @if (avatarPreview()) {
+            <img
+              [src]="avatarPreview()"
+              [alt]="profile.email + ' avatar'"
+              class="avatar-preview"
+              (error)="onAvatarError($event)">
+          } @else {
+            <div class="avatar-placeholder">
+              <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+          }
+        </div>
+
+        <div class="avatar-controls">
+          <div class="form-field">
+            <label class="field-label">Avatar URL</label>
+            <input
+              type="url"
+              formControlName="avatar_url"
+              placeholder="https://example.com/avatar.jpg"
+              class="form-input"
+              [class.error]="isFieldInvalid('avatar_url')"
+              (input)="updateAvatarPreview()">
+            @if (isFieldInvalid('avatar_url')) {
+              <p class="field-error">
+                @if (profileForm.get('avatar_url')?.errors?.['url']) {
+                  Please enter a valid URL
+                }
+              </p>
+            }
+          </div>
+
+          <button
+            type="button"
+            class="remove-avatar-btn"
+            (click)="removeAvatar()"
+            [disabled]="!profileForm.get('avatar_url')?.value">
+            Remove Avatar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Personal Information -->
+    <div class="form-section">
+      <h3 class="section-title">Personal Information</h3>
+      <div class="form-grid">
+        <!-- First Name -->
+        <div class="form-field">
+          <label class="field-label">First Name</label>
+          <input
+            type="text"
+            formControlName="first_name"
+            placeholder="Enter your first name"
+            class="form-input"
+            [class.error]="isFieldInvalid('first_name')">
+          @if (isFieldInvalid('first_name')) {
+            <p class="field-error">
+              @if (profileForm.get('first_name')?.errors?.['required']) {
+                First name is required
+              } @else if (profileForm.get('first_name')?.errors?.['minlength']) {
+                First name must be at least 2 characters
+              } @else if (profileForm.get('first_name')?.errors?.['maxlength']) {
+                First name cannot exceed 100 characters
+              }
+            </p>
+          }
+        </div>
+
+        <!-- Last Name -->
+        <div class="form-field">
+          <label class="field-label">Last Name</label>
+          <input
+            type="text"
+            formControlName="last_name"
+            placeholder="Enter your last name"
+            class="form-input"
+            [class.error]="isFieldInvalid('last_name')">
+          @if (isFieldInvalid('last_name')) {
+            <p class="field-error">
+              @if (profileForm.get('last_name')?.errors?.['required']) {
+                Last name is required
+              } @else if (profileForm.get('last_name')?.errors?.['minlength']) {
+                Last name must be at least 2 characters
+              } @else if (profileForm.get('last_name')?.errors?.['maxlength']) {
+                Last name cannot exceed 100 characters
+              }
+            </p>
+          }
+        </div>
+
+        <!-- Display Name -->
+        <div class="form-field full-width">
+          <label class="field-label">Display Name</label>
+          <input
+            type="text"
+            formControlName="display_name"
+            placeholder="Enter your display name"
+            class="form-input"
+            [class.error]="isFieldInvalid('display_name')">
+          <p class="field-hint">This is how your name will appear to other users</p>
+          @if (isFieldInvalid('display_name')) {
+            <p class="field-error">
+              @if (profileForm.get('display_name')?.errors?.['maxlength']) {
+                Display name cannot exceed 200 characters
+              }
+            </p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Read-only Information -->
+    <div class="form-section">
+      <h3 class="section-title">Account Information</h3>
+      <div class="readonly-info">
+        <div class="readonly-field">
+          <label class="field-label">Email Address</label>
+          <span class="readonly-value">{{ profile.email }}</span>
+          <p class="field-hint">Contact support to change your email address</p>
+        </div>
+
+        <div class="readonly-grid">
+          <div class="readonly-field">
+            <label class="field-label">Account Role</label>
+            <span class="readonly-value">{{ getRoleDisplay() }}</span>
+          </div>
+
+          <div class="readonly-field">
+            <label class="field-label">Account Status</label>
+            <span class="readonly-value">{{ getStatusDisplay() }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Global Error -->
+    @if (error) {
+      <div class="form-error">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>{{ error }}</span>
+      </div>
+    }
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <tp-button
+        type="submit"
+        variant="primary"
+        [disabled]="profileForm.invalid || loading || !hasChanges()"
+        [loading]="loading">
+        {{ loading ? 'Saving...' : 'Save Changes' }}
+      </tp-button>
+
+      <tp-button
+        type="button"
+        variant="outline"
+        (buttonClick)="onCancel()"
+        [disabled]="loading">
+        Cancel
+      </tp-button>
+
+      @if (hasChanges()) {
+        <button
+          type="button"
+          class="reset-btn"
+          (click)="resetForm()"
+          [disabled]="loading">
+          Reset Changes
+        </button>
+      }
+    </div>
+  </form>
+</div>

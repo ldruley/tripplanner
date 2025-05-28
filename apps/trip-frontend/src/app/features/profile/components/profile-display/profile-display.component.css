@@ -1,0 +1,117 @@
+.profile-display {
+  @apply p-6;
+}
+
+.profile-header {
+  @apply flex flex-col sm:flex-row items-start sm:items-center gap-6 pb-6 border-b border-gray-200 mb-6;
+}
+
+.avatar-section {
+  @apply flex-shrink-0;
+}
+
+.avatar-image {
+  @apply w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white shadow-lg;
+}
+
+.avatar-placeholder {
+  @apply w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-100 border-4 border-white shadow-lg flex items-center justify-center;
+}
+
+.profile-info {
+  @apply flex-grow;
+}
+
+.profile-name {
+  @apply text-2xl font-bold text-gray-900 mb-1;
+}
+
+.profile-email {
+  @apply text-gray-600 mb-3;
+}
+
+.profile-badges {
+  @apply flex gap-2 flex-wrap;
+}
+
+.role-badge, .status-badge {
+  @apply px-2 py-1 text-xs font-medium rounded-full;
+}
+
+.role-badge.admin {
+  @apply bg-purple-100 text-purple-800;
+}
+
+.role-badge.moderator {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.role-badge.user {
+  @apply bg-gray-100 text-gray-800;
+}
+
+.status-badge.active {
+  @apply bg-green-100 text-green-800;
+}
+
+.status-badge.suspended {
+  @apply bg-red-100 text-red-800;
+}
+
+.status-badge.pending {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.profile-actions {
+  @apply flex gap-2 flex-shrink-0;
+}
+
+.profile-details {
+  @apply space-y-6;
+}
+
+.info-section {
+  @apply space-y-4;
+}
+
+.section-title {
+  @apply text-lg font-semibold text-gray-900 border-b border-gray-100 pb-2;
+}
+
+.info-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-4;
+}
+
+.info-item {
+  @apply space-y-1;
+}
+
+.info-label {
+  @apply block text-sm font-medium text-gray-700;
+}
+
+.info-value {
+  @apply block text-sm text-gray-900;
+}
+
+.completion-status {
+  @apply pt-2;
+}
+
+.status-complete, .status-incomplete {
+  @apply flex items-center;
+}
+
+@media (max-width: 640px) {
+  .profile-header {
+    @apply flex-col text-center;
+  }
+
+  .profile-actions {
+    @apply flex-col w-full;
+  }
+
+  .info-grid {
+    @apply grid-cols-1;
+  }
+}

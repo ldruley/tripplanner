@@ -1,0 +1,126 @@
+<div class="profile-display">
+  <!-- Header with avatar and main info -->
+  <div class="profile-header">
+    <div class="avatar-section">
+      @if (profile.avatar_url) {
+        <img
+          [src]="profile.avatar_url"
+          [alt]="getDisplayName() + ' avatar'"
+          class="avatar-image"
+          (error)="onAvatarError($event)">
+      } @else {
+        <div class="avatar-placeholder">
+          <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </div>
+      }
+    </div>
+
+    <div class="profile-info">
+      <h2 class="profile-name">{{ getDisplayName() }}</h2>
+      <p class="profile-email">{{ profile.email }}</p>
+      <div class="profile-badges">
+        <span class="role-badge" [class]="getRoleBadgeClass()">
+          {{ getRoleDisplay() }}
+        </span>
+        <span class="status-badge" [class]="getStatusBadgeClass()">
+          {{ getStatusDisplay() }}
+        </span>
+      </div>
+    </div>
+
+    <div class="profile-actions">
+      <tp-button
+        variant="primary"
+        size="sm"
+        (buttonClick)="editRequested.emit()"
+        [disabled]="loading">
+        Edit Profile
+      </tp-button>
+      <tp-button
+        variant="ghost"
+        size="sm"
+        (buttonClick)="refreshRequested.emit()"
+        [disabled]="loading">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Refresh
+      </tp-button>
+    </div>
+  </div>
+
+  <!-- Detailed information sections -->
+  <div class="profile-details">
+    <!-- Personal Information -->
+    <div class="info-section">
+      <h3 class="section-title">Personal Information</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <label class="info-label">First Name</label>
+          <span class="info-value">{{ profile.first_name || 'Not provided' }}</span>
+        </div>
+        <div class="info-item">
+          <label class="info-label">Last Name</label>
+          <span class="info-value">{{ profile.last_name || 'Not provided' }}</span>
+        </div>
+        <div class="info-item">
+          <label class="info-label">Display Name</label>
+          <span class="info-value">{{ profile.display_name || 'Not provided' }}</span>
+        </div>
+        <div class="info-item">
+          <label class="info-label">Email Address</label>
+          <span class="info-value">{{ profile.email }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Information -->
+    <div class="info-section">
+      <h3 class="section-title">Account Information</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <label class="info-label">Account Role</label>
+          <span class="info-value">{{ getRoleDisplay() }}</span>
+        </div>
+        <div class="info-item">
+          <label class="info-label">Account Status</label>
+          <span class="info-value">{{ getStatusDisplay() }}</span>
+        </div>
+        <div class="info-item">
+          <label class="info-label">Last Sign In</label>
+          <span class="info-value">{{ formatDate(profile.last_sign_in_at) }}</span>
+        </div>
+        <div class="info-item">
+          <label class="info-label">Member Since</label>
+          <span class="info-value">{{ formatDate(profile.created_at) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Completion -->
+    @if (profile.onboarding_completed !== null) {
+      <div class="info-section">
+        <h3 class="section-title">Onboarding Status</h3>
+        <div class="completion-status">
+          @if (profile.onboarding_completed) {
+            <div class="status-complete">
+              <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="text-green-700">Onboarding completed</span>
+            </div>
+          } @else {
+            <div class="status-incomplete">
+              <svg class="w-5 h-5 text-amber-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <span class="text-amber-700">Onboarding pending</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>

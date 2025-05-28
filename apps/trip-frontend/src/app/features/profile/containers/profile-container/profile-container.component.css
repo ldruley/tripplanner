@@ -1,0 +1,33 @@
+.profile-container {
+      @apply min-h-screen bg-gray-50 py-8 px-4;
+    }
+
+    .profile-content {
+      @apply max-w-4xl mx-auto;
+    }
+
+    .profile-header {
+      @apply text-center mb-8;
+    }
+
+    .loading-container {
+      @apply text-center py-12;
+    }
+
+    .error-container {
+      @apply max-w-md mx-auto;
+    }
+
+    .profile-content-wrapper {
+      @apply bg-white rounded-lg shadow-sm;
+    }
+
+    .profile-footer {
+      @apply mt-8 text-center;
+    }
+
+    @media (max-width: 640px) {
+      .profile-content {
+        @apply px-2;
+      }
+    }

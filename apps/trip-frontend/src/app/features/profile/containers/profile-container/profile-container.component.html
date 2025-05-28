@@ -1,0 +1,74 @@
+<div class="profile-container">
+  <div class="profile-content">
+    <!-- Header -->
+    <div class="profile-header">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">Profile Settings</h1>
+      <p class="text-gray-600 mb-8">Manage your account information and preferences.</p>
+    </div>
+
+    <!-- Loading State -->
+    @if (profileState().loading && !profileState().profile) {
+      <div class="loading-container">
+        <app-loading-spinner></app-loading-spinner>
+        <p class="text-gray-600 mt-4">Loading your profile...</p>
+      </div>
+    }
+
+    <!-- Error State -->
+    @if (profileState().error && !profileState().profile) {
+      <div class="error-container">
+        <div class="bg-red-50 border border-red-200 rounded-md p-4 flex items-start">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400 mt-0.5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <h3 class="text-sm font-medium text-red-800">Error loading profile</h3>
+            <p class="text-sm text-red-700 mt-1">{{ profileState().error }}</p>
+          </div>
+        </div>
+        <div class="mt-4">
+          <tp-button
+            variant="outline"
+            (buttonClick)="handleRefresh()">
+            Try Again
+          </tp-button>
+        </div>
+      </div>
+    }
+
+    <!-- Profile Content -->
+    @if (profileState().profile; as profile) {
+      <div class="profile-content-wrapper">
+        <!-- Display Mode -->
+        @if (!profileState().isEditing) {
+          <app-profile-display
+            [profile]="profile"
+            [loading]="profileState().loading"
+            (editRequested)="handleEditRequested()"
+            (refreshRequested)="handleRefresh()">
+          </app-profile-display>
+        }
+
+        <!-- Edit Mode -->
+        @if (profileState().isEditing) {
+          <app-profile-edit
+            [profile]="profile"
+            [loading]="profileState().loading"
+            [error]="profileState().error"
+            (saveRequested)="handleSaveRequested($event)"
+            (cancelRequested)="handleCancelRequested()">
+          </app-profile-edit>
+        }
+      </div>
+    }
+
+    <!-- Actions Footer -->
+    <div class="profile-footer">
+      <tp-button
+        variant="ghost"
+        (buttonClick)="handleBackToDashboard()">
+        ← Back to Dashboard
+      </tp-button>
+    </div>
+  </div>
+</div>
