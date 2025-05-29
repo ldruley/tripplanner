@@ -60,6 +60,10 @@ export class ProfileContainerComponent implements OnInit {
     this.profileService.refreshProfile();
   }
 
+  handleChangePasswordRequested(): void {
+    this.router.navigate(['/auth/change-password']);
+  }
+
   handleBackToDashboard(): void {
     this.router.navigate(['/dashboard']);
   }

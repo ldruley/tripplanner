@@ -16,7 +16,7 @@ export class ProfileDisplayComponent {
   @Input() loading = false;
 
   @Output() editRequested = new EventEmitter<void>();
-  @Output() refreshRequested = new EventEmitter<void>();
+  @Output() changePasswordRequested = new EventEmitter<void>();
 
   getDisplayName(): string {
     if(this.profile.display_name) {
