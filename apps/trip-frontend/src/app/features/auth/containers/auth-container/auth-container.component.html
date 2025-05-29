@@ -71,6 +71,7 @@
         *ngSwitchCase="'change-password'"
         [isLoading]="(isLoading$ | async) || false"
         [error]="(error$ | async)"
+        (cancelPasswordChange)="handleCancel()"
         (changePasswordSubmit)="handleChangePassword($event)">
       </app-change-password-form>
 
