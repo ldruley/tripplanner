@@ -25,58 +25,48 @@
         </tp-button>
       </div>
 
-      <!-- Auth-dependent buttons -->
-      <div class="auth-section">
-        @if (isAuthenticated$ | async) {
-          <!-- User Avatar -->
-          @if (currentUser$ | async; as user) {
-            <app-avatar
-              [src]="getUserAvatarUrl(user)"
-              [alt]="getUserDisplayName(user) + ' avatar'"
+       <!-- Auth-dependent buttons -->
+        <div class="auth-section">
+          @if (isAuthenticated$ | async) {
+            <!-- User Avatar -->
+            @if (currentUser$ | async; as user) {
+              <app-avatar
+                [src]="getUserAvatarUrl(user)"
+                [alt]="getUserDisplayName(user) + ' avatar'"
+                size="sm"
+                [clickable]="true"
+                [showBorder]="false"
+                (avatarClick)="onProfile()">
+              </app-avatar>
+            }
+
+            <!-- Authenticated user buttons -->
+            <tp-button
+              variant="outline"
               size="sm"
-              [clickable]="true"
-              [showBorder]="false"
-              (avatarClick)="onProfile()">
-            </app-avatar>
+              (buttonClick)="onSignOut()">
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Sign Out
+            </tp-button>
+          } @else {
+            <!-- Guest user buttons -->
+            <tp-button
+              variant="outline"
+              size="sm"
+              (buttonClick)="onLogin()">
+              Login
+            </tp-button>
+
+            <tp-button
+              variant="primary"
+              size="sm"
+              (buttonClick)="onRegister()">
+              Register
+            </tp-button>
           }
-
-          <!-- Authenticated user buttons -->
-          <tp-button
-            variant="ghost"
-            size="sm"
-            (buttonClick)="onProfile()">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            Profile
-          </tp-button>
-
-          <tp-button
-            variant="outline"
-            size="sm"
-            (buttonClick)="onSignOut()">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Sign Out
-          </tp-button>
-        } @else {
-          <!-- Guest user buttons -->
-          <tp-button
-            variant="outline"
-            size="sm"
-            (buttonClick)="onLogin()">
-            Login
-          </tp-button>
-
-          <tp-button
-            variant="primary"
-            size="sm"
-            (buttonClick)="onRegister()">
-            Register
-          </tp-button>
-        }
-      </div>
+        </div>
     </nav>
   </div>
 </header>
