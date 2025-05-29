@@ -32,6 +32,7 @@ export interface AuthState {
 export class AuthService {
   private readonly router = inject(Router);
   private supabase: SupabaseClient;
+  private isAlreadySignedIn = false;
 
   private authStateSubject = new BehaviorSubject<AuthState>({
     user: null,
@@ -55,7 +56,7 @@ export class AuthService {
   private async initializeAuth(): Promise<void> {
     try {
       const { data: { session } } = await this.supabase.auth.getSession();
-
+      this.isAlreadySignedIn = !!session?.user;
       this.authStateSubject.next({
         user: session?.user ?? null,
         loading: false,
@@ -74,9 +75,11 @@ export class AuthService {
 
         this.sessionSubject.next(session);
 
-        if (event === 'SIGNED_IN') {
+        if (event === 'SIGNED_IN' && !this.isAlreadySignedIn) {
+          this.isAlreadySignedIn = !!session?.user;
           this.handleSuccessfulLogin();
         } else if (event === 'SIGNED_OUT') {
+          this.isAlreadySignedIn = false;
           this.router.navigate(['/auth/login']);
         }
       });
