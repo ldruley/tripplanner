@@ -13,7 +13,7 @@ import { ChangePasswordCredentials } from '../../services/auth.service';
 })
 export class ChangePasswordFormComponent {
   @Input() isLoading = false;
-  @Input() isError: string | null = null;
+  @Input() error: string | null = null;
   @Output() changePasswordSubmit = new EventEmitter<ChangePasswordCredentials>();
   readonly changePasswordForm = buildChangePasswordForm(new FormBuilder());
 

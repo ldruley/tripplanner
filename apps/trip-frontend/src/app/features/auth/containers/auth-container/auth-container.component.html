@@ -37,13 +37,13 @@
         *ngSwitchCase="'forgot'"
         (submitEmail)="handleForgotPassword($event)">
       </app-forgot-password-form>
+ -->
+      <app-change-password-form
+        *ngSwitchCase="'change-password'"
+        [error]="(error$ | async)"
+        (changePasswordSubmit)="handleChangePassword($event)">
+      </app-change-password-form>
 
-      <app-reset-password-form
-        *ngSwitchCase="'reset'"
-        [token]="resetToken"
-        (submitReset)="handleResetPassword($event)">
-      </app-reset-password-form>
-      -->
     </ng-container>
   </div>
 </div>

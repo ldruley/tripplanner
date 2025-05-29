@@ -24,6 +24,12 @@ export const appRoutes: Route[] = [
         title: 'Sign Up - Trip Planner'
       },
       {
+        path: 'change-password',
+        loadComponent: () =>
+          import('./features/auth/containers/auth-container/auth-container.component').then(m => m.AuthContainerComponent),
+        title: 'Change Password - Trip Planner'
+      },
+      {
         path: 'signup',
         redirectTo: 'register'
       }

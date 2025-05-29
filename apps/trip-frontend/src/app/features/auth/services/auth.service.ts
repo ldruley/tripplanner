@@ -17,6 +17,7 @@ export interface SignUpCredentials extends LoginCredentials {
 export interface ChangePasswordCredentials {
   oldPassword: string;
   newPassword: string;
+  confirmPassword: string;
 }
 
 export interface AuthState {
