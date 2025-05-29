@@ -34,9 +34,10 @@ export function buildForgotPasswordForm(fb: FormBuilder): FormGroup {
   });
 }
 
-export function buildResetPasswordForm(fb: FormBuilder): FormGroup {
+export function buildChangePasswordForm(fb: FormBuilder): FormGroup {
   return fb.group({
-    password: ['', passwordValidator],
+    oldPassword: ['', passwordValidator],
+    newPassword: ['', passwordValidator],
     confirmPassword: ['', Validators.required],
   }, { validators: matchPasswords });
 }

@@ -14,6 +14,11 @@ export interface SignUpCredentials extends LoginCredentials {
   lastName?: string;
 }
 
+export interface ChangePasswordCredentials {
+  oldPassword: string;
+  newPassword: string;
+}
+
 export interface AuthState {
   user: User | null;
   loading: boolean;
@@ -161,6 +166,36 @@ export class AuthService {
       return { success: true };
     } catch (error) {
       return { success: false, error: 'Failed to send reset email' };
+    }
+  }
+
+  async updatePassword(credentials: ChangePasswordCredentials): Promise<{ success: boolean; error?: string }> {
+    try {
+      const user = this.getCurrentUser();
+      if (!user?.email) {
+        return { success: false, error: 'No authenticated user found' };
+      }
+
+      const { error: verifyError } = await this.supabase.auth.signInWithPassword({
+        email: user.email,
+        password: credentials.oldPassword
+      });
+
+      if (verifyError) {
+        return { success: false, error: 'Current password is incorrect' };
+      }
+
+      const { error: updateError } = await this.supabase.auth.updateUser({
+        password: credentials.newPassword
+      });
+
+      if (updateError) {
+        return { success: false, error: this.formatAuthError(updateError) };
+      }
+
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: 'Failed to update password' };
     }
   }
 
