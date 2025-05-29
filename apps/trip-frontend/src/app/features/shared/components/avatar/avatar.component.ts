@@ -12,7 +12,7 @@ export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 })
 export class AvatarComponent {
   @Input() src: string | null = null;
-  @Input() alt: string = 'User avatar';
+  @Input() alt = 'User avatar';
   @Input() size: AvatarSize = 'md';
   @Input() clickable = false;
   @Input() showBorder = true;
