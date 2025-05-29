@@ -1,12 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule, NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
+import { CommonModule, NgSwitch, NgSwitchCase } from '@angular/common';
 
 import { AuthService, ChangePasswordCredentials, LoginCredentials, SignUpCredentials } from '../../services/auth.service';
 import { LoginFormComponent } from '../../components/login-form/login-form.component';
 import { RegisterFormComponent } from '../../components/register-form/register-form.component';
 //import { ForgotPasswordFormComponent } from '../forgot-password-form/forgot-password-form.component';
-//import { ResetPasswordFormComponent } from '../reset-password-form/reset-password-form.component';
 import { map } from 'rxjs/operators';
 import { ChangePasswordFormComponent } from '../../components/change-password-form/change-password-form.component';
 
@@ -20,14 +19,12 @@ interface ToastMessage {
   standalone: true,
   imports: [
     CommonModule,
-    NgIf,
     NgSwitch,
     NgSwitchCase,
     LoginFormComponent,
     RegisterFormComponent,
     ChangePasswordFormComponent,
     //ForgotPasswordFormComponent,
-    //ResetPasswordFormComponent,
   ],
   templateUrl: './auth-container.component.html',
   styleUrls: ['./auth-container.component.css'],
@@ -71,38 +68,44 @@ export class AuthContainerComponent {
       }
     }
 
-    public async handleLogin(credentials: LoginCredentials): Promise<void> {
-      const result = await this.authService.signIn(credentials);
+  public async handleLogin(credentials: LoginCredentials): Promise<void> {
+    const result = await this.authService.signIn(credentials);
 
-      if (result && !result.success && result.error) {
-        this.showToast('error', result.error);
-      }
+    if (result && !result.success && result.error) {
+      this.showToast('error', result.error);
     }
+  }
 
-    public async handleChangePassword(credentials: ChangePasswordCredentials): Promise<void> {
-      const result = await this.authService.updatePassword(credentials);
+  public async handleChangePassword(credentials: ChangePasswordCredentials): Promise<void> {
+    const result = await this.authService.updatePassword(credentials);
 
-      if (result.success) {
-        this.showToast('success', 'Password updated successfully!');
-        setTimeout(() => {
-          this.router.navigate(['/profile']);
-        }, 2000);
-      } else if (result.error) {
-        this.showToast('error', result.error);
-      }
+    if (result.success) {
+      this.showToast('success', 'Password updated successfully!');
+      setTimeout(() => {
+        this.router.navigate(['/profile']);
+      }, 2000);
+    } else if (result.error) {
+      this.showToast('error', result.error);
     }
+  }
+
+  handleCancel(): void {
+    this.router.navigate(['/profile']).catch(err => {
+      console.error('Navigation failed:', err);
+    });
+  }
 
 
   private showToast(type: 'success' | 'error', message: string): void {
-      this.toastMessage.set({ type, message });
+    this.toastMessage.set({ type, message });
 
-      // Auto-hide toast after 5 seconds
-      setTimeout(() => {
-        this.toastMessage.set(null);
-      }, 5000);
-    }
-
-    public dismissToast(): void {
+    // Auto-hide toast after 5 seconds
+    setTimeout(() => {
       this.toastMessage.set(null);
-    }
+    }, 5000);
+  }
+
+  public dismissToast(): void {
+    this.toastMessage.set(null);
+  }
 }

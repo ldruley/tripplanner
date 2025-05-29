@@ -1,16 +1,14 @@
-import { Component, effect, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
 
 import { ProfileService } from '../../services/profile.service';
-import { AuthService } from '../../../auth/services/auth.service';
 import { ProfileDisplayComponent } from '../../components/profile-display/profile-display.component';
 import { ProfileEditComponent } from '../../components/profile-edit/profile-edit.component';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
-import { Profile, UpdateProfile } from '@trip-planner/types';
+import { UpdateProfile } from '@trip-planner/types';
 
 @Component({
   selector: 'app-profile-container',
@@ -27,7 +25,6 @@ import { Profile, UpdateProfile } from '@trip-planner/types';
 })
 export class ProfileContainerComponent implements OnInit {
   private readonly profileService = inject(ProfileService);
-  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
   public readonly profile$ = this.profileService.profile$;
@@ -61,11 +58,15 @@ export class ProfileContainerComponent implements OnInit {
   }
 
   handleChangePasswordRequested(): void {
-    this.router.navigate(['/auth/change-password']);
+    this.router.navigate(['/auth/change-password']).catch(err => {
+     console.error('Navigation failed:', err);
+   });
   }
 
   handleBackToDashboard(): void {
-    this.router.navigate(['/dashboard']);
+    this.router.navigate(['/dashboard']).catch(err => {
+      console.error('Navigation failed:', err);
+    });
   }
 
   private showToast(message: string): void {

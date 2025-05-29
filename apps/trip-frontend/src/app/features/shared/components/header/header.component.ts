@@ -48,7 +48,7 @@ export class HeaderComponent {
 
 
 
-  getUserAvatarUrl(user: any): string | null {
+  getUserAvatarUrl(): string | null {
     const profile = this.currentProfile();
     return profile?.avatar_url || null;
   }
@@ -69,24 +69,34 @@ export class HeaderComponent {
     // Navigate to home/dashboard based on auth state
     const isAuthenticated = this.authService.isAuthenticated();
     if (isAuthenticated) {
-      this.router.navigate(['/dashboard']);
+      this.router.navigate(['/dashboard']).catch(err => {
+        console.error('Navigation failed:', err);
+      });
     } else {
       // Could navigate to a landing page or stay on current page
       // For now, let's navigate to login if not authenticated
-      this.router.navigate(['/auth/login']);
+      this.router.navigate(['/auth/login']).catch(err => {
+        console.error('Navigation failed:', err);
+      });
     }
   }
 
   onLogin() {
-    this.router.navigate(['/auth/login']);
+    this.router.navigate(['/auth/login']).catch(err => {
+      console.error('Navigation failed:', err);
+    });
   }
 
   onRegister() {
-    this.router.navigate(['/auth/register']);
+    this.router.navigate(['/auth/register']).catch(err => {
+      console.error('Navigation failed:', err);
+    });
   }
 
   onProfile() {
-    this.router.navigate(['/profile']);
+    this.router.navigate(['/profile']).catch(err => {
+      console.error('Navigation failed:', err);
+    });
   }
 
   async onSignOut() {

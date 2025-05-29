@@ -1,20 +1,9 @@
 import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SignUpCredentials } from '../../services/auth.service';
 import { buildRegisterForm } from '../../../../core/forms/form-factory';
-
-// Custom validator for password confirmation
-function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
-  const password = control.get('password');
-  const confirmPassword = control.get('confirmPassword');
-
-  if (password && confirmPassword && password.value !== confirmPassword.value) {
-    return { passwordMismatch: true };
-  }
-  return null;
-}
 
 @Component({
   selector: 'app-register-form',

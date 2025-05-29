@@ -15,6 +15,7 @@ export class ChangePasswordFormComponent {
   @Input() isLoading = false;
   @Input() error: string | null = null;
   @Output() changePasswordSubmit = new EventEmitter<ChangePasswordCredentials>();
+  @Output() cancelPasswordChange = new EventEmitter<void>();
   readonly changePasswordForm = buildChangePasswordForm(new FormBuilder());
 
   public readonly showOldPassword = signal(false);
@@ -45,6 +46,10 @@ export class ChangePasswordFormComponent {
   public hasPasswordMismatch(): boolean {
     return !!(this.changePasswordForm.errors?.['passwordMismatch'] &&
       this.changePasswordForm.get('confirmPassword')?.touched);
+  }
+
+  handleCancelClick(): void {
+    this.cancelPasswordChange.emit();
   }
 
   public onSubmit(): void {
