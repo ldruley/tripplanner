@@ -14,13 +14,13 @@ export const appRoutes: Route[] = [
       {
         path: 'login',
         loadComponent: () =>
-          import('./features/auth/containers/login-container/login-container.component').then(m => m.LoginContainerComponent),
+          import('./features/auth/containers/auth-container/auth-container.component').then(m => m.AuthContainerComponent),
         title: 'Sign In - Trip Planner'
       },
       {
         path: 'register',
         loadComponent: () =>
-          import('./features/auth/containers/register-container/register-container.component').then(m => m.RegisterContainerComponent),
+          import('./features/auth/containers/auth-container/auth-container.component').then(m => m.AuthContainerComponent),
         title: 'Sign Up - Trip Planner'
       },
       {
