@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractContro
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SignUpCredentials } from '../../services/auth.service';
+import { buildRegisterForm } from '../../../../core/forms/form-factory';
 
 // Custom validator for password confirmation
 function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
@@ -26,34 +27,27 @@ export class RegisterFormComponent {
   @Input() isLoading = false;
   @Input() error: string | null = null;
   @Output() registerSubmit = new EventEmitter<SignUpCredentials>();
+  readonly registerForm = buildRegisterForm(new FormBuilder());
 
   public readonly showPassword = signal(false);
   public readonly showConfirmPassword = signal(false);
 
-  public readonly registerForm: FormGroup;
 
-  constructor(private formBuilder: FormBuilder) {
-    this.registerForm = this.formBuilder.group({
-      firstName: ['', [Validators.required, Validators.minLength(2)]],
-      lastName: ['', [Validators.required, Validators.minLength(2)]],
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
-      confirmPassword: ['', [Validators.required]],
-      acceptTerms: [false, [Validators.requiredTrue]]
-    }, { validators: passwordMatchValidator });
+  togglePasswordVisibility(): void {
+    this.showPassword.update(v => !v);
   }
 
-  public togglePasswordVisibility(): void {
-    this.showPassword.update(current => !current);
+  toggleConfirmPasswordVisibility(): void {
+    this.showConfirmPassword.update(v => !v);
   }
 
-  public toggleConfirmPasswordVisibility(): void {
-    this.showConfirmPassword.update(current => !current);
+  isFieldInvalid(field: string): boolean {
+    const control = this.registerForm.get(field);
+    return !!control && control.invalid && (control.touched || control.dirty);
   }
 
-  public isFieldInvalid(fieldName: string): boolean {
-    const field = this.registerForm.get(fieldName);
-    return !!(field && field.invalid && (field.dirty || field.touched));
+  private markAllFieldsAsTouched(): void {
+    Object.values(this.registerForm.controls).forEach(control => control.markAsTouched());
   }
 
   public hasPasswordMismatch(): boolean {
@@ -62,24 +56,20 @@ export class RegisterFormComponent {
   }
 
   public onSubmit(): void {
+    this.markAllFieldsAsTouched();
     if (this.registerForm.invalid) {
-      this.markAllFieldsAsTouched();
       return;
     }
 
+    const { firstName, lastName, email, password } = this.registerForm.value;
+
     const credentials: SignUpCredentials = {
-      firstName: this.registerForm.value.firstName,
-      lastName: this.registerForm.value.lastName,
-      email: this.registerForm.value.email,
-      password: this.registerForm.value.password
+      firstName,
+      lastName,
+      email,
+      password
     };
 
     this.registerSubmit.emit(credentials);
-  }
-
-  private markAllFieldsAsTouched(): void {
-    Object.keys(this.registerForm.controls).forEach(key => {
-      this.registerForm.get(key)?.markAsTouched();
-    });
   }
 }

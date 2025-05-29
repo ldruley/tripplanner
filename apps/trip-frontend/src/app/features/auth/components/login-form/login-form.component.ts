@@ -1,58 +1,44 @@
-import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { LoginCredentials } from '../../services/auth.service';
+import { buildLoginForm } from '../../../../core/forms/form-factory';
 
 @Component({
   selector: 'app-login-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './login-form.component.html',
-  styleUrl: './login-form.component.css'
+  styleUrls: ['./login-form.component.css'],
 })
 export class LoginFormComponent {
   @Input() isLoading = false;
   @Input() error: string | null = null;
-  @Output() loginSubmit = new EventEmitter<LoginCredentials>();
+  @Output() loginSubmit = new EventEmitter<{ email: string; password: string }>();
 
-  public readonly showPassword = signal(false);
+  readonly loginForm = buildLoginForm(new FormBuilder());
+  private show = false;
 
-  public readonly loginForm: FormGroup;
-
-  constructor(private formBuilder: FormBuilder) {
-    this.loginForm = this.formBuilder.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
-    });
+  showPassword() {
+    return this.show;
   }
 
-  public togglePasswordVisibility(): void {
-    this.showPassword.update(current => !current);
+  togglePasswordVisibility() {
+    this.show = !this.show;
   }
 
-  public isFieldInvalid(fieldName: string): boolean {
-    const field = this.loginForm.get(fieldName);
-    return !!(field && field.invalid && (field.dirty || field.touched));
-  }
-
-  public onSubmit(): void {
-    if (this.loginForm.invalid) {
-      this.markAllFieldsAsTouched();
-      return;
-    }
-
-    const credentials: LoginCredentials = {
-      email: this.loginForm.value.email,
-      password: this.loginForm.value.password
-    };
-
-    this.loginSubmit.emit(credentials);
+  isFieldInvalid(field: string): boolean {
+    const control = this.loginForm.get(field);
+    return !!control && control.invalid && (control.touched || control.dirty);
   }
 
   private markAllFieldsAsTouched(): void {
-    Object.keys(this.loginForm.controls).forEach(key => {
-      this.loginForm.get(key)?.markAsTouched();
-    });
+    Object.values(this.loginForm.controls).forEach(control => control.markAsTouched());
+  }
+
+  onSubmit(): void {
+    this.markAllFieldsAsTouched();
+    if (this.loginForm.valid) {
+      this.loginSubmit.emit(this.loginForm.value);
+    }
   }
 }
