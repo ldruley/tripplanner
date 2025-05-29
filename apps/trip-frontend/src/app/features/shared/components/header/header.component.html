@@ -31,7 +31,7 @@
             <!-- User Avatar -->
             @if (currentUser$ | async; as user) {
               <app-avatar
-                [src]="getUserAvatarUrl(user)"
+                [src]="getUserAvatarUrl()"
                 [alt]="getUserDisplayName(user) + ' avatar'"
                 size="sm"
                 [clickable]="true"
