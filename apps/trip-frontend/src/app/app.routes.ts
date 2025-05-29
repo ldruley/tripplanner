@@ -27,7 +27,8 @@ export const appRoutes: Route[] = [
         path: 'change-password',
         loadComponent: () =>
           import('./features/auth/containers/auth-container/auth-container.component').then(m => m.AuthContainerComponent),
-        title: 'Change Password - Trip Planner'
+        title: 'Change Password - Trip Planner',
+        canActivate: [authGuard]
       },
       {
         path: 'signup',

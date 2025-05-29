@@ -8,3 +8,9 @@ export function matchPasswords(group: AbstractControl): ValidationErrors | null 
   const confirm = group.get('confirmPassword')?.value;
   return password === confirm ? null : { mismatch: true };
 }
+
+export function matchNewPasswords(group: AbstractControl): ValidationErrors | null {
+  const newPassword = group.get('newPassword')?.value;
+  const confirmPassword = group.get('confirmPassword')?.value;
+  return newPassword === confirmPassword ? null : { mismatch: true };
+}

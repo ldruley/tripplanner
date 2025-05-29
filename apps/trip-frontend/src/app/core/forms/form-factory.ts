@@ -1,5 +1,5 @@
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { emailValidator, passwordValidator, matchPasswords } from './validators';
+import { emailValidator, passwordValidator, matchPasswords, matchNewPasswords } from './validators';
 
 export function buildLoginForm(fb: FormBuilder): FormGroup {
   return fb.group({
@@ -39,5 +39,5 @@ export function buildChangePasswordForm(fb: FormBuilder): FormGroup {
     oldPassword: ['', passwordValidator],
     newPassword: ['', passwordValidator],
     confirmPassword: ['', Validators.required],
-  }, { validators: matchPasswords });
+  }, { validators: matchNewPasswords });
 }

@@ -1,9 +1,10 @@
+/* Existing styles */
 :host {
   display: block;
 }
 
 .login-container {
-  @apply min-h-screen bg-gray-100 flex items-center justify-center p-4;
+  @apply min-h-screen bg-gray-100 flex items-center justify-center p-4 relative;
 }
 
 .login-content {
@@ -20,4 +21,89 @@
 
 .brand-subtitle {
   @apply text-gray-600;
+}
+
+/* Toast Styles */
+.toast-container {
+  @apply fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 max-w-sm;
+  animation: slideInUp 0.3s ease-out;
+}
+
+.toast {
+  @apply rounded-lg shadow-lg p-4 flex items-start justify-between gap-3;
+  min-width: 300px;
+}
+
+.toast-success {
+  @apply bg-green-50 border border-green-200;
+}
+
+.toast-error {
+  @apply bg-red-50 border border-red-200;
+}
+
+.toast-content {
+  @apply flex items-start gap-3 flex-grow;
+}
+
+.toast-icon {
+  @apply w-5 h-5 flex-shrink-0 mt-0.5;
+}
+
+.toast-success .toast-icon {
+  @apply text-green-400;
+}
+
+.toast-error .toast-icon {
+  @apply text-red-400;
+}
+
+.toast-message {
+  @apply text-sm font-medium;
+}
+
+.toast-success .toast-message {
+  @apply text-green-800;
+}
+
+.toast-error .toast-message {
+  @apply text-red-800;
+}
+
+.toast-dismiss {
+  @apply text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600 transition-colors duration-200 flex-shrink-0;
+}
+
+.toast-success .toast-dismiss {
+  @apply text-green-400 hover:text-green-600 focus:text-green-600;
+}
+
+.toast-error .toast-dismiss {
+  @apply text-red-400 hover:text-red-600 focus:text-red-600;
+}
+
+/* Toast Animation */
+@keyframes slideInUp {
+  from {
+    transform: translateX(-50%) translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .toast-container {
+    @apply left-4 right-4 max-w-none transform-none;
+    left: 1rem;
+    right: 1rem;
+    transform: none;
+  }
+
+  .toast {
+    min-width: auto;
+  }
 }

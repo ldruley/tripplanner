@@ -177,14 +177,14 @@ export class AuthService {
         return { success: false, error: 'No authenticated user found' };
       }
 
-      const { error: verifyError } = await this.supabase.auth.signInWithPassword({
+      /*const { error: verifyError } = await this.supabase.auth.signInWithPassword({
         email: user.email,
         password: credentials.oldPassword
       });
 
       if (verifyError) {
         return { success: false, error: 'Current password is incorrect' };
-      }
+      }*/
 
       const { error: updateError } = await this.supabase.auth.updateUser({
         password: credentials.newPassword
