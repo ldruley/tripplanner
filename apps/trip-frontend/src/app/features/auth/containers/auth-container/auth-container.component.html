@@ -1,0 +1,49 @@
+<div class="login-container">
+  <div class="login-content">
+    <!-- Brand/Logo Section -->
+    <div class="brand-section">
+      <h1 class="brand-title">Trip Planner</h1>
+      <p class="brand-subtitle">
+       <ng-container [ngSwitch]="currentForm">
+         <span *ngSwitchCase="'login'">Welcome back! Please sign in.</span>
+         <span *ngSwitchCase="'register'">Create your account.</span>
+         <span *ngSwitchCase="'forgot'">Recover your password.</span>
+         <span *ngSwitchCase="'reset'">Choose a new password.</span>
+         <span *ngSwitchDefault>Welcome.</span>
+       </ng-container>
+      </p>
+    </div>
+
+    <ng-container [ngSwitch]="currentForm">
+      <app-login-form
+        *ngSwitchCase="'login'"
+        [isLoading]="(isLoading$ | async) || false"
+        [error]="(error$ | async)"
+        (loginSubmit)="handleLogin($event)">
+      </app-login-form>
+
+
+
+      <app-register-form
+        *ngSwitchCase="'register'"
+        [isLoading]="(isLoading$ | async) || false"
+        [error]="(error$ | async)"
+        (registerSubmit)="handleRegister($event)">
+      </app-register-form>
+
+       <!-- Placeholder for future forms -->
+<!--
+      <app-forgot-password-form
+        *ngSwitchCase="'forgot'"
+        (submitEmail)="handleForgotPassword($event)">
+      </app-forgot-password-form>
+
+      <app-reset-password-form
+        *ngSwitchCase="'reset'"
+        [token]="resetToken"
+        (submitReset)="handleResetPassword($event)">
+      </app-reset-password-form>
+      -->
+    </ng-container>
+  </div>
+</div>
