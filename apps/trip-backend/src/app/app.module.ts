@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ProfilesModule } from '../domain/profile/profiles.module';
 import { CacheModule } from '@nestjs/cache-manager';
+import { BullModule } from '@nestjs/bullmq';
 import { createKeyv } from '@keyv/redis';
 
 @Module({
@@ -12,10 +13,10 @@ import { createKeyv } from '@keyv/redis';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [
-        'libs/shared/prisma/.env',
-        '.env.development',
-        '.env'
+        `.env.${process.env.NODE_ENV || 'development'}`,
+        `.env`,
       ],
+      cache: true,
     }),
     CacheModule.registerAsync({
       isGlobal: true,
@@ -37,6 +38,12 @@ import { createKeyv } from '@keyv/redis';
         };
       },
       inject: [ConfigService],
+    }),
+    BullModule.forRoot({
+      connection: {
+        host: 'localhost',
+        port: 6379,
+      },
     }),
     PrismaModule,
     ProfilesModule,

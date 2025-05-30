@@ -45,11 +45,10 @@ export class AuthService {
   public session$ = this.sessionSubject.asObservable();
 
   constructor() {
-    this.supabase = createClient(
-      environment.supabaseUrl,
-      environment.supabaseAnonKey
-    );
+    const supabaseUrl = environment.supabaseUrl;
+    const supabaseAnonKey = environment.supabaseAnonKey;
 
+    this.supabase = createClient(supabaseUrl, supabaseAnonKey);
     this.initializeAuth();
   }
 

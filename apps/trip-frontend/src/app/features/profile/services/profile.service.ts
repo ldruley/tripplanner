@@ -17,11 +17,14 @@ import {
   catchError,
   tap,
 } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
   private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
+
+  private readonly backendApiUrl = environment.backendApiUrl;
 
   // Signals for UI
   private readonly profile: WritableSignal<Profile | null> = signal(null);
@@ -72,7 +75,7 @@ export class ProfileService {
           this.error.set(null);
         }),
         switchMap((payload) =>
-          this.http.put<ProfileApiResponse>('http://127.0.0.1:3000/api/profiles/me', payload).pipe(
+          this.http.put<ProfileApiResponse>(`${this.backendApiUrl}/profiles/me`, payload).pipe(
             tap((res) => {
               this.profile.set(res.data);
               this.cacheTimestamp.set(Date.now());
@@ -97,7 +100,7 @@ export class ProfileService {
           this.error.set(null);
         }),
         switchMap(() =>
-          this.http.get<ProfileApiResponse>('http://127.0.0.1:3000/api/profiles/me').pipe(
+          this.http.get<ProfileApiResponse>(`${this.backendApiUrl}/profiles/me`).pipe(
             tap((res) => {
               console.log('✅ Response received:', res);
               this.profile.set(res.data);
