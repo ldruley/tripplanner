@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, NgSwitch, NgSwitchCase } from '@angular/common';
 
@@ -8,6 +8,7 @@ import { RegisterFormComponent } from '../../components/register-form/register-f
 //import { ForgotPasswordFormComponent } from '../forgot-password-form/forgot-password-form.component';
 import { map } from 'rxjs/operators';
 import { ChangePasswordFormComponent } from '../../components/change-password-form/change-password-form.component';
+import { Subscription } from 'rxjs';
 
 interface ToastMessage {
   type: 'success' | 'error';
@@ -29,10 +30,12 @@ interface ToastMessage {
   templateUrl: './auth-container.component.html',
   styleUrls: ['./auth-container.component.css'],
 })
-export class AuthContainerComponent {
+export class AuthContainerComponent implements OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private route = inject(ActivatedRoute);
+
+  private routeSubscription: Subscription;
 
   currentForm: 'login' | 'register' | 'forgot' | 'change-password' = 'login';
   resetToken: string | null = null;
@@ -46,7 +49,7 @@ export class AuthContainerComponent {
   public readonly error$ = this.authState$.pipe(map((state) => state.error));
 
   constructor() {
-    this.route.url.subscribe((segments) => {
+    this.routeSubscription = this.route.url.subscribe((segments) => {
       const path = segments.map((s) => s.path).join('/');
       if (path.includes('register')) this.currentForm = 'register';
       else if (path.includes('forgot')) this.currentForm = 'forgot';
@@ -56,6 +59,12 @@ export class AuthContainerComponent {
         this.currentForm = 'login';
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.routeSubscription) {
+      this.routeSubscription.unsubscribe();
+    }
   }
 
   public async handleRegister(credentials: SignUpCredentials): Promise<void> {
