@@ -6,6 +6,7 @@ import { AuthService, ChangePasswordCredentials, LoginCredentials, SignUpCredent
 import { LoginFormComponent } from '../../components/login-form/login-form.component';
 import { RegisterFormComponent } from '../../components/register-form/register-form.component';
 //import { ForgotPasswordFormComponent } from '../forgot-password-form/forgot-password-form.component';
+import { RecoverPasswordFormComponent, RecoverPasswordCredentials } from '../../components/recover-password/recover-password-form.component';
 import { map } from 'rxjs/operators';
 import { ChangePasswordFormComponent } from '../../components/change-password-form/change-password-form.component';
 import { Subscription } from 'rxjs';
@@ -25,6 +26,7 @@ interface ToastMessage {
     LoginFormComponent,
     RegisterFormComponent,
     ChangePasswordFormComponent,
+    RecoverPasswordFormComponent,
     //ForgotPasswordFormComponent,
   ],
   templateUrl: './auth-container.component.html',
@@ -38,7 +40,6 @@ export class AuthContainerComponent implements OnDestroy {
   private routeSubscription: Subscription;
 
   currentForm: 'login' | 'register' | 'forgot' | 'change-password' = 'login';
-  resetToken: string | null = null;
 
   public readonly toastMessage = signal<ToastMessage | null>(null);
 
@@ -81,6 +82,16 @@ export class AuthContainerComponent implements OnDestroy {
     const result = await this.authService.signIn(credentials);
 
     if (result && !result.success && result.error) {
+      this.showToast('error', result.error);
+    }
+  }
+
+  public async handleRecoverPassword(credentials: RecoverPasswordCredentials): Promise<void> {
+    const result = await this.authService.resetPassword(credentials.email);
+
+    if (result.success) {
+      this.showToast('success', 'Password recovery email sent! Please check your inbox.');
+    } else if (result.error) {
       this.showToast('error', result.error);
     }
   }
