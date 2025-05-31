@@ -1,178 +1,73 @@
-name: Deploy to DigitalOcean Dev Droplet
+name: Deploy to DigitalOcean Dev
 
 on:
   push:
-    branches:
-      - dev
+    branches: [dev]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
-      - name: Install Monorepo Dependencies
-        run: npm ci
+      - run: npm ci
+      - run: npx nx db:generate prisma
 
-      - name: Generate Prisma Client
-        run: npx nx db:generate prisma
+      # Build both apps
+      - run: npx nx build trip-frontend --configuration=staging
+      - run: npx nx build trip-backend --configuration=staging
 
-      - name: Build Angular Frontend (Staging Configuration)
-        run: npx nx build trip-frontend --configuration=staging
-
-      - name: Build NestJS Backend (Staging Configuration)
-        run: npx nx build trip-backend --configuration=staging
-
-      - name: Check Frontend Build Output on Runner # Your useful debug step!
-        run: |
-          echo "Listing contents of dist/apps/trip-frontend/browser/ :"
-          ls -la dist/apps/trip-frontend/browser/
-          if [ -f "dist/apps/trip-frontend/browser/index.html" ]; then
-            echo "SUCCESS: index.html FOUND in build output on runner."
-          else
-            echo "ERROR: index.html NOT FOUND in build output on runner!"
-            exit 1
-          fi
-
-      - name: Copy Frontend to Droplet
-        uses: appleboy/scp-action@v1.0.0 # Or latest version
+      # Deploy frontend - simple and direct
+      - name: Deploy Frontend
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST_DEV }}
           username: ${{ secrets.SSH_USER_DEV }}
           key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
-          source: "dist/apps/trip-frontend/browser/*" # Copy contents of browser
+          source: "dist/apps/trip-frontend/browser/"
           target: "/var/www/trip-frontend/"
-          strip_components: 3 # Removes 'dist/apps/trip-frontend' from path, so 'browser/*' contents go to target
+          strip_components: 4  # Removes dist/apps/trip-frontend/browser
+          rm: true  # Clean target directory first
 
-      - name: Create Backend Staging Directory on Droplet
-        uses: appleboy/ssh-action@v1.0.3 # Using a newer version
-        with:
-          host: ${{ secrets.SSH_HOST_DEV }}
-          username: ${{ secrets.SSH_USER_DEV }}
-          key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
-          script: |
-            mkdir -p /home/${{ secrets.SSH_USER_DEV }}/staging/trip-backend/dist
-            mkdir -p /home/${{ secrets.SSH_USER_DEV }}/staging/trip-backend-config
-
-      - name: Copy Backend to Droplet Staging
+      # Deploy backend - single step
+      - name: Deploy Backend
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST_DEV }}
           username: ${{ secrets.SSH_USER_DEV }}
           key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
-          source: "dist/apps/trip-backend/*,apps/trip-backend/package.json,ecosystem.config.js" # Comma-separated list
-          target: "/home/${{ secrets.SSH_USER_DEV }}/staging_temp/" # Temporary flat staging for these specific files
-          # Note: scp-action might not handle multiple disparate sources to specific nested targets well.
-          # It might be better to do separate scp steps or archive and unarchive.
+          source: "dist/apps/trip-backend/,apps/trip-backend/package.json,ecosystem.config.js"
+          target: "/home/${{ secrets.SSH_USER_DEV }}/app/"
+          rm: true
 
-      # A more robust way for backend: Create an archive, copy it, then extract on server
-      - name: Archive Backend for SCP
-        run: |
-          echo "Preparing backend archive..."
-          mkdir -p backend_archive/dist # Create a dist subfolder in the archive staging area
-
-          echo "Copying backend distribution files from dist/apps/trip-backend/..."
-          # This copies all contents of the backend build output (including subdirectories like 'main.js' etc.)
-          # It should also copy the generated package.json if it's at the root of dist/apps/trip-backend/
-          cp -r dist/apps/trip-backend/* backend_archive/
-          # Note: The previous 'cp -r dist/apps/trip-backend/* backend_archive/dist/'
-          # would put the generated package.json into backend_archive/dist/package.json.
-          # If 'npm install --production' is run in $BACKEND_APP_PATH,
-          # then package.json should be at $BACKEND_APP_PATH/package.json.
-          # So, we copy dist/apps/trip-backend/package.json directly to backend_archive/package.json.
-          # And the compiled code (which was in dist/apps/trip-backend/ a moment ago) should go into backend_archive/dist/.
-
-          # Let's be more explicit and structured for the archive:
-          rm -rf backend_archive/* # Clean staging archive directory first
-          mkdir -p backend_archive/dist
-
-          echo "Copying compiled backend code to backend_archive/dist/"
-          cp -r dist/apps/trip-backend/* backend_archive/dist/
-          # This will copy the compiled JS files. If package.json is also in dist/apps/trip-backend,
-          # it will go to backend_archive/dist/package.json. We need it at the root of the backend app.
-          # So, after copying everything to backend_archive/dist, move package.json up.
-          if [ -f "backend_archive/dist/package.json" ]; then
-            mv backend_archive/dist/package.json backend_archive/package.json
-            echo "Moved generated package.json to root of archive."
-          else
-            echo "ERROR: Generated package.json not found in dist/apps/trip-backend/"
-            exit 1
-          fi
-
-          echo "Copying ecosystem.config.js from repository root..."
-          cp ecosystem.config.js backend_archive/
-
-          echo "Contents of backend_archive before taring:"
-          ls -lR backend_archive/ # Display contents for debugging
-
-          echo "Creating tarball: backend_deploy.tar.gz..."
-          tar -czf backend_deploy.tar.gz -C backend_archive .
-          echo "Backend tarball created successfully."
-
-      - name: Copy Backend Archive to Droplet
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST_DEV }}
-          username: ${{ secrets.SSH_USER_DEV }}
-          key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
-          source: "backend_deploy.tar.gz"
-          target: "/home/${{ secrets.SSH_USER_DEV }}/"
-
-      - name: Deploy Application and Run Commands on Droplet
-        uses: appleboy/ssh-action@v1.0.3 # Using a newer version
+      # Start services
+      - name: Start Services
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST_DEV }}
           username: ${{ secrets.SSH_USER_DEV }}
           key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
           script: |
-            echo "Setting permissions for frontend..."
+            # Frontend permissions
             sudo chown -R www-data:www-data /var/www/trip-frontend
 
-            REPO_PATH="/home/${{ secrets.SSH_USER_DEV }}/tripplanner" # Main repo path on server
-            BACKEND_APP_PATH="$REPO_PATH/apps/trip-backend"      # Backend app within the repo
+            # Backend setup
+            cd /home/${{ secrets.SSH_USER_DEV }}/app
+            npm install --production
 
-            echo "Ensuring backend app directory exists in repo structure..."
-            mkdir -p $BACKEND_APP_PATH/dist
-
-            echo "Extracting backend archive..."
-            tar -xzf /home/${{ secrets.SSH_USER_DEV }}/backend_deploy.tar.gz -C $BACKEND_APP_PATH
-            # This will place 'dist', 'package.json', 'ecosystem.config.js' into $BACKEND_APP_PATH
-
-            echo "Copying ecosystem.config.js to home for PM2 if not already the one in archive..."
-            # The archive already places ecosystem.config.js into $BACKEND_APP_PATH
-            # If PM2 needs it in ~/, then:
-            cp $BACKEND_APP_PATH/ecosystem.config.js /home/${{ secrets.SSH_USER_DEV }}/ecosystem.config.js
-
-            echo "Stopping existing backend process (if any)..."
-            pm2 stop trip-backend || true
-
-            echo "Installing production dependencies for NestJS on Droplet..."
-            cd $BACKEND_APP_PATH && npm install --production
-
-            echo "Starting/reloading NestJS backend via PM2..."
-            # Assuming ecosystem.config.js refers to paths relative to where it's run from,
-            # or you use --cwd for pm2. If ecosystem.config.js is in user's home:
-            pm2 startOrReload /home/${{ secrets.SSH_USER_DEV }}/ecosystem.config.js \
-              --env staging \
-              --update-env \
-              --interpreter="node" \
-              -- \
-              -e "NODE_ENV=staging" \
-              -e "PORT=3000" \
-              -e "DATABASE_URL=${{ secrets.DEV_SUPABASE_DATABASE_URL }}" \
-              -e "SUPABASE_URL=${{ secrets.DEV_SUPABASE_URL }}" \
-              -e "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.DEV_SUPABASE_SERVICE_ROLE_KEY }}" \
-              -e "REDIS_URL=redis://localhost:6379"
+            # PM2 with environment variables
+            pm2 delete trip-backend || true
+            PORT=3000 \
+            NODE_ENV=staging \
+            DATABASE_URL="${{ secrets.DEV_SUPABASE_DATABASE_URL }}" \
+            SUPABASE_URL="${{ secrets.DEV_SUPABASE_URL }}" \
+            SUPABASE_SERVICE_ROLE_KEY="${{ secrets.DEV_SUPABASE_SERVICE_ROLE_KEY }}" \
+            REDIS_URL="redis://localhost:6379" \
+            pm2 start ecosystem.config.js --env staging
 
             pm2 save
-            rm /home/${{ secrets.SSH_USER_DEV }}/backend_deploy.tar.gz # Clean up archive
-
-            echo "Deployment to Droplet complete!"
