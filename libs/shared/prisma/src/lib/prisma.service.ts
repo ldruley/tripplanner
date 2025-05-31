@@ -25,11 +25,4 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     await this.$disconnect();
     this.logger.log('Disconnected from database');
   }
-
-  async enableShutdownHooks(app: any) {
-    // @ts-expect-error we don't care yet
-    this.$on('beforeExit', async () => {
-      await app.close();
-    });
-  }
 }
