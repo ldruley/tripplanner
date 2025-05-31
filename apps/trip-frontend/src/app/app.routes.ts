@@ -35,7 +35,6 @@ export const appRoutes: Route[] = [
         loadComponent: () =>
           import('./features/auth/containers/auth-container/auth-container.component').then(m => m.AuthContainerComponent),
         title: 'Recover Password - Trip Planner',
-        canActivate: [authGuard]
       },
       {
         path: 'signup',
