@@ -76,11 +76,46 @@ jobs:
       # A more robust way for backend: Create an archive, copy it, then extract on server
       - name: Archive Backend for SCP
         run: |
+          echo "Preparing backend archive..."
+          mkdir -p backend_archive/dist # Create a dist subfolder in the archive staging area
+
+          echo "Copying backend distribution files from dist/apps/trip-backend/..."
+          # This copies all contents of the backend build output (including subdirectories like 'main.js' etc.)
+          # It should also copy the generated package.json if it's at the root of dist/apps/trip-backend/
+          cp -r dist/apps/trip-backend/* backend_archive/
+          # Note: The previous 'cp -r dist/apps/trip-backend/* backend_archive/dist/'
+          # would put the generated package.json into backend_archive/dist/package.json.
+          # If 'npm install --production' is run in $BACKEND_APP_PATH,
+          # then package.json should be at $BACKEND_APP_PATH/package.json.
+          # So, we copy dist/apps/trip-backend/package.json directly to backend_archive/package.json.
+          # And the compiled code (which was in dist/apps/trip-backend/ a moment ago) should go into backend_archive/dist/.
+
+          # Let's be more explicit and structured for the archive:
+          rm -rf backend_archive/* # Clean staging archive directory first
           mkdir -p backend_archive/dist
+
+          echo "Copying compiled backend code to backend_archive/dist/"
           cp -r dist/apps/trip-backend/* backend_archive/dist/
-          cp apps/trip-backend/package.json backend_archive/
+          # This will copy the compiled JS files. If package.json is also in dist/apps/trip-backend,
+          # it will go to backend_archive/dist/package.json. We need it at the root of the backend app.
+          # So, after copying everything to backend_archive/dist, move package.json up.
+          if [ -f "backend_archive/dist/package.json" ]; then
+            mv backend_archive/dist/package.json backend_archive/package.json
+            echo "Moved generated package.json to root of archive."
+          else
+            echo "ERROR: Generated package.json not found in dist/apps/trip-backend/"
+            exit 1
+          fi
+
+          echo "Copying ecosystem.config.js from repository root..."
           cp ecosystem.config.js backend_archive/
+
+          echo "Contents of backend_archive before taring:"
+          ls -lR backend_archive/ # Display contents for debugging
+
+          echo "Creating tarball: backend_deploy.tar.gz..."
           tar -czf backend_deploy.tar.gz -C backend_archive .
+          echo "Backend tarball created successfully."
 
       - name: Copy Backend Archive to Droplet
         uses: appleboy/scp-action@v0.1.7
