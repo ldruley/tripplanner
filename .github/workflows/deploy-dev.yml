@@ -37,7 +37,7 @@ jobs:
           script: |
             # Navigate to the monorepo clone location on the Droplet
             # Assumes your user's home directory has the monorepo cloned, e.g., /home/ldruley/trip-planner-cachingsetup
-            REPO_PATH="/home/${{ secrets.SSH_USER_DEV }}/trip-planner-cachingsetup" # Adjust if your repo is cloned elsewhere
+            REPO_PATH="/home/${{ secrets.SSH_USER_DEV }}/tripplanner" # Adjust if your repo is cloned elsewhere
             cd $REPO_PATH
 
             echo "Stopping existing backend process (if any)..."
