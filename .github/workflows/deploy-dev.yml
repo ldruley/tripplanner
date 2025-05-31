@@ -23,10 +23,10 @@ jobs:
         run: npm ci # 'npm ci' ensures a clean install based on package-lock.json
 
       - name: Build Angular Frontend (Staging Configuration)
-        run: nx build trip-frontend --configuration=staging # Builds your Angular app using environment.staging.ts
+        run: npx nx build trip-frontend --configuration=staging # Builds your Angular app using environment.staging.ts
 
       - name: Build NestJS Backend (Staging Configuration)
-        run: nx build trip-backend --configuration=staging # Builds your NestJS app
+        run: npx nx build trip-backend --configuration=staging # Builds your NestJS app
 
       - name: Deploy Application to Droplet via SSH
         uses: appleboy/ssh-action@v0.1.10 # Third-party action to execute commands over SSH
