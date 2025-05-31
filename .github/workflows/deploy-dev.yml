@@ -32,6 +32,7 @@ jobs:
           script: |
             sudo rm -rf /var/www/trip-frontend/*
             sudo mkdir -p /var/www/trip-frontend
+            sudo chown -R ${{ secrets.SSH_USER_DEV }}:$${{ secrets.SSH_USER_DEV }} /var/www/trip-frontend
 
       # Deploy frontend
       - name: Deploy Frontend
