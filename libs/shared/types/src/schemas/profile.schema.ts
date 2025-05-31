@@ -1,6 +1,6 @@
 import { extendApi } from '@anatine/zod-openapi';
 import { z } from 'zod';
-import { UserStatus, UserRole } from '@trip-planner/prisma';
+import { UserStatus, UserRole } from '@prisma/client';
 
 // Reusable primitives
 const uuidSchema = extendApi(z.string().uuid(), {

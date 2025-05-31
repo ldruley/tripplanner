@@ -22,6 +22,9 @@ jobs:
       - name: Install Monorepo Dependencies
         run: npm ci # 'npm ci' ensures a clean install based on package-lock.json
 
+      - name: Generate Prisma Client
+        run: npx nx db:generate prisma
+
       - name: Build Angular Frontend (Staging Configuration)
         run: npx nx build trip-frontend --configuration=staging # Builds your Angular app using environment.staging.ts
 
