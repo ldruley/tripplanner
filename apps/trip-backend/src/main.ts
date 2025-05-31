@@ -12,7 +12,7 @@ import type { Request, Response, NextFunction } from 'express';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     cors: {
-      origin: ['http://localhost:4200', 'http://127.0.0.1:4200'],
+      origin: ['http://localhost:4200', 'http://127.0.0.1:4200', 'http://138.68.5.168:4200'],
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
       credentials: true,

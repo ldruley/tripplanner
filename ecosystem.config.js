@@ -3,9 +3,8 @@ module.exports = {
     {
       name: 'trip-backend',
       script: 'apps/trip-backend/dist/main.js',
-      instances: 1,
-      exec_mode: 'fork',
-      watch: false,
+      args: 'nx serve trip-backend',
+      cwd: '/home/logan/tripplanner',
       env_staging: {
         NODE_ENV: 'staging',
         PORT: 3000,
