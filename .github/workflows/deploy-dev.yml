@@ -31,7 +31,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
           source: "dist/apps/trip-frontend/browser/"
           target: "/var/www/trip-frontend/"
-          strip_components: 4  # Removes dist/apps/trip-frontend/browser
+          strip_components: 3  # Removes dist/apps/trip-frontend/browser
           rm: true  # Clean target directory first
 
       # Deploy backend - single step
