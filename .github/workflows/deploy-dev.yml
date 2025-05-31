@@ -1,0 +1,90 @@
+name: Deploy to DigitalOcean Dev Droplet
+
+on:
+  push:
+    branches:
+      - dev # Trigger this workflow on pushes to your 'dev' branch (adjust branch name if different)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest # The GitHub Actions runner environment
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 # Action to clone your repository
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20 # Use a specific Node.js LTS version
+          cache: 'npm' # Cache npm dependencies for faster builds
+
+      - name: Install Monorepo Dependencies
+        run: npm ci # 'npm ci' ensures a clean install based on package-lock.json
+
+      - name: Build Angular Frontend (Staging Configuration)
+        run: nx build trip-frontend --configuration=staging # Builds your Angular app using environment.staging.ts
+
+      - name: Build NestJS Backend (Staging Configuration)
+        run: nx build trip-backend --configuration=staging # Builds your NestJS app
+
+      - name: Deploy Application to Droplet via SSH
+        uses: appleboy/ssh-action@v0.1.10 # Third-party action to execute commands over SSH
+        with:
+          host: ${{ secrets.SSH_HOST_DEV }} # From GitHub Secret
+          username: ${{ secrets.SSH_USER_DEV }} # From GitHub Secret
+          key: ${{ secrets.SSH_PRIVATE_KEY_DEV }} # From GitHub Secret (the private deploy key)
+          script: |
+            # Navigate to the monorepo clone location on the Droplet
+            # Assumes your user's home directory has the monorepo cloned, e.g., /home/ldruley/trip-planner-cachingsetup
+            REPO_PATH="/home/${{ secrets.SSH_USER_DEV }}/trip-planner-cachingsetup" # Adjust if your repo is cloned elsewhere
+            cd $REPO_PATH
+
+            echo "Stopping existing backend process (if any)..."
+            pm2 stop trip-backend || true # Stop, but don't fail if not running
+
+            echo "Cleaning old frontend build artifacts..."
+            sudo rm -rf /var/www/trip-frontend/*
+            sudo mkdir -p /var/www/trip-frontend # Ensure directory exists
+
+            echo "Copying Angular frontend build..."
+            # Copy contents of the browser folder (Angular's static output)
+            sudo rsync -avz --delete dist/apps/trip-frontend/browser/ /var/www/trip-frontend/
+            sudo chown -R www-data:www-data /var/www/trip-frontend # Set permissions for Nginx
+
+            echo "Cleaning old backend build artifacts..."
+            rm -rf apps/trip-backend/dist/* # Clean up old backend build on server
+
+            echo "Copying NestJS backend build..."
+            # Copy the entire backend dist folder
+            rsync -avz dist/apps/trip-backend/ apps/trip-backend/dist/
+            # Copy backend's package.json (needed for npm install --production on server)
+            rsync -avz apps/trip-backend/package.json apps/trip-backend/package.json
+            # Copy the ecosystem.config.js to the user's home directory on the droplet for PM2
+            cp ecosystem.config.js /home/${{ secrets.SSH_USER_DEV }}/
+
+            echo "Installing production dependencies for NestJS on Droplet..."
+            # Run npm install --production in the backend's directory on the droplet
+            cd apps/trip-backend && npm install --production && cd $REPO_PATH
+
+            echo "Starting/reloading NestJS backend via PM2..."
+            # Set environment variables for PM2 dynamically
+            # These will be available to the 'env_staging' block in ecosystem.config.js
+            # Use --update-env to update env vars for existing PM2 processes
+            pm2 startOrReload /home/${{ secrets.SSH_USER_DEV }}/ecosystem.config.js \
+              --env staging \
+              --update-env \
+              --interpreter="node" \
+              -- \
+              -e "NODE_ENV=staging" \
+              -e "PORT=3000" \
+              -e "DATABASE_URL=${{ secrets.DEV_SUPABASE_DATABASE_URL }}" \
+              -e "SUPABASE_URL=${{ secrets.DEV_SUPABASE_URL }}" \
+              -e "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.DEV_SUPABASE_SERVICE_ROLE_KEY }}" \
+              -e "REDIS_URL=redis://localhost:6379"
+
+            pm2 save # Save current PM2 processes to ensure they restart on reboot
+
+            echo "Deployment to Droplet complete!"
+            # (Optional: Reload Nginx if you anticipate Nginx config changes, though not needed on every app deploy)
+            # sudo systemctl reload nginx

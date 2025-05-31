@@ -53,6 +53,7 @@ Thumbs.db
 .env.development
 .env.local
 apps/src/environments/environment.development.ts
+apps/src/environments/environment.staging.ts
 
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
