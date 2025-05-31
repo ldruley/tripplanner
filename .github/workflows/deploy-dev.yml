@@ -16,7 +16,6 @@ jobs:
           cache: 'npm'
 
       - run: npm ci
-      - run: npx nx db:generate prisma
 
       # Build both apps
       - run: npx nx build trip-frontend --configuration=staging
@@ -64,6 +63,9 @@ jobs:
           username: ${{ secrets.SSH_USER_DEV }}
           key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
           script: |
+            export PATH="/home/logan/.nvm/versions/node/v22.16.0/bin:$PATH"
+            source ~/.bashrc
+
             # Frontend permissions
             sudo chown -R www-data:www-data /var/www/trip-frontend
 
