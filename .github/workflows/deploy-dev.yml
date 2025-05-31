@@ -3,92 +3,128 @@ name: Deploy to DigitalOcean Dev Droplet
 on:
   push:
     branches:
-      - dev # Trigger this workflow on pushes to your 'dev' branch (adjust branch name if different)
+      - dev
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest # The GitHub Actions runner environment
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4 # Action to clone your repository
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20 # Use a specific Node.js LTS version
-          cache: 'npm' # Cache npm dependencies for faster builds
+          node-version: 20
+          cache: 'npm'
 
       - name: Install Monorepo Dependencies
-        run: npm ci # 'npm ci' ensures a clean install based on package-lock.json
+        run: npm ci
 
       - name: Generate Prisma Client
         run: npx nx db:generate prisma
 
       - name: Build Angular Frontend (Staging Configuration)
-        run: npx nx build trip-frontend --configuration=staging # Builds your Angular app using environment.staging.ts
+        run: npx nx build trip-frontend --configuration=staging
 
-      - name: Check Frontend Build Output on Runner
+      - name: Build NestJS Backend (Staging Configuration)
+        run: npx nx build trip-backend --configuration=staging
+
+      - name: Check Frontend Build Output on Runner # Your useful debug step!
         run: |
           echo "Listing contents of dist/apps/trip-frontend/browser/ :"
           ls -la dist/apps/trip-frontend/browser/
-          echo "Checking for index.html specifically:"
           if [ -f "dist/apps/trip-frontend/browser/index.html" ]; then
             echo "SUCCESS: index.html FOUND in build output on runner."
           else
             echo "ERROR: index.html NOT FOUND in build output on runner!"
-            # Optionally, you can make the workflow fail here if index.html is critical
-            # exit 1
+            exit 1
           fi
-          echo "Listing contents of base dist/apps/trip-frontend/ :"
-          ls -la dist/apps/trip-frontend/
 
-      - name: Build NestJS Backend (Staging Configuration)
-        run: npx nx build trip-backend --configuration=staging # Builds your NestJS app
-
-      - name: Deploy Application to Droplet via SSH
-        uses: appleboy/ssh-action@v1.0.3 # Third-party action to execute commands over SSH
+      - name: Copy Frontend to Droplet
+        uses: appleboy/scp-action@v1.0.0 # Or latest version
         with:
-          host: ${{ secrets.SSH_HOST_DEV }} # From GitHub Secret
-          username: ${{ secrets.SSH_USER_DEV }} # From GitHub Secret
-          key: ${{ secrets.SSH_PRIVATE_KEY_DEV }} # From GitHub Secret (the private deploy key)
+          host: ${{ secrets.SSH_HOST_DEV }}
+          username: ${{ secrets.SSH_USER_DEV }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
+          source: "dist/apps/trip-frontend/browser/*" # Copy contents of browser
+          target: "/var/www/trip-frontend/"
+          strip_components: 3 # Removes 'dist/apps/trip-frontend' from path, so 'browser/*' contents go to target
+
+      - name: Create Backend Staging Directory on Droplet
+        uses: appleboy/ssh-action@v1.0.3 # Using a newer version
+        with:
+          host: ${{ secrets.SSH_HOST_DEV }}
+          username: ${{ secrets.SSH_USER_DEV }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
           script: |
-            # Navigate to the monorepo clone location on the Droplet
-            # Assumes your user's home directory has the monorepo cloned, e.g., /home/ldruley/trip-planner-cachingsetup
-            REPO_PATH="/home/${{ secrets.SSH_USER_DEV }}/tripplanner" # Adjust if your repo is cloned elsewhere
-            cd $REPO_PATH
+            mkdir -p /home/${{ secrets.SSH_USER_DEV }}/staging/trip-backend/dist
+            mkdir -p /home/${{ secrets.SSH_USER_DEV }}/staging/trip-backend-config
+
+      - name: Copy Backend to Droplet Staging
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST_DEV }}
+          username: ${{ secrets.SSH_USER_DEV }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
+          source: "dist/apps/trip-backend/*,apps/trip-backend/package.json,ecosystem.config.js" # Comma-separated list
+          target: "/home/${{ secrets.SSH_USER_DEV }}/staging_temp/" # Temporary flat staging for these specific files
+          # Note: scp-action might not handle multiple disparate sources to specific nested targets well.
+          # It might be better to do separate scp steps or archive and unarchive.
+
+      # A more robust way for backend: Create an archive, copy it, then extract on server
+      - name: Archive Backend for SCP
+        run: |
+          mkdir -p backend_archive/dist
+          cp -r dist/apps/trip-backend/* backend_archive/dist/
+          cp apps/trip-backend/package.json backend_archive/
+          cp ecosystem.config.js backend_archive/
+          tar -czf backend_deploy.tar.gz -C backend_archive .
+
+      - name: Copy Backend Archive to Droplet
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST_DEV }}
+          username: ${{ secrets.SSH_USER_DEV }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
+          source: "backend_deploy.tar.gz"
+          target: "/home/${{ secrets.SSH_USER_DEV }}/"
+
+      - name: Deploy Application and Run Commands on Droplet
+        uses: appleboy/ssh-action@v1.0.3 # Using a newer version
+        with:
+          host: ${{ secrets.SSH_HOST_DEV }}
+          username: ${{ secrets.SSH_USER_DEV }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
+          script: |
+            echo "Setting permissions for frontend..."
+            sudo chown -R www-data:www-data /var/www/trip-frontend
+
+            REPO_PATH="/home/${{ secrets.SSH_USER_DEV }}/tripplanner" # Main repo path on server
+            BACKEND_APP_PATH="$REPO_PATH/apps/trip-backend"      # Backend app within the repo
+
+            echo "Ensuring backend app directory exists in repo structure..."
+            mkdir -p $BACKEND_APP_PATH/dist
+
+            echo "Extracting backend archive..."
+            tar -xzf /home/${{ secrets.SSH_USER_DEV }}/backend_deploy.tar.gz -C $BACKEND_APP_PATH
+            # This will place 'dist', 'package.json', 'ecosystem.config.js' into $BACKEND_APP_PATH
+
+            echo "Copying ecosystem.config.js to home for PM2 if not already the one in archive..."
+            # The archive already places ecosystem.config.js into $BACKEND_APP_PATH
+            # If PM2 needs it in ~/, then:
+            cp $BACKEND_APP_PATH/ecosystem.config.js /home/${{ secrets.SSH_USER_DEV }}/ecosystem.config.js
 
             echo "Stopping existing backend process (if any)..."
-            pm2 stop trip-backend || true # Stop, but don't fail if not running
-
-            echo "Cleaning old frontend build artifacts..."
-            sudo rm -rf /var/www/trip-frontend/*
-            sudo mkdir -p /var/www/trip-frontend # Ensure directory exists
-
-            echo "Copying Angular frontend build..."
-            # Copy contents of the browser folder (Angular's static output)
-            sudo rsync -avz --delete dist/apps/trip-frontend/browser/ /var/www/trip-frontend/
-            sudo chown -R www-data:www-data /var/www/trip-frontend # Set permissions for Nginx
-
-            echo "Cleaning old backend build artifacts..."
-            rm -rf apps/trip-backend/dist/* # Clean up old backend build on server
-
-            echo "Copying NestJS backend build..."
-            # Copy the entire backend dist folder
-            rsync -avz dist/apps/trip-backend/ apps/trip-backend/dist/
-            # Copy backend's package.json (needed for npm install --production on server)
-            rsync -avz apps/trip-backend/package.json apps/trip-backend/package.json
-            # Copy the ecosystem.config.js to the user's home directory on the droplet for PM2
-            cp ecosystem.config.js /home/${{ secrets.SSH_USER_DEV }}/
+            pm2 stop trip-backend || true
 
             echo "Installing production dependencies for NestJS on Droplet..."
-            # Run npm install --production in the backend's directory on the droplet
-            cd apps/trip-backend && npm install --production && cd $REPO_PATH
+            cd $BACKEND_APP_PATH && npm install --production
 
             echo "Starting/reloading NestJS backend via PM2..."
-            # Set environment variables for PM2 dynamically
-            # These will be available to the 'env_staging' block in ecosystem.config.js
-            # Use --update-env to update env vars for existing PM2 processes
+            # Assuming ecosystem.config.js refers to paths relative to where it's run from,
+            # or you use --cwd for pm2. If ecosystem.config.js is in user's home:
             pm2 startOrReload /home/${{ secrets.SSH_USER_DEV }}/ecosystem.config.js \
               --env staging \
               --update-env \
@@ -101,8 +137,7 @@ jobs:
               -e "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.DEV_SUPABASE_SERVICE_ROLE_KEY }}" \
               -e "REDIS_URL=redis://localhost:6379"
 
-            pm2 save # Save current PM2 processes to ensure they restart on reboot
+            pm2 save
+            rm /home/${{ secrets.SSH_USER_DEV }}/backend_deploy.tar.gz # Clean up archive
 
             echo "Deployment to Droplet complete!"
-            # (Optional: Reload Nginx if you anticipate Nginx config changes, though not needed on every app deploy)
-            # sudo systemctl reload nginx
