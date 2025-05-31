@@ -1,6 +1,18 @@
 import { extendApi } from '@anatine/zod-openapi';
 import { z } from 'zod';
-import { UserStatus, UserRole } from '@prisma/client';
+//import { UserStatus, UserRole } from '@prisma/client';
+
+export enum UserRole {
+  ADMIN = 'admin',
+  MODERATOR = 'moderator',
+  USER = 'user',
+}
+
+export enum UserStatus {
+  ACTIVE = 'active',
+  SUSPENDED = 'suspended',
+  PENDING = 'pending',
+}
 
 // Reusable primitives
 const uuidSchema = extendApi(z.string().uuid(), {
@@ -27,7 +39,7 @@ const displayNameSchema = extendApi(z.string().max(200), {
   example: 'John Doe',
 });
 
-const avatarUrlSchema = extendApi(z.string().url(), {
+const avatarUrlSchema = extendApi(z.string().url().nullable(), {
   title: 'Avatar URL',
   description: 'A valid URL pointing to an avatar image',
   example: 'https://example.com/avatars/john-doe.jpg',
@@ -68,8 +80,8 @@ export const CreateProfileSchema = z.object({
   last_name: nameSchema.nullable().optional(),
   display_name: displayNameSchema.nullable().optional(),
   avatar_url: avatarUrlSchema.nullable().optional(),
-  role: roleSchema,
-  status: statusSchema,
+  role: roleSchema.default(UserRole.USER),
+  status: statusSchema.default(UserStatus.PENDING),
   last_sign_in_at: z.coerce.date().nullable().optional(),
   onboarding_completed: z.boolean().nullable().optional(),
 });
