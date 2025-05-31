@@ -22,19 +22,29 @@ jobs:
       - run: npx nx build trip-frontend --configuration=staging
       - run: npx nx build trip-backend --configuration=staging
 
-      # Deploy frontend - simple and direct
+      # Clean our frontend directory
+      - name: Clean Frontend Directory
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST_DEV }}
+          username: ${{ secrets.SSH_USER_DEV }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
+          script: |
+            sudo rm -rf /var/www/trip-frontend/*
+            sudo mkdir -p /var/www/trip-frontend
+
+      # Deploy frontend
       - name: Deploy Frontend
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST_DEV }}
           username: ${{ secrets.SSH_USER_DEV }}
           key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
-          source: "dist/apps/trip-frontend/browser/"
+          source: "dist/apps/trip-frontend/browser/*"
           target: "/var/www/trip-frontend/"
-          strip_components: 3  # Removes dist/apps/trip-frontend/browser
-          rm: true  # Clean target directory first
+          strip_components: 3
 
-      # Deploy backend - single step
+      # Deploy backend
       - name: Deploy Backend
         uses: appleboy/scp-action@v0.1.7
         with:
