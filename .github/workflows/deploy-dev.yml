@@ -28,11 +28,26 @@ jobs:
       - name: Build Angular Frontend (Staging Configuration)
         run: npx nx build trip-frontend --configuration=staging # Builds your Angular app using environment.staging.ts
 
+      - name: Check Frontend Build Output on Runner
+        run: |
+          echo "Listing contents of dist/apps/trip-frontend/browser/ :"
+          ls -la dist/apps/trip-frontend/browser/
+          echo "Checking for index.html specifically:"
+          if [ -f "dist/apps/trip-frontend/browser/index.html" ]; then
+            echo "SUCCESS: index.html FOUND in build output on runner."
+          else
+            echo "ERROR: index.html NOT FOUND in build output on runner!"
+            # Optionally, you can make the workflow fail here if index.html is critical
+            # exit 1
+          fi
+          echo "Listing contents of base dist/apps/trip-frontend/ :"
+          ls -la dist/apps/trip-frontend/
+
       - name: Build NestJS Backend (Staging Configuration)
         run: npx nx build trip-backend --configuration=staging # Builds your NestJS app
 
       - name: Deploy Application to Droplet via SSH
-        uses: appleboy/ssh-action@v0.1.10 # Third-party action to execute commands over SSH
+        uses: appleboy/ssh-action@v1.0.3 # Third-party action to execute commands over SSH
         with:
           host: ${{ secrets.SSH_HOST_DEV }} # From GitHub Secret
           username: ${{ secrets.SSH_USER_DEV }} # From GitHub Secret
