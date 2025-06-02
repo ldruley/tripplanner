@@ -1,1 +1,14 @@
-<p>trip-container works!</p>
+@if (isLoading()) {
+  <div class="flex justify-center items-center h-64">
+    <p class="text-lg text-gray-600">Loading trip data...</p>
+  </div>
+} @else if (trip()) {
+  <app-trip-editor
+    [initialTripData]="trip()"
+    (tripSaved)="handleTripSave($event)">
+  </app-trip-editor>
+} @else {
+  <div class="p-6 text-center">
+    <p class="text-lg text-red-600">Could not load trip data.</p>
+  </div>
+}

@@ -1,1 +1,45 @@
-<p>trip-editor works!</p>
+@if (currentTrip(); as trip) {
+  <div class="space-y-6 p-4 bg-white shadow-md rounded-lg">
+    <header class="mb-4">
+      <h2 class="text-2xl font-bold text-gray-800">{{ trip.name }}</h2>
+    </header>
+
+    <section>
+      <h3 class="text-lg font-semibold mb-2 text-gray-700">Add a Stop:</h3>
+      <app-location-search
+        (locationSelected)="onLocationSelectedFromSearch($event)">
+      </app-location-search>
+    </section>
+
+    @if (currentStops().length > 0) {
+      <section class="mt-6">
+        <h3 class="text-lg font-semibold mb-2 text-gray-700">Current Stops:</h3>
+        <ul class="list-disc list-inside space-y-1">
+          @for (stop of currentStops(); track stop.id) {
+            <li>
+              {{ stop.locationDetails?.name }}
+              @if (stop.locationDetails; as details) {
+                @if (details.address) {
+                <span class="text-xs text-gray-500"> ({{ stop.locationDetails.address}})</span>
+                }
+              }
+            </li>
+          }
+        </ul>
+      </section>
+    } @else {
+      <p class="text-gray-500 mt-4">This trip has no stops yet. Add some locations!</p>
+    }
+
+    <footer class="mt-8 pt-4 border-t">
+      <button
+        (click)="saveTrip()"
+        class="px-6 py-2 bg-green-500 text-white font-semibold rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+      >
+        Save Trip
+      </button>
+    </footer>
+  </div>
+} @else {
+  <p class="text-gray-500">Initializing trip editor...</p>
+}
