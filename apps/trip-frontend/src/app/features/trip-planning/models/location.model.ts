@@ -1,3 +1,3 @@
-import { Location as SharedLocation } from '@tripplanner/shared/types';
+import { Location as SharedLocation } from '@trip-planner/types';
 
 export type Location = SharedLocation;

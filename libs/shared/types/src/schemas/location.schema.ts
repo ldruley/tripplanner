@@ -11,11 +11,11 @@ export const LocationSchema = z.object({
   city: z.string().min(1).max(100).optional(),
   state: z.string().min(1).max(100).optional(),
   country: z.string().min(1).max(100).optional(),
-  postal_code: z.string().min(1).max(20).optional(),
+  postalCode: z.string().min(1).max(20).optional(),
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
-  created_at: z.coerce.date().nullable(),
-  updated_at: z.coerce.date().nullable(),
+  createdAt: z.coerce.date().nullable(),
+  updatedAt: z.coerce.date().nullable(),
 });
 
 // Type Exports
