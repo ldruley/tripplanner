@@ -15,7 +15,7 @@ export class TripContainerComponent implements OnInit {
   private route = inject(ActivatedRoute);
   // private tripService = inject(TripService);
 
-  trip: WritableSignal<Trip | null | undefined> = signal(undefined);
+  trip: WritableSignal<Trip | null> = signal(null);
   isLoading: WritableSignal<boolean> = signal(true);
   tripId: WritableSignal<string | null> = signal(null);
 
