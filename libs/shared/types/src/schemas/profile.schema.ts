@@ -136,7 +136,7 @@ export const ErrorResponseSchema = extendApi(z.object({
   description: 'API error response format',
 });
 
-// 🧾 Type Exports
+// Type Exports
 export type Profile = z.infer<typeof ProfileSchema>;
 export type CreateProfile = z.infer<typeof CreateProfileSchema>;
 export type UpdateProfile = z.infer<typeof UpdateProfileSchema>;
