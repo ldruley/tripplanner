@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma, PrismaService } from '@trip-planner/prisma';
 import { toPrismaUpdateInput, toProfileDto, toProfileDtoArray } from '../mappers/profile.mapper';
 
-import { PrismaClient } from '@trip-planner/prisma';
+import { PrismaClient } from '@prisma/client';
 import { ProfileRepository } from './profile.repository';
 import { CreateProfile, Profile, ProfileQuery, UpdateProfile } from '../../../../../../libs/shared/types/src/schemas/profile.schema';
 

@@ -51,8 +51,6 @@
         (loginSubmit)="handleLogin($event)">
       </app-login-form>
 
-
-
       <app-register-form
         *ngSwitchCase="'register'"
         [isLoading]="(isLoading$ | async) || false"
@@ -60,13 +58,13 @@
         (registerSubmit)="handleRegister($event)">
       </app-register-form>
 
-       <!-- Placeholder for future forms -->
-<!--
-      <app-forgot-password-form
+      <app-recover-password-form
         *ngSwitchCase="'forgot'"
-        (submitEmail)="handleForgotPassword($event)">
-      </app-forgot-password-form>
- -->
+        [isLoading]="(isLoading$ | async) || false"
+        [error]="(error$ | async)"
+        (recoverPasswordSubmit)="handleRecoverPassword($event)">
+      </app-recover-password-form>
+
       <app-change-password-form
         *ngSwitchCase="'change-password'"
         [isLoading]="(isLoading$ | async) || false"

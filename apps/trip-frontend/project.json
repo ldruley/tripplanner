@@ -50,6 +50,17 @@
               "with": "apps/trip-frontend/src/environments/environment.development.ts"
             }
           ]
+        },
+        "staging": {
+          "optimization": true,
+          "outputHashing": "all",
+          "sourceMap": false,
+          "fileReplacements": [
+            {
+              "replace": "apps/trip-frontend/src/environments/environment.ts",
+              "with": "apps/trip-frontend/src/environments/environment.staging.ts"
+            }
+          ]
         }
       },
       "defaultConfiguration": "production"

@@ -1,0 +1,87 @@
+name: Deploy to DigitalOcean Dev
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm ci
+      - run: npx nx db:generate prisma
+
+      # Build both apps
+      - run: npx nx build trip-frontend --configuration=staging
+      - run: npx nx build trip-backend --configuration=staging
+
+      # Clean our frontend directory
+      - name: Clean Frontend Directory
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST_DEV }}
+          username: ${{ secrets.SSH_USER_DEV }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
+          script: |
+            sudo rm -rf /var/www/trip-frontend/*
+            sudo mkdir -p /var/www/trip-frontend
+            sudo chown -R ${{ secrets.SSH_USER_DEV }}:$${{ secrets.SSH_USER_DEV }} /var/www/trip-frontend
+
+      # Deploy frontend
+      - name: Deploy Frontend
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST_DEV }}
+          username: ${{ secrets.SSH_USER_DEV }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
+          source: "dist/apps/trip-frontend/browser/*"
+          target: "/var/www/trip-frontend/"
+          strip_components: 3
+
+      # Deploy backend
+      - name: Deploy Backend
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST_DEV }}
+          username: ${{ secrets.SSH_USER_DEV }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
+          source: "dist/apps/trip-backend/,apps/trip-backend/package.json,ecosystem.config.js"
+          target: "/home/${{ secrets.SSH_USER_DEV }}/app/"
+          rm: true
+
+      # Start services
+      - name: Start Services
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST_DEV }}
+          username: ${{ secrets.SSH_USER_DEV }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
+          script: |
+            export PATH="/home/logan/.nvm/versions/node/v22.16.0/bin:$PATH"
+            source ~/.bashrc
+
+            # Frontend permissions
+            sudo chown -R www-data:www-data /var/www/trip-frontend
+
+            # Backend setup
+            cd /home/${{ secrets.SSH_USER_DEV }}/app
+            npm install --production
+
+            # PM2 with environment variables
+            pm2 delete trip-backend || true
+            PORT=3000 \
+            NODE_ENV=staging \
+            DATABASE_URL="${{ secrets.DEV_SUPABASE_DATABASE_URL }}" \
+            SUPABASE_URL="${{ secrets.DEV_SUPABASE_URL }}" \
+            SUPABASE_SERVICE_ROLE_KEY="${{ secrets.DEV_SUPABASE_SERVICE_ROLE_KEY }}" \
+            REDIS_URL="redis://localhost:6379" \
+            pm2 start ecosystem.config.js --env staging
+
+            pm2 save

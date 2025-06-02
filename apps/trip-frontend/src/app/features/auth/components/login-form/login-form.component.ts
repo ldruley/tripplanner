@@ -1,29 +1,31 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { LoginCredentials } from '../../services/auth.service';
 import { buildLoginForm } from '../../../../core/forms/form-factory';
 
 @Component({
   selector: 'app-login-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule, // For formGroup, formControlName, ngSubmit
+    RouterLink // For routerLink directive
+  ],
   templateUrl: './login-form.component.html',
-  styleUrls: ['./login-form.component.css'],
+  styleUrl: './login-form.component.css' // Using styleUrl for a single CSS file
 })
 export class LoginFormComponent {
   @Input() isLoading = false;
   @Input() error: string | null = null;
-  @Output() loginSubmit = new EventEmitter<{ email: string; password: string }>();
+  @Output() loginSubmit = new EventEmitter<LoginCredentials>();
 
   readonly loginForm = buildLoginForm(new FormBuilder());
-  private show = false;
+  public readonly showPasswordSignal = signal(false);
 
-  showPassword() {
-    return this.show;
-  }
-
-  togglePasswordVisibility() {
-    this.show = !this.show;
+  togglePasswordVisibility(): void {
+    this.showPasswordSignal.update(v => !v);
   }
 
   isFieldInvalid(field: string): boolean {
@@ -38,7 +40,7 @@ export class LoginFormComponent {
   onSubmit(): void {
     this.markAllFieldsAsTouched();
     if (this.loginForm.valid) {
-      this.loginSubmit.emit(this.loginForm.value);
+      this.loginSubmit.emit(this.loginForm.value as LoginCredentials);
     }
   }
 }
