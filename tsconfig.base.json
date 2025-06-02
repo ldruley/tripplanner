@@ -16,7 +16,6 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@prisma/client": ["libs/shared/prisma/src/lib/generated"],
       "@trip-planner/prisma": ["libs/shared/prisma/src/index.ts"],
       "@trip-planner/types": ["libs/shared/types/src/index.ts"],
       "@trip-planner/ui": ["/libs/shared/ui/src/index.ts"]
