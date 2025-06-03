@@ -1,6 +1,6 @@
 import { Component, input, output, WritableSignal, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LocationSearchComponent } from '../../components/location-search/location-search.component';
+import { LocationSearchComponent } from '../location-search/location-search.component';
 import { Location } from '../../models/location.model';
 import { Trip } from '../../models/trip.model';
 import { Stop } from '../../models/stop.model';
