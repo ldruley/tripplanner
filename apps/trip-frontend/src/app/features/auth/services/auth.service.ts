@@ -214,6 +214,10 @@ export class AuthService {
     return this.authStateSubject.value.user !== null;
   }
 
+  public isCurrentlyLoading(): boolean {
+    return this.authStateSubject.value.loading;
+  }
+
   private setLoading(loading: boolean): void {
     const currentState = this.authStateSubject.value;
     this.authStateSubject.next({

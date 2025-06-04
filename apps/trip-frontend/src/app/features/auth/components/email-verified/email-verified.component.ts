@@ -63,16 +63,22 @@ export class EmailVerifiedComponent implements OnInit, OnDestroy {
     });
 
     // Check initial state immediately too, in case it's already resolved
+
     const initialAuthState = this.authService.getCurrentUser();
     if (initialAuthState && initialAuthState.email_confirmed_at) {
-        this.verificationStatus = 'success';
-        this.isLoading = false;
-    } else if (!initialAuthState && !this.authService.authStateSubject.value.loading) {
-        // If there's no user and not loading, it might be an issue if we expect one.
-        // However, onAuthStateChange should handle this.
-        // This is more of a fallback.
+      this.verificationStatus = 'success';
+      this.isLoading = false;
+    } else if (!initialAuthState && !this.authService.isCurrentlyLoading()) { // Changed this line
+      // If there's no current user and the auth service reports it's not loading synchronously,
+      // this is a strong indicator of an issue for email verification.
+      this.verificationStatus = 'error';
+      this.isLoading = false;
+      if (!this.errorMessage) {
+        this.errorMessage = 'Email verification cannot proceed. Please check the link or try logging in again.';
+      }
     }
   }
+
 
   ngOnDestroy(): void {
     if (this.authSubscription) {
