@@ -1,7 +1,7 @@
 // Draft version of the stop schema, to be updated when we finalize backend specs
 
 import { z } from 'zod';
-
+import { LocationSchema} from './location.schema';
 // Main schema
 export const StopSchema = z.object({
   id: z.string().uuid(),
@@ -11,11 +11,8 @@ export const StopSchema = z.object({
   departureTime: z.coerce.date().nullable().optional(),
   createdAt: z.coerce.date().nullable().optional(),
   updatedAt: z.coerce.date().nullable().optional(),
-  locationDetails: z.object({ // Simplified embedded location for now
-    id: z.string().uuid(),
-    name: z.string(),
-    address: z.string().max(500).optional(),
-  }).optional(),
+  locationDetails: LocationSchema,
+  locationId: z.string().uuid()
 });
 
 export type Stop = z.infer<typeof StopSchema>;
