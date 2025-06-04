@@ -1,9 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { LoginFormComponent } from '../../components/login-form/login-form.component';
-import { AuthService, LoginCredentials, AuthState } from '../../services/auth.service';
+import { AuthService, LoginCredentials } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login-container',

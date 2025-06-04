@@ -1,0 +1,31 @@
+<div class="p-4 border rounded-lg shadow-sm bg-gray-50">
+  <h3 class="text-lg font-semibold mb-3 text-gray-700">Location Bank</h3>
+  @if (bankedLocations().length > 0) {
+    <div
+      cdkDropList
+      id="bank-list"
+      class="space-y-2 min-h-[100px] p-2 border border-dashed border-gray-300 rounded-md bg-white"
+      [cdkDropListData]="bankedLocations()">
+      @for (location of bankedLocations(); track location.id) {
+        <div
+          cdkDrag
+          [cdkDragData]="location"
+          class="p-3 bg-white border border-gray-200 rounded-md shadow-sm cursor-grab hover:shadow-md transition-shadow">
+          <div class="font-medium text-gray-800">{{ location.name }}</div>
+          @if (location.address) {
+            <div class="text-xs text-gray-500 mt-1">{{ location.address }}</div>
+          } @else if (location.city || location.country) {
+            <div class="text-xs text-gray-500 mt-1">
+              {{ location.city }}{{ location.city && location.country ? ', ' : '' }}{{ location.country }}
+            </div>
+          }
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="text-center text-gray-500 py-4">
+      <p>Your location bank is empty.</p>
+      <p class="text-sm">Add locations using the search above.</p>
+    </div>
+  }
+</div>

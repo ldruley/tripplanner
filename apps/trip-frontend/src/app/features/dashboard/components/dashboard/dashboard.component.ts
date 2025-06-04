@@ -44,4 +44,8 @@ export class DashboardComponent implements OnInit {
   public async handleSignOut(): Promise<void> {
     await this.authService.signOut();
   }
+
+  public handleNewTrip(): void {
+    this.router.navigate(['/trip-planning/new']);
+  }
 }

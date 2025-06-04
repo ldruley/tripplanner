@@ -10,37 +10,9 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'auth',
-    children: [
-      {
-        path: 'login',
-        loadComponent: () =>
-          import('./features/auth/containers/auth-container/auth-container.component').then(m => m.AuthContainerComponent),
-        title: 'Sign In - Trip Planner'
-      },
-      {
-        path: 'register',
-        loadComponent: () =>
-          import('./features/auth/containers/auth-container/auth-container.component').then(m => m.AuthContainerComponent),
-        title: 'Sign Up - Trip Planner'
-      },
-      {
-        path: 'change-password',
-        loadComponent: () =>
-          import('./features/auth/containers/auth-container/auth-container.component').then(m => m.AuthContainerComponent),
-        title: 'Change Password - Trip Planner',
-        canActivate: [authGuard]
-      },
-      {
-        path: 'forgot',
-        loadComponent: () =>
-          import('./features/auth/containers/auth-container/auth-container.component').then(m => m.AuthContainerComponent),
-        title: 'Recover Password - Trip Planner',
-      },
-      {
-        path: 'signup',
-        redirectTo: 'register'
-      }
-    ]
+    loadChildren: () =>
+      import('./features/auth/auth.routes').then(
+        (m) => m.AUTH_ROUTES)
   },
   {
     path: 'dashboard',
@@ -55,5 +27,13 @@ export const appRoutes: Route[] = [
       import('./features/profile/containers/profile-container/profile-container.component').then(m => m.ProfileContainerComponent),
     title: 'Profile Settings - Trip Planner',
     canActivate: [authGuard]
-  }
+  },
+  {
+    path: 'trip-planning',
+    loadChildren: () =>
+      import('./features/trip-planning/trip-planning.routes').then(
+        (m) => m.TRIP_PLANNING_ROUTES
+      ),
+    canActivate: [authGuard],
+  },
 ];

@@ -1,0 +1,55 @@
+<div class="p-4 border rounded-md shadow-sm">
+  <h3 class="text-lg font-semibold mb-2">Add Location</h3>
+  <div class="flex items-center space-x-2 mb-2">
+    <input
+      type="text"
+      placeholder="Enter place or address..."
+      class="flex-grow px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      [ngModel]="searchQuery()"
+      (ngModelChange)="searchQuery.set($event)"
+      (keyup.enter)="performSearch()"
+      aria-label="Search for location"
+    />
+    <button
+      (click)="performSearch()"
+      [disabled]="isLoading()"
+      class="px-4 py-2 bg-blue-500 text-white font-semibold rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      <span *ngIf="!isLoading()">Search</span>
+      <span *ngIf="isLoading()">Searching...</span> </button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="text-sm text-gray-500">Loading results...</div>
+  }
+
+  @if (!isLoading() && searchResults().length > 0) {
+    <div class="border rounded-md max-h-60 overflow-y-auto">
+      <ul class="divide-y divide-gray-200">
+        @for (location of searchResults(); track location.id) {
+          <li
+            (click)="selectLocation(location)"
+            class="p-3 hover:bg-gray-100 cursor-pointer"
+            role="button"
+            tabindex="0"
+            (keydown.enter)="selectLocation(location)"
+            (keydown.space)="selectLocation(location)"
+          >
+            <div class="font-medium">{{ location.name }}</div>
+            @if (location.address) {
+              <div class="text-sm text-gray-600">{{ location.address }}</div>
+            } @else if (location.city || location.country) {
+              <div class="text-sm text-gray-600">
+                {{ location.city }}{{ location.city && location.country ? ', ' : '' }}{{ location.country }}
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    </div>
+  } @else if (!isLoading() && hasAttemptedSearch() && searchQuery().trim().length > 0 && !searchResults().length) {
+    <div class="text-sm text-gray-500">
+      No results found for "{{ searchQuery() }}".
+    </div>
+  }
+</div>
