@@ -1,17 +1,28 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["multiSchema", "postgresqlExtensions"]
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  schemas  = ["auth", "public"]
 }
 
-model profiles {
+model User {
+  id        String   @id @default(cuid()) @map("user_id")
+  email     String   @unique
+  password  String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  profile Profile?
+
+  @@map("users")
+}
+
+model Profile {
   id                  String     @id @db.Uuid
-  email               String     @unique
   firstName           String?    @map("first_name")
   lastName            String?    @map("last_name")
   displayName         String?    @map("display_name")
@@ -23,8 +34,11 @@ model profiles {
   updatedAt           DateTime?  @default(now()) @map("updated_at") @db.Timestamptz(6)
   onboardingCompleted Boolean?   @default(false) @map("onboarding_completed")
 
+  //relations
+  userId String @unique
+  user   User   @relation(onDelete: Cascade, fields: [userId], references: [id])
+
   @@map("profiles")
-  @@schema("public")
 }
 
 model Location {
@@ -51,7 +65,6 @@ model Location {
 
   //@@index([geom], type: Gist, map: "location_geom_idx") // Spatial index
   @@map("locations")
-  @@schema("public")
 }
 
 model Trip {
@@ -71,7 +84,6 @@ model Trip {
 
   @@index([userId], name: "idx_trip_user")
   @@map("trips")
-  @@schema("public")
 }
 
 // TripBankedLocation: Join table to associate Locations with a Trip's "bank"
@@ -88,7 +100,6 @@ model TripBankedLocation {
   @@index([tripId], name: "idx_trip_banked_location_trip")
   @@index([locationId], name: "idx_trip_banked_location_location")
   @@map("trip_banked_locations")
-  @@schema("public")
 }
 
 // Stop: Represents an ordered stop in a trip's itinerary, referencing a Location.
@@ -121,7 +132,6 @@ model Stop {
   @@index([tripId, order], name: "idx_stop_trip_order") // For fetching ordered itinerary
   @@index([locationId], name: "idx_stop_location")
   @@map("stops")
-  @@schema("public")
 }
 
 // TravelSegment: Represents the journey between two ordered (ITINERARY) stops.
@@ -152,7 +162,6 @@ model TravelSegment {
 
   @@index([tripId], name: "idx_travelsegment_trip")
   @@map("travel_segments")
-  @@schema("public")
 }
 
 enum TravelMode {
@@ -161,24 +170,18 @@ enum TravelMode {
   BICYCLING
   TRANSIT
   PUBLIC_TRANSPORT
-
-  @@schema("public")
 }
 
 enum UserRole {
   user
   admin
   moderator
-
-  @@schema("public")
 }
 
 enum UserStatus {
   active
   suspended
   pending
-
-  @@schema("public")
 }
 
 enum ApiSourceProvider {
@@ -189,8 +192,6 @@ enum ApiSourceProvider {
   MAPBOX
   USER_INPUT
   INTERNAL_SEED
-
-  @@schema("public")
 }
 
 enum LocationCategory {
@@ -208,6 +209,4 @@ enum LocationCategory {
   HISTORICAL_SITE
   ENTERTAINMENT
   OTHER
-
-  @@schema("public")
 }
