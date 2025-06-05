@@ -1,6 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["multiSchema"]
+  previewFeatures = ["multiSchema", "postgresqlExtensions"]
 }
 
 datasource db {
@@ -9,22 +9,158 @@ datasource db {
   schemas  = ["auth", "public"]
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model profiles {
-  id                   String     @id @db.Uuid
-  email                String     @unique
-  first_name           String?
-  last_name            String?
-  display_name         String?
-  avatar_url           String?
-  role                 UserRole
-  status               UserStatus
-  last_sign_in_at      DateTime?  @db.Timestamptz(6)
-  created_at           DateTime?  @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime?  @default(now()) @db.Timestamptz(6)
-  onboarding_completed Boolean?   @default(false)
-  users                users      @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                  String     @id @db.Uuid
+  email               String     @unique
+  firstName           String?    @map("first_name")
+  lastName            String?    @map("last_name")
+  displayName         String?    @map("display_name")
+  avatarUrl           String?    @map("avatar_url")
+  role                UserRole
+  status              UserStatus
+  lastSignInAt        DateTime?  @map("last_sign_in_at") @db.Timestamptz(6)
+  createdAt           DateTime?  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime?  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  onboardingCompleted Boolean?   @default(false) @map("onboarding_completed")
+
+  @@map("profiles")
+  @@schema("public")
+}
+
+model Location {
+  id          String             @id @default(cuid()) @map("location_id")
+  name        String             @db.Text
+  description String?            @db.Text
+  address     String?            @db.Text
+  city        String?
+  state       String?
+  country     String?
+  postalCode  String?            @map("postal_code")
+  latitude    Float
+  longitude   Float
+  apiSource   ApiSourceProvider? @map("api_source")
+  category    LocationCategory?
+  // Prisma doesn't support geography types directly, so
+  //geom        Unsupported("geography(Point, 4326)")? @map("geom")
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  stops          Stop[] // Locations used in actual itinerary stops
+  bankedForTrips TripBankedLocation[] // Locations saved in a trip's bank
+
+  //@@index([geom], type: Gist, map: "location_geom_idx") // Spatial index
+  @@map("locations")
+  @@schema("public")
+}
+
+model Trip {
+  id          String    @id @default(cuid()) @map("trip_id")
+  userId      String    @map("user_id")
+  name        String    @default("Untitled Trip") @db.Text
+  description String?   @db.Text
+  startDate   DateTime? @map("start_date")
+  endDate     DateTime? @map("end_date")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  stops           Stop[] // Ordered itinerary stops for this trip
+  bankedLocations TripBankedLocation[] // Locations banked for this trip but not yet in itinerary
+  travelSegments  TravelSegment[]
+
+  @@index([userId], name: "idx_trip_user")
+  @@map("trips")
+  @@schema("public")
+}
+
+// TripBankedLocation: Join table to associate Locations with a Trip's "bank"
+model TripBankedLocation {
+  id         String   @id @default(cuid()) @map("trip_banked_location_id")
+  tripId     String   @map("trip_id")
+  locationId String   @map("location_id")
+  addedAt    DateTime @default(now()) @map("added_at") // When it was added to the bank
+
+  trip     Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, locationId], name: "idx_trip_banked_location_unique")
+  @@index([tripId], name: "idx_trip_banked_location_trip")
+  @@index([locationId], name: "idx_trip_banked_location_location")
+  @@map("trip_banked_locations")
+  @@schema("public")
+}
+
+// Stop: Represents an ordered stop in a trip's itinerary, referencing a Location.
+model Stop {
+  id String @id @default(cuid()) @map("stop_id")
+
+  tripId     String @map("trip_id")
+  locationId String @map("location_id")
+  order      Int // Defines the sequence within the itinerary; not nullable
+
+  // Stop-specific details
+  plannedArrivalTime      DateTime? @map("planned_arrival_time")
+  plannedDepartureTime    DateTime? @map("planned_departure_time")
+  calculatedArrivalTime   DateTime? @map("calculated_arrival_time")
+  calculatedDepartureTime DateTime? @map("calculated_departure_time")
+  notes                   String?   @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  trip     Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  segmentAsOrigin      TravelSegment? @relation("SegmentOriginStop")
+  segmentAsDestination TravelSegment? @relation("SegmentDestinationStop")
+  travelSegmentId      String?
+  TravelSegment        TravelSegment? @relation(fields: [travelSegmentId], references: [id])
+
+  @@index([tripId, order], name: "idx_stop_trip_order") // For fetching ordered itinerary
+  @@index([locationId], name: "idx_stop_location")
+  @@map("stops")
+  @@schema("public")
+}
+
+// TravelSegment: Represents the journey between two ordered (ITINERARY) stops.
+model TravelSegment {
+  id String @id @default(cuid()) @map("travel_segment_id")
+
+  tripId            String @map("trip_id")
+  originStopId      String @unique @map("origin_stop_id") // Foreign key to the originating Stop
+  destinationStopId String @unique @map("destination_stop_id") // Foreign key to the destination Stop
+
+  travelMode TravelMode? @map("travel_mode")
+  distance   Float?
+  duration   Int?
+
+  apiCalculatedDistance Float?  @map("api_calculated_distance")
+  apiCalculatedDuration Int?    @map("api_calculated_duration")
+  polyline              String? @db.Text
+  notes                 String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  trip            Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  originStop      Stop   @relation("SegmentOriginStop", fields: [originStopId], references: [id], onDelete: Cascade)
+  destinationStop Stop   @relation("SegmentDestinationStop", fields: [destinationStopId], references: [id], onDelete: Cascade)
+  Stop            Stop[]
+
+  @@index([tripId], name: "idx_travelsegment_trip")
+  @@map("travel_segments")
+  @@schema("public")
+}
+
+enum TravelMode {
+  DRIVING
+  WALKING
+  BICYCLING
+  TRANSIT
+  PUBLIC_TRANSPORT
 
   @@schema("public")
 }
@@ -41,6 +177,37 @@ enum UserStatus {
   active
   suspended
   pending
+
+  @@schema("public")
+}
+
+enum ApiSourceProvider {
+  GOOGLE_PLACES
+  FOURSQUARE
+  OPENSTREETMAP
+  HERE
+  MAPBOX
+  USER_INPUT
+  INTERNAL_SEED
+
+  @@schema("public")
+}
+
+enum LocationCategory {
+  RESTAURANT
+  CAFE
+  HOTEL
+  ACCOMMODATION
+  LANDMARK
+  POINT_OF_INTEREST
+  TRANSPORT_HUB
+  SHOPPING
+  NATURE
+  MUSEUM
+  PARK
+  HISTORICAL_SITE
+  ENTERTAINMENT
+  OTHER
 
   @@schema("public")
 }

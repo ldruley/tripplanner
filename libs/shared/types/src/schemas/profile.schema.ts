@@ -49,38 +49,38 @@ const statusSchema = extendApi(z.nativeEnum(UserStatus), {
 export const ProfileSchema = z.object({
   id: uuidSchema,
   email: emailSchema,
-  first_name: nameSchema.nullable(),
-  last_name: nameSchema.nullable(),
-  display_name: displayNameSchema.nullable(),
-  avatar_url: avatarUrlSchema.nullable(),
+  firstName: nameSchema.nullable(),
+  lastName: nameSchema.nullable(),
+  displayName: displayNameSchema.nullable(),
+  avatarUrl: avatarUrlSchema.nullable(),
   role: roleSchema,
   status: statusSchema,
-  last_sign_in_at: z.coerce.date().nullable(),
-  created_at: z.coerce.date().nullable(),
-  updated_at: z.coerce.date().nullable(),
-  onboarding_completed: z.boolean().nullable(),
+  lastSignInAt: z.coerce.date().nullable(),
+  createdAt: z.coerce.date().nullable(),
+  updatedAt: z.coerce.date().nullable(),
+  onboardingCompleted: z.boolean().nullable(),
 });
 
 // Create
 export const CreateProfileSchema = z.object({
   email: emailSchema,
-  first_name: nameSchema.nullable().optional(),
-  last_name: nameSchema.nullable().optional(),
-  display_name: displayNameSchema.nullable().optional(),
-  avatar_url: avatarUrlSchema.nullable().optional(),
+  firstName: nameSchema.nullable().optional(),
+  lastName: nameSchema.nullable().optional(),
+  displayName: displayNameSchema.nullable().optional(),
+  avatarUrl: avatarUrlSchema.nullable().optional(),
   role: roleSchema,
   status: statusSchema,
-  last_sign_in_at: z.coerce.date().nullable().optional(),
-  onboarding_completed: z.boolean().nullable().optional(),
+  lastSignInAt: z.coerce.date().nullable().optional(),
+  onboardingCompleted: z.boolean().nullable().optional(),
 });
 
 // Update
 export const UpdateProfileSchema = extendApi(ProfileSchema.partial().omit({
   id: true,
   email: true,
-  created_at: true,
-  updated_at: true,
-  last_sign_in_at: true,
+  createdAt: true,
+  updatedAt: true,
+  lastSignInAt: true,
 }), {
   title: 'Update Profile',
   description: 'Data that can be updated in a user profile',
@@ -103,7 +103,7 @@ export const ProfilesListResponseSchema = extendApi(z.object({
     total: z.number().int().min(0),
     page: z.number().int().min(1),
     limit: z.number().int().min(1).max(100),
-    total_pages: z.number().int().min(0),
+    totalPages: z.number().int().min(0),
   }),
   message: z.string().optional(),
 }), {
@@ -118,8 +118,8 @@ export const ProfileQuerySchema = extendApi(z.object({
   search: z.string().optional(),
   role: roleSchema.optional(),
   status: statusSchema.optional(),
-  sort_by: z.enum(['created_at', 'updated_at', 'last_sign_in_at', 'email', 'display_name']).default('created_at'),
-  sort_order: z.enum(['asc', 'desc']).default('desc'),
+  sortBy: z.enum(['created_at', 'updated_at', 'last_sign_in_at', 'email', 'display_name']).default('created_at'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
 }), {
   title: 'Profile Query Parameters',
   description: 'Query parameters for filtering and paginating profiles',
