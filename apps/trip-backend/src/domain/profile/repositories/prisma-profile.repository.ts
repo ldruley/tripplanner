@@ -16,7 +16,7 @@ export class PrismaProfileRepository implements ProfileRepository {
 
   async findById(id: string, client?: PrismaClient): Promise<Profile | null> {
     const prismaClient = this.getClient(client);
-    const result = await prismaClient.profiles.findUnique({
+    const result = await prismaClient.profile.findUnique({
       where: { id }
     });
 
@@ -29,7 +29,7 @@ export class PrismaProfileRepository implements ProfileRepository {
 
   async findByEmail(email: string, client?: PrismaClient): Promise<Profile | null> {
     const prismaClient = this.getClient(client);
-    const result = await prismaClient.profiles.findUnique({
+    const result = await prismaClient.profile.findUnique({
       where: { email }
     });
 
@@ -44,7 +44,7 @@ export class PrismaProfileRepository implements ProfileRepository {
     const prismaClient = this.getClient(client);
     const updateInput = toPrismaUpdateInput(data);
 
-    return prismaClient.profiles.update({
+    return prismaClient.profile.update({
       where: { id },
       data: updateInput,
     });
@@ -52,14 +52,14 @@ export class PrismaProfileRepository implements ProfileRepository {
 
   async delete(id: string, client?: PrismaClient): Promise<void> {
     const prismaClient = this.getClient(client);
-    await prismaClient.profiles.delete({
+    await prismaClient.profile.delete({
       where: { id }
     });
   }
 
   async exists(id: string, client?: PrismaClient): Promise<boolean> {
     const prismaClient = this.getClient(client);
-    const count = await prismaClient.profiles.count({
+    const count = await prismaClient.profile.count({
       where: { id }
     });
     return count > 0;
@@ -73,7 +73,7 @@ export class PrismaProfileRepository implements ProfileRepository {
     total_pages: number;
   }> {
     const prismaClient = this.getClient(client);
-    const { page, limit, search, role, status, sort_by, sort_order } = query;
+    const { page, limit, search, role, status, sortBy, sortOrder } = query;
 
     // Build where clause
     const where: any = {};
@@ -97,12 +97,12 @@ export class PrismaProfileRepository implements ProfileRepository {
 
     // Execute queries in parallel
     const [profiles, total] = await Promise.all([
-      prismaClient.profiles.findMany({
+      prismaClient.profile.findMany({
         where,
-        orderBy: { [sort_by]: sort_order },
+        orderBy: { [sortBy]: sortOrder },
         skip: (page - 1) * limit,
         take: limit }),
-      prismaClient.profiles.count({ where })
+      prismaClient.profile.count({ where })
     ]);
 
     return {

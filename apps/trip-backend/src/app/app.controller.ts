@@ -33,7 +33,7 @@ export class AppController {
   async checkProfiles() {
     try {
       const client = this.databaseService.getClient();
-      const profileCount = await client.profiles.count();
+      const profileCount = await client.profile.count();
       return {
         profilesTable: 'accessible',
         count: profileCount,

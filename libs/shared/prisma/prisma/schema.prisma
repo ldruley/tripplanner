@@ -11,7 +11,8 @@ datasource db {
 model User {
   id        String   @id @default(cuid()) @map("user_id")
   email     String   @unique
-  password  String?  @db.Text
+  password  String   @db.Text
+  role      UserRole
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -27,7 +28,6 @@ model Profile {
   lastName            String?    @map("last_name")
   displayName         String?    @map("display_name")
   avatarUrl           String?    @map("avatar_url")
-  role                UserRole
   status              UserStatus
   lastSignInAt        DateTime?  @map("last_sign_in_at") @db.Timestamptz(6)
   createdAt           DateTime?  @default(now()) @map("created_at") @db.Timestamptz(6)

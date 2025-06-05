@@ -33,12 +33,6 @@ const avatarUrlSchema = extendApi(z.string().url(), {
   example: 'https://example.com/avatars/john-doe.jpg',
 });
 
-const roleSchema = extendApi(z.nativeEnum(UserRole), {
-  title: 'User Role',
-  description: 'The role assigned to the user',
-  example: 'user',
-});
-
 const statusSchema = extendApi(z.nativeEnum(UserStatus), {
   title: 'User Status',
   description: 'The current status of the user account',
@@ -53,7 +47,6 @@ export const ProfileSchema = z.object({
   lastName: nameSchema.nullable(),
   displayName: displayNameSchema.nullable(),
   avatarUrl: avatarUrlSchema.nullable(),
-  role: roleSchema,
   status: statusSchema,
   lastSignInAt: z.coerce.date().nullable(),
   createdAt: z.coerce.date().nullable(),
@@ -68,7 +61,6 @@ export const CreateProfileSchema = z.object({
   lastName: nameSchema.nullable().optional(),
   displayName: displayNameSchema.nullable().optional(),
   avatarUrl: avatarUrlSchema.nullable().optional(),
-  role: roleSchema,
   status: statusSchema,
   lastSignInAt: z.coerce.date().nullable().optional(),
   onboardingCompleted: z.boolean().nullable().optional(),
@@ -116,7 +108,6 @@ export const ProfileQuerySchema = extendApi(z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
   search: z.string().optional(),
-  role: roleSchema.optional(),
   status: statusSchema.optional(),
   sortBy: z.enum(['created_at', 'updated_at', 'last_sign_in_at', 'email', 'display_name']).default('created_at'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
