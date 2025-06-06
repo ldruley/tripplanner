@@ -8,17 +8,14 @@ import {
 
 import { PrismaService } from '../../../../../../libs/shared/prisma/src';
 import {
-  CreateProfile,
   UpdateProfile,
   Profile,
   ProfileQuery,
   ProfilesListResponse,
-  CreateProfileSchema,
   UpdateProfileSchema,
   ProfileQuerySchema,
 } from '@trip-planner/types';
 import { ProfileRepository } from '../repositories/profile.repository';
-import { PrismaProfileRepository } from '../repositories/prisma-profile.repository';
 import { ZodError } from 'zod';
 
 @Injectable()

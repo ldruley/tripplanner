@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { extendApi } from '@anatine/zod-openapi';
 import { UserRole } from '@prisma/client';
-import { nameSchema } from './profile.schema';
+import { nameSchema, emailSchema, uuidSchema, passwordSchema } from './base.schema';
 
 const roleSchema = extendApi(z.nativeEnum(UserRole), {
   title: 'User Role',
@@ -9,16 +9,11 @@ const roleSchema = extendApi(z.nativeEnum(UserRole), {
   example: 'user',
 });
 
-const emailSchema = extendApi(z.string().email().min(1), {
-  title: 'Email Address',
-  description: 'A valid email address',
-  example: 'john.doe@example.com',
-});
 
 export const UserSchema = z.object({
-  id: z.string().cuid(),
+  id: uuidSchema,
   email: emailSchema,
-  password: z.string(),
+  password: passwordSchema,
   role: roleSchema,
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -26,21 +21,22 @@ export const UserSchema = z.object({
 
 export const SafeUserSchema = UserSchema.omit({ password: true });
 
-export const CreateUserSchema = z.object({
-  email: z.string().email({ message: 'Invalid email address' }),
-  password: z.string().min(8, { message: 'Password must be at least 8 characters long' }),
+export const CreateUserSchema = UserSchema.pick({
+  email: true,
+  password: true,
+}).extend({
   firstName: nameSchema,
   lastName: nameSchema,
 });
 
-export const LoginUserSchema = z.object({
-  email: z.string().email({ message: 'Invalid email address' }),
-  password: z.string(),
+export const LoginUserSchema = UserSchema.pick({
+  email: true,
+  password: true ,
 });
 
 export const ChangePasswordSchema = z.object({
-  currentPassword: z.string(),
-  newPassword: z.string().min(8, { message: 'New password must be at least 8 characters long' }),
+  currentPassword: passwordSchema,
+  newPassword: passwordSchema,
 });
 
 export const UserResponseSchema = z.object({

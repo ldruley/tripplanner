@@ -8,6 +8,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { Request, Response, NextFunction } from 'express';
+import { patchNestjsSwagger } from '@anatine/zod-nestjs';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -21,23 +22,24 @@ async function bootstrap() {
     }
   });
 
-  const config = new DocumentBuilder()
-    .setTitle('Trip Planner API')
-    .setDescription('Backend API for Trip Planner Frontend')
-    .setVersion('0.1')
-    .addTag('trip')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        name: 'JWT',
-        description: 'Enter JWT token',
-        in: 'header',
-      },
-      'jwt',
-    )
-    .build();
+const config = new DocumentBuilder()
+  .setTitle('Trip Planner API')
+  .setDescription('Backend API for Trip Planner Frontend')
+  .setVersion('0.1')
+  .addTag('trip')
+  .addBearerAuth(
+    {
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      name: 'JWT',
+      description: 'Enter JWT token',
+      in: 'header',
+    },
+    'jwt',
+  )
+  .build();
+  patchNestjsSwagger();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory, {
     swaggerOptions: {

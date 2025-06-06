@@ -1,19 +1,7 @@
 import { extendApi } from '@anatine/zod-openapi';
 import { z } from 'zod';
 import { UserStatus, UserRole } from '@trip-planner/prisma';
-
-// Reusable primitives
-const uuidSchema = extendApi(z.string().uuid(), {
-  title: 'UUID',
-  description: 'A valid UUID v4 string',
-  example: '123e4567-e89b-12d3-a456-426614174000',
-});
-
-export const nameSchema = extendApi(z.string().min(1).max(100), {
-  title: 'Name',
-  description: 'A name between 1 and 100 characters',
-  example: 'John',
-});
+import { nameSchema, uuidSchema } from './base.schema';
 
 const displayNameSchema = extendApi(z.string().max(200), {
   title: 'Display Name',
