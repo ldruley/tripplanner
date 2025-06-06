@@ -9,13 +9,7 @@ const uuidSchema = extendApi(z.string().uuid(), {
   example: '123e4567-e89b-12d3-a456-426614174000',
 });
 
-const emailSchema = extendApi(z.string().email().min(1), {
-  title: 'Email Address',
-  description: 'A valid email address',
-  example: 'john.doe@example.com',
-});
-
-const nameSchema = extendApi(z.string().min(1).max(100), {
+export const nameSchema = extendApi(z.string().min(1).max(100), {
   title: 'Name',
   description: 'A name between 1 and 100 characters',
   example: 'John',
@@ -42,7 +36,6 @@ const statusSchema = extendApi(z.nativeEnum(UserStatus), {
 // Main schema
 export const ProfileSchema = z.object({
   id: uuidSchema,
-  email: emailSchema,
   firstName: nameSchema.nullable(),
   lastName: nameSchema.nullable(),
   displayName: displayNameSchema.nullable(),
@@ -56,7 +49,6 @@ export const ProfileSchema = z.object({
 
 // Create
 export const CreateProfileSchema = z.object({
-  email: emailSchema,
   firstName: nameSchema.nullable().optional(),
   lastName: nameSchema.nullable().optional(),
   displayName: displayNameSchema.nullable().optional(),
@@ -69,7 +61,6 @@ export const CreateProfileSchema = z.object({
 // Update
 export const UpdateProfileSchema = extendApi(ProfileSchema.partial().omit({
   id: true,
-  email: true,
   createdAt: true,
   updatedAt: true,
   lastSignInAt: true,

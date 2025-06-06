@@ -27,7 +27,7 @@ export class PrismaProfileRepository implements ProfileRepository {
     return result ? toProfileDto(result) : null;
   }
 
-  async findByEmail(email: string, client?: PrismaClient): Promise<Profile | null> {
+  /*async findByEmail(email: string, client?: PrismaClient): Promise<Profile | null> {
     const prismaClient = this.getClient(client);
     const result = await prismaClient.profile.findUnique({
       where: { email }
@@ -38,7 +38,7 @@ export class PrismaProfileRepository implements ProfileRepository {
     }
 
     return result ? toProfileDto(result) : null;
-  }
+  }*/
 
   async update(id: string, data: UpdateProfile, client?: PrismaClient): Promise<Profile> {
     const prismaClient = this.getClient(client);
@@ -70,10 +70,10 @@ export class PrismaProfileRepository implements ProfileRepository {
     total: number;
     page: number;
     limit: number;
-    total_pages: number;
+    totalPages: number;
   }> {
     const prismaClient = this.getClient(client);
-    const { page, limit, search, role, status, sortBy, sortOrder } = query;
+    const { page, limit, search, status, sortBy, sortOrder } = query;
 
     // Build where clause
     const where: any = {};
@@ -81,14 +81,10 @@ export class PrismaProfileRepository implements ProfileRepository {
     if (search) {
       where.OR = [
         { email: { contains: search, mode: 'insensitive' } },
-        { display_name: { contains: search, mode: 'insensitive' } },
-        { first_name: { contains: search, mode: 'insensitive' } },
-        { last_name: { contains: search, mode: 'insensitive' } }
+        { displayName: { contains: search, mode: 'insensitive' } },
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } }
       ];
-    }
-
-    if (role) {
-      where.role = role;
     }
 
     if (status) {
@@ -110,7 +106,7 @@ export class PrismaProfileRepository implements ProfileRepository {
       total,
       page,
       limit,
-      total_pages: Math.ceil(total / limit),
+      totalPages: Math.ceil(total / limit),
     };
   }
 }

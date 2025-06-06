@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { extendApi } from '@anatine/zod-openapi';
 import { UserRole } from '@prisma/client';
+import { nameSchema } from './profile.schema';
 
 const roleSchema = extendApi(z.nativeEnum(UserRole), {
   title: 'User Role',
@@ -8,9 +9,15 @@ const roleSchema = extendApi(z.nativeEnum(UserRole), {
   example: 'user',
 });
 
+const emailSchema = extendApi(z.string().email().min(1), {
+  title: 'Email Address',
+  description: 'A valid email address',
+  example: 'john.doe@example.com',
+});
+
 export const UserSchema = z.object({
   id: z.string().cuid(),
-  email: z.string().email(),
+  email: emailSchema,
   password: z.string(),
   role: roleSchema,
   createdAt: z.date(),
@@ -22,7 +29,8 @@ export const SafeUserSchema = UserSchema.omit({ password: true });
 export const CreateUserSchema = z.object({
   email: z.string().email({ message: 'Invalid email address' }),
   password: z.string().min(8, { message: 'Password must be at least 8 characters long' }),
-  // roles: z.array(z.string()).optional(),
+  firstName: nameSchema,
+  lastName: nameSchema,
 });
 
 export const LoginUserSchema = z.object({

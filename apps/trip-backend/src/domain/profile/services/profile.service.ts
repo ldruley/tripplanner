@@ -52,10 +52,10 @@ export class ProfileService {
    * @param email - The email of the profile to find
    * @return A promise that resolves to the found profile or null if not found
    */
-  async findByEmail(email: string): Promise<Profile | null> {
+  /*async findByEmail(email: string): Promise<Profile | null> {
     this.logger.debug(`Finding profile by email: ${email}`);
     return this.profileRepository.findByEmail(email);
-  }
+  }*/
 
   /**
    * Update a profile

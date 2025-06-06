@@ -9,7 +9,7 @@ import {
 
 export abstract class ProfileRepository {
   abstract findById(id: string, client?: PrismaClient): Promise<Profile | null>;
-  abstract findByEmail(email: string, client?: PrismaClient): Promise<Profile | null>;
+ /* abstract findByEmail(email: string, client?: PrismaClient): Promise<Profile | null>;*/
   abstract update(id: string, data: UpdateProfile, client?: PrismaClient): Promise<Profile>;
   abstract delete(id: string, client?: PrismaClient): Promise<void>;
   abstract findMany(query: ProfileQuery, client?: PrismaClient): Promise<{
@@ -17,7 +17,7 @@ export abstract class ProfileRepository {
     total: number;
     page: number;
     limit: number;
-    total_pages: number;
+    totalPages: number;
   }>;
   abstract exists(id: string, client?: PrismaClient): Promise<boolean>;
 }

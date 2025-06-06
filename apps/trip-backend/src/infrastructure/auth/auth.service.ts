@@ -8,9 +8,10 @@ import { CreateUserDto, SafeUser } from '@trip-planner/types';
 export class AuthService {
 
   constructor(
-    private readonly prisma : PrismaService,
-    private readonly jwtService : JwtService,
-  ) {}
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {
+  }
 
   async validateUser(email: string, pass: string): Promise<SafeUser | null> {
     const user = await this.prisma.user.findUnique({
@@ -32,20 +33,35 @@ export class AuthService {
   }
 
   async register(createUserDto: CreateUserDto): Promise<SafeUser> {
-    const {email, password} = createUserDto;
+    const { email, password, firstName, lastName } = createUserDto;
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
-    if(existingUser) {
+    if (existingUser) {
       throw new ConflictException('Email already in use');
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await this.prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        role: 'user',
-      },
+    return this.prisma.$transaction(async (tx) => {
+      // Create user
+      const user = await tx.user.create({
+        data: {
+          email,
+          password: await bcrypt.hash(password, 10),
+          role: 'user',
+        },
+      });
+
+      // Create corresponding profile
+      await tx.profile.create({
+        data: {
+          id: user.id,
+          userId: user.id,
+          status: 'pending', // Requires email verification
+          firstName: firstName,
+          lastName: lastName,
+          displayName: `${firstName} ${lastName}`,
+        },
+      });
+
+      const { password: _, ...safeUser } = user;
+      return safeUser;
     });
-    const { password: _, ...safeUser } = user;
-    return safeUser;
   }
 }
