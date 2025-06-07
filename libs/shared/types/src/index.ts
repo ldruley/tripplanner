@@ -9,3 +9,4 @@ export * from './dtos/location.dto';
 export * from './dtos/trip.dto';
 export * from './dtos/stop.dto';
 export * from './dtos/user.dto';
+export * from './schemas/base.schema';

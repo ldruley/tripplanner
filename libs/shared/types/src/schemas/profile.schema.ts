@@ -95,17 +95,6 @@ export const ProfileQuerySchema = extendApi(z.object({
   description: 'Query parameters for filtering and paginating profiles',
 });
 
-// Error Response
-export const ErrorResponseSchema = extendApi(z.object({
-  success: z.boolean().default(false),
-  error: z.string(),
-  message: z.string().optional(),
-  details: z.record(z.any()).optional(),
-}), {
-  title: 'Error Response',
-  description: 'API error response format',
-});
-
 // Type Exports
 export type Profile = z.infer<typeof ProfileSchema>;
 export type CreateProfile = z.infer<typeof CreateProfileSchema>;
@@ -113,4 +102,3 @@ export type UpdateProfile = z.infer<typeof UpdateProfileSchema>;
 export type ProfileResponse = z.infer<typeof ProfileResponseSchema>;
 export type ProfilesListResponse = z.infer<typeof ProfilesListResponseSchema>;
 export type ProfileQuery = z.infer<typeof ProfileQuerySchema>;
-export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;

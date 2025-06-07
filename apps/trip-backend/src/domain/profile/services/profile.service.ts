@@ -6,7 +6,7 @@ import {
   Logger
 } from '@nestjs/common';
 
-import { PrismaService } from '../../../../../../libs/shared/prisma/src';
+import { PrismaService } from '@trip-planner/prisma';
 import {
   UpdateProfile,
   Profile,
