@@ -50,7 +50,7 @@ export class HeaderComponent {
 
   getUserAvatarUrl(): string | null {
     const profile = this.currentProfile();
-    return profile?.avatar_url || null;
+    return profile?.avatarUrl || null;
   }
 
   getUserDisplayName(user: any): string {

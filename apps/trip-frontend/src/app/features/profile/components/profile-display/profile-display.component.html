@@ -3,7 +3,7 @@
   <div class="profile-header">
     <div class="avatar-section">
       <app-avatar
-        [src]="profile.avatar_url"
+        [src]="profile.avatarUrl"
         [alt]="getDisplayName() + ' avatar'"
         size="xl"
         [showBorder]="true">
@@ -12,10 +12,10 @@
 
     <div class="profile-info">
       <h2 class="profile-name">{{ getDisplayName() }}</h2>
-      <p class="profile-email">{{ profile.email }}</p>
+      <p class="profile-email">{{ "placeholder" //profile.email }}</p>
       <div class="profile-badges">
-        <span class="role-badge" [class]="getRoleBadgeClass()">
-          {{ getRoleDisplay() }}
+        <span class="role-badge" [class]="'user' //getRoleBadgeClass()">
+        <!--  {{ getRoleDisplay() }}-->
         </span>
         <span class="status-badge" [class]="getStatusBadgeClass()">
           {{ getStatusDisplay() }}
@@ -52,19 +52,19 @@
       <div class="info-grid">
         <div class="info-item">
           <label class="info-label">First Name</label>
-          <span class="info-value">{{ profile.first_name || 'Not provided' }}</span>
+          <span class="info-value">{{ profile.firstName || 'Not provided' }}</span>
         </div>
         <div class="info-item">
           <label class="info-label">Last Name</label>
-          <span class="info-value">{{ profile.last_name || 'Not provided' }}</span>
+          <span class="info-value">{{ profile.lastName || 'Not provided' }}</span>
         </div>
         <div class="info-item">
           <label class="info-label">Display Name</label>
-          <span class="info-value">{{ profile.display_name || 'Not provided' }}</span>
+          <span class="info-value">{{ profile.displayName || 'Not provided' }}</span>
         </div>
         <div class="info-item">
           <label class="info-label">Email Address</label>
-          <span class="info-value">{{ profile.email }}</span>
+          <span class="info-value">{{ "placeholder" //profile.email }}</span>
         </div>
       </div>
     </div>
@@ -75,7 +75,7 @@
       <div class="info-grid">
         <div class="info-item">
           <label class="info-label">Account Role</label>
-          <span class="info-value">{{ getRoleDisplay() }}</span>
+          <span class="info-value">{{ "placeholder" //getRoleDisplay() }}</span>
         </div>
         <div class="info-item">
           <label class="info-label">Account Status</label>
@@ -83,21 +83,21 @@
         </div>
         <div class="info-item">
           <label class="info-label">Last Sign In</label>
-          <span class="info-value">{{ formatDate(profile.last_sign_in_at) }}</span>
+          <span class="info-value">{{ formatDate(profile.lastSignInAt) }}</span>
         </div>
         <div class="info-item">
           <label class="info-label">Member Since</label>
-          <span class="info-value">{{ formatDate(profile.created_at) }}</span>
+          <span class="info-value">{{ formatDate(profile.createdAt) }}</span>
         </div>
       </div>
     </div>
 
     <!-- Profile Completion -->
-    @if (profile.onboarding_completed !== null) {
+    @if (profile.onboardingCompleted !== null) {
       <div class="info-section">
         <h3 class="section-title">Onboarding Status</h3>
         <div class="completion-status">
-          @if (profile.onboarding_completed) {
+          @if (profile.onboardingCompleted) {
             <div class="status-complete">
               <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />

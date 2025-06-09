@@ -7,20 +7,19 @@ const backendApiBaseUrl = environment.backendApiUrl;
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
+  const authToken = authService.getToken();
 
   if (req.method === 'OPTIONS') {
       return next(req);
     }
 
-  if (req.url.startsWith(backendApiBaseUrl)) {
-    const session = authService.getCurrentSession();
-    if (session?.access_token) {
-      req = req.clone({
-        setHeaders: {
-          Authorization: `Bearer ${session.access_token}`
-        }
-      });
-    }
+  if (authToken && req.url.startsWith(backendApiBaseUrl)) {
+    const authReq = req.clone({
+      setHeaders: {
+        Authorization: `Bearer ${authToken}`
+      }
+    });
+    return next(authReq);
   }
 
   return next(req);

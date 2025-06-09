@@ -15,7 +15,7 @@
           @if (avatarPreview()) {
             <img
               [src]="avatarPreview()"
-              [alt]="profile.email + ' avatar'"
+              [alt]="profile.displayName + ' avatar'"
               class="avatar-preview"
               (error)="onAvatarError($event)">
           } @else {
@@ -132,14 +132,14 @@
       <div class="readonly-info">
         <div class="readonly-field">
           <label class="field-label">Email Address</label>
-          <span class="readonly-value">{{ profile.email }}</span>
+          <span class="readonly-value">{{ "placeholder" //profile.email }}</span>
           <p class="field-hint">Contact support to change your email address</p>
         </div>
 
         <div class="readonly-grid">
           <div class="readonly-field">
             <label class="field-label">Account Role</label>
-            <span class="readonly-value">{{ getRoleDisplay() }}</span>
+            <span class="readonly-value">{{ "placeholder" //getRoleDisplay() }}</span>
           </div>
 
           <div class="readonly-field">

@@ -19,28 +19,15 @@ export class ProfileDisplayComponent {
   @Output() changePasswordRequested = new EventEmitter<void>();
 
   getDisplayName(): string {
-    if(this.profile.display_name) {
-      return this.profile.display_name;
+    if(this.profile.displayName) {
+      return this.profile.displayName;
     }
 
-    if(this.profile.first_name || this.profile.last_name) {
-      return `${this.profile.first_name || ''} ${this.profile.last_name || ''}`.trim();
+    if(this.profile.firstName || this.profile.lastName) {
+      return `${this.profile.firstName || ''} ${this.profile.lastName || ''}`.trim();
     }
 
-    return this.profile.email.split('@')[0];
-  }
-
-  getRoleDisplay(): string {
-    switch (this.profile.role) {
-      case 'admin':
-        return 'Administrator';
-      case 'moderator':
-        return 'Moderator';
-      case 'user':
-        return 'User';
-      default:
-        return 'Unknown';
-    }
+    return 'No Name';
   }
 
   getStatusDisplay(): string {
@@ -54,10 +41,6 @@ export class ProfileDisplayComponent {
       default:
         return 'Unknown';
     }
-  }
-
-  getRoleBadgeClass(): string {
-    return `role-badge ${this.profile.role}`;
   }
 
   getStatusBadgeClass(): string {
