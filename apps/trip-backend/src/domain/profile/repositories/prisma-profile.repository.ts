@@ -16,7 +16,7 @@ export class PrismaProfileRepository implements ProfileRepository {
 
   async findById(id: string, client?: PrismaClient): Promise<Profile | null> {
     const prismaClient = this.getClient(client);
-    const result = await prismaClient.profiles.findUnique({
+    const result = await prismaClient.profile.findUnique({
       where: { id }
     });
 
@@ -27,9 +27,22 @@ export class PrismaProfileRepository implements ProfileRepository {
     return result ? toProfileDto(result) : null;
   }
 
-  async findByEmail(email: string, client?: PrismaClient): Promise<Profile | null> {
+  async findByUserId(userId: string, client?: PrismaClient): Promise<Profile | null> {
     const prismaClient = this.getClient(client);
-    const result = await prismaClient.profiles.findUnique({
+    const result = await prismaClient.profile.findUnique({
+      where: { userId } // Find by the unique 'userId' field
+    });
+
+    if(!result) {
+      return null;
+    }
+
+    return result ? toProfileDto(result) : null;
+  }
+
+  /*async findByEmail(email: string, client?: PrismaClient): Promise<Profile | null> {
+    const prismaClient = this.getClient(client);
+    const result = await prismaClient.profile.findUnique({
       where: { email }
     });
 
@@ -38,13 +51,13 @@ export class PrismaProfileRepository implements ProfileRepository {
     }
 
     return result ? toProfileDto(result) : null;
-  }
+  }*/
 
   async update(id: string, data: UpdateProfile, client?: PrismaClient): Promise<Profile> {
     const prismaClient = this.getClient(client);
     const updateInput = toPrismaUpdateInput(data);
 
-    return prismaClient.profiles.update({
+    return prismaClient.profile.update({
       where: { id },
       data: updateInput,
     });
@@ -52,17 +65,18 @@ export class PrismaProfileRepository implements ProfileRepository {
 
   async delete(id: string, client?: PrismaClient): Promise<void> {
     const prismaClient = this.getClient(client);
-    await prismaClient.profiles.delete({
+    await prismaClient.profile.delete({
       where: { id }
     });
   }
 
   async exists(id: string, client?: PrismaClient): Promise<boolean> {
     const prismaClient = this.getClient(client);
-    const count = await prismaClient.profiles.count({
-      where: { id }
+    const result = await prismaClient.profile.findUnique({
+      where: { id },
+      select: { id: true }
     });
-    return count > 0;
+    return !!result;
   }
 
   async findMany(query: ProfileQuery, client?: PrismaClient): Promise<{
@@ -70,25 +84,21 @@ export class PrismaProfileRepository implements ProfileRepository {
     total: number;
     page: number;
     limit: number;
-    total_pages: number;
+    totalPages: number;
   }> {
     const prismaClient = this.getClient(client);
-    const { page, limit, search, role, status, sort_by, sort_order } = query;
+    const { page, limit, search, status, sortBy, sortOrder } = query;
 
     // Build where clause
-    const where: any = {};
+    const where: Prisma.ProfileWhereInput = {};
 
     if (search) {
       where.OR = [
-        { email: { contains: search, mode: 'insensitive' } },
-        { display_name: { contains: search, mode: 'insensitive' } },
-        { first_name: { contains: search, mode: 'insensitive' } },
-        { last_name: { contains: search, mode: 'insensitive' } }
+        { user: { email: { contains: search, mode: 'insensitive' } } },
+        { displayName: { contains: search, mode: 'insensitive' } },
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } }
       ];
-    }
-
-    if (role) {
-      where.role = role;
     }
 
     if (status) {
@@ -97,12 +107,19 @@ export class PrismaProfileRepository implements ProfileRepository {
 
     // Execute queries in parallel
     const [profiles, total] = await Promise.all([
-      prismaClient.profiles.findMany({
+      prismaClient.profile.findMany({
         where,
-        orderBy: { [sort_by]: sort_order },
+        include: {
+          user: {
+            select: {
+              email: true
+            }
+          }
+        },
+        orderBy: { [sortBy]: sortOrder },
         skip: (page - 1) * limit,
         take: limit }),
-      prismaClient.profiles.count({ where })
+      prismaClient.profile.count({ where })
     ]);
 
     return {
@@ -110,7 +127,7 @@ export class PrismaProfileRepository implements ProfileRepository {
       total,
       page,
       limit,
-      total_pages: Math.ceil(total / limit),
+      totalPages: Math.ceil(total / limit),
     };
   }
 }

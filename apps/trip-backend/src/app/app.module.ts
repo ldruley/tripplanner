@@ -7,6 +7,7 @@ import { ProfilesModule } from '../domain/profile/profiles.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { BullModule } from '@nestjs/bullmq';
 import { createKeyv } from '@keyv/redis';
+import { AuthModule } from '../infrastructure/auth/auth.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { createKeyv } from '@keyv/redis';
         port: 6379,
       },
     }),
+    AuthModule,
     PrismaModule,
     ProfilesModule,
   ],

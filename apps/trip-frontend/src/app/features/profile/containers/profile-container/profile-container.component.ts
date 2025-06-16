@@ -23,22 +23,13 @@ import { UpdateProfile } from '@trip-planner/types';
   templateUrl: './profile-container.component.html',
   styleUrl: './profile-container.component.css',
 })
-export class ProfileContainerComponent implements OnInit {
+export class ProfileContainerComponent {
   private readonly profileService = inject(ProfileService);
   private readonly router = inject(Router);
 
-  public readonly profile$ = this.profileService.profile$;
-  public readonly loading$ = this.profileService.loading$;
-  public readonly error$ = this.profileService.error$;
-  public readonly isEditing$ = this.profileService.isEditing$;
+  public readonly state = this.profileService.state$;
 
   public readonly toastMessage = signal<string | null>(null);
-
-  ngOnInit(): void {
-    if(!this.profile$) {
-      this.profileService.refreshProfile();
-    }
-  }
 
   handleEditRequested(): void {
     this.profileService.setEditMode(true);

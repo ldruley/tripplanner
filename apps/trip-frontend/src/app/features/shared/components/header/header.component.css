@@ -1,113 +1,90 @@
-.header {
-  background-color: #fff;
-  border-bottom: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
+/*
+ *  Corrected CSS for header.component.css
+ */
 
 .header-container {
+  /* This main container centers the content and provides padding */
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   height: 64px;
-}
-
-.logo {
-  .app-title-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    transition: opacity 0.2s ease;
-
-    &:hover {
-      opacity: 0.8;
-    }
-
-    &:focus {
-      outline: 2px solid #3b82f6;
-      outline-offset: 2px;
-      border-radius: 4px;
-    }
-  }
-
-  .app-title {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #1f2937;
-    pointer-events: none;
-  }
-}
-
-.nav-actions {
+  /* Use Flexbox to manage the layout of the direct child (.header-content) */
   display: flex;
   align-items: center;
-  gap: 1rem;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.home-section {
-  padding-right: 1rem;
-  border-right: 1px solid #e5e7eb;
-}
-
-.auth-section {
+.header-content {
+  /* This is the key container for the left/right sections */
   display: flex;
-  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between; /* This pushes the logo and actions to opposite ends */
+  width: 100%;
+}
+
+/* Left side styling (Logo and Title) */
+.header-left .logo-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* Space between icon and text */
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: #1f2937;
+  transition: opacity 0.2s ease;
+}
+
+.header-left .logo-button:hover {
+  opacity: 0.8;
+}
+
+.header-left .logo-svg {
+  width: 24px;
+  height: 24px;
+}
+
+.header-left .logo-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+
+/* Right side styling (User Menu or Guest Actions) */
+.header-right {
+  display: flex;
   align-items: center;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
-  .header-container {
-    padding: 0 0.75rem;
-  }
-
-  .app-title {
-    font-size: 1.25rem !important;
-  }
-
-  .nav-actions {
-    gap: 0.75rem;
-  }
-
-  .home-section {
-    padding-right: 0.75rem;
-  }
-
-  .auth-section {
-    gap: 0.5rem;
-  }
+/* Styles for the authenticated user view */
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* Space between "Welcome" text and the buttons */
 }
 
-@media (max-width: 640px) {
-  .nav-actions {
-    gap: 0.5rem;
-  }
-
-  .home-section {
-    padding-right: 0.5rem;
-  }
-
-  .auth-section {
-    gap: 0.375rem;
-  }
-
-  /* Stack buttons vertically on very small screens if needed */
-  .auth-section {
-    flex-direction: column;
-    gap: 0.25rem;
-  }
+.user-greeting {
+  font-size: 0.875rem;
+  color: #4b5563;
 }
 
-/* Accessibility improvements */
-@media (prefers-reduced-motion: reduce) {
-  .app-title-btn {
-    transition: none;
-  }
+.user-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* Space between avatar and Sign Out button */
+}
+
+.profile-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 9999px; /* Make it round */
+}
+
+/* Styles for the unauthenticated user view */
+.guest-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }

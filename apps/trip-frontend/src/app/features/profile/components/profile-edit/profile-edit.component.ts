@@ -2,16 +2,18 @@ import { Component, Input, Output, EventEmitter, OnInit, signal, computed } from
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
-import { Profile, UpdateProfile } from '@trip-planner/types';
+import { UpdateProfile } from '@trip-planner/types';
+import { UserProfile } from '../../types/profile.types';
 
 @Component({
   selector: 'app-profile-edit',
+  standalone: true,
   imports: [CommonModule, ReactiveFormsModule, ButtonComponent],
   templateUrl: './profile-edit.component.html',
   styleUrl: './profile-edit.component.css',
 })
 export class ProfileEditComponent implements OnInit {
-  @Input({ required: true }) profile!: Profile;
+  @Input({ required: true }) userProfile!: UserProfile;
   @Input() loading = false;
   @Input() error: string | null = null;
 
@@ -31,20 +33,20 @@ export class ProfileEditComponent implements OnInit {
 
   private initializeForm(): void {
     this.profileForm = this.formBuilder.group({
-      first_name: [
-        this.profile.first_name || '',
+      firstName: [
+        this.userProfile.firstName || '',
         [Validators.minLength(2), Validators.maxLength(100)]
       ],
-      last_name: [
-        this.profile.last_name || '',
+      lastName: [
+        this.userProfile.lastName || '',
         [Validators.minLength(2), Validators.maxLength(100)]
       ],
-      display_name: [
-        this.profile.display_name || '',
+      displayName: [
+        this.userProfile.displayName || '',
         [Validators.maxLength(200)]
       ],
-      avatar_url: [
-        this.profile.avatar_url || '',
+      avatarUrl: [
+        this.userProfile.avatarUrl || '',
         [Validators.pattern(/^https?:\/\/.+/)]
       ]
     });
@@ -53,7 +55,7 @@ export class ProfileEditComponent implements OnInit {
     this.initialFormValue.set(this.profileForm.value);
 
     // Update avatar preview when URL changes
-    this.profileForm.get('avatar_url')?.valueChanges.subscribe(() => {
+    this.profileForm.get('avatarUrl')?.valueChanges.subscribe(() => {
       this.updateAvatarPreview();
     });
   }
@@ -71,12 +73,12 @@ export class ProfileEditComponent implements OnInit {
   }
 
   public updateAvatarPreview(): void {
-    const avatarUrl = this.profileForm.get('avatar_url')?.value;
+    const avatarUrl = this.profileForm.get('avatarUrl')?.value;
     this.avatarPreview.set(avatarUrl || null);
   }
 
   public removeAvatar(): void {
-    this.profileForm.patchValue({ avatar_url: '' });
+    this.profileForm.patchValue({ avatarUrl: '' });
     this.avatarPreview.set(null);
   }
 
@@ -96,28 +98,28 @@ export class ProfileEditComponent implements OnInit {
     // Create update payload, only including non-empty values
     const updateData: UpdateProfile = {};
 
-    if (formValue.first_name?.trim()) {
-      updateData.first_name = formValue.first_name.trim();
+    if (formValue.firstName?.trim()) {
+      updateData.firstName = formValue.firstName.trim();
     } else {
-      updateData.first_name = null;
+      updateData.firstName = null;
     }
 
-    if (formValue.last_name?.trim()) {
-      updateData.last_name = formValue.last_name.trim();
+    if (formValue.lastName?.trim()) {
+      updateData.lastName = formValue.lastName.trim();
     } else {
-      updateData.last_name = null;
+      updateData.lastName = null;
     }
 
-    if (formValue.display_name?.trim()) {
-      updateData.display_name = formValue.display_name.trim();
+    if (formValue.displayName?.trim()) {
+      updateData.displayName = formValue.displayName.trim();
     } else {
-      updateData.display_name = null;
+      updateData.displayName = null;
     }
 
-    if (formValue.avatar_url?.trim()) {
-      updateData.avatar_url = formValue.avatar_url.trim();
+    if (formValue.avatarUrl?.trim()) {
+      updateData.avatarUrl = formValue.avatarUrl.trim();
     } else {
-      updateData.avatar_url = null;
+      updateData.avatarUrl = null;
     }
 
     this.saveRequested.emit(updateData);
@@ -134,21 +136,13 @@ export class ProfileEditComponent implements OnInit {
     this.avatarPreview.set(null);
   }
 
-  public getRoleDisplay(): string {
-    switch (this.profile.role) {
-      case 'admin':
-        return 'Administrator';
-      case 'moderator':
-        return 'Moderator';
-      case 'user':
-        return 'User';
-      default:
-        return 'Unknown';
-    }
+  getRoleDisplay(): string {
+    if (!this.userProfile.role) return 'User';
+    return this.userProfile.role.charAt(0).toUpperCase() + this.userProfile.role.slice(1);
   }
 
   public getStatusDisplay(): string {
-    switch (this.profile.status) {
+    switch (this.userProfile.status) {
       case 'active':
         return 'Active';
       case 'suspended':

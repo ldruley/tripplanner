@@ -21,7 +21,7 @@
     }
 
     <!-- Loading State -->
-    @if (loading$() && !profile$()) {
+    @if (state().loading && !state().userProfile) {
       <div class="loading-container">
         <app-loading-spinner></app-loading-spinner>
         <p class="text-gray-600 mt-4">Loading your profile...</p>
@@ -29,15 +29,13 @@
     }
 
     <!-- Error State -->
-    @if (error$() && !profile$()) {
+    @if (state().error && !state().userProfile) {
       <div class="error-container">
         <div class="bg-red-50 border border-red-200 rounded-md p-4 flex items-start">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400 mt-0.5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <!-- ... svg icon ... -->
           <div>
             <h3 class="text-sm font-medium text-red-800">Error loading profile</h3>
-            <p class="text-sm text-red-700 mt-1">{{ error$() }}</p>
+            <p class="text-sm text-red-700 mt-1">{{ state().error }}</p>
           </div>
         </div>
         <div class="mt-4">
@@ -51,30 +49,32 @@
     }
 
     <!-- Profile Content -->
-    @if (profile$(); as profile) {
+    @if (state().userProfile; as userProfile) {
       <div class="profile-content-wrapper">
         <!-- Display Mode -->
-        @if (!isEditing$()) {
+        @if (!state().isEditing) {
           <app-profile-display
-            [profile]="profile"
-            [loading]="loading$()"
+            [userProfile]="userProfile"
+            [loading]="state().loading"
             (editRequested)="handleEditRequested()"
             (changePasswordRequested)="handleChangePasswordRequested()">
           </app-profile-display>
         }
 
+
         <!-- Edit Mode -->
-        @if (isEditing$()) {
+        @if (state().isEditing) {
           <app-profile-edit
-            [profile]="profile"
-            [loading]="loading$()"
-            [error]="error$()"
+            [userProfile]="userProfile"
+            [loading]="state().loading"
+            [error]="state().error"
             (saveRequested)="handleSaveRequested($event)"
             (cancelRequested)="handleCancelRequested()">
           </app-profile-edit>
         }
       </div>
     }
+
 
     <!-- Actions Footer -->
     <div class="profile-footer">

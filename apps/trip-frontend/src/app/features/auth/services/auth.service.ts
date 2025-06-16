@@ -1,7 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { createClient, SupabaseClient, User, AuthError } from '@supabase/supabase-js';
-import { BehaviorSubject } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
+import { jwtDecode } from 'jwt-decode';
+
+import { CreateUser, LoginUser, SafeUser } from '@trip-planner/types';
+
 import { environment } from '../../../../environments/environment';
 
 export interface LoginCredentials {
@@ -10,18 +15,28 @@ export interface LoginCredentials {
 }
 
 export interface SignUpCredentials extends LoginCredentials {
-  firstName?: string;
-  lastName?: string;
+  firstName: string;
+  lastName: string;
 }
 
 export interface ChangePasswordCredentials {
-  oldPassword: string;
+  currentPassword: string;
   newPassword: string;
   confirmPassword: string;
 }
 
+// Define the shape of the decoded JWT payload from your backend
+interface JwtPayload {
+  sub: string;
+  email: string;
+  roles: string;
+  iat: number;
+  exp: number;
+}
+
+// Update AuthState to use SafeUser
 export interface AuthState {
-  user: User | null;
+  user: SafeUser | null;
   loading: boolean;
   error: string | null;
 }
@@ -31,8 +46,9 @@ export interface AuthState {
 })
 export class AuthService {
   private readonly router = inject(Router);
-  private supabase: SupabaseClient;
-  private isAlreadySignedIn = false;
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${environment.backendApiUrl}/auth`;
+  private readonly TOKEN_KEY = 'auth_token';
 
   private authStateSubject = new BehaviorSubject<AuthState>({
     user: null,
@@ -41,173 +57,117 @@ export class AuthService {
   });
 
   public authState$ = this.authStateSubject.asObservable();
-  private sessionSubject = new BehaviorSubject<any>(null);
-  public session$ = this.sessionSubject.asObservable();
 
   constructor() {
-    const supabaseUrl = environment.supabaseUrl;
-    const supabaseAnonKey = environment.supabaseAnonKey;
-
-    this.supabase = createClient(supabaseUrl, supabaseAnonKey);
     this.initializeAuth();
   }
 
   private async initializeAuth(): Promise<void> {
-    try {
-      const { data: { session } } = await this.supabase.auth.getSession();
-      this.isAlreadySignedIn = !!session?.user;
-      this.authStateSubject.next({
-        user: session?.user ?? null,
-        loading: false,
-        error: null
-      });
-
-      this.sessionSubject.next(session);
-
-      // Listen for auth changes
-      this.supabase.auth.onAuthStateChange((event, session) => {
-        this.authStateSubject.next({
-          user: session?.user ?? null,
-          loading: false,
-          error: null
-        });
-
-        this.sessionSubject.next(session);
-
-        if (event === 'SIGNED_IN' && !this.isAlreadySignedIn) {
-          this.isAlreadySignedIn = !!session?.user;
-          this.handleSuccessfulLogin();
-        } else if (event === 'SIGNED_OUT') {
-          this.isAlreadySignedIn = false;
-          this.router.navigate(['/auth/login']);
+    const token = localStorage.getItem(this.TOKEN_KEY);
+    if (token) {
+      try {
+        const decodedToken = jwtDecode<JwtPayload>(token);
+        // Check if token is expired
+        if (decodedToken.exp * 1000 > Date.now()) {
+          const user = this.mapPayloadToSafeUser(decodedToken);
+          this.authStateSubject.next({ user, loading: false, error: null });
+        } else {
+          // Token is expired, clear it
+          this.signOut();
         }
-      });
-    } catch (error) {
-      this.authStateSubject.next({
-        user: null,
-        loading: false,
-        error: 'Failed to initialize authentication'
-      });
+      } catch (error) {
+        // Invalid token, clear it
+        this.signOut();
+      }
+    } else {
+      this.authStateSubject.next({ user: null, loading: false, error: null });
     }
   }
 
-  private handleSuccessfulLogin(): void {
-      // Check for return URL in query params
-      const urlParams = new URLSearchParams(window.location.search);
-      const returnUrl = urlParams.get('returnUrl');
-
-      if (returnUrl && returnUrl !== '/auth/login') {
-        this.router.navigateByUrl(returnUrl);
-      } else {
-        this.router.navigate(['/dashboard']);
-      }
-    }
-
-  async signIn(credentials: LoginCredentials): Promise<{ success: boolean; error?: string }> {
+  signIn(credentials: LoginUser): Observable<{ success: boolean; error?: string }> {
     this.setLoading(true);
-
-    try {
-      const { error } = await this.supabase.auth.signInWithPassword({
-        email: credentials.email,
-        password: credentials.password
-      });
-
-      if (error) {
-        this.setError(this.formatAuthError(error));
-        return { success: false, error: this.formatAuthError(error) };
-      }
-
-      return { success: true };
-    } catch (error) {
-      const message = 'An unexpected error occurred during sign in';
-      this.setError(message);
-      return { success: false, error: message };
-    }
+    return this.http.post<{ access_token: string }>(`${this.apiUrl}/login`, credentials)
+      .pipe(
+        tap(response => {
+          this.handleSuccessfulAuthentication(response.access_token);
+        }),
+        map(() => ({ success: true })),
+        catchError((err: HttpErrorResponse) => {
+          const message = err.error?.message || 'Invalid email or password';
+          this.setError(message);
+          return of({ success: false, error: message });
+        })
+      );
   }
 
-  async signUp(credentials: SignUpCredentials): Promise<{ success: boolean; error?: string }> {
+  signUp(credentials: CreateUser): Observable<{ success: boolean; error?: string }> {
     this.setLoading(true);
+    return this.http.post<SafeUser>(`${this.apiUrl}/register`, credentials)
+      .pipe(
+        tap(() => {
+          // On successful registration, set loading to false. The user needs to login separately.
+          this.setLoading(false);
+        }),
+        map(() => ({ success: true })),
+        catchError((err: HttpErrorResponse) => {
+          const message = err.error?.message || 'An error occurred during registration.';
+          this.setError(message);
+          return of({ success: false, error: message });
+        })
+      );
+  }
 
-    try {
-      const { error } = await this.supabase.auth.signUp({
-        email: credentials.email,
-        password: credentials.password,
-        options: {
-          data: {
-            first_name: credentials.firstName,
-            last_name: credentials.lastName,
-            display_name: `${credentials.firstName} ${credentials.lastName}`.trim()
-          }
-        }
-      });
+  signOut(): void {
+    localStorage.removeItem(this.TOKEN_KEY);
+    this.authStateSubject.next({ user: null, loading: false, error: null });
+    this.router.navigate(['/auth/login']);
+  }
 
-      if (error) {
-        this.setError(this.formatAuthError(error));
-        return { success: false, error: this.formatAuthError(error) };
-      }
+  private handleSuccessfulAuthentication(token: string): void {
+    localStorage.setItem(this.TOKEN_KEY, token);
+    const decodedToken = jwtDecode<JwtPayload>(token);
+    const user = this.mapPayloadToSafeUser(decodedToken);
+    this.authStateSubject.next({ user, loading: false, error: null });
+    this.handleRedirect();
+  }
 
-      return { success: true };
-    } catch (error) {
-      const message = 'An unexpected error occurred during sign up';
-      this.setError(message);
-      return { success: false, error: message };
+  private handleRedirect(): void {
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnUrl = urlParams.get('returnUrl');
+    if (returnUrl && returnUrl !== '/auth/login') {
+      this.router.navigateByUrl(returnUrl);
+    } else {
+      this.router.navigate(['/dashboard']);
     }
   }
 
-  async signOut(): Promise<void> {
-    await this.supabase.auth.signOut();
+  // Helper to map JWT payload to our SafeUser type
+  private mapPayloadToSafeUser(payload: JwtPayload): SafeUser {
+    return {
+      id: payload.sub,
+      email: payload.email,
+      role: payload.roles as SafeUser['role'],
+      createdAt: new Date(0), // Placeholder
+      updatedAt: new Date(0), // Placeholder
+    };
   }
 
   async resetPassword(email: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { error } = await this.supabase.auth.resetPasswordForEmail(email);
-
-      if (error) {
-        return { success: false, error: this.formatAuthError(error) };
-      }
-
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: 'Failed to send reset email' };
-    }
+    console.warn('resetPassword functionality requires a backend endpoint.');
+    return { success: false, error: 'Not implemented' };
   }
 
-  async updatePassword(credentials: ChangePasswordCredentials): Promise<{ success: boolean; error?: string }> {
-    try {
-      const user = this.getCurrentUser();
-      if (!user?.email) {
-        return { success: false, error: 'No authenticated user found' };
-      }
-
-      /*const { error: verifyError } = await this.supabase.auth.signInWithPassword({
-        email: user.email,
-        password: credentials.oldPassword
-      });
-
-      if (verifyError) {
-        return { success: false, error: 'Current password is incorrect' };
-      }*/
-
-      const { error: updateError } = await this.supabase.auth.updateUser({
-        password: credentials.newPassword
-      });
-
-      if (updateError) {
-        return { success: false, error: this.formatAuthError(updateError) };
-      }
-
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: 'Failed to update password' };
-    }
+  async updatePassword(credentials: any): Promise<{ success: boolean; error?: string }> {
+    console.warn('updatePassword functionality requires a backend endpoint.');
+    return { success: false, error: 'Not implemented' };
   }
 
-  getCurrentUser(): User | null {
+  getCurrentUser(): SafeUser | null {
     return this.authStateSubject.value.user;
   }
 
-  getCurrentSession() {
-    return this.sessionSubject.value;
+  getToken(): string | null {
+    return localStorage.getItem(this.TOKEN_KEY);
   }
 
   isAuthenticated(): boolean {
@@ -234,18 +194,5 @@ export class AuthService {
       loading: false,
       error
     });
-  }
-
-  private formatAuthError(error: AuthError): string {
-    switch (error.message) {
-      case 'Invalid login credentials':
-        return 'Invalid email or password';
-      case 'Email not confirmed':
-        return 'Please check your email and click the confirmation link';
-      case 'User already registered':
-        return 'An account with this email already exists';
-      default:
-        return error.message;
-    }
   }
 }

@@ -15,7 +15,7 @@
           @if (avatarPreview()) {
             <img
               [src]="avatarPreview()"
-              [alt]="profile.email + ' avatar'"
+              [alt]="(userProfile.displayName || 'User') + ' avatar'"
               class="avatar-preview"
               (error)="onAvatarError($event)">
           } @else {
@@ -32,12 +32,12 @@
             <label class="field-label">Avatar URL</label>
             <input
               type="url"
-              formControlName="avatar_url"
+              formControlName="avatarUrl"
               placeholder="https://example.com/avatar.jpg"
               class="form-input"
-              [class.error]="isFieldInvalid('avatar_url')"
+              [class.error]="isFieldInvalid('avatarUrl')"
               (input)="updateAvatarPreview()">
-            @if (isFieldInvalid('avatar_url')) {
+            @if (isFieldInvalid('avatarUrl')) {
               <p class="field-error">
                 @if (profileForm.get('avatar_url')?.errors?.['url']) {
                   Please enter a valid URL
@@ -66,17 +66,17 @@
           <label class="field-label">First Name</label>
           <input
             type="text"
-            formControlName="first_name"
+            formControlName="firstName"
             placeholder="Enter your first name"
             class="form-input"
-            [class.error]="isFieldInvalid('first_name')">
-          @if (isFieldInvalid('first_name')) {
+            [class.error]="isFieldInvalid('firstName')">
+          @if (isFieldInvalid('firstName')) {
             <p class="field-error">
-              @if (profileForm.get('first_name')?.errors?.['required']) {
+              @if (profileForm.get('firstName')?.errors?.['required']) {
                 First name is required
-              } @else if (profileForm.get('first_name')?.errors?.['minlength']) {
+              } @else if (profileForm.get('firstName')?.errors?.['minlength']) {
                 First name must be at least 2 characters
-              } @else if (profileForm.get('first_name')?.errors?.['maxlength']) {
+              } @else if (profileForm.get('firstName')?.errors?.['maxlength']) {
                 First name cannot exceed 100 characters
               }
             </p>
@@ -88,17 +88,17 @@
           <label class="field-label">Last Name</label>
           <input
             type="text"
-            formControlName="last_name"
+            formControlName="lastName"
             placeholder="Enter your last name"
             class="form-input"
-            [class.error]="isFieldInvalid('last_name')">
-          @if (isFieldInvalid('last_name')) {
+            [class.error]="isFieldInvalid('lastName')">
+          @if (isFieldInvalid('lastName')) {
             <p class="field-error">
-              @if (profileForm.get('last_name')?.errors?.['required']) {
+              @if (profileForm.get('lastName')?.errors?.['required']) {
                 Last name is required
-              } @else if (profileForm.get('last_name')?.errors?.['minlength']) {
+              } @else if (profileForm.get('lastName')?.errors?.['minlength']) {
                 Last name must be at least 2 characters
-              } @else if (profileForm.get('last_name')?.errors?.['maxlength']) {
+              } @else if (profileForm.get('lastName')?.errors?.['maxlength']) {
                 Last name cannot exceed 100 characters
               }
             </p>
@@ -110,14 +110,14 @@
           <label class="field-label">Display Name</label>
           <input
             type="text"
-            formControlName="display_name"
+            formControlName="displayName"
             placeholder="Enter your display name"
             class="form-input"
-            [class.error]="isFieldInvalid('display_name')">
+            [class.error]="isFieldInvalid('displayName')">
           <p class="field-hint">This is how your name will appear to other users</p>
-          @if (isFieldInvalid('display_name')) {
+          @if (isFieldInvalid('displayName')) {
             <p class="field-error">
-              @if (profileForm.get('display_name')?.errors?.['maxlength']) {
+              @if (profileForm.get('displayName')?.errors?.['maxlength']) {
                 Display name cannot exceed 200 characters
               }
             </p>
@@ -132,7 +132,7 @@
       <div class="readonly-info">
         <div class="readonly-field">
           <label class="field-label">Email Address</label>
-          <span class="readonly-value">{{ profile.email }}</span>
+          <span class="readonly-value">{{ userProfile.email }}</span>
           <p class="field-hint">Contact support to change your email address</p>
         </div>
 

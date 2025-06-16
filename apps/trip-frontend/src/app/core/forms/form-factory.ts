@@ -36,7 +36,7 @@ export function buildForgotPasswordForm(fb: FormBuilder): FormGroup {
 
 export function buildChangePasswordForm(fb: FormBuilder): FormGroup {
   return fb.group({
-    oldPassword: ['', passwordValidator],
+    currentPassword: ['', passwordValidator],
     newPassword: ['', passwordValidator],
     confirmPassword: ['', Validators.required],
   }, { validators: matchNewPasswords });

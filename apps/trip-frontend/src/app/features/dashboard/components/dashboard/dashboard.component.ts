@@ -16,12 +16,12 @@ export class DashboardComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
-  public readonly userDisplayName$: Observable<string | null>;
+  //public readonly userDisplayName$: Observable<string | null>;
 
   constructor() {
-    this.userDisplayName$ = this.authService.authState$.pipe(
+   /* this.userDisplayName$ = this.authService.authState$.pipe(
       map(state => {
-        if (state.user?.user_metadata?.['display_name']) {
+        if (state.user?.userMetadata?.['display_name']) {
           return state.user.user_metadata['display_name'];
         }
         if (state.user?.user_metadata?.['first_name']) {
@@ -31,7 +31,7 @@ export class DashboardComponent implements OnInit {
         }
         return state.user?.email || null;
       })
-    );
+    );*/
   }
 
   ngOnInit(): void {

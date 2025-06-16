@@ -58,10 +58,10 @@ export class ChangePasswordFormComponent {
       return;
     }
 
-    const { oldPassword, newPassword, confirmPassword } = this.changePasswordForm.value;
+    const { currentPassword, newPassword, confirmPassword } = this.changePasswordForm.value;
 
     const credentials: ChangePasswordCredentials = {
-      oldPassword,
+      currentPassword,
       newPassword,
       confirmPassword
     };

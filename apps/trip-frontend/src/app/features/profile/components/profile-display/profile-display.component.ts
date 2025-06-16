@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
-import { Profile } from '@trip-planner/types';
+import { UserProfile } from '../../types/profile.types';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
 
 @Component({
@@ -12,39 +12,26 @@ import { AvatarComponent } from '../../../shared/components/avatar/avatar.compon
   styleUrl: './profile-display.component.css',
 })
 export class ProfileDisplayComponent {
-  @Input({ required: true}) profile!: Profile;
+  @Input({ required: true }) userProfile!: UserProfile;
   @Input() loading = false;
 
   @Output() editRequested = new EventEmitter<void>();
   @Output() changePasswordRequested = new EventEmitter<void>();
 
   getDisplayName(): string {
-    if(this.profile.display_name) {
-      return this.profile.display_name;
+    if(this.userProfile.displayName) {
+      return this.userProfile.displayName;
     }
 
-    if(this.profile.first_name || this.profile.last_name) {
-      return `${this.profile.first_name || ''} ${this.profile.last_name || ''}`.trim();
+    if(this.userProfile.firstName || this.userProfile.lastName) {
+      return `${this.userProfile.firstName || ''} ${this.userProfile.lastName || ''}`.trim();
     }
 
-    return this.profile.email.split('@')[0];
-  }
-
-  getRoleDisplay(): string {
-    switch (this.profile.role) {
-      case 'admin':
-        return 'Administrator';
-      case 'moderator':
-        return 'Moderator';
-      case 'user':
-        return 'User';
-      default:
-        return 'Unknown';
-    }
+    return this.userProfile.email;
   }
 
   getStatusDisplay(): string {
-    switch (this.profile.status) {
+    switch (this.userProfile.status) {
       case 'active':
         return 'Active';
       case 'suspended':
@@ -56,12 +43,17 @@ export class ProfileDisplayComponent {
     }
   }
 
-  getRoleBadgeClass(): string {
-    return `role-badge ${this.profile.role}`;
+  getStatusBadgeClass(): string {
+    return `status-badge ${this.userProfile.status}`;
   }
 
-  getStatusBadgeClass(): string {
-    return `status-badge ${this.profile.status}`;
+  getRoleDisplay(): string {
+    if (!this.userProfile.role) return 'User';
+    return this.userProfile.role.charAt(0).toUpperCase() + this.userProfile.role.slice(1);
+  }
+
+  getRoleBadgeClass(): string {
+    return `role-badge ${this.userProfile.role}`;
   }
 
   formatDate(date: Date | string | null): string {

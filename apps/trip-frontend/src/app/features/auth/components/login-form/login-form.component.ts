@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { LoginCredentials } from '../../services/auth.service';
+import { LoginUser} from '@trip-planner/types';
 import { buildLoginForm } from '../../../../core/forms/form-factory';
 
 @Component({
@@ -19,7 +19,7 @@ import { buildLoginForm } from '../../../../core/forms/form-factory';
 export class LoginFormComponent {
   @Input() isLoading = false;
   @Input() error: string | null = null;
-  @Output() loginSubmit = new EventEmitter<LoginCredentials>();
+  @Output() loginSubmit = new EventEmitter<LoginUser>();
 
   readonly loginForm = buildLoginForm(new FormBuilder());
   public readonly showPasswordSignal = signal(false);
@@ -40,7 +40,7 @@ export class LoginFormComponent {
   onSubmit(): void {
     this.markAllFieldsAsTouched();
     if (this.loginForm.valid) {
-      this.loginSubmit.emit(this.loginForm.value as LoginCredentials);
+      this.loginSubmit.emit(this.loginForm.value as LoginUser);
     }
   }
 }

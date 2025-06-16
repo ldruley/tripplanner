@@ -6,19 +6,16 @@ import {
   Logger
 } from '@nestjs/common';
 
-import { PrismaService } from '../../../../../../libs/shared/prisma/src';
+import { PrismaService } from '@trip-planner/prisma';
 import {
-  CreateProfile,
   UpdateProfile,
   Profile,
   ProfileQuery,
   ProfilesListResponse,
-  CreateProfileSchema,
   UpdateProfileSchema,
   ProfileQuerySchema,
 } from '@trip-planner/types';
 import { ProfileRepository } from '../repositories/profile.repository';
-import { PrismaProfileRepository } from '../repositories/prisma-profile.repository';
 import { ZodError } from 'zod';
 
 @Injectable()
@@ -47,15 +44,24 @@ export class ProfileService {
     return profile;
   }
 
+
+  async findByUserId(userId: string): Promise<Profile | null> {
+    const profile = await this.profileRepository.findByUserId(userId);
+    if (!profile) {
+      throw new NotFoundException(`Profile for user with ID ${userId} not found`);
+    }
+    return profile;
+  }
+
   /**
    * Find a profile by email
    * @param email - The email of the profile to find
    * @return A promise that resolves to the found profile or null if not found
    */
-  async findByEmail(email: string): Promise<Profile | null> {
+  /*async findByEmail(email: string): Promise<Profile | null> {
     this.logger.debug(`Finding profile by email: ${email}`);
     return this.profileRepository.findByEmail(email);
-  }
+  }*/
 
   /**
    * Update a profile

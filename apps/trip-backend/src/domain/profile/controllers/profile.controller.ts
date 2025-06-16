@@ -10,6 +10,7 @@ import {
   HttpStatus,
   UseGuards,
   Logger,
+  UsePipes,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -31,9 +32,11 @@ import {
 } from '@trip-planner/types';
 import { JwtAuthGuard } from '../../../infrastructure/auth/guards/jwt-auth-guard';
 import { CurrentUser } from '../../../infrastructure/auth/decorators/current-user.decorator';
+import { ZodValidationPipe } from '@anatine/zod-nestjs';
 
-@ApiTags('profiles')
+@ApiTags('Profiles')
 @Controller('profiles')
+@UsePipes(ZodValidationPipe)
 @ApiBearerAuth('jwt')
 @UseGuards(JwtAuthGuard)
 export class ProfileController {
@@ -41,6 +44,7 @@ export class ProfileController {
 
   constructor(private readonly profileService: ProfileService) {
   }
+
   @Get('me')
     @ApiOperation({
       summary: 'Get current user profile',
@@ -64,7 +68,7 @@ export class ProfileController {
     async getCurrentUserProfile(@CurrentUser() user: any) {
       this.logger.debug(`GET /profiles/me - User: ${user.id}`);
 
-      const profile = await this.profileService.findById(user.id);
+      const profile = await this.profileService.findByUserId(user.id);
       return {
         success: true,
         data: profile,
