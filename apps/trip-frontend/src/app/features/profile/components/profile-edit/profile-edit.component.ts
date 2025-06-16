@@ -2,16 +2,18 @@ import { Component, Input, Output, EventEmitter, OnInit, signal, computed } from
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
-import { Profile, UpdateProfile } from '@trip-planner/types';
+import { UpdateProfile } from '@trip-planner/types';
+import { UserProfile } from '../../types/profile.types';
 
 @Component({
   selector: 'app-profile-edit',
+  standalone: true,
   imports: [CommonModule, ReactiveFormsModule, ButtonComponent],
   templateUrl: './profile-edit.component.html',
   styleUrl: './profile-edit.component.css',
 })
 export class ProfileEditComponent implements OnInit {
-  @Input({ required: true }) profile!: Profile;
+  @Input({ required: true }) userProfile!: UserProfile;
   @Input() loading = false;
   @Input() error: string | null = null;
 
@@ -32,19 +34,19 @@ export class ProfileEditComponent implements OnInit {
   private initializeForm(): void {
     this.profileForm = this.formBuilder.group({
       firstName: [
-        this.profile.firstName || '',
+        this.userProfile.firstName || '',
         [Validators.minLength(2), Validators.maxLength(100)]
       ],
       lastName: [
-        this.profile.lastName || '',
+        this.userProfile.lastName || '',
         [Validators.minLength(2), Validators.maxLength(100)]
       ],
       displayName: [
-        this.profile.displayName || '',
+        this.userProfile.displayName || '',
         [Validators.maxLength(200)]
       ],
       avatarUrl: [
-        this.profile.avatarUrl || '',
+        this.userProfile.avatarUrl || '',
         [Validators.pattern(/^https?:\/\/.+/)]
       ]
     });
@@ -134,8 +136,13 @@ export class ProfileEditComponent implements OnInit {
     this.avatarPreview.set(null);
   }
 
+  getRoleDisplay(): string {
+    if (!this.userProfile.role) return 'User';
+    return this.userProfile.role.charAt(0).toUpperCase() + this.userProfile.role.slice(1);
+  }
+
   public getStatusDisplay(): string {
-    switch (this.profile.status) {
+    switch (this.userProfile.status) {
       case 'active':
         return 'Active';
       case 'suspended':

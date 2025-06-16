@@ -1,94 +1,84 @@
-import { Component, inject, signal, OnDestroy } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule, NgSwitch, NgSwitchCase } from '@angular/common';
+import { CommonModule } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { firstValueFrom } from 'rxjs';
+import { map } from 'rxjs/operators';
 
-import { AuthService, ChangePasswordCredentials, LoginCredentials, SignUpCredentials } from '../../services/auth.service';
+import { AuthService} from '../../services/auth.service';
+import { LoginUser, CreateUser, ChangePassword } from '@trip-planner/types';
 import { LoginFormComponent } from '../../components/login-form/login-form.component';
 import { RegisterFormComponent } from '../../components/register-form/register-form.component';
-//import { ForgotPasswordFormComponent } from '../forgot-password-form/forgot-password-form.component';
-import { RecoverPasswordFormComponent, RecoverPasswordCredentials } from '../../components/recover-password/recover-password-form.component';
-import { map } from 'rxjs/operators';
+import { RecoverPasswordFormComponent } from '../../components/recover-password/recover-password-form.component';
 import { ChangePasswordFormComponent } from '../../components/change-password-form/change-password-form.component';
-import { Subscription } from 'rxjs';
 
 interface ToastMessage {
   type: 'success' | 'error';
   message: string;
 }
 
+type AuthFormType = 'login' | 'register' | 'recover' | 'change-password';
+
 @Component({
   selector: 'app-auth-container',
   standalone: true,
   imports: [
     CommonModule,
-    NgSwitch,
-    NgSwitchCase,
     LoginFormComponent,
     RegisterFormComponent,
     ChangePasswordFormComponent,
     RecoverPasswordFormComponent,
-    //ForgotPasswordFormComponent,
   ],
   templateUrl: './auth-container.component.html',
   styleUrls: ['./auth-container.component.css'],
 })
-export class AuthContainerComponent implements OnDestroy {
+export class AuthContainerComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
-  private route = inject(ActivatedRoute);
+  private readonly route = inject(ActivatedRoute);
 
-  private routeSubscription: Subscription;
-
-  currentForm: 'login' | 'register' | 'forgot' | 'change-password' = 'login';
-
+  // --- State Signals ---
+  private readonly authState = toSignal(this.authService.authState$);
   public readonly toastMessage = signal<ToastMessage | null>(null);
 
-  public readonly authState$ = this.authService.authState$;
-  public readonly isLoading$ = this.authState$.pipe(
-    map((state) => state.loading)
+  // --- Computed Signals for the View ---
+  public readonly isLoading = computed(() => this.authState()?.loading ?? false);
+  public readonly error = computed(() => this.authState()?.error ?? null);
+
+  public readonly currentForm = toSignal(
+    this.route.url.pipe(
+      map(segments => {
+        const path = segments[0]?.path;
+        switch (path) {
+          case 'register': return 'register' as AuthFormType;
+          case 'recover-password': return 'recover' as AuthFormType;
+          case 'change-password': return 'change-password' as AuthFormType;
+          default: return 'login' as AuthFormType;
+        }
+      })
+    ), { initialValue: 'login' as AuthFormType }
   );
-  public readonly error$ = this.authState$.pipe(map((state) => state.error));
 
-  constructor() {
-    this.routeSubscription = this.route.url.subscribe((segments) => {
-      const path = segments.map((s) => s.path).join('/');
-      if (path.includes('register')) this.currentForm = 'register';
-      else if (path.includes('forgot')) this.currentForm = 'forgot';
-      else if (path.includes('change-password')) {
-        this.currentForm = 'change-password';
-      } else {
-        this.currentForm = 'login';
-      }
-    });
-  }
+  public async handleRegister(credentials: CreateUser): Promise<void> {
+    const result = await firstValueFrom(this.authService.signUp(credentials));
 
-  ngOnDestroy(): void {
-    if (this.routeSubscription) {
-      this.routeSubscription.unsubscribe();
-    }
-  }
-
-  public async handleRegister(credentials: SignUpCredentials): Promise<void> {
-      const result = await this.authService.signUp(credentials);
-
-      if (result.success) {
-        this.showToast('success', 'Registration successful! Please check your email for verification.');
-      } else if (result.error) {
-        this.showToast('error', result.error);
-      }
-    }
-
-  public async handleLogin(credentials: LoginCredentials): Promise<void> {
-    const result = await this.authService.signIn(credentials);
-
-    if (result && !result.success && result.error) {
+    if (result.success) {
+      this.showToast('success', 'Registration successful! Please sign in to continue.');
+      this.router.navigate(['/auth/login']);
+    } else if (result.error) {
       this.showToast('error', result.error);
     }
   }
 
-  public async handleRecoverPassword(credentials: RecoverPasswordCredentials): Promise<void> {
-    const result = await this.authService.resetPassword(credentials.email);
+  public async handleLogin(credentials: LoginUser): Promise<void> {
+    const result = await firstValueFrom(this.authService.signIn(credentials));
+    if (!result.success && result.error) {
+      this.showToast('error', result.error);
+    }
+  }
 
+  public async handleRecoverPassword(email: string): Promise<void> {
+    const result = await this.authService.resetPassword(email);
     if (result.success) {
       this.showToast('success', 'Password recovery email sent! Please check your inbox.');
     } else if (result.error) {
@@ -96,33 +86,25 @@ export class AuthContainerComponent implements OnDestroy {
     }
   }
 
-  public async handleChangePassword(credentials: ChangePasswordCredentials): Promise<void> {
+  public async handleChangePassword(credentials: ChangePassword): Promise<void> {
     const result = await this.authService.updatePassword(credentials);
-
     if (result.success) {
       this.showToast('success', 'Password updated successfully!');
-      setTimeout(() => {
-        this.router.navigate(['/profile']);
-      }, 2000);
+      setTimeout(() => this.router.navigate(['/profile']), 2000);
     } else if (result.error) {
       this.showToast('error', result.error);
     }
   }
 
-  handleCancel(): void {
+  public handleCancel(): void {
     this.router.navigate(['/profile']).catch(err => {
-      console.error('Navigation failed:', err);
+      console.error('Navigation to profile failed:', err);
     });
   }
 
-
   private showToast(type: 'success' | 'error', message: string): void {
     this.toastMessage.set({ type, message });
-
-    // Auto-hide toast after 5 seconds
-    setTimeout(() => {
-      this.toastMessage.set(null);
-    }, 5000);
+    setTimeout(() => this.toastMessage.set(null), 5000);
   }
 
   public dismissToast(): void {

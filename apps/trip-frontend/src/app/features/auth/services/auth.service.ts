@@ -9,13 +9,29 @@ import { CreateUser, LoginUser, SafeUser } from '@trip-planner/types';
 
 import { environment } from '../../../../environments/environment';
 
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface SignUpCredentials extends LoginCredentials {
+  firstName: string;
+  lastName: string;
+}
+
+export interface ChangePasswordCredentials {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 // Define the shape of the decoded JWT payload from your backend
 interface JwtPayload {
-  sub: string;   // subject (user ID)
+  sub: string;
   email: string;
-  roles: string; // 'user' | 'admin', etc.
-  iat: number;   // issued at
-  exp: number;   // expiration time
+  roles: string;
+  iat: number;
+  exp: number;
 }
 
 // Update AuthState to use SafeUser
@@ -130,9 +146,7 @@ export class AuthService {
     return {
       id: payload.sub,
       email: payload.email,
-      role: payload.roles as SafeUser['role'], // Cast as the enum type
-      // The backend doesn't put these in the JWT, so we can't know them here.
-      // If needed, you could add an endpoint like /auth/profile to get full user data.
+      role: payload.roles as SafeUser['role'],
       createdAt: new Date(0), // Placeholder
       updatedAt: new Date(0), // Placeholder
     };

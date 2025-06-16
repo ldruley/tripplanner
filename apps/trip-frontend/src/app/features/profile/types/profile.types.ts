@@ -4,10 +4,17 @@ import {
   ProfileResponse
 } from '@trip-planner/types';
 
+//TODO: reconsider this, maybe just export the types directly from the package
+
 export type { Profile, UpdateProfile, ProfileResponse };
 
 export type UpdateProfileRequest = UpdateProfile;
 export type ProfileApiResponse = ProfileResponse;
+
+export interface UserProfile extends Profile {
+  email: string;
+  role: 'user' | 'admin' | 'moderator';
+}
 
 export interface ProfileState {
   profile: Profile | null;

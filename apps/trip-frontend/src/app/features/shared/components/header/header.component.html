@@ -1,72 +1,57 @@
-<header class="header">
-  <div class="header-container">
-    <!-- Logo and Home Button -->
-    <div class="logo">
-      <button
-        type="button"
-        class="app-title-btn"
-        (click)="onHome()">
-        <h1 class="app-title">Trip Planner</h1>
+
+<header class="header-container">
+  <div class="header-content">
+    <!-- Logo and Title -->
+    <div class="header-left">
+      <button (click)="onHome()" class="logo-button">
+        <!-- Replace -->
+        <svg class="logo-svg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.5-10.5h-7a2.25 2.25 0 00-2.25 2.25v10.5a2.25 2.25 0 002.25 2.25h7.5a2.25 2.25 0 002.25-2.25v-10.5a2.25 2.25 0 00-2.25-2.25z" />
+        </svg>
+        <span class="logo-text">TripPlanner</span>
       </button>
     </div>
 
-    <!-- Navigation Actions -->
-    <nav class="nav-actions">
-      <!-- Home Button (always visible, visually separated) -->
-      <div class="home-section">
-        <tp-button
-          variant="ghost"
-          size="sm"
-          (buttonClick)="onHome()">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-          </svg>
-          Home
-        </tp-button>
-      </div>
-
-       <!-- Auth-dependent buttons -->
-        <div class="auth-section">
-          @if (isAuthenticated$ | async) {
-            <!-- User Avatar -->
-            @if (currentUser$ | async; as user) {
+    <!-- Right Side Actions -->
+    <div class="header-right">
+      <!-- Authenticated User View -->
+      @if (isAuthenticated()) {
+        <div class="user-menu">
+          <span class="user-greeting">Welcome, {{ userDisplayName() }}</span>
+          <div class="user-actions">
+            <button (click)="onProfile()" class="profile-button">
               <app-avatar
-                [src]="getUserAvatarUrl()"
-                [alt]="getUserDisplayName(user) + ' avatar'"
+                [src]="userAvatarUrl()"
+                [alt]="userDisplayName() + ' avatar'"
                 size="sm"
-                [clickable]="true"
-                [showBorder]="false"
-                (avatarClick)="onProfile()">
-              </app-avatar>
-            }
-
-            <!-- Authenticated user buttons -->
+                [showBorder]="true"
+              ></app-avatar>
+            </button>
             <tp-button
               variant="outline"
               size="sm"
               (buttonClick)="onSignOut()">
-              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
               Sign Out
             </tp-button>
-          } @else {
-            <!-- Guest user buttons -->
-            <tp-button
-              variant="outline"
-              size="sm"
-              (buttonClick)="onLogin()">
-              Login
-            </tp-button>
-
-            <tp-button
-              variant="primary"
-              size="sm"
-              (buttonClick)="onRegister()">
-              Register
-            </tp-button>
-          }
+          </div>
         </div>
-    </nav>
+      } @else {
+        <!-- Unauthenticated User View -->
+        <div class="guest-actions">
+          <tp-button
+            variant="ghost"
+            size="sm"
+            (buttonClick)="onLogin()">
+            Sign In
+          </tp-button>
+          <tp-button
+            variant="primary"
+            size="sm"
+            (buttonClick)="onRegister()">
+            Register
+          </tp-button>
+        </div>
+      }
+    </div>
   </div>
 </header>

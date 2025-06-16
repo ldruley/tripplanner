@@ -1,78 +1,65 @@
-<div class="login-container">
 
+<div class="auth-layout">
+  <!-- Global Toast Notification -->
   @if (toastMessage(); as toast) {
-      <div class="toast-container">
-        <div [class]="'toast toast-' + toast.type">
-          <div class="toast-content">
-            @if (toast.type === 'success') {
-              <svg xmlns="http://www.w3.org/2000/svg" class="toast-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            } @else {
-              <svg xmlns="http://www.w3.org/2000/svg" class="toast-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            }
-            <span class="toast-message">{{ toast.message }}</span>
-          </div>
-          <button
-            type="button"
-            class="toast-dismiss"
-            (click)="dismissToast()"
-            aria-label="Dismiss notification">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+    <div class="toast-container">
+      <div [class]="'toast toast-' + toast.type">
+        <div class="toast-content">
+          @if (toast.type === 'success') {
+            <svg xmlns="http://www.w3.org/2000/svg" class="toast-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" class="toast-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          }
+          <span class="toast-message">{{ toast.message }}</span>
         </div>
+        <button type="button" class="toast-dismiss" (click)="dismissToast()" aria-label="Dismiss notification">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
       </div>
-    }
+    </div>
+  }
 
-  <div class="login-content">
-    <!-- Brand/Logo Section -->
-    <div class="brand-section">
+  <!-- Centered Authentication Card -->
+  <div class="auth-card">
+    <div class="auth-header">
       <h1 class="brand-title">Trip Planner</h1>
-      <p class="brand-subtitle">
-       <ng-container [ngSwitch]="currentForm">
-         <span *ngSwitchCase="'login'">Welcome back! Please sign in.</span>
-         <span *ngSwitchCase="'register'">Create your account.</span>
-         <span *ngSwitchCase="'forgot'">Recover your password.</span>
-         <span *ngSwitchCase="'change-password'">Choose a new password.</span>
-         <span *ngSwitchDefault>Welcome.</span>
-       </ng-container>
-      </p>
+      @switch (currentForm()) {
+        @case ('login') { <p class="brand-subtitle">Welcome back! Please sign in.</p> }
+        @case ('register') { <p class="brand-subtitle">Create your account to get started.</p> }
+        @case ('recover') { <p class="brand-subtitle">Recover your password.</p> }
+        @case ('change-password') { <p class="brand-subtitle">Choose a new, secure password.</p> }
+        @default { <p class="brand-subtitle">Welcome.</p> }
+      }
     </div>
 
-    <ng-container [ngSwitch]="currentForm">
-      <app-login-form
-        *ngSwitchCase="'login'"
-        [isLoading]="(isLoading$ | async) || false"
-        [error]="(error$ | async)"
-        (loginSubmit)="handleLogin($event)">
-      </app-login-form>
-
-      <app-register-form
-        *ngSwitchCase="'register'"
-        [isLoading]="(isLoading$ | async) || false"
-        [error]="(error$ | async)"
-        (registerSubmit)="handleRegister($event)">
-      </app-register-form>
-
-      <app-recover-password-form
-        *ngSwitchCase="'forgot'"
-        [isLoading]="(isLoading$ | async) || false"
-        [error]="(error$ | async)"
-        (recoverPasswordSubmit)="handleRecoverPassword($event)">
-      </app-recover-password-form>
-
-      <app-change-password-form
-        *ngSwitchCase="'change-password'"
-        [isLoading]="(isLoading$ | async) || false"
-        [error]="(error$ | async)"
-        (cancelPasswordChange)="handleCancel()"
-        (changePasswordSubmit)="handleChangePassword($event)">
-      </app-change-password-form>
-
-    </ng-container>
+    <div class="auth-form-wrapper">
+      @switch (currentForm()) {
+        @case ('login') {
+          <app-login-form
+            [isLoading]="isLoading()"
+            (loginSubmit)="handleLogin($event)">
+          </app-login-form>
+        }
+        @case ('register') {
+          <app-register-form
+            [isLoading]="isLoading()"
+            (registerSubmit)="handleRegister($event)">
+          </app-register-form>
+        }
+        @case ('recover') {
+          <app-recover-password-form
+            [isLoading]="isLoading()"
+            (recoverPasswordSubmit)="handleRecoverPassword($event.email)">
+          </app-recover-password-form>
+        }
+        @case ('change-password') {
+          <app-change-password-form
+            [isLoading]="isLoading()"
+            (cancelPasswordChange)="handleCancel()"
+            (changePasswordSubmit)="handleChangePassword($event)">
+          </app-change-password-form>
+        }
+      }
+    </div>
   </div>
 </div>

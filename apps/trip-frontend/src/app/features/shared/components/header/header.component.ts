@@ -1,4 +1,4 @@
-import { Component, effect, inject } from '@angular/core';
+import { Component, computed, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ButtonComponent } from '../button/button.component';
@@ -22,89 +22,63 @@ export class HeaderComponent {
   private readonly profileService = inject(ProfileService);
   //TODO: pulling full profile for photo, find a better way probably (unless we end up needing more profile data in header)
 
-  public readonly isAuthenticated$: Observable<boolean>;
-  public readonly currentUser$: Observable<any>;
-  public readonly currentProfile = this.profileService.profile$;
+  private readonly authState = toSignal(this.authService.authState$);
+  public readonly userProfile = this.profileService.userProfile$;
 
-  private readonly authState = toSignal(this.authService.authState$, { initialValue: null });
+  public readonly isAuthenticated = computed(() => !!this.authState()?.user);
+  public readonly user = computed(() => this.authState()?.user);
 
-  constructor() {
-    this.isAuthenticated$ = this.authService.authState$.pipe(
-      map(state => state.user !== null)
-    );
+  public readonly userAvatarUrl = computed(() => {
+    return this.userProfile()?.avatarUrl || null;
+  });
 
-    this.currentUser$ = this.authService.authState$.pipe(
-      map(state => state.user)
-    );
+  public readonly userDisplayName = computed(() => {
+    const profile = this.userProfile();
+    const user = this.user();
 
-    effect(() => {
-      const auth = this.authState();
-      if (auth?.user && !this.currentProfile()) {
-        // Only fetch if we don't already have profile data
-        this.profileService.refreshProfile();
-      }
-    });
-  }
-
-
-
-  getUserAvatarUrl(): string | null {
-    const profile = this.currentProfile();
-    return profile?.avatarUrl || null;
-  }
-
-  getUserDisplayName(user: any): string {
-    if (user?.user_metadata?.display_name) {
-      return user.user_metadata.display_name;
+    if (profile?.displayName) {
+      return profile.displayName;
     }
-
-    if (user?.user_metadata?.first_name || user?.user_metadata?.last_name) {
-      return `${user.user_metadata.first_name || ''} ${user.user_metadata.last_name || ''}`.trim();
+    if (profile?.firstName || profile?.lastName) {
+      return `${profile.firstName || ''} ${profile.lastName || ''}`.trim();
     }
-
+    // Fallback to the email from the auth state if no profile name is set
     return user?.email?.split('@')[0] || 'User';
-  }
+  });
 
-  onHome() {
-    // Navigate to home/dashboard based on auth state
-    const isAuthenticated = this.authService.isAuthenticated();
-    if (isAuthenticated) {
+  onHome(): void {
+    // Navigate to dashboard if authenticated, otherwise to login
+    if (this.isAuthenticated()) {
       this.router.navigate(['/dashboard']).catch(err => {
-        console.error('Navigation failed:', err);
+        console.error('Navigation to dashboard failed:', err);
       });
     } else {
-      // Could navigate to a landing page or stay on current page
-      // For now, let's navigate to login if not authenticated
       this.router.navigate(['/auth/login']).catch(err => {
-        console.error('Navigation failed:', err);
+        console.error('Navigation to login failed:', err);
       });
     }
   }
 
-  onLogin() {
+  onLogin(): void {
     this.router.navigate(['/auth/login']).catch(err => {
       console.error('Navigation failed:', err);
     });
   }
 
-  onRegister() {
+  onRegister(): void {
     this.router.navigate(['/auth/register']).catch(err => {
       console.error('Navigation failed:', err);
     });
   }
 
-  onProfile() {
+  onProfile(): void {
     this.router.navigate(['/profile']).catch(err => {
       console.error('Navigation failed:', err);
     });
   }
 
-  async onSignOut() {
-    try {
-      await this.authService.signOut();
-      // Navigation will be handled by the auth state change in AuthService
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+  onSignOut(): void {
+    this.authService.signOut();
+    // Navigation is handled automatically by the AuthService upon state change
   }
 }

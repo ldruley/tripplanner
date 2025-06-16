@@ -1,13 +1,13 @@
 import { Injectable, Signal, WritableSignal, computed, effect, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { AuthService } from '../../auth/services/auth.service';
+import { AuthService, AuthState } from '../../auth/services/auth.service';
 import { Profile, UpdateProfile } from '@trip-planner/types';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
   ProfileApiResponse,
   ProfileCacheConfig,
-  ProfileState,
   UpdateProfileRequest,
+  UserProfile
 } from '../types/profile.types';
 
 import { Subject, of } from 'rxjs';
@@ -26,13 +26,15 @@ export class ProfileService {
 
   private readonly backendApiUrl = environment.backendApiUrl;
 
-  // Signals for UI
+  // Internal State Signals
   private readonly profile: WritableSignal<Profile | null> = signal(null);
   private readonly isLoading = signal(false);
   private readonly error = signal<string | null>(null);
   private readonly isEditing = signal(false);
   private readonly cacheTimestamp = signal(0);
-  private readonly authState = toSignal(this.authService.authState$, { initialValue: null });
+  private readonly authState = toSignal(this.authService.authState$, {
+    initialValue: { user: null, loading: true, error: null }
+  });
 
   // Subjects for Async tasks
   private readonly updateRequest$ = new Subject<UpdateProfileRequest>();
@@ -43,18 +45,30 @@ export class ProfileService {
     maxAge: 30 * 60 * 1000,
   };
 
-  // Computed state for templates or view-model consumption
-  public readonly profileState$: Signal<ProfileState> = computed(() => ({
-    profile: this.profile(),
+  // Combined UserProfile Signal
+  public readonly userProfile$: Signal<UserProfile | null> = computed(() => {
+    const profileData = this.profile();
+    const userData = this.authState().user;
+
+    if (!profileData || !userData) {
+      return null;
+    }
+
+    // Merge the two data sources into our new view model
+    return {
+      ...profileData,
+      email: userData.email,
+      role: userData.role,
+    };
+  });
+
+  // Expose a comprehensive state object
+  public readonly state$ = computed(() => ({
+    userProfile: this.userProfile$(),
     loading: this.isLoading(),
     error: this.error(),
     isEditing: this.isEditing(),
   }));
-
-  public readonly profile$ = computed(() => this.profile());
-  public readonly loading$ = computed(() => this.isLoading());
-  public readonly error$ = computed(() => this.error());
-  public readonly isEditing$ = computed(() => this.isEditing());
 
   constructor() {
     effect(() => {
@@ -95,19 +109,16 @@ export class ProfileService {
     this.refreshTrigger$
       .pipe(
         tap(() => {
-          console.log('🔄 Profile refresh triggered');
           this.isLoading.set(true);
           this.error.set(null);
         }),
         switchMap(() =>
           this.http.get<ProfileApiResponse>(`${this.backendApiUrl}/profiles/me`).pipe(
             tap((res) => {
-              console.log('✅ Response received:', res);
               this.profile.set(res.data);
               this.cacheTimestamp.set(Date.now());
             }),
             catchError((err) => {
-              console.error('❌ HTTP Error:', err);
               this.error.set(this.getErrorMessage(err));
               return of(null);
             }),
@@ -119,9 +130,9 @@ export class ProfileService {
   }
 
   // ---- Public API ----
-
-  getCurrentProfileSync(): Profile | null {
-    return this.profile();
+  // This method can be updated or deprecated in favor of the userProfile$ signal
+  getCurrentProfileSync(): UserProfile | null {
+    return this.userProfile$();
   }
 
   refreshProfile(): void {
