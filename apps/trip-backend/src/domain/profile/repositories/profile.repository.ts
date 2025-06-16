@@ -9,6 +9,7 @@ import {
 
 export abstract class ProfileRepository {
   abstract findById(id: string, client?: PrismaClient): Promise<Profile | null>;
+  abstract findByUserId(userId: string, client?: PrismaClient): Promise<Profile | null>;
  /* abstract findByEmail(email: string, client?: PrismaClient): Promise<Profile | null>;*/
   abstract update(id: string, data: UpdateProfile, client?: PrismaClient): Promise<Profile>;
   abstract delete(id: string, client?: PrismaClient): Promise<void>;

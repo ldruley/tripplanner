@@ -44,6 +44,15 @@ export class ProfileService {
     return profile;
   }
 
+
+  async findByUserId(userId: string): Promise<Profile | null> {
+    const profile = await this.profileRepository.findByUserId(userId);
+    if (!profile) {
+      throw new NotFoundException(`Profile for user with ID ${userId} not found`);
+    }
+    return profile;
+  }
+
   /**
    * Find a profile by email
    * @param email - The email of the profile to find

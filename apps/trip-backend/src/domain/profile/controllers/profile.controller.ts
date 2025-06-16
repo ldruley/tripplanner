@@ -44,6 +44,7 @@ export class ProfileController {
 
   constructor(private readonly profileService: ProfileService) {
   }
+
   @Get('me')
     @ApiOperation({
       summary: 'Get current user profile',
@@ -67,7 +68,7 @@ export class ProfileController {
     async getCurrentUserProfile(@CurrentUser() user: any) {
       this.logger.debug(`GET /profiles/me - User: ${user.id}`);
 
-      const profile = await this.profileService.findById(user.id);
+      const profile = await this.profileService.findByUserId(user.id);
       return {
         success: true,
         data: profile,

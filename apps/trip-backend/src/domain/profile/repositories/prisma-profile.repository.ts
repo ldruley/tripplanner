@@ -27,6 +27,19 @@ export class PrismaProfileRepository implements ProfileRepository {
     return result ? toProfileDto(result) : null;
   }
 
+  async findByUserId(userId: string, client?: PrismaClient): Promise<Profile | null> {
+    const prismaClient = this.getClient(client);
+    const result = await prismaClient.profile.findUnique({
+      where: { userId } // Find by the unique 'userId' field
+    });
+
+    if(!result) {
+      return null;
+    }
+
+    return result ? toProfileDto(result) : null;
+  }
+
   /*async findByEmail(email: string, client?: PrismaClient): Promise<Profile | null> {
     const prismaClient = this.getClient(client);
     const result = await prismaClient.profile.findUnique({
@@ -59,10 +72,11 @@ export class PrismaProfileRepository implements ProfileRepository {
 
   async exists(id: string, client?: PrismaClient): Promise<boolean> {
     const prismaClient = this.getClient(client);
-    const count = await prismaClient.profile.count({
-      where: { id }
+    const result = await prismaClient.profile.findUnique({
+      where: { id },
+      select: { id: true }
     });
-    return count > 0;
+    return !!result;
   }
 
   async findMany(query: ProfileQuery, client?: PrismaClient): Promise<{
@@ -76,11 +90,11 @@ export class PrismaProfileRepository implements ProfileRepository {
     const { page, limit, search, status, sortBy, sortOrder } = query;
 
     // Build where clause
-    const where: any = {};
+    const where: Prisma.ProfileWhereInput = {};
 
     if (search) {
       where.OR = [
-        { email: { contains: search, mode: 'insensitive' } },
+        { user: { email: { contains: search, mode: 'insensitive' } } },
         { displayName: { contains: search, mode: 'insensitive' } },
         { firstName: { contains: search, mode: 'insensitive' } },
         { lastName: { contains: search, mode: 'insensitive' } }
@@ -95,6 +109,13 @@ export class PrismaProfileRepository implements ProfileRepository {
     const [profiles, total] = await Promise.all([
       prismaClient.profile.findMany({
         where,
+        include: {
+          user: {
+            select: {
+              email: true
+            }
+          }
+        },
         orderBy: { [sortBy]: sortOrder },
         skip: (page - 1) * limit,
         take: limit }),

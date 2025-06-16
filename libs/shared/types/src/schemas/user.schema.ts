@@ -37,6 +37,7 @@ export const LoginUserSchema = UserSchema.pick({
 export const ChangePasswordSchema = z.object({
   currentPassword: passwordSchema,
   newPassword: passwordSchema,
+  confirmPassword: passwordSchema,
 });
 
 export const UserResponseSchema = z.object({

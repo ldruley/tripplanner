@@ -1,4 +1,4 @@
-import { Controller, HttpCode, Post, UseGuards, HttpStatus, Req, Request, Body } from '@nestjs/common';
+import { Controller, HttpCode, Post, UseGuards, HttpStatus, Req, Request, Body, Logger } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateUserDto, SafeUser } from '@trip-planner/types';
@@ -13,8 +13,9 @@ export class AuthController {
   @UseGuards(AuthGuard('local'))
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Req() req: SafeUser): Promise<{ access_token: string }> {
-    return this.authService.login(req);
+  async login(@Request() req: any): Promise<{ access_token: string }> {
+    Logger.log('Login request received', 'AuthController');
+    return this.authService.login(req.user);
   }
 
   @Post('register')

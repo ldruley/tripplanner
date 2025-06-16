@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { SignUpCredentials } from '../../services/auth.service';
+import { CreateUser } from '@trip-planner/types';
 import { buildRegisterForm } from '../../../../core/forms/form-factory';
 
 @Component({
@@ -15,7 +15,7 @@ import { buildRegisterForm } from '../../../../core/forms/form-factory';
 export class RegisterFormComponent {
   @Input() isLoading = false;
   @Input() error: string | null = null;
-  @Output() registerSubmit = new EventEmitter<SignUpCredentials>();
+  @Output() registerSubmit = new EventEmitter<CreateUser>();
   readonly registerForm = buildRegisterForm(new FormBuilder());
 
   public readonly showPassword = signal(false);
@@ -52,7 +52,7 @@ export class RegisterFormComponent {
 
     const { firstName, lastName, email, password } = this.registerForm.value;
 
-    const credentials: SignUpCredentials = {
+    const credentials: CreateUser = {
       firstName,
       lastName,
       email,

@@ -51,7 +51,6 @@ export class AuthService {
       // Create corresponding profile
       await tx.profile.create({
         data: {
-          id: user.id,
           userId: user.id,
           status: 'pending', // Requires email verification
           firstName: firstName,
