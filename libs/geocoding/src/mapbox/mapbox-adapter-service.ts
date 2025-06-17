@@ -44,11 +44,7 @@ export class MapboxAdapterService {
         };
 
         // Use Zod to parse. This will throw an error if the data doesn't match our schema.
-        try {
-          return GeocodingResultSchema.parse(location);
-        } catch (zodError) {
-          this.logger.error('[DEBUG] Zod validation failed!', zodError);
-        }
+        return GeocodingResultSchema.parse(location);
       });
 
       return normalizedResults;
@@ -58,10 +54,43 @@ export class MapboxAdapterService {
     }
   }
 
+  async reverseGeocode(latitude: number, longitude: number): Promise<GeocodingResult[]> {
+    Logger.log(`Geocoding [${latitude}, ${longitude}]`)
+    try {
+      const response = await this.geocodingClient
+        .reverseGeocode({
+          query: [longitude, latitude]
+        }).send();
+
+      Logger.log(`Reverse geocoding response for [${longitude}, ${latitude}]:`, response.body);
+
+      const normalizedResults = response.body.features.map((feature: any) => {
+        const location: Partial<GeocodingResult> = {
+          latitude: feature.center[1],
+          longitude: feature.center[0],
+          fullAddress: feature.place_name,
+          streetAddress: `${feature.address} ${feature.text}`.trim(),
+          provider: 'mapbox',
+          providerId: feature.id,
+          country: this.findInContext(feature, 'country'),
+          region: this.findInContext(feature, 'region'),
+          city: this.findInContext(feature, 'place'),
+          postalCode: this.findInContext(feature, 'postcode'),
+          rawResponse: process.env.NODE_ENV === 'development' ? feature : undefined,
+        };
+
+        // Use Zod to parse. This will throw an error if the data doesn't match our schema.
+        return GeocodingResultSchema.parse(location);
+      });
+      return normalizedResults;
+    } catch (error) {
+      this.logger.error(`Error during forward geocoding with "${latitude} - ${longitude}"`, error);
+      throw new Error('Failed to perform forward geocoding');
+    }
+  }
+
   private findInContext(feature: any, type: string): string | null {
       const context = feature.context?.find((ctx: any) => ctx.id.startsWith(type));
       return context?.text || null;
     }
 }
-
-

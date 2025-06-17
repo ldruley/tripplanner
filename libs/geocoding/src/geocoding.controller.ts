@@ -1,10 +1,8 @@
 import { Controller, Get, Query, UsePipes } from '@nestjs/common';
 import { GeocodingService } from './geocoding.service';
 import {
-  GeocodingResult,
   ForwardGeocodeQueryDto,
-  ForwardGeocodeQuerySchema,
-  GeocodingResultDto
+  GeocodingResultDto, ReverseGeocodeQueryDto
 } from '../../shared/types/src/schemas/geocoding.schema';
 import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
@@ -27,5 +25,21 @@ export class GeocodingController {
   @Get('forward')
   async forwardGeocode(@Query() query: ForwardGeocodeQueryDto) {
     return this.geocodingService.forwardGeocode(query.search);
+  }
+
+  @UsePipes(ZodValidationPipe)
+  @ApiOperation({ summary: 'Get location details based on latitude and longitude (Reverse Geocoding)' })
+  @ApiQuery({ name: 'latitude', description: 'The latitude of the location.', type: Number, required: true })
+  @ApiQuery({ name: 'longitude', description: 'The longitude of the location.', type: Number, required: true })
+  @ApiResponse({
+    status: 200,
+    description: 'Location details for the specified latitude and longitude.',
+    type: GeocodingResultDto,
+  })
+  @ApiResponse({ status: 400, description: 'Bad Request. Latitude and longitude are required.' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error.' })
+  @Get('reverse')
+  async reverseGeocode(@Query() query: ReverseGeocodeQueryDto) {
+    return this.geocodingService.reverseGeocode(query.latitude, query.longitude);
   }
 }

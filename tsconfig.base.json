@@ -16,6 +16,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@trip-planner/poi": ["poi/src/index.ts"],
       "@trip-planner/prisma": ["libs/shared/prisma/src/index.ts"],
       "@trip-planner/types": ["libs/shared/types/src/index.ts"],
       "@trip-planner/ui": ["/libs/shared/ui/src/index.ts"]

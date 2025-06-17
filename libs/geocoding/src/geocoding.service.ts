@@ -37,5 +37,26 @@ export class GeocodingService {
     return results;
   }
 
+  async reverseGeocode(lat: number, lon: number): Promise<GeocodingResult[]> {
+    const cacheKey = `GEOCODE_REVERSE_${lat}_${lon}`;
+
+    const cachedData = await this.cacheManager.get<GeocodingResult[]>(cacheKey);
+    if (cachedData) {
+      this.logger.log(`Cache HIT for key: ${cacheKey}`);
+      return cachedData;
+    }
+
+    this.logger.log(`Cache MISS for key: ${cacheKey}. Fetching from provider.`);
+    // If not cached, call the Mapbox adapter service - later we can add more adapters
+    const results = await this.mapboxAdapter.reverseGeocode(lat, lon);
+
+    // Cache the result for future requests
+    if (results && results.length > 0) {
+      await this.cacheManager.set(cacheKey, results, this.CACHE_TTL_MS);
+    }
+
+    return results;
+  }
+
 }
 
