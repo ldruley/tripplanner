@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService} from '@nestjs/config';
 import { PoiSearchResult, PoiSearchResultSchema } from '../../../shared/types/src/schemas/search.schema';
-import * as axios from 'axios';
+import axios from 'axios';
 
 @Injectable()
 export class MapboxPoiAdapterService {
@@ -21,7 +21,7 @@ export class MapboxPoiAdapterService {
 
   private buildUrl(endpoint: string, queryParams: Record<string, string | number>): string {
     const url = new URL(`${this.baseUrl}/${endpoint}`);
-    url.searchParams.set('apiKey', this.apiKey); // or use headers depending on API
+    url.searchParams.set('access_token', this.apiKey);
     if (queryParams) {
       for (const [key, value] of Object.entries(queryParams)) {
         url.searchParams.set(key, value.toString());
