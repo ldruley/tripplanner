@@ -5,17 +5,27 @@ import { z } from 'zod';
 // Main schema
 export const LocationSchema = z.object({
   id: z.string().uuid(),
-  name: z.string().min(1).max(100),
+  name: z.string().min(1, "Name is required").max(100),
   description: z.string().max(500).optional(),
-  address: z.string().min(1).max(200).optional(),
-  city: z.string().min(1).max(100).optional(),
-  state: z.string().min(1).max(100).optional(),
-  country: z.string().min(1).max(100).optional(),
-  postalCode: z.string().min(1).max(20).optional(),
-  latitude: z.number().min(-90).max(90),
-  longitude: z.number().min(-180).max(180),
-  createdAt: z.coerce.date().nullable(),
-  updatedAt: z.coerce.date().nullable(),
+
+  // Denormalized address
+  fullAddress: z.string(),
+
+  // Granular address
+  addressLine1: z.string().max(200).nullable(),
+  city: z.string().max(100).nullable(),
+  state: z.string().max(100).nullable(),
+  country: z.string().max(100).nullable(),
+  postalCode: z.string().max(20).nullable(),
+
+  // --- Geocoding Provenance (The "How we got this data") ---
+  geocodingProvider: z.enum(['mapbox', 'google', 'here']).nullable(),
+  geocodingProviderId: z.string().nullable(),
+  geocodedAt: z.coerce.date().nullable(),
+
+  // Standard database timestamps
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 });
 
 // Type Exports

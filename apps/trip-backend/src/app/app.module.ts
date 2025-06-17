@@ -8,6 +8,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { BullModule } from '@nestjs/bullmq';
 import { createKeyv } from '@keyv/redis';
 import { AuthModule } from '../infrastructure/auth/auth.module';
+import { GeocodingModule } from '../../../../libs/geocoding/src';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { AuthModule } from '../infrastructure/auth/auth.module';
     AuthModule,
     PrismaModule,
     ProfilesModule,
+    GeocodingModule
   ],
   controllers: [AppController],
   providers: [AppService],
