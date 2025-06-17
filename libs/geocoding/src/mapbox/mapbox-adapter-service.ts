@@ -28,7 +28,7 @@ export class MapboxAdapterService {
         })
         .send();
       Logger.log(`Forward geocoding response for "${search}":`, response.body);
-      const normalizedResults = response.body.features.map((feature: any) => {
+      return response.body.features.map((feature: any) => {
         const location: Partial<GeocodingResult> = {
           latitude: feature.center[1],
           longitude: feature.center[0],
@@ -46,8 +46,6 @@ export class MapboxAdapterService {
         // Use Zod to parse. This will throw an error if the data doesn't match our schema.
         return GeocodingResultSchema.parse(location);
       });
-
-      return normalizedResults;
     } catch (error) {
       this.logger.error(`Error during forward geocoding with "${search}"`, error);
       throw new Error('Failed to perform forward geocoding');
@@ -64,7 +62,7 @@ export class MapboxAdapterService {
 
       Logger.log(`Reverse geocoding response for [${longitude}, ${latitude}]:`, response.body);
 
-      const normalizedResults = response.body.features.map((feature: any) => {
+      return response.body.features.map((feature: any) => {
         const location: Partial<GeocodingResult> = {
           latitude: feature.center[1],
           longitude: feature.center[0],
@@ -82,7 +80,6 @@ export class MapboxAdapterService {
         // Use Zod to parse. This will throw an error if the data doesn't match our schema.
         return GeocodingResultSchema.parse(location);
       });
-      return normalizedResults;
     } catch (error) {
       this.logger.error(`Error during forward geocoding with "${latitude} - ${longitude}"`, error);
       throw new Error('Failed to perform forward geocoding');

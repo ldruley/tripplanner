@@ -2,12 +2,13 @@ import { z } from 'zod';
 import { createZodDto } from '@anatine/zod-nestjs';
 import { citySchema, countrySchema, fullAddressSchema, latitudeSchema, longitudeSchema, postalCodeSchema, regionSchema, streetAddressSchema } from './base.schema';
 
-export const GeocodingResultSchema = z.object({
+export const PoiSearchResultSchema = z.object({
   // Core geographic data
   latitude: latitudeSchema,
   longitude: longitudeSchema,
 
   // Standardized address components
+  name: z.string().describe("The name of the point of interest (POI)."),
   fullAddress: fullAddressSchema,
   streetAddress: streetAddressSchema,
   city: citySchema,
@@ -22,16 +23,17 @@ export const GeocodingResultSchema = z.object({
   rawResponse: z.any().optional(),
 });
 
-export type GeocodingResult = z.infer<typeof GeocodingResultSchema>;
-export class GeocodingResultDto extends createZodDto(GeocodingResultSchema) {}
+export type PoiSearchResult = z.infer<typeof PoiSearchResultSchema>;
+export class PoiSearchResultDto extends createZodDto(PoiSearchResultSchema) {}
 
-export const ForwardGeocodeQuerySchema = z.object({
+export const PoiSearchQuerySchema = z.object({
   search: z.string().min(3, { message: 'Search query must be at least 3 characters.' }),
+  limit: z.number().int().min(1).max(100).default(10).describe("Maximum number of results to return, defaults to 10."),
+  proximity: z.string().min(5).optional().describe('Optional proximity point in "lat,lon" format to bias results towards.'),
+  // implement stricter validation for proximity format
+  // poi categories
 });
-export class ForwardGeocodeQueryDto extends createZodDto(ForwardGeocodeQuerySchema) {};
 
-export const ReverseGeocodeQuerySchema = z.object({
-  latitude: z.coerce.number().min(-90).max(90, { message: 'Latitude must be between -90 and 90.' }),
-  longitude: z.coerce.number().min(-180).max(180, { message: 'Longitude must be between -180 and 180.' }),
-});
-export class ReverseGeocodeQueryDto extends createZodDto(ReverseGeocodeQuerySchema) {};
+export class PoiSearchQueryDto extends createZodDto(PoiSearchQuerySchema) {}
+
+

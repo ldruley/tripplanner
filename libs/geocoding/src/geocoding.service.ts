@@ -18,10 +18,10 @@ export class GeocodingService {
     const cacheKey = `GEOCODE_FORWARD_${search.toUpperCase().replace(/\s/g, '_')}`;
 
     // Check if the result is cached
-    const cachedData = await this.cacheManager.get<GeocodingResult[]>(cacheKey);
-    if (cachedData) {
+    const cachedResult = await this.cacheManager.get<GeocodingResult[]>(cacheKey);
+    if (cachedResult) {
       this.logger.log(`Cache HIT for key: ${cacheKey}`);
-      return cachedData;
+      return cachedResult;
     }
 
     this.logger.log(`Cache MISS for key: ${cacheKey}. Fetching from provider.`);
