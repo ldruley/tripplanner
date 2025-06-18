@@ -17,6 +17,7 @@
     "baseUrl": ".",
     "paths": {
       "@trip-planner/geocoding": ["libs/src/geocoding/src/index.ts"],
+      "@trip-planner/matrix-routing": ["libs/matrix-routing/src/index.ts"],
       "@trip-planner/poi": ["libs/poi/src/index.ts"],
       "@trip-planner/prisma": ["libs/shared/prisma/src/index.ts"],
       "@trip-planner/shared": ["shared/src/index.ts"],
