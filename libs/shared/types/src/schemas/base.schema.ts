@@ -79,6 +79,8 @@ export const coordinateSchema = extendApi(
   }
 );
 
+export type Coordinate = z.infer<typeof coordinateSchema>;
+
 export const coordinatesArraySchema = extendApi(
   z.array(coordinateSchema),
   {
@@ -90,6 +92,7 @@ export const coordinatesArraySchema = extendApi(
     ],
   }
 );
+
 
 export const fullAddressSchema = extendApi(
   z.string(),

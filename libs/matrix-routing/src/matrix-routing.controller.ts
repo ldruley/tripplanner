@@ -1,5 +1,5 @@
 import { MatrixRoutingService } from './matrix-routing.service';
-import { Controller, Get, Query, UsePipes } from '@nestjs/common';
+import { Controller, Get, Logger, Query, UsePipes } from '@nestjs/common';
 import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import { MatrixQueryDto } from '../../shared/types/src/schemas/matrix.schema';
 
@@ -11,6 +11,7 @@ export class MatrixRoutingController {
   @UsePipes(ZodValidationPipe)
   @Get('route')
   async getMatrixRoute(@Query() query: MatrixQueryDto) {
+    Logger.log('MatrixRoutingController.getMatrixRoute', query);
     return this.matrixRoutingService.getMatrixRouting(query);
   }
 }

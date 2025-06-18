@@ -1,10 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
-import { MatrixQueryDto } from '../../../shared/types/src/schemas/matrix.schema';
+import {
+  CoordinateMatrixDto,
+  CoordinateMatrixSchema,
+  MatrixQueryDto,
+  toCoordinateKey
+} from '../../../shared/types/src/schemas/matrix.schema';
 import { buildUrl } from '@trip-planner/utils';
 import { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
+import { Coordinate } from '@trip-planner/types';
 
 
 @Injectable()
@@ -23,24 +29,67 @@ export class HereMatrixRoutingAdapterService {
     })();
   }
 
-  async getMatrixRouting(query: MatrixQueryDto): Promise<any> {
-    const url = buildUrl(
-      this.matrixUrl,
-      '',
-      {
-        origins: query.origins,
-        async: false
-      }
-    );
+  async getMatrixRouting(query: MatrixQueryDto): Promise<CoordinateMatrixDto> {
+    Logger.log('query: ' + JSON.stringify(query), HereMatrixRoutingAdapterService.name);
+    const body = {
+      origins: query.origins,
+      regionDefinition: { type: 'world' },
+      matrixAttributes: ['travelTimes', 'distances'],
+    };
+
+    const url = `${this.matrixUrl}/matrix`;
+    const params = {
+      apiKey: this.apiKey,
+      async: false,
+    };
+
+    this.logger.debug('Matrix URL: ' + url);
     try {
       const response: AxiosResponse<any> = await firstValueFrom(
-        this.httpService.get(url)
+        this.httpService.post(url, body, {params})
       );
 
       this.logger.debug(`Matrix response: ${JSON.stringify(response.data)}`);
+      return this.mapMatrixResponseToCoordinateMatrix({
+        origins: query.origins,
+        travelTimes: response.data.matrix.travelTimes,
+        distances: response.data.matrix.distances,
+      });
     } catch(error) {
       this.logger.error('Error fetching matrix data', error);
+      throw new Error('Failed to fetch matrix data from HERE API');
     }
-    return null;
   }
+
+  mapMatrixResponseToCoordinateMatrix({
+      origins,
+      travelTimes,
+      distances,
+    }: {
+    origins: Coordinate[];
+    travelTimes: number[];
+    distances: number[];
+  }) {
+    const result: Record<string, Record<string, { time: number; distance: number }>> = {};
+
+    const n = origins.length;
+
+    for (let i = 0; i < n; i++) {
+      const originKey = toCoordinateKey(origins[i]);
+      result[originKey] = {};
+
+      for (let j = 0; j < n; j++) {
+        const destKey = toCoordinateKey(origins[j]);
+        const index = i * n + j;
+
+        result[originKey][destKey] = {
+          time: travelTimes[index],
+          distance: distances[index],
+        };
+      }
+    }
+
+    return CoordinateMatrixSchema.parse(result);
+  }
+
 }

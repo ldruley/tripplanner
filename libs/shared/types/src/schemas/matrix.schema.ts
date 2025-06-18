@@ -1,10 +1,41 @@
 import { z } from 'zod';
-import { coordinatesArraySchema } from './base.schema';
+import { coordinatesArraySchema, coordinateSchema } from './base.schema';
 import { createZodDto } from '@anatine/zod-nestjs';
 
+export const MatrixCellSchema = z.object({
+  time: z.number(),     // in seconds
+  distance: z.number(), // in meters
+});
+
+export type MatrixCell = z.infer<typeof MatrixCellSchema>;
+
+export const CoordinateMatrixSchema: z.ZodType<Record<string, Record<string, MatrixCell>>> =
+  z.record(z.record(MatrixCellSchema));
+
+export type CoordinateMatrix = z.infer<typeof CoordinateMatrixSchema>;
+export class CoordinateMatrixDto extends createZodDto(CoordinateMatrixSchema) {}
+
+export function toCoordinateKey(coord: { lat: number; lng: number }): string {
+  return `${coord.lat},${coord.lng}`;
+}
+
+const coordinateFromJsonString = z
+  .string()
+  .transform((val, ctx) => {
+    try {
+      const parsed = JSON.parse(val);
+      return coordinateSchema.parse(parsed); // validate the structure
+    } catch (err) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Invalid coordinate JSON string',
+      });
+      return z.NEVER;
+    }
+  });
 
 export const MatrixQuerySchema = z.object({
-  origins: coordinatesArraySchema,
+  origins: z.array(coordinateFromJsonString),
   profile: z.enum(['carFast', 'carShort', 'pedestrian', 'bicycle']).optional().nullable(),
   routingMode: z.enum(['fast', 'short']).optional().nullable(),
 });
