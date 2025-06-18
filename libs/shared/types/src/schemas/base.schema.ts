@@ -67,6 +67,30 @@ export const longitudeSchema = extendApi(
   }
 );
 
+export const coordinateSchema = extendApi(
+  z.object({
+    lat: latitudeSchema,
+    lng: longitudeSchema,
+  }),
+  {
+    title: 'Coordinate',
+    description: 'A geographical coordinate with latitude and longitude',
+    example: { lat: 37.7749, lng: -122.4194 },
+  }
+);
+
+export const coordinatesArraySchema = extendApi(
+  z.array(coordinateSchema),
+  {
+    title: 'CoordinateArray',
+    description: 'An array of geographic coordinates',
+    example: [
+      { lat: 52.5309, lng: 13.3849 },
+      { lat: 48.8566, lng: 2.3522 },
+    ],
+  }
+);
+
 export const fullAddressSchema = extendApi(
   z.string(),
   {

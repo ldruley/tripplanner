@@ -10,6 +10,7 @@ import { createKeyv } from '@keyv/redis';
 import { AuthModule } from '../infrastructure/auth/auth.module';
 import { GeocodingModule } from '../../../../libs/geocoding/src';
 import { PoiModule } from '@trip-planner/poi';
+import { MatrixRoutingModule } from '@trip-planner/matrix-routing';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { PoiModule } from '@trip-planner/poi';
     ProfilesModule,
     GeocodingModule,
     PoiModule,
+    MatrixRoutingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
