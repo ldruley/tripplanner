@@ -1,8 +1,13 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { MapboxAdapterService } from './mapbox/mapbox-adapter-service';
-import { GeocodingResult } from '../../shared/types/src/schemas/geocoding.schema';
+import { MapboxGeocodeAdapterService } from './mapbox/mapbox-geocode-adapter.service';
+import {
+  ForwardGeocodeQueryDto,
+  GeocodingResult,
+  ReverseGeocodeQueryDto
+} from '../../shared/types/src/schemas/geocoding.schema';
+import { HereGeocodeAdapterService } from './here/here-geocode-adapter.service';
 
 @Injectable()
 export class GeocodingService {
@@ -11,11 +16,12 @@ export class GeocodingService {
 
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    private readonly mapboxAdapter: MapboxAdapterService
+    private readonly mapboxAdapter: MapboxGeocodeAdapterService,
+    private readonly hereAdapter: HereGeocodeAdapterService,
   ) {}
 
-  async forwardGeocode(search: string): Promise<GeocodingResult[]> {
-    const cacheKey = `GEOCODE_FORWARD_${search.toUpperCase().replace(/\s/g, '_')}`;
+  async forwardGeocode(query: ForwardGeocodeQueryDto): Promise<GeocodingResult[]> {
+    const cacheKey = `GEOCODE_FORWARD_${query.search.toUpperCase().replace(/\s/g, '_')}`;
 
     // Check if the result is cached
     const cachedResult = await this.cacheManager.get<GeocodingResult[]>(cacheKey);
@@ -26,8 +32,8 @@ export class GeocodingService {
 
     this.logger.log(`Cache MISS for key: ${cacheKey}. Fetching from provider.`);
     // If not cached, call the Mapbox adapter service - later we can add more adapters
-    const results = await this.mapboxAdapter.forwardGeocode(search);
-
+    //const results = await this.mapboxAdapter.forwardGeocode(query);
+    const results = await this.hereAdapter.forwardGeocode(query);
     // Cache the result for future requests
     if (results && results.length > 0) {
       await this.cacheManager.set(cacheKey, results, this.CACHE_TTL_MS);
@@ -37,8 +43,8 @@ export class GeocodingService {
     return results;
   }
 
-  async reverseGeocode(lat: number, lon: number): Promise<GeocodingResult[]> {
-    const cacheKey = `GEOCODE_REVERSE_${lat}_${lon}`;
+  async reverseGeocode(query: ReverseGeocodeQueryDto): Promise<GeocodingResult[]> {
+    const cacheKey = `GEOCODE_REVERSE_${query.latitude}_${query.longitude}`;
 
     const cachedData = await this.cacheManager.get<GeocodingResult[]>(cacheKey);
     if (cachedData) {
@@ -48,7 +54,7 @@ export class GeocodingService {
 
     this.logger.log(`Cache MISS for key: ${cacheKey}. Fetching from provider.`);
     // If not cached, call the Mapbox adapter service - later we can add more adapters
-    const results = await this.mapboxAdapter.reverseGeocode(lat, lon);
+    const results = await this.mapboxAdapter.reverseGeocode(query);
 
     // Cache the result for future requests
     if (results && results.length > 0) {

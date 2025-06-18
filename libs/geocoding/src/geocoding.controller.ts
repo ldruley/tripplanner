@@ -24,7 +24,7 @@ export class GeocodingController {
   @ApiResponse({ status: 500, description: 'Internal Server Error.' })
   @Get('forward')
   async forwardGeocode(@Query() query: ForwardGeocodeQueryDto) {
-    return this.geocodingService.forwardGeocode(query.search);
+    return this.geocodingService.forwardGeocode(query);
   }
 
   @UsePipes(ZodValidationPipe)
@@ -40,6 +40,6 @@ export class GeocodingController {
   @ApiResponse({ status: 500, description: 'Internal Server Error.' })
   @Get('reverse')
   async reverseGeocode(@Query() query: ReverseGeocodeQueryDto) {
-    return this.geocodingService.reverseGeocode(query.latitude, query.longitude);
+    return this.geocodingService.reverseGeocode(query);
   }
 }

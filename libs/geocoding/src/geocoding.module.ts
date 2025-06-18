@@ -1,14 +1,15 @@
 import { Module } from '@nestjs/common';
 import { GeocodingService } from './geocoding.service';
-import { MapboxAdapterService } from './mapbox/mapbox-adapter-service';
+import { MapboxGeocodeAdapterService } from './mapbox/mapbox-geocode-adapter.service';
 import { GeocodingController } from './geocoding.controller';
-import { ConfigService } from '@nestjs/config';
-import { MapboxModule } from './mapbox/mapbox.module';
+import { ConfigModule } from '@nestjs/config';
+import { HereGeocodeAdapterService } from './here/here-geocode-adapter.service';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [MapboxModule],
+  imports: [ConfigModule, HttpModule],
   controllers: [GeocodingController],
-  providers: [GeocodingService],
+  providers: [GeocodingService, HereGeocodeAdapterService, MapboxGeocodeAdapterService],
   exports: [GeocodingService],
 })
 export class GeocodingModule {}

@@ -22,8 +22,7 @@ export class HerePoiAdapterService {
   }
 
   async searchPoi(query: string): Promise<PoiSearchResult[]> {
-    const apiKey = this.configService.get<string>('HERE_API_KEY');
-    const url = `https://discover.search.hereapi.com/v1/discover?apikey=${apiKey}&at=36.97693,-122.030645&in=countryCode:USA&q=${encodeURIComponent(query)}`;
+    const url = `https://discover.search.hereapi.com/v1/discover?apikey=${this.apiKey}&at=36.97693,-122.030645&in=countryCode:USA&q=${encodeURIComponent(query)}`;
 
     try {
       const response: AxiosResponse<any> = await firstValueFrom(
