@@ -1,5 +1,5 @@
 {
-  "extends": "../libs/geocoding/tsconfig.json",
+  "extends": "../../libs/geocoding/tsconfig.json",
   "compilerOptions": {
     "outDir": "../dist/out-tsc",
     "declaration": true,

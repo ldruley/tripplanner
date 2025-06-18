@@ -1,5 +1,5 @@
 {
-  "extends": "../libs/poi/tsconfig.json",
+  "extends": "../../libs/poi/tsconfig.json",
   "compilerOptions": {
     "outDir": "../dist/out-tsc",
     "declaration": true,

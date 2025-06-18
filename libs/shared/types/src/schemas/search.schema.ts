@@ -28,7 +28,7 @@ export class PoiSearchResultDto extends createZodDto(PoiSearchResultSchema) {}
 
 export const PoiSearchQuerySchema = z.object({
   search: z.string().min(3, { message: 'Search query must be at least 3 characters.' }),
-  limit: z.number().int().min(1).max(100).default(10).describe("Maximum number of results to return, defaults to 10."),
+  limit: z.coerce.number().int().min(1).max(100).default(10).describe("Maximum number of results to return, defaults to 10."),
   proximity: z.string().min(5).optional().describe('Optional proximity point in "lat,lon" format to bias results towards.'),
   // implement stricter validation for proximity format
   // poi categories

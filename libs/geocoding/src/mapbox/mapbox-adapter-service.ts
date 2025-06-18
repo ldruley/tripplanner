@@ -40,7 +40,8 @@ export class MapboxAdapterService {
           region: this.findInContext(feature, 'region'),
           city: this.findInContext(feature, 'place'),
           postalCode: this.findInContext(feature, 'postcode'),
-          rawResponse: process.env.NODE_ENV === 'development' ? feature : undefined,
+          rawResponse:
+            process.env['NODE_ENV'] === 'development' ? feature : undefined,
         };
 
         // Use Zod to parse. This will throw an error if the data doesn't match our schema.
@@ -74,7 +75,8 @@ export class MapboxAdapterService {
           region: this.findInContext(feature, 'region'),
           city: this.findInContext(feature, 'place'),
           postalCode: this.findInContext(feature, 'postcode'),
-          rawResponse: process.env.NODE_ENV === 'development' ? feature : undefined,
+          rawResponse:
+            process.env['NODE_ENV'] === 'development' ? feature : undefined,
         };
 
         // Use Zod to parse. This will throw an error if the data doesn't match our schema.

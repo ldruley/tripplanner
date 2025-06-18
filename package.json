@@ -29,6 +29,7 @@
     "@angular/router": "~19.2.0",
     "@keyv/redis": "^4.4.0",
     "@mapbox/mapbox-sdk": "^0.16.1",
+    "@nestjs/axios": "^4.0.0",
     "@nestjs/bullmq": "^11.0.2",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/jwt": "^11.0.0",

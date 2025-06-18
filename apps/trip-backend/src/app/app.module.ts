@@ -9,6 +9,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { createKeyv } from '@keyv/redis';
 import { AuthModule } from '../infrastructure/auth/auth.module';
 import { GeocodingModule } from '../../../../libs/geocoding/src';
+import { PoiModule } from '@trip-planner/poi';
 
 @Module({
   imports: [
@@ -50,7 +51,8 @@ import { GeocodingModule } from '../../../../libs/geocoding/src';
     AuthModule,
     PrismaModule,
     ProfilesModule,
-    GeocodingModule
+    GeocodingModule,
+    PoiModule,
   ],
   controllers: [AppController],
   providers: [AppService],

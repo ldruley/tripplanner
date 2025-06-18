@@ -74,8 +74,7 @@ export const fullAddressSchema = extendApi(
     description: 'A complete address string',
     example: '123 Main St, San Francisco, CA 94105, USA',
   }
-  );
-
+);
 
 export const streetAddressSchema = extendApi(
   z.string()
@@ -125,8 +124,7 @@ export const postalCodeSchema = extendApi(
     description: 'A postal code string, which can be null',
     example: '94105',
   }
-)
-
+);
 
 export const ErrorResponseSchema = extendApi(z.object({
   success: z.literal(false).describe('Indicates if the request was successful; always false for errors.'),

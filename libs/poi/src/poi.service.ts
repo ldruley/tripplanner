@@ -2,6 +2,8 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import {CACHE_MANAGER} from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { MapboxPoiAdapterService } from './mapbox/mapbox-poi-adapter.service';
+import { PoiSearchQueryDto } from '../../shared/types/src/schemas/search.schema';
+import { HerePoiAdapterService } from './here/here-poi-adapter.service';
 
 
 @Injectable()
@@ -11,11 +13,12 @@ export class PoiService {
 
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    private readonly mapboxAdapter: MapboxPoiAdapterService
+    private readonly mapboxAdapter: MapboxPoiAdapterService,
+    private readonly hereAdapter: HerePoiAdapterService,
   ) {}
 
-  async poiSearch(search: string, limit: 10): Promise<any> {
-    const cacheKey = `POI_SEARCH_:${search}:${limit}`;
+  async poiSearch(query: PoiSearchQueryDto): Promise<any> {
+    const cacheKey = `POI_SEARCH_:${query.search}:${query.limit}`;
 
     const cachedResult = await this.cacheManager.get(cacheKey);
 
@@ -25,9 +28,9 @@ export class PoiService {
     }
 
     this.logger.log(`Cache miss for key: ${cacheKey}. Fetching from Mapbox.`);
-    const result = await this.mapboxAdapter.searchPoi(search, limit);
+    const result = await this.hereAdapter.searchPoi(query.search);
 
-    await this.cacheManager.set(cacheKey, result, { ttl: this.CACHE_TTL_MS });
+    await this.cacheManager.set(cacheKey, result, this.CACHE_TTL_MS);
     return result;
   }
 
