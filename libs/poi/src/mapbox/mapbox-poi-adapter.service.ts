@@ -1,9 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService} from '@nestjs/config';
-import { PoiSearchResult, PoiSearchResultSchema } from '../../../shared/types/src/schemas/search.schema';
+import {
+  PoiSearchQueryDto,
+  PoiSearchResult,
+  PoiSearchResultSchema
+} from '../../../shared/types/src/schemas/search.schema';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { AxiosResponse } from 'axios';
+import { buildUrl } from '@trip-planner/utils';
 
 @Injectable()
 export class MapboxPoiAdapterService {
@@ -39,8 +44,8 @@ export class MapboxPoiAdapterService {
     return url.toString();
   }
 
-  async searchPoi(query: string): Promise<PoiSearchResult[]> {
-    const url = this.buildUrl(this.SEARCH_URL, { q: query });
+  async searchPoi(query: PoiSearchQueryDto): Promise<PoiSearchResult[]> {
+    const url = buildUrl(this.baseUrl, this.SEARCH_URL, { q: query.search });
     this.logger.debug(`Searching POI with URL: ${url}`);
     try {
       const response: AxiosResponse<any>  = await firstValueFrom(this.httpService.get(url));

@@ -1,9 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService} from '@nestjs/config';
-import { PoiSearchResult, PoiSearchResultSchema } from '../../../shared/types/src/schemas/search.schema';
+import {
+  PoiSearchQueryDto,
+  PoiSearchResult,
+  PoiSearchResultSchema
+} from '../../../shared/types/src/schemas/search.schema';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { AxiosResponse } from 'axios';
+import { buildUrl } from '@trip-planner/utils';
 
 @Injectable()
 export class HerePoiAdapterService {
@@ -21,8 +26,8 @@ export class HerePoiAdapterService {
     })();
   }
 
-  async searchPoi(query: string): Promise<PoiSearchResult[]> {
-    const url = `https://discover.search.hereapi.com/v1/discover?apikey=${this.apiKey}&at=36.97693,-122.030645&in=countryCode:USA&q=${encodeURIComponent(query)}`;
+  async searchPoi(query: PoiSearchQueryDto): Promise<PoiSearchResult[]> {
+    const url = buildUrl(this.baseUrl, '', {at: '36.97693,-122.030645', q: query.search});
 
     try {
       const response: AxiosResponse<any> = await firstValueFrom(

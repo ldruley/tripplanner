@@ -8,6 +8,7 @@ import {
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
+import { buildUrl } from '@trip-planner/utils';
 
 @Injectable()
 export class MapboxGeocodeAdapterService {
@@ -26,7 +27,7 @@ export class MapboxGeocodeAdapterService {
   }
 
   async forwardGeocode(query: ForwardGeocodeQueryDto): Promise<GeocodingResult[]> {
-    const url = `${this.apiBaseUrl}forward?q=${encodeURIComponent(query.search)}&access_token=${this.apiKey}`;
+    const url = buildUrl(this.apiBaseUrl, 'forward', { q: query.search, access_token: this.apiKey });
     try {
       const response: AxiosResponse = await firstValueFrom(
         this.httpService.get(url)
@@ -40,7 +41,7 @@ export class MapboxGeocodeAdapterService {
   }
 
   async reverseGeocode(query: ReverseGeocodeQueryDto): Promise<GeocodingResult[]> {
-    const url = `${this.apiBaseUrl}reverse?longitude=${encodeURIComponent(query.longitude)}&latitude=${encodeURIComponent(query.latitude)}&access_token=${this.apiKey}`;
+    const url = buildUrl(this.apiBaseUrl, 'reverse', { longitude: query.longitude, latitude: query.latitude, access_token: this.apiKey });
     Logger.log(`Geocoding [${query.latitude}, ${query.longitude}]`)
     try {
       const response: AxiosResponse = await firstValueFrom(

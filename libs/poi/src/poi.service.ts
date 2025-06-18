@@ -28,7 +28,7 @@ export class PoiService {
     }
 
     this.logger.log(`Cache miss for key: ${cacheKey}. Fetching from Mapbox.`);
-    const result = await this.hereAdapter.searchPoi(query.search);
+    const result = await this.hereAdapter.searchPoi(query);
 
     await this.cacheManager.set(cacheKey, result, this.CACHE_TTL_MS);
     return result;

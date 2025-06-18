@@ -8,6 +8,7 @@ import {
 } from '../../../shared/types/src/schemas/geocoding.schema';
 import { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
+import { buildUrl } from '@trip-planner/utils';
 
 
 @Injectable()
@@ -28,7 +29,7 @@ export class HereGeocodeAdapterService {
   }
 
   async forwardGeocode(query: ForwardGeocodeQueryDto): Promise<GeocodingResult[]> {
-    const url = `${this.geocodeUrl}?q=${encodeURIComponent(query.search)}&apiKey=${this.apiKey}`;
+    const url = buildUrl(this.geocodeUrl, '', { q: query.search, apiKey: this.apiKey });
     Logger.log(url);
     try {
       const response: AxiosResponse<any> = await firstValueFrom(
@@ -42,7 +43,7 @@ export class HereGeocodeAdapterService {
   }
 
   async reverseGeocode(query: ReverseGeocodeQueryDto): Promise<GeocodingResult[]> {
-    const url = `${this.reverseGeocodeUrl}?at=${encodeURIComponent(query.latitude)},${encodeURIComponent(query.longitude)}&apiKey=${this.apiKey}`;
+    const url = buildUrl(this.reverseGeocodeUrl, '', { at: `${query.latitude},${query.longitude}`, apiKey: this.apiKey});
     try {
       const response: AxiosResponse<any> = await firstValueFrom(
         this.httpService.get(url)
