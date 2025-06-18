@@ -1,1 +1,1 @@
-export * from './lib/matrix-routing.module';
+export * from './matrix-routing.module';
