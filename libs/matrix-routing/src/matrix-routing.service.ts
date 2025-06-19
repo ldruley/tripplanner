@@ -14,6 +14,7 @@ export class MatrixRoutingService {
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly hereAdapter: HereMatrixRoutingAdapterService,
+    private readonly mapBoxAdapter: HereMatrixRoutingAdapterService,
   ) {}
 
   async getMatrixRouting(query: MatrixQueryDto): Promise<CoordinateMatrix> {
@@ -26,7 +27,8 @@ export class MatrixRoutingService {
     }
     this.logger.log(`Cache MISS for key: ${cacheKey}, fetching new data`, MatrixRoutingService.name);
 
-    const results = await this.hereAdapter.getMatrixRouting(query);
+    //const results = await this.hereAdapter.getMatrixRouting(query);
+    const results = await this.mapBoxAdapter.getMatrixRouting(query);
     if (results) {
       await this.cacheManager.set(cacheKey, results, this.CACHE_TTL_MS);
     }

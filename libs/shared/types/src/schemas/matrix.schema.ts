@@ -24,7 +24,7 @@ const coordinateFromJsonString = z
   .transform((val, ctx) => {
     try {
       const parsed = JSON.parse(val);
-      return coordinateSchema.parse(parsed); // validate the structure
+      return coordinateSchema.parse(parsed);
     } catch (err) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

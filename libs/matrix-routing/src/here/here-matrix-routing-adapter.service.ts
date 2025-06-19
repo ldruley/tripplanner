@@ -23,7 +23,7 @@ export class HereMatrixRoutingAdapterService {
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
   ) {
-    this.apiKey = this.configService.get<string>('HERE_API_KEY') ?? (() => {
+      this.apiKey = this.configService.get<string>('HERE_API_KEY') ?? (() => {
       this.logger.error('HERE_API_KEY is not set');
       throw new Error('HERE_API_KEY is required');
     })();
@@ -91,5 +91,4 @@ export class HereMatrixRoutingAdapterService {
 
     return CoordinateMatrixSchema.parse(result);
   }
-
 }
