@@ -27,7 +27,7 @@ export class HerePoiAdapterService {
   }
 
   async searchPoi(query: PoiSearchQueryDto): Promise<PoiSearchResult[]> {
-    const url = buildUrl(this.baseUrl, '', {at: '36.97693,-122.030645', q: query.search});
+    const url = buildUrl(this.baseUrl, '', {at: '36.97693,-122.030645', q: query.search, apiKey: this.apiKey});
 
     try {
       const response: AxiosResponse<any> = await firstValueFrom(
@@ -40,7 +40,7 @@ export class HerePoiAdapterService {
           longitude: feature.position.lng,
           name: feature.title || 'Unknown',
           fullAddress: feature.address?.label || 'No address available',
-          streetAddress: feature.address?.houseNumber + feature.address?.street || 'No street address available',
+          streetAddress: feature.address?.houseNumber + ' ' + feature.address?.street || 'No street address available',
           provider: 'here',
           providerId: feature.id,
           country: feature.address?.countryName || 'Unknown country',
