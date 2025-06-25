@@ -62,7 +62,7 @@ export class HereGeocodeAdapterService {
           latitude: feature.position.lat,
           longitude: feature.position.lng,
           fullAddress: feature.address?.label || 'No address available',
-          streetAddress: feature.address?.houseNumber + feature.address?.street || 'No street address available',
+          streetAddress: feature.address?.houseNumber + " " + feature.address?.street || 'No street address available',
           provider: 'here',
           providerId: feature.id,
           country: feature.address?.countryName || 'Unknown country',
