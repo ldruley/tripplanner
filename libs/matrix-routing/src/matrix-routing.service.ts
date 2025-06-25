@@ -1,8 +1,6 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import { Injectable, Logger } from '@nestjs/common';
 import { HereMatrixRoutingAdapterService } from './here/here-matrix-routing-adapter.service';
-import { CoordinateMatrix, MatrixQueryDto } from '../../shared/types/src/schemas/matrix.schema';
+import { CoordinateMatrix, MatrixQuery} from '../../shared/types/src/schemas/matrix.schema';
 import { createHash } from 'crypto';
 import { RedisService } from '../../redis/src/redis.service';
 import { ApiUsageService } from '../../api-usage/src/api-usage.service';
@@ -20,7 +18,7 @@ export class MatrixRoutingService {
     private readonly apiUsageService: ApiUsageService
   ) {}
 
-  async getMatrixRouting(query: MatrixQueryDto): Promise<CoordinateMatrix> {
+  async getMatrixRouting(query: MatrixQuery): Promise<CoordinateMatrix> {
     const cacheKey = this.createCacheKey(query);
 
     const cachedResult = await this.redisService.get<CoordinateMatrix>(cacheKey);
@@ -46,7 +44,7 @@ export class MatrixRoutingService {
     return results;
   }
 
-  createCacheKey(query: MatrixQueryDto): string {
+  createCacheKey(query: MatrixQuery): string {
     const sorted = query.origins.map(coord =>
       `${coord.lat.toFixed(5)},${coord.lng.toFixed(5)}`
     ).slice().sort().join('|');

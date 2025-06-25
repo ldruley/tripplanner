@@ -2,7 +2,7 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '@trip-planner/prisma';
-import { CreateUserDto, SafeUser } from '@trip-planner/types';
+import { CreateUser, SafeUser } from '@trip-planner/types';
 
 @Injectable()
 export class AuthService {
@@ -32,8 +32,8 @@ export class AuthService {
     };
   }
 
-  async register(createUserDto: CreateUserDto): Promise<SafeUser> {
-    const { email, password, firstName, lastName } = createUserDto;
+  async register(createUser: CreateUser): Promise<SafeUser> {
+    const { email, password, firstName, lastName } = createUser;
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       throw new ConflictException('Email already in use');

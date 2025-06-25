@@ -1,8 +1,9 @@
 import { Controller, Get, Query, UsePipes } from '@nestjs/common';
 import { GeocodingService } from './geocoding.service';
 import {
+  ForwardGeocodeQuery,
   ForwardGeocodeQueryDto,
-  GeocodingResultDto, ReverseGeocodeQueryDto
+  GeocodingResultDto, ReverseGeocodeQuery, ReverseGeocodeQueryDto
 } from '../../shared/types/src/schemas/geocoding.schema';
 import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
@@ -24,7 +25,7 @@ export class GeocodingController {
   @ApiResponse({ status: 500, description: 'Internal Server Error.' })
   @Get('forward')
   async forwardGeocode(@Query() query: ForwardGeocodeQueryDto) {
-    return this.geocodingService.forwardGeocode(query);
+    return this.geocodingService.forwardGeocode(query as ForwardGeocodeQuery);
   }
 
   @UsePipes(ZodValidationPipe)
@@ -40,6 +41,6 @@ export class GeocodingController {
   @ApiResponse({ status: 500, description: 'Internal Server Error.' })
   @Get('reverse')
   async reverseGeocode(@Query() query: ReverseGeocodeQueryDto) {
-    return this.geocodingService.reverseGeocode(query);
+    return this.geocodingService.reverseGeocode(query as ReverseGeocodeQuery);
   }
 }

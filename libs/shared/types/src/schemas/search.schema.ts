@@ -34,6 +34,8 @@ export const PoiSearchQuerySchema = z.object({
   // poi categories
 });
 
+
+export type PoiSearchQuery = z.infer<typeof PoiSearchQuerySchema>;
 export class PoiSearchQueryDto extends createZodDto(PoiSearchQuerySchema) {}
 
 

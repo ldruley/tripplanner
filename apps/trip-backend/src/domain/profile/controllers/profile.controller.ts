@@ -28,7 +28,7 @@ import {
   ProfileResponseDto,
   ProfilesListResponseDto,
   ProfileQueryDto,
-  ErrorResponseDto,
+  ErrorResponseDto, UpdateProfile
 } from '@trip-planner/types';
 import { JwtAuthGuard } from '../../../infrastructure/auth/guards/jwt-auth-guard';
 import { CurrentUser } from '../../../infrastructure/auth/decorators/current-user.decorator';
@@ -107,7 +107,7 @@ export class ProfileController {
     ) {
       this.logger.debug(`PUT /profiles/me - User: ${user.id} - Data: ${JSON.stringify(updateProfileDto)}`);
 
-      const profile = await this.profileService.update(user.id, updateProfileDto);
+      const profile = await this.profileService.update(user.id, updateProfileDto as UpdateProfile);
       return {
         success: true,
         data: profile,
@@ -209,7 +209,7 @@ export class ProfileController {
   })
   async update(@Param('id') id: string, @Body() updateProfileDto: UpdateProfileDto) {
     this.logger.debug(`PUT /profiles/${id} - Data: ${JSON.stringify(updateProfileDto)}`);
-    const profile = await this.profileService.update(id, updateProfileDto);
+    const profile = await this.profileService.update(id, updateProfileDto as UpdateProfile);
     return {
       success: true,
       data: profile,

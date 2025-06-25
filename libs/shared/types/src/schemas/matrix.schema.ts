@@ -40,4 +40,5 @@ export const MatrixQuerySchema = z.object({
   routingMode: z.enum(['fast', 'short']).optional().nullable(),
 });
 
+export type MatrixQuery = z.infer<typeof MatrixQuerySchema>;
 export class MatrixQueryDto extends createZodDto(MatrixQuerySchema) {}

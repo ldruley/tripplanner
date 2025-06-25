@@ -1,7 +1,7 @@
 import { Controller, HttpCode, Post, UseGuards, HttpStatus, Req, Request, Body, Logger } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
-import { CreateUserDto, SafeUser } from '@trip-planner/types';
+import { CreateUser, CreateUserDto, SafeUser } from '@trip-planner/types';
 
 
 
@@ -21,7 +21,7 @@ export class AuthController {
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() createUserDto: CreateUserDto): Promise<SafeUser> {
-    return this.authService.register(createUserDto);
+    return this.authService.register(createUserDto as CreateUser);
   }
 
 

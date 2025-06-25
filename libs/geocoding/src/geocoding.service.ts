@@ -1,11 +1,8 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import { Injectable, Logger } from '@nestjs/common';
 import { MapboxGeocodeAdapterService } from './mapbox/mapbox-geocode-adapter.service';
 import {
-  ForwardGeocodeQueryDto,
-  GeocodingResult,
-  ReverseGeocodeQueryDto
+  ForwardGeocodeQuery,
+  GeocodingResult, ReverseGeocodeQuery,
 } from '../../shared/types/src/schemas/geocoding.schema';
 import { HereGeocodeAdapterService } from './here/here-geocode-adapter.service';
 import { RedisService } from '../../redis/src/redis.service';
@@ -23,7 +20,7 @@ export class GeocodingService {
     private readonly apiUsageService: ApiUsageService
   ) {}
 
-  async forwardGeocode(query: ForwardGeocodeQueryDto): Promise<GeocodingResult[]> {
+  async forwardGeocode(query: ForwardGeocodeQuery): Promise<GeocodingResult[]> {
     const cacheKey = `GEOCODE_FORWARD_${query.search.toUpperCase().replace(/\s/g, '_')}`;
 
     // Check if the result is cached
@@ -55,7 +52,7 @@ export class GeocodingService {
     return results;
   }
 
-  async reverseGeocode(query: ReverseGeocodeQueryDto): Promise<GeocodingResult[]> {
+  async reverseGeocode(query: ReverseGeocodeQuery): Promise<GeocodingResult[]> {
     const cacheKey = `GEOCODE_REVERSE_${query.latitude}_${query.longitude}`;
 
     const cachedData = await this.redisService.get<GeocodingResult[]>(cacheKey);
@@ -84,6 +81,4 @@ export class GeocodingService {
 
     return results;
   }
-
 }
-

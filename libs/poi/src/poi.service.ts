@@ -1,8 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-import {CACHE_MANAGER} from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
 import { MapboxPoiAdapterService } from './mapbox/mapbox-poi-adapter.service';
-import { PoiSearchQueryDto } from '../../shared/types/src/schemas/search.schema';
+import { PoiSearchQuery, PoiSearchResult } from '../../shared/types/src/schemas/search.schema';
 import { HerePoiAdapterService } from './here/here-poi-adapter.service';
 import { RedisService } from '../../redis/src/redis.service';
 import { ApiUsageService } from '../../api-usage/src/api-usage.service';
@@ -20,7 +18,7 @@ export class PoiService {
     private readonly apiUsageService: ApiUsageService
   ) {}
 
-  async poiSearch(query: PoiSearchQueryDto): Promise<any> {
+  async poiSearch(query: PoiSearchQuery): Promise<PoiSearchResult[] | null> {
     const cacheKey = `POI_SEARCH_:${query.search}:${query.limit}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
@@ -41,6 +39,8 @@ export class PoiService {
     }
     if (results && results.length > 0) {
       await this.redisService.set(cacheKey, results, this.CACHE_TTL_MS);
+    } else {
+      return null;
     }
     return results;
   }
