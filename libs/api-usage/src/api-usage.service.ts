@@ -2,6 +2,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { RedisService } from '../../redis/src/redis.service';
 import { Redis } from 'ioredis';
+import { QuotaService } from '../../quota/src/quote.service';
 
 type Provider = 'here' | 'mapbox' | 'google';
 type Action = 'geocoding' | 'routing' | 'matrix-routing' | 'poi';
@@ -11,7 +12,10 @@ export class ApiUsageService implements OnModuleInit {
   private redisClient!: Redis;
   private luaScriptSha!: string;
 
-  constructor(private readonly redisService: RedisService) {}
+  constructor (
+    private readonly redisService: RedisService,
+    private readonly quotaService: QuotaService
+  ) {}
 
   async onModuleInit() {
     this.redisClient = this.redisService.getClient();
@@ -58,5 +62,16 @@ export class ApiUsageService implements OnModuleInit {
     const key = this.makeKey(provider, action, endpoint);
     const val = await this.redisClient.get(key);
     return Number(val ?? 0);
+  }
+
+  async checkQuota(
+    provider: Provider,
+    action: Action,
+    endpoint?: string,
+  ): Promise<boolean> {
+    const quota = this.quotaService.getQuota(provider, action, endpoint);
+    const currentUsage = await this.getCurrent(provider, action, endpoint);
+    //TODO: Better strategy for handling undefined quotas
+    return currentUsage < (quota ? quota : Number.MAX_SAFE_INTEGER) ;
   }
 }

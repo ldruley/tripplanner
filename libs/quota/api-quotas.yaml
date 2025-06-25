@@ -1,0 +1,22 @@
+quotas:
+  here:
+    geocoding:
+      monthly: 30000
+    routing:
+      monthly: 30000
+      endpoints:
+        time-aware:
+          monthly: 5000
+    search:
+      monthly: 5000
+    matrix:
+      monthly: 2500
+  mapbox:
+    routing:
+      monthly: 100000
+    geocoding:
+      monthly: 100000
+    search:
+      monthly: 50000
+    matrix:
+      monthly: 100000
