@@ -31,8 +31,7 @@ export class GeocodingService {
     }
 
     this.logger.log(`Cache MISS for key: ${cacheKey}. Fetching from provider.`);
-    // If not cached, call the Mapbox adapter service - later we can add more adapters
-    //const results = await this.mapboxAdapter.forwardGeocode(query);
+    // Not cached, get results from a geocoding provider
     let results: GeocodingResult[] = [];
     if(await this.apiUsageService.checkQuota("here", "geocoding")) {
       results = await this.hereAdapter.forwardGeocode(query);
@@ -62,7 +61,7 @@ export class GeocodingService {
     }
 
     this.logger.log(`Cache MISS for key: ${cacheKey}. Fetching from provider.`);
-    // If not cached, call the Mapbox adapter service - later we can add more adapters
+    // If not cached, get from a geocoding provider
     let results: GeocodingResult[] = [];
     if(await this.apiUsageService.checkQuota('here', 'geocoding')) {
       results = await this.mapboxAdapter.reverseGeocode(query);
