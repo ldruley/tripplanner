@@ -2,6 +2,7 @@ import z from 'zod';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as YAML from 'yaml';
 import * as fs from 'fs';
+import * as path from 'node:path';
 
 const EndpointQuotaSchema = z.object({
   monthly: z.number(),
@@ -25,7 +26,8 @@ export class QuotaService implements OnModuleInit {
   private config!: QuotaConfig;
 
   onModuleInit() {
-    const file = fs.readFileSync('../api-quotas.yaml', 'utf8');
+    const filePath = path.resolve(process.cwd(), 'config/api-quotas.yaml');
+    const file = fs.readFileSync(filePath, 'utf8');
     const config = YAML.parse(file);
     this.config = QuotaConfigSchema.parse(config);
   }

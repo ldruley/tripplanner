@@ -5,6 +5,7 @@ import { HereMatrixRoutingAdapterService } from './here/here-matrix-routing-adap
 import { CoordinateMatrix, MatrixQueryDto } from '../../shared/types/src/schemas/matrix.schema';
 import { createHash } from 'crypto';
 import { RedisService } from '../../redis/src/redis.service';
+import { ApiUsageService } from '../../api-usage/src/api-usage.service';
 
 
 @Injectable()
@@ -16,6 +17,7 @@ export class MatrixRoutingService {
     private readonly hereAdapter: HereMatrixRoutingAdapterService,
     private readonly mapBoxAdapter: HereMatrixRoutingAdapterService,
     private readonly redisService: RedisService,
+    private readonly apiUsageService: ApiUsageService
   ) {}
 
   async getMatrixRouting(query: MatrixQueryDto): Promise<CoordinateMatrix> {
@@ -27,9 +29,17 @@ export class MatrixRoutingService {
       return cachedResult;
     }
     this.logger.log(`Cache MISS for key: ${cacheKey}, fetching new data`, MatrixRoutingService.name);
-
-    //const results = await this.hereAdapter.getMatrixRouting(query);
-    const results = await this.mapBoxAdapter.getMatrixRouting(query);
+    let results: CoordinateMatrix;
+    //TODO: Additional logic to assign providers based on query size
+    if(await this.apiUsageService.checkQuota('mapbox', 'matrix-routing')) {
+      results = await this.mapBoxAdapter.getMatrixRouting(query);
+      await this.apiUsageService.increment('mapbox', 'matrix-routing');
+    } else if(await this.apiUsageService.checkQuota('here', 'matrix-routing')) {
+      results = await this.hereAdapter.getMatrixRouting(query);
+      await this.apiUsageService.increment('here', 'matrix-routing');
+    } else {
+      throw new Error('No API quota available for matrix routing');
+    }
     if (results) {
       await this.redisService.set(cacheKey, results, this.CACHE_TTL_MS);
     }

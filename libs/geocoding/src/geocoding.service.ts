@@ -9,6 +9,7 @@ import {
 } from '../../shared/types/src/schemas/geocoding.schema';
 import { HereGeocodeAdapterService } from './here/here-geocode-adapter.service';
 import { RedisService } from '../../redis/src/redis.service';
+import { ApiUsageService } from '../../api-usage/src/api-usage.service';
 
 @Injectable()
 export class GeocodingService {
@@ -19,6 +20,7 @@ export class GeocodingService {
     private readonly mapboxAdapter: MapboxGeocodeAdapterService,
     private readonly hereAdapter: HereGeocodeAdapterService,
     private readonly redisService: RedisService,
+    private readonly apiUsageService: ApiUsageService
   ) {}
 
   async forwardGeocode(query: ForwardGeocodeQueryDto): Promise<GeocodingResult[]> {
@@ -34,7 +36,16 @@ export class GeocodingService {
     this.logger.log(`Cache MISS for key: ${cacheKey}. Fetching from provider.`);
     // If not cached, call the Mapbox adapter service - later we can add more adapters
     //const results = await this.mapboxAdapter.forwardGeocode(query);
-    const results = await this.hereAdapter.forwardGeocode(query);
+    let results: GeocodingResult[] = [];
+    if(await this.apiUsageService.checkQuota("here", "geocoding")) {
+      results = await this.hereAdapter.forwardGeocode(query);
+      await this.apiUsageService.increment("here", "geocoding");
+    } else if(await this.apiUsageService.checkQuota("mapbox", "geocoding")) {
+      results = await this.mapboxAdapter.forwardGeocode(query);
+      await this.apiUsageService.increment("mapbox", "geocoding");
+    } else {
+      throw new Error("No geocoding provider available or quota exceeded");
+    }
     // Cache the result for future requests
     if (results && results.length > 0) {
       await this.redisService.set(cacheKey, results, this.CACHE_TTL_MS);
@@ -55,7 +66,16 @@ export class GeocodingService {
 
     this.logger.log(`Cache MISS for key: ${cacheKey}. Fetching from provider.`);
     // If not cached, call the Mapbox adapter service - later we can add more adapters
-    const results = await this.mapboxAdapter.reverseGeocode(query);
+    let results: GeocodingResult[] = [];
+    if(await this.apiUsageService.checkQuota('here', 'geocoding')) {
+      results = await this.mapboxAdapter.reverseGeocode(query);
+      await this.apiUsageService.increment('here', 'geocoding');
+    } else if(await this.apiUsageService.checkQuota('mapbox', 'geocoding')) {
+      results = await this.hereAdapter.reverseGeocode(query);
+      await this.apiUsageService.increment('mapbox', 'geocoding');
+    } else {
+      throw new Error('No geocoding provider available or quota exceeded');
+    }
 
     // Cache the result for future requests
     if (results && results.length > 0) {

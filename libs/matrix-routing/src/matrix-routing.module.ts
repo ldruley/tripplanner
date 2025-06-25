@@ -5,9 +5,10 @@ import { ConfigModule } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { MatrixRoutingController } from './matrix-routing.controller';
 import { MapboxMatrixRoutingAdapterService } from './mapbox/mapbox-matrix-routing-adapter.service';
+import { ApiUsageModule } from '@trip-planner/api-usage';
 
 @Module({
-  imports: [ConfigModule, HttpModule],
+  imports: [ConfigModule, HttpModule, ApiUsageModule],
   controllers: [MatrixRoutingController],
   providers: [MatrixRoutingService, HereMatrixRoutingAdapterService, MapboxMatrixRoutingAdapterService],
   exports: [MatrixRoutingService],

@@ -5,6 +5,7 @@ import { MapboxPoiAdapterService } from './mapbox/mapbox-poi-adapter.service';
 import { PoiSearchQueryDto } from '../../shared/types/src/schemas/search.schema';
 import { HerePoiAdapterService } from './here/here-poi-adapter.service';
 import { RedisService } from '../../redis/src/redis.service';
+import { ApiUsageService } from '../../api-usage/src/api-usage.service';
 
 
 @Injectable()
@@ -16,6 +17,7 @@ export class PoiService {
     private readonly mapboxAdapter: MapboxPoiAdapterService,
     private readonly hereAdapter: HerePoiAdapterService,
     private readonly redisService: RedisService,
+    private readonly apiUsageService: ApiUsageService
   ) {}
 
   async poiSearch(query: PoiSearchQueryDto): Promise<any> {
@@ -29,10 +31,18 @@ export class PoiService {
     }
 
     this.logger.log(`Cache miss for key: ${cacheKey}. Fetching from Mapbox.`);
-    const result = await this.hereAdapter.searchPoi(query);
-
-    await this.redisService.set(cacheKey, result, this.CACHE_TTL_MS);
-    return result;
+    let results;
+    if(await this.apiUsageService.checkQuota('here', 'poi')) {
+      results = await this.hereAdapter.searchPoi(query);
+      await this.apiUsageService.increment('here', 'poi');
+    } else if(await this.apiUsageService.checkQuota('mapbox', 'poi')) {
+      results = await this.mapboxAdapter.searchPoi(query);
+      await this.apiUsageService.increment('mapbox', 'poi');
+    }
+    if (results && results.length > 0) {
+      await this.redisService.set(cacheKey, results, this.CACHE_TTL_MS);
+    }
+    return results;
   }
 
 }
