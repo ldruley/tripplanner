@@ -41,7 +41,7 @@ function encodeValue(key: string, value: QueryValue, url: URL): void {
         url.searchParams.append(`${key}${i}`, coordToString(c)),
       );
     } else {
-      // array of primitives  →  key=value&key=value2
+      // array of primitives ->  key=value&key=value2
       (value as (string | number | boolean)[]).forEach(v =>
         url.searchParams.append(key, v.toString()),
       );
@@ -71,10 +71,12 @@ function buildCacheKey(ns: string, parts: unknown[]): string {
 }
 
 function sortObjectKeys(obj: unknown): unknown {
+  // Handle arrays
   if (Array.isArray(obj)) {
     return obj.map(sortObjectKeys);
   }
 
+  // Handle objects
   if (obj && typeof obj === 'object') {
     return Object.keys(obj)
       .sort()
@@ -84,5 +86,6 @@ function sortObjectKeys(obj: unknown): unknown {
       }, {} as Record<string, unknown>);
   }
 
+  // Return primitive values as is
   return obj;
 }
