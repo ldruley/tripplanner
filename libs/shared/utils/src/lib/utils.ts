@@ -58,3 +58,31 @@ function encodeValue(key: string, value: QueryValue, url: URL): void {
   // Primitive
   url.searchParams.set(key, value.toString());
 }
+
+function buildCacheKey(ns: string, parts: unknown[]): string {
+  const suffix = parts.map((part) => {
+    if (part && typeof part === 'object') {
+      return JSON.stringify(sortObjectKeys(part));
+    }
+    return String(part);
+  }).join(':');
+
+  return `${ns}:${suffix}`;
+}
+
+function sortObjectKeys(obj: unknown): unknown {
+  if (Array.isArray(obj)) {
+    return obj.map(sortObjectKeys);
+  }
+
+  if (obj && typeof obj === 'object') {
+    return Object.keys(obj)
+      .sort()
+      .reduce((acc, key) => {
+        acc[key] = sortObjectKeys((obj as Record<string, unknown>)[key]);
+        return acc;
+      }, {} as Record<string, unknown>);
+  }
+
+  return obj;
+}
