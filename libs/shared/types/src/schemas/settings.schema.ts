@@ -3,14 +3,16 @@ import { extendApi } from '@anatine/zod-openapi';
 import { DistanceUnit } from '@prisma/client';
 import { createZodDto } from '@anatine/zod-nestjs';
 
-export const DistanceUnitSchema = extendApi(z.nativeEnum(DistanceUnit), {
+const BaseDistanceUnitSchema = z.nativeEnum(DistanceUnit);
+
+export const DistanceUnitSchema = extendApi(BaseDistanceUnitSchema.default(DistanceUnit.MILES), {
   title: 'Distance Unit',
   description: 'Preferred unit for measuring distance',
   example: 'MILES',
 });
 
 export const UserSettingsSchema = z.object({
-  id: z.string().uuid().optional(),
+  id: z.string().uuid(),
   userId: z.string().uuid(),
   timezone: z.string().default('UTC'),
   distanceUnit: DistanceUnitSchema,
