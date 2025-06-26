@@ -30,7 +30,9 @@
       <app-location-bank
         [bankedLocations]="bankedLocations()"
         [listId]="'bank-list'"
-        [connectedDropLists]="['itinerary-list']">
+        [connectedDropLists]="['itinerary-list']"
+        (dragStarted)="handleBankDragStart($event)">
+      >
       </app-location-bank>
     </div>
 

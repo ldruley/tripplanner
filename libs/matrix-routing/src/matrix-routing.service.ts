@@ -30,6 +30,7 @@ export class MatrixRoutingService {
     let results: CoordinateMatrix;
     //TODO: Additional logic to assign providers based on query size
     if(await this.apiUsageService.checkQuota('mapbox', 'matrix-routing')) {
+      this.logger.log('Using Mapbox for matrix routing', MatrixRoutingService.name);
       results = await this.mapBoxAdapter.getMatrixRouting(query);
       await this.apiUsageService.increment('mapbox', 'matrix-routing');
     } else if(await this.apiUsageService.checkQuota('here', 'matrix-routing')) {

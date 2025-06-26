@@ -38,4 +38,6 @@ export const PoiSearchQuerySchema = z.object({
 export type PoiSearchQuery = z.infer<typeof PoiSearchQuerySchema>;
 export class PoiSearchQueryDto extends createZodDto(PoiSearchQuerySchema) {}
 
+export type SearchMode = 'place' | 'address';
+
 

@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LocationSearchService } from '../../services/location-search.service';
 import { Location } from '../../models/location.model';
-import { EMPTY, Subject } from 'rxjs';
+import { EMPTY, of, Subject } from 'rxjs';
 import { catchError, switchMap, tap, takeUntil } from 'rxjs/operators';
+import { SearchMode } from '../../../../../../../../libs/shared/types/src/schemas/search.schema';
 
 @Component({
   selector: 'app-location-search',
@@ -20,6 +21,8 @@ export class LocationSearchComponent implements OnDestroy{
   isLoading: WritableSignal<boolean> = signal(false);
   hasAttemptedSearch: WritableSignal<boolean> = signal(false);
 
+  searchMode: WritableSignal<SearchMode> = signal('place');
+
   private searchTrigger = new Subject<string>();
   private destroy$ = new Subject<void>();
 
@@ -28,15 +31,16 @@ export class LocationSearchComponent implements OnDestroy{
       tap(() => {
         this.isLoading.set(true);
         this.searchResults.set([]);
+        this.hasAttemptedSearch.set(true);
       }),
-      switchMap(query =>
-        this.locationSearchService.searchLocations(query).pipe(
+      switchMap(query => {
+        return this.locationSearchService.searchLocations(query, this.searchMode()).pipe(
           catchError(error => {
-            console.error('Search failed:', error);
+            console.error(`Search by ${this.searchMode} failed:`, error);
             return EMPTY;
           })
-        )
-      ),
+        );
+      }),
       takeUntil(this.destroy$)
     ).subscribe(results => {
       this.searchResults.set(results);
@@ -46,18 +50,30 @@ export class LocationSearchComponent implements OnDestroy{
 
   performSearch(): void {
     const currentQuery = this.searchQuery().trim();
-    this.hasAttemptedSearch.set(true);
+
     if (currentQuery.length > 0) {
       this.searchTrigger.next(currentQuery);
     } else {
-      this.searchResults.set([]); // Clear results if query is empty
+      this.searchResults.set([]);
+      this.hasAttemptedSearch.set(true);
     }
+  }
+
+  setSearchMode(mode: SearchMode): void {
+    if (this.searchMode() === mode) return;
+
+    this.searchMode.set(mode);
+    this.searchQuery.set('');
+    this.searchResults.set([]);
+    this.hasAttemptedSearch.set(false);
+    this.isLoading.set(false);
   }
 
   selectLocation(location: Location): void {
     this.locationSelected.emit(location);
     this.searchResults.set([]);
     this.searchQuery.set('');
+    this.hasAttemptedSearch.set(false);
   }
 
   ngOnDestroy(): void {

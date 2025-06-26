@@ -1,6 +1,7 @@
 //Draft version of the location schema, to be updated when we finalize backend specs
 
 import { z } from 'zod';
+import { latitudeSchema, longitudeSchema } from './base.schema';
 
 // Main schema
 export const LocationSchema = z.object({
@@ -8,8 +9,12 @@ export const LocationSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   description: z.string().max(500).optional(),
 
+  // Location coordinates
+  latitude: latitudeSchema,
+  longitude: longitudeSchema,
+
   // Denormalized address
-  fullAddress: z.string(),
+  fullAddress: z.string().nullable(),
 
   // Granular address
   addressLine1: z.string().max(200).nullable(),
@@ -18,8 +23,8 @@ export const LocationSchema = z.object({
   country: z.string().max(100).nullable(),
   postalCode: z.string().max(20).nullable(),
 
-  // --- Geocoding Provenance (The "How we got this data") ---
-  geocodingProvider: z.enum(['mapbox', 'google', 'here']).nullable(),
+  // Geocoding details
+  geocodingProvider: z.enum(['mapbox', 'google', 'here', 'manual']).nullable(),
   geocodingProviderId: z.string().nullable(),
   geocodedAt: z.coerce.date().nullable(),
 

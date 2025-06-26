@@ -16,6 +16,7 @@ import {
 import { Location } from '../../models/location.model';
 import { Trip } from '../../models/trip.model';
 import { Stop } from '../../models/stop.model';
+import { MatrixCalculationService } from '../../services/matrix-calculation.service';
 
 // Services (placeholders for now)
 // import { TripService } from '../../services/trip.service';
@@ -51,9 +52,13 @@ export class TripEditorComponent {
   bankedLocations: WritableSignal<Location[]> = signal([]);
   itineraryStops: WritableSignal<Stop[]> = signal([]);
 
+
+  private matrixService = inject(MatrixCalculationService);
   // For Matrix API results
-  matrixData: WritableSignal<MatrixData | null> = signal(null);
-  isLoadingMatrix: WritableSignal<boolean> = signal(false);
+  matrixData = this.matrixService.formattedMatrix;
+  isLoadingMatrix = this.matrixService.isLoading;
+
+
 
   // private tripService = inject(TripService);  For intermediate saves/persistence
   // private matrixApiService = inject(MatrixApiService);
@@ -113,21 +118,6 @@ export class TripEditorComponent {
         // The call to fetchMatrixData can remain here if it depends on initialized stops/bank.
         // this.fetchMatrixData(); // This will be called when the signals it depends on are set
       });
-
-
-
-      // Effect to react to changes in itinerary or bank for matrix data
-    // This is a simplified example; you might want more control over when this fires.
-    effect(() => {
-      const stops = this.itineraryStops();
-      const bank = this.bankedLocations();
-      // console.log('Stops or bank changed, consider fetching matrix data.');
-      if (stops.length > 0 || bank.length > 0) { // Only fetch if there are locations
-        this.fetchMatrixData();
-      } else {
-        this.matrixData.set(null); // Clear matrix data if no locations
-      }
-    });
   }
 
   /**
@@ -216,7 +206,7 @@ export class TripEditorComponent {
    * Simulates fetching matrix data.
    * In a real app, this would call MatrixApiService.
    */
-  fetchMatrixData(): void {
+  /*fetchMatrixData(): void {
     const stops = this.itineraryStops();
     const bank = this.bankedLocations();
 
@@ -257,6 +247,11 @@ export class TripEditorComponent {
       this.isLoadingMatrix.set(false);
       // console.log('TripEditor: Mock matrix data set.');
     }, 1000); // Simulate API delay
+  }*/
+
+  handleBankDragStart(draggedLocation: Location): void {
+    console.log(`TripEditor: Drag started for "${draggedLocation.name}". Triggering matrix calculation.`);
+    this.matrixService.calculateMatrixForDrag(this.itineraryStops(), draggedLocation);
   }
 
   /**

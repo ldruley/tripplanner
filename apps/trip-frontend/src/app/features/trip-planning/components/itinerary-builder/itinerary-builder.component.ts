@@ -82,8 +82,25 @@ export class ItineraryBuilderComponent {
       return null; // Missing location details to form a key
     }
 
-    const key = `${currentStop.locationDetails.id}_${nextStop.locationDetails.id}`;
-    return matrix.get(key) || null;
+    //const key = `${currentStop.locationDetails.id}_${nextStop.locationDetails.id}`;
+    //return matrix.get(key) || null;
+
+    const fromLoc = currentStop.locationDetails;
+    const toLoc = nextStop.locationDetails;
+
+    if (!fromLoc || !toLoc) {
+      return null;
+    }
+    const fromCoordKey = `${fromLoc.latitude},${fromLoc.longitude}`;
+    const toCoordKey = `${toLoc.latitude},${toLoc.longitude}`;
+    const compositeKey = `${fromCoordKey}_${toCoordKey}`;
+
+    const travelData = matrix.get(compositeKey);
+
+    if (!travelData) {
+       console.warn(`No matrix data found for key: ${compositeKey}`);
+    }
+    return travelData || null;
   }
 
   // --- Bubbling up events from ItineraryStopComponent ---

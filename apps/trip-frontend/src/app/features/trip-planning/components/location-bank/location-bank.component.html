@@ -10,10 +10,11 @@
         <div
           cdkDrag
           [cdkDragData]="location"
+          (cdkDragStarted)="onDragStarted($event)">
           class="p-3 bg-white border border-gray-200 rounded-md shadow-sm cursor-grab hover:shadow-md transition-shadow">
           <div class="font-medium text-gray-800">{{ location.name }}</div>
-          @if (location.address) {
-            <div class="text-xs text-gray-500 mt-1">{{ location.address }}</div>
+          @if (location.fullAddress) {
+            <div class="text-xs text-gray-500 mt-1">{{ location.fullAddress }}</div>
           } @else if (location.city || location.country) {
             <div class="text-xs text-gray-500 mt-1">
               {{ location.city }}{{ location.city && location.country ? ', ' : '' }}{{ location.country }}

@@ -10,8 +10,8 @@
       </div>
       <div class="flex-grow min-w-0">
         <span class="font-semibold text-gray-800 truncate">{{ index() + 1 }}. {{ stop().locationDetails?.name || 'Unnamed Stop' }}</span>
-        @if (stop().locationDetails?.address) {
-          <p class="text-xs text-gray-500 truncate" title="{{stop().locationDetails?.address}}">{{ stop().locationDetails?.address }}</p>
+        @if (stop().locationDetails?.fullAddress) {
+          <p class="text-xs text-gray-500 truncate" title="{{stop().locationDetails?.fullAddress}}">{{ stop().locationDetails?.fullAddress }}</p>
         }
       </div>
     </div>

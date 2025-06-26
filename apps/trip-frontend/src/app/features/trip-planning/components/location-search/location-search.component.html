@@ -1,5 +1,29 @@
 <div class="p-4 border rounded-md shadow-sm">
   <h3 class="text-lg font-semibold mb-2">Add Location</h3>
+
+  <div class="flex items-center space-x-2 mb-3">
+    <button
+      (click)="setSearchMode('place')"
+      [class.bg-blue-500]="searchMode() === 'place'"
+      [class.text-white]="searchMode() === 'place'"
+      [class.bg-gray-200]="searchMode() !== 'place'"
+      [class.hover:bg-gray-300]="searchMode() !== 'place'"
+      class="px-4 py-1.5 text-sm font-medium rounded-md transition-colors"
+    >
+      By Place Name
+    </button>
+    <button
+      (click)="setSearchMode('address')"
+      [class.bg-blue-500]="searchMode() === 'address'"
+      [class.text-white]="searchMode() === 'address'"
+      [class.bg-gray-200]="searchMode() !== 'address'"
+      [class.hover:bg-gray-300]="searchMode() !== 'address'"
+      class="px-4 py-1.5 text-sm font-medium rounded-md transition-colors"
+    >
+      By Address
+    </button>
+  </div>
+
   <div class="flex items-center space-x-2 mb-2">
     <input
       type="text"
@@ -8,7 +32,7 @@
       [ngModel]="searchQuery()"
       (ngModelChange)="searchQuery.set($event)"
       (keyup.enter)="performSearch()"
-      aria-label="Search for location"
+      [attr.aria-label]="searchMode() === 'place' ? 'Search by place name' : 'Search by address'"
     />
     <button
       (click)="performSearch()"
@@ -36,8 +60,8 @@
             (keydown.space)="selectLocation(location)"
           >
             <div class="font-medium">{{ location.name }}</div>
-            @if (location.address) {
-              <div class="text-sm text-gray-600">{{ location.address }}</div>
+            @if (location.fullAddress) {
+              <div class="text-sm text-gray-600">{{ location.fullAddress }}</div>
             } @else if (location.city || location.country) {
               <div class="text-sm text-gray-600">
                 {{ location.city }}{{ location.city && location.country ? ', ' : '' }}{{ location.country }}
