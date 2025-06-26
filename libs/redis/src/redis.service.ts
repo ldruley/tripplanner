@@ -3,7 +3,7 @@ import Redis, { RedisOptions } from 'ioredis';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
-  private client: Redis;
+  private readonly client: Redis;
 
   constructor() {
     const options: RedisOptions = {
@@ -25,6 +25,19 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   getClient(): Redis {
     return this.client;
+  }
+
+  async getOrSet<T = unknown>(
+    key: string,
+    ttlSec: number,
+    fetchFn: () => Promise<T>,
+  ): Promise<T> {
+    const cached = await this.get<T>(key);
+    if (cached !== null) return cached;
+
+    const fresh = await fetchFn();
+    await this.set(key, fresh, ttlSec);
+    return fresh;
   }
 
   async set(key: string, value: any, ttlSec?: number) {
