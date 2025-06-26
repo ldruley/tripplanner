@@ -10,6 +10,7 @@ import { GeocodingModule } from '../../../../libs/geocoding/src';
 import { PoiModule } from '@trip-planner/poi';
 import { MatrixRoutingModule } from '@trip-planner/matrix-routing';
 import { RedisModule } from '@trip-planner/redis';
+import { UserSettingsModule } from '@trip-planner/user-settings';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { RedisModule } from '@trip-planner/redis';
     PoiModule,
     MatrixRoutingModule,
     RedisModule,
+    UserSettingsModule
   ],
   controllers: [AppController],
   providers: [AppService],

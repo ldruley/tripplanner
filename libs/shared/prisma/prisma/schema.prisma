@@ -17,9 +17,24 @@ model User {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  profile Profile?
+  profile  Profile?
+  settings UserSettings?
 
   @@map("users")
+}
+
+model UserSettings {
+  id           String       @id @default(cuid()) @map("user_settings_id")
+  userId       String       @unique @map("user_id")
+  timezone     String       @default("UTC")
+  distanceUnit DistanceUnit @default(MILES) @map("distance_unit")
+  darkMode     Boolean      @default(false) @map("dark_mode")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
 }
 
 model Profile {
@@ -209,4 +224,9 @@ enum LocationCategory {
   HISTORICAL_SITE
   ENTERTAINMENT
   OTHER
+}
+
+enum DistanceUnit {
+  MILES
+  KILOMETERS
 }
