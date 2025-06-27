@@ -1,8 +1,9 @@
 import { Controller, Get, Query, UsePipes } from '@nestjs/common';
 import { PoiService } from './poi.service';
-import { PoiSearchQuery, PoiSearchQueryDto, PoiSearchResultDto } from '../../shared/types/src/schemas/search.schema';
+import { PoiSearchQuery } from '../../shared/types/src/schemas/search.schema';
 import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { PoiSearchQueryDto, PoiSearchResultDto } from '@trip-planner/shared/dtos';
 
 @Controller('poi')
 export class PoiController {

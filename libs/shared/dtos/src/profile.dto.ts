@@ -4,9 +4,9 @@ import {
   ProfileResponseSchema,
   ProfileSchema, ProfilesListResponseSchema,
   UpdateProfileSchema
-} from '../schemas/profile.schema';
+} from '../../types/src/schemas/profile.schema';
 
-import { ErrorResponseSchema } from '../schemas/base.schema';
+import { ErrorResponseSchema } from '../../types/src/schemas/base.schema';
 
 export class ProfileDto extends createZodDto(ProfileSchema) {}
 

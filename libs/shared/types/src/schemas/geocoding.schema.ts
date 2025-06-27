@@ -23,17 +23,17 @@ export const GeocodingResultSchema = z.object({
 });
 
 export type GeocodingResult = z.infer<typeof GeocodingResultSchema>;
-export class GeocodingResultDto extends createZodDto(GeocodingResultSchema) {}
+
 
 export const ForwardGeocodeQuerySchema = z.object({
   search: z.string().min(3, { message: 'Search query must be at least 3 characters.' }),
 });
 export type ForwardGeocodeQuery = z.infer<typeof ForwardGeocodeQuerySchema>;
-export class ForwardGeocodeQueryDto extends createZodDto(ForwardGeocodeQuerySchema) {};
+
 
 export const ReverseGeocodeQuerySchema = z.object({
   latitude: z.coerce.number().min(-90).max(90, { message: 'Latitude must be between -90 and 90.' }),
   longitude: z.coerce.number().min(-180).max(180, { message: 'Longitude must be between -180 and 180.' }),
 });
 export type ReverseGeocodeQuery = z.infer<typeof ReverseGeocodeQuerySchema>;
-export class ReverseGeocodeQueryDto extends createZodDto(ReverseGeocodeQuerySchema) {};
+

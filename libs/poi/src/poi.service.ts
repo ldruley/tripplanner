@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MapboxPoiAdapterService } from './mapbox/mapbox-poi-adapter.service';
-import { PoiSearchQuery, PoiSearchResult } from '../../shared/types/src/schemas/search.schema';
 import { HerePoiAdapterService } from './here/here-poi-adapter.service';
 import { RedisService } from '../../redis/src/redis.service';
 import { ApiUsageService } from '../../api-usage/src/api-usage.service';
 import { buildCacheKey } from '@trip-planner/utils';
+import { PoiSearchQuery, PoiSearchResult } from '@trip-planner/types';
 
 
 @Injectable()

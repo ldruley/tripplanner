@@ -1,14 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService} from '@nestjs/config';
-import {
-  PoiSearchQueryDto,
-  PoiSearchResult,
-  PoiSearchResultSchema
-} from '../../../shared/types/src/schemas/search.schema';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import { buildUrl } from '@trip-planner/utils';
+import { PoiSearchQuery, PoiSearchResult, PoiSearchResultSchema } from '@trip-planner/types';
 
 @Injectable()
 export class HerePoiAdapterService {
@@ -26,7 +22,7 @@ export class HerePoiAdapterService {
     })();
   }
 
-  async searchPoi(query: PoiSearchQueryDto): Promise<PoiSearchResult[]> {
+  async searchPoi(query: PoiSearchQuery): Promise<PoiSearchResult[]> {
     //TODO: implement proximity in place of hardcoded location
     const url = buildUrl(this.baseUrl, '', {at: '36.97693,-122.030645', q: query.search, apiKey: this.apiKey});
 

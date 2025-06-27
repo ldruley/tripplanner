@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HereMatrixRoutingAdapterService } from './here/here-matrix-routing-adapter.service';
-import { CoordinateMatrix, MatrixQuery} from '../../shared/types/src/schemas/matrix.schema';
 import { RedisService } from '../../redis/src/redis.service';
 import { ApiUsageService } from '../../api-usage/src/api-usage.service';
 import { buildCacheKey } from '@trip-planner/utils';
+import { CoordinateMatrix, MatrixQuery } from '@trip-planner/types';
 
 
 @Injectable()

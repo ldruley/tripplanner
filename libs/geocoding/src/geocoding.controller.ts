@@ -1,12 +1,13 @@
 import { Controller, Get, Query, UsePipes } from '@nestjs/common';
 import { GeocodingService } from './geocoding.service';
-import {
-  ForwardGeocodeQuery,
-  ForwardGeocodeQueryDto,
-  GeocodingResultDto, ReverseGeocodeQuery, ReverseGeocodeQueryDto
-} from '../../shared/types/src/schemas/geocoding.schema';
 import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import {
+  ForwardGeocodeQueryDto,
+  GeocodingResultDto,
+  ReverseGeocodeQueryDto,
+} from '@trip-planner/shared/dtos';
+import { ForwardGeocodeQuery, ReverseGeocodeQuery } from '@trip-planner/types';
 
 
 @Controller('geocoding') // This will expose endpoints at /geocoding

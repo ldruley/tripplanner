@@ -1,4 +1,4 @@
 import { createZodDto} from '@anatine/zod-nestjs';
-import { TripSchema } from '../schemas/trip.schema';
+import { TripSchema } from '../../types/src/schemas/trip.schema';
 
 export class TripDto extends createZodDto(TripSchema) {}

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@trip-planner/prisma';
-import { CreateUserSettings, UpdateUserSettings } from '../../shared/types/src/schemas/settings.schema';
+import { CreateUserSettings, UpdateUserSettings } from '@trip-planner/types';
 
 @Injectable()
 export class UserSettingsService {

@@ -1,13 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MapboxGeocodeAdapterService } from './mapbox/mapbox-geocode-adapter.service';
-import {
-  ForwardGeocodeQuery,
-  GeocodingResult, ReverseGeocodeQuery,
-} from '../../shared/types/src/schemas/geocoding.schema';
 import { HereGeocodeAdapterService } from './here/here-geocode-adapter.service';
 import { RedisService } from '../../redis/src/redis.service';
 import { ApiUsageService } from '../../api-usage/src/api-usage.service';
 import { buildCacheKey } from '@trip-planner/utils';
+import {
+  ForwardGeocodeQuery,
+  GeocodingResult,
+  ReverseGeocodeQuery,
+} from '@trip-planner/types';
 
 @Injectable()
 export class GeocodingService {

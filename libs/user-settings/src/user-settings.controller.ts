@@ -2,12 +2,14 @@ import { Body, Controller, Get, Patch, Post, Put, UseGuards } from '@nestjs/comm
 import { JwtAuthGuard } from '../../../apps/trip-backend/src/infrastructure/auth/guards/jwt-auth-guard';
 import { UserSettingsService } from './user-settings.service';
 import { CurrentUser } from '../../../apps/trip-backend/src/infrastructure/auth/decorators/current-user.decorator';
-import { SafeUser } from '@trip-planner/types';
 import {
   CreateUserSettings,
-  CreateUserSettingsDto, UpdateUserSettings,
-  UpdateUserSettingsDto
-} from '../../shared/types/src/schemas/settings.schema';
+  SafeUser, UpdateUserSettings,
+} from '@trip-planner/types';
+import {
+  CreateUserSettingsDto,
+  UpdateUserSettingsDto,
+} from '@trip-planner/shared/dtos';
 
 @UseGuards(JwtAuthGuard)
 @Controller('user-settings')

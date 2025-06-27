@@ -1,14 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
-import {
-  ForwardGeocodeQueryDto,
-  GeocodingResult,
-  GeocodingResultSchema, ReverseGeocodeQueryDto
-} from '../../../shared/types/src/schemas/geocoding.schema';
+
 import { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
 import { buildUrl } from '@trip-planner/utils';
+import {
+  ForwardGeocodeQuery,
+  GeocodingResult, GeocodingResultSchema,
+  ReverseGeocodeQuery
+} from '@trip-planner/types';
 
 
 @Injectable()
@@ -28,7 +29,7 @@ export class HereGeocodeAdapterService {
     })();
   }
 
-  async forwardGeocode(query: ForwardGeocodeQueryDto): Promise<GeocodingResult[]> {
+  async forwardGeocode(query: ForwardGeocodeQuery): Promise<GeocodingResult[]> {
     const url = buildUrl(this.geocodeUrl, '', { q: query.search, apiKey: this.apiKey });
     Logger.log(url);
     try {
@@ -42,7 +43,7 @@ export class HereGeocodeAdapterService {
     }
   }
 
-  async reverseGeocode(query: ReverseGeocodeQueryDto): Promise<GeocodingResult[]> {
+  async reverseGeocode(query: ReverseGeocodeQuery): Promise<GeocodingResult[]> {
     const url = buildUrl(this.reverseGeocodeUrl, '', { at: `${query.latitude},${query.longitude}`, apiKey: this.apiKey});
     try {
       const response: AxiosResponse<any> = await firstValueFrom(

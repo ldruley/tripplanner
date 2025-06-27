@@ -1,16 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
-import {
-  CoordinateMatrixDto,
-  CoordinateMatrixSchema,
-  MatrixQueryDto,
-  toCoordinateKey
-} from '../../../shared/types/src/schemas/matrix.schema';
 import { buildUrl } from '@trip-planner/utils';
 import { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
-import { Coordinate } from '@trip-planner/types';
+import {
+  Coordinate,
+  CoordinateMatrix,
+  CoordinateMatrixSchema, MatrixQuery,
+  toCoordinateKey
+} from '@trip-planner/types';
 
 
 @Injectable()
@@ -29,7 +28,7 @@ export class HereMatrixRoutingAdapterService {
     })();
   }
 
-  async getMatrixRouting(query: MatrixQueryDto): Promise<CoordinateMatrixDto> {
+  async getMatrixRouting(query: MatrixQuery): Promise<CoordinateMatrix> {
     Logger.log('query: ' + JSON.stringify(query), HereMatrixRoutingAdapterService.name);
     const body = {
       origins: query.origins,

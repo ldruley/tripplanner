@@ -6,7 +6,7 @@ import {
   ChangePasswordSchema,
   UserResponseSchema,
   UserSchema
-} from '../schemas/user.schema';
+} from '../../types/src/schemas/user.schema';
 
 export class UserDto extends createZodDto(UserSchema) {}
 export class CreateUserDto extends createZodDto(CreateUserSchema) {}

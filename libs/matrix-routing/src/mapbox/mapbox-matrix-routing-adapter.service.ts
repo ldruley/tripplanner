@@ -1,14 +1,13 @@
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  CoordinateMatrixDto,
-  CoordinateMatrixSchema,
-  MatrixQueryDto
-} from '../../../shared/types/src/schemas/matrix.schema';
 import { buildUrl } from '@trip-planner/utils';
-import { Coordinate } from '@trip-planner/types';
-import { toCoordinateKey} from '../../../shared/types/src/schemas/matrix.schema';
+import {
+  Coordinate, CoordinateMatrix,
+  CoordinateMatrixSchema,
+  MatrixQuery,
+  toCoordinateKey
+} from '@trip-planner/types';
 import { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
 
@@ -36,7 +35,7 @@ export class MapboxMatrixRoutingAdapterService {
   }
 
   //TODO: handle url creation better
-  async getMatrixRouting(query: MatrixQueryDto): Promise<CoordinateMatrixDto> {
+  async getMatrixRouting(query: MatrixQuery): Promise<CoordinateMatrix> {
     const origins = this.buildMapboxOriginsParam(query.origins);
     Logger.log('query:' + JSON.stringify(query), MapboxMatrixRoutingAdapterService.name);
     const url = `${this.baseUrl}/${this.matrixEndpoint}${origins}?access_token=${this.apiKey}`;
@@ -66,7 +65,7 @@ export class MapboxMatrixRoutingAdapterService {
     origins: Coordinate[],
     travelTimes: number[][],
     distances: number[][] })
-    : CoordinateMatrixDto {
+    : CoordinateMatrix {
     const result: Record<string, Record<string, {time: number; distance: number}>> = {};
     const n = origins.length;
     for(let i = 0; i < n; i++) {

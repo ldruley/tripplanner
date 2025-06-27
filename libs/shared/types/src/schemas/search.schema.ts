@@ -24,7 +24,6 @@ export const PoiSearchResultSchema = z.object({
 });
 
 export type PoiSearchResult = z.infer<typeof PoiSearchResultSchema>;
-export class PoiSearchResultDto extends createZodDto(PoiSearchResultSchema) {}
 
 export const PoiSearchQuerySchema = z.object({
   search: z.string().min(3, { message: 'Search query must be at least 3 characters.' }),
@@ -34,10 +33,7 @@ export const PoiSearchQuerySchema = z.object({
   // poi categories
 });
 
-
 export type PoiSearchQuery = z.infer<typeof PoiSearchQuerySchema>;
-export class PoiSearchQueryDto extends createZodDto(PoiSearchQuerySchema) {}
-
 export type SearchMode = 'place' | 'address';
 
 

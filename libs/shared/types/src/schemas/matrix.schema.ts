@@ -13,7 +13,7 @@ export const CoordinateMatrixSchema: z.ZodType<Record<string, Record<string, Mat
   z.record(z.record(MatrixCellSchema));
 
 export type CoordinateMatrix = z.infer<typeof CoordinateMatrixSchema>;
-export class CoordinateMatrixDto extends createZodDto(CoordinateMatrixSchema) {}
+
 
 export function toCoordinateKey(coord: { lat: number; lng: number }): string {
   return `${coord.lat},${coord.lng}`;
@@ -41,4 +41,4 @@ export const MatrixQuerySchema = z.object({
 });
 
 export type MatrixQuery = z.infer<typeof MatrixQuerySchema>;
-export class MatrixQueryDto extends createZodDto(MatrixQuerySchema) {}
+
