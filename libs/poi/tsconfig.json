@@ -15,6 +15,9 @@
   "references": [
     {
       "path": "../../poi/tsconfig.lib.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
     }
   ]
 }

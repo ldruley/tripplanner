@@ -4,6 +4,13 @@
   "sourceRoot": "poi/src",
   "projectType": "library",
   "tags": [],
-  "// targets": "to see all targets run: nx show project poi --web",
-  "targets": {}
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/poi/jest.config.ts"
+      }
+    }
+  }
 }
