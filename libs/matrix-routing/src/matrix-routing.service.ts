@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HereMatrixRoutingAdapterService } from './here/here-matrix-routing-adapter.service';
 import { CoordinateMatrix, MatrixQuery} from '../../shared/types/src/schemas/matrix.schema';
-import { createHash } from 'crypto';
 import { RedisService } from '../../redis/src/redis.service';
 import { ApiUsageService } from '../../api-usage/src/api-usage.service';
+import { buildCacheKey } from '@trip-planner/utils';
 
 
 @Injectable()
@@ -19,14 +19,11 @@ export class MatrixRoutingService {
   ) {}
 
   async getMatrixRouting(query: MatrixQuery): Promise<CoordinateMatrix> {
-    const cacheKey = this.createCacheKey(query);
+    const cacheKey = buildCacheKey('matrix:routing',[query], true);
+    return this.redisService.getOrSet(cacheKey, this.CACHE_TTL_MS, () => this.implementMatrixStrategy(query))
+  }
 
-    const cachedResult = await this.redisService.get<CoordinateMatrix>(cacheKey);
-    if(cachedResult) {
-      this.logger.log(`Cache HIT for key: ${cacheKey}`, MatrixRoutingService.name);
-      return cachedResult;
-    }
-    this.logger.log(`Cache MISS for key: ${cacheKey}, fetching new data`, MatrixRoutingService.name);
+  async implementMatrixStrategy(query: MatrixQuery): Promise<CoordinateMatrix> {
     let results: CoordinateMatrix;
     //TODO: Additional logic to assign providers based on query size
     if(await this.apiUsageService.checkQuota('mapbox', 'matrix-routing')) {
@@ -39,17 +36,6 @@ export class MatrixRoutingService {
     } else {
       throw new Error('No API quota available for matrix routing');
     }
-    if (results) {
-      await this.redisService.set(cacheKey, results, this.CACHE_TTL_MS);
-    }
     return results;
-  }
-
-  createCacheKey(query: MatrixQuery): string {
-    const sorted = query.origins.map(coord =>
-      `${coord.lat.toFixed(5)},${coord.lng.toFixed(5)}`
-    ).slice().sort().join('|');
-    const hash = createHash('sha256').update(sorted).digest('hex');
-    return `MATRIX_ROUTING_:${hash}`;
   }
 }

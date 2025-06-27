@@ -7,10 +7,11 @@ import {
 import { HereGeocodeAdapterService } from './here/here-geocode-adapter.service';
 import { RedisService } from '../../redis/src/redis.service';
 import { ApiUsageService } from '../../api-usage/src/api-usage.service';
+import { buildCacheKey } from '@trip-planner/utils';
 
 @Injectable()
 export class GeocodingService {
-  private readonly CACHE_TTL_MS = 24 * 60 * 60;
+  private readonly CACHE_TTL_MS = 3 * 24 * 60 * 60;
   private readonly logger = new Logger(GeocodingService.name);
 
   constructor(
@@ -21,17 +22,11 @@ export class GeocodingService {
   ) {}
 
   async forwardGeocode(query: ForwardGeocodeQuery): Promise<GeocodingResult[]> {
-    const cacheKey = `GEOCODE_FORWARD_${query.search.toUpperCase().replace(/\s/g, '_')}`;
+    const cacheKey = buildCacheKey('geocode:forward', [query], true);
+    return this.redisService.getOrSet(cacheKey, this.CACHE_TTL_MS, () => this.implementForwardGeocodeStrategy(query))
+  }
 
-    // Check if the result is cached
-    const cachedResult = await this.redisService.get<GeocodingResult[]>(cacheKey);
-    if (cachedResult) {
-      this.logger.log(`Cache HIT for key: ${cacheKey}`);
-      return cachedResult;
-    }
-
-    this.logger.log(`Cache MISS for key: ${cacheKey}. Fetching from provider.`);
-    // Not cached, get results from a geocoding provider
+  async implementForwardGeocodeStrategy(query: ForwardGeocodeQuery): Promise<GeocodingResult[]> {
     let results: GeocodingResult[] = [];
     if(await this.apiUsageService.checkQuota("here", "geocoding")) {
       results = await this.hereAdapter.forwardGeocode(query);
@@ -42,26 +37,15 @@ export class GeocodingService {
     } else {
       throw new Error("No geocoding provider available or quota exceeded");
     }
-    // Cache the result for future requests
-    if (results && results.length > 0) {
-      await this.redisService.set(cacheKey, results, this.CACHE_TTL_MS);
-    }
-
-    //TODO: Persisting locations potentially
     return results;
   }
 
   async reverseGeocode(query: ReverseGeocodeQuery): Promise<GeocodingResult[]> {
-    const cacheKey = `GEOCODE_REVERSE_${query.latitude}_${query.longitude}`;
+    const cacheKey = buildCacheKey('geocode:reverse', [query], true);
+    return this.redisService.getOrSet(cacheKey, this.CACHE_TTL_MS, () => this.implementReverseGeocodeStrategy(query));
+  }
 
-    const cachedData = await this.redisService.get<GeocodingResult[]>(cacheKey);
-    if (cachedData) {
-      this.logger.log(`Cache HIT for key: ${cacheKey}`);
-      return cachedData;
-    }
-
-    this.logger.log(`Cache MISS for key: ${cacheKey}. Fetching from provider.`);
-    // If not cached, get from a geocoding provider
+  async implementReverseGeocodeStrategy(query: ReverseGeocodeQuery): Promise<GeocodingResult[]> {
     let results: GeocodingResult[] = [];
     if(await this.apiUsageService.checkQuota('here', 'geocoding')) {
       results = await this.mapboxAdapter.reverseGeocode(query);
@@ -72,12 +56,6 @@ export class GeocodingService {
     } else {
       throw new Error('No geocoding provider available or quota exceeded');
     }
-
-    // Cache the result for future requests
-    if (results && results.length > 0) {
-      await this.redisService.set(cacheKey, results, this.CACHE_TTL_MS);
-    }
-
     return results;
   }
 }

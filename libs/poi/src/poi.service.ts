@@ -1,14 +1,15 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { MapboxPoiAdapterService } from './mapbox/mapbox-poi-adapter.service';
 import { PoiSearchQuery, PoiSearchResult } from '../../shared/types/src/schemas/search.schema';
 import { HerePoiAdapterService } from './here/here-poi-adapter.service';
 import { RedisService } from '../../redis/src/redis.service';
 import { ApiUsageService } from '../../api-usage/src/api-usage.service';
+import { buildCacheKey } from '@trip-planner/utils';
 
 
 @Injectable()
 export class PoiService {
-  private readonly CACHE_TTL_MS = 24 * 60 * 60;
+  private readonly CACHE_TTL_MS = 3 * 24 * 60 * 60;
   private readonly logger = new Logger(PoiService.name);
 
   constructor(
@@ -19,16 +20,11 @@ export class PoiService {
   ) {}
 
   async poiSearch(query: PoiSearchQuery): Promise<PoiSearchResult[] | null> {
-    const cacheKey = `POI_SEARCH_:${query.search}:${query.limit}`;
+    const cacheKey = buildCacheKey('poi:search', [query], true);
+    return this.redisService.getOrSet(cacheKey, this.CACHE_TTL_MS, () => this.implementStrategy(query));
+  }
 
-    const cachedResult = await this.redisService.get(cacheKey);
-
-    if (cachedResult) {
-      this.logger.log(`Cache hit for key: ${cacheKey}`);
-      return cachedResult;
-    }
-
-    this.logger.log(`Cache miss for key: ${cacheKey}. Fetching from Mapbox.`);
+  async implementStrategy(query: PoiSearchQuery): Promise<PoiSearchResult[] | null> {
     let results;
     if(await this.apiUsageService.checkQuota('here', 'poi')) {
       results = await this.hereAdapter.searchPoi(query);
@@ -36,13 +32,9 @@ export class PoiService {
     } else if(await this.apiUsageService.checkQuota('mapbox', 'poi')) {
       results = await this.mapboxAdapter.searchPoi(query);
       await this.apiUsageService.increment('mapbox', 'poi');
-    }
-    if (results && results.length > 0) {
-      await this.redisService.set(cacheKey, results, this.CACHE_TTL_MS);
     } else {
-      return null;
+      throw new Error('No API quota available for POI search');
     }
     return results;
   }
-
 }

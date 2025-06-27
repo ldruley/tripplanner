@@ -27,6 +27,7 @@ export class HerePoiAdapterService {
   }
 
   async searchPoi(query: PoiSearchQueryDto): Promise<PoiSearchResult[]> {
+    //TODO: implement proximity in place of hardcoded location
     const url = buildUrl(this.baseUrl, '', {at: '36.97693,-122.030645', q: query.search, apiKey: this.apiKey});
 
     try {
@@ -34,13 +35,13 @@ export class HerePoiAdapterService {
         this.httpService.get(url),
       );
       Logger.log(response);
-      return response.data.items.map((feature: any) => {
+      const results: Array<PoiSearchResult | null> = response.data.items.map((feature: any) => {
         const location: Partial<PoiSearchResult> = {
-          latitude: feature.position.lat,
-          longitude: feature.position.lng,
+          latitude: feature.position?.lat,
+          longitude: feature.position?.lng,
           name: feature.title || 'Unknown',
           fullAddress: feature.address?.label || 'No address available',
-          streetAddress: feature.address?.houseNumber + ' ' + feature.address?.street || 'No street address available',
+          streetAddress: `${feature.address?.houseNumber ?? ''} ${feature.address?.street ?? ''}`.trim() || 'No street address available',
           provider: 'here',
           providerId: feature.id,
           country: feature.address?.countryName || 'Unknown country',
@@ -51,11 +52,22 @@ export class HerePoiAdapterService {
             process.env['NODE_ENV'] === 'development' ? feature : undefined,
         };
 
-        return PoiSearchResultSchema.parse(location);
+        const parsed = PoiSearchResultSchema.safeParse(location);
+        if (!parsed.success) {
+          this.logger.warn('Invalid POI result from HERE', {
+            errors: parsed.error.flatten(),
+            source: feature
+          });
+          return null;
+        }
+
+        return parsed.data;
       });
+
+      return results.filter((item): item is PoiSearchResult => item !== null);
     } catch (error) {
       this.logger.error('Error fetching POI data', error);
-      throw error;
+      throw new Error('Failed to search POI');
     }
   }
 }

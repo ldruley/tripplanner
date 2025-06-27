@@ -33,17 +33,6 @@ export class MapboxPoiAdapterService {
     })();
   }
 
-  private buildUrl(endpoint: string, queryParams: Record<string, string | number>): string {
-    const url = new URL(`${this.baseUrl}/${endpoint}`);
-    url.searchParams.set('access_token', this.apiKey);
-    if (queryParams) {
-      for (const [key, value] of Object.entries(queryParams)) {
-        url.searchParams.set(key, value.toString());
-      }
-    }
-    return url.toString();
-  }
-
   async searchPoi(query: PoiSearchQueryDto): Promise<PoiSearchResult[]> {
     const url = buildUrl(this.baseUrl, this.SEARCH_URL, { q: query.search });
     this.logger.debug(`Searching POI with URL: ${url}`);
@@ -52,13 +41,13 @@ export class MapboxPoiAdapterService {
       Logger.log(response);
       return response.data.features.map((feature: any) => {
         const location: Partial<PoiSearchResult> = {
-          latitude: feature.properties.coordinates.latitude,
-          longitude: feature.properties.coordinates.longitude,
+          latitude: feature.properties?.coordinates?.latitude,
+          longitude: feature.properties?.coordinates?.longitude,
           name: feature.properties?.name || 'Unknown',
           fullAddress: feature.properties?.full_address || 'No address available',
           streetAddress: feature.properties.address || 'No street address available',
           provider: 'mapbox',
-          providerId: feature.properties.mapbox_id,
+          providerId: feature.properties?.mapbox_id,
           country: feature.properties?.context?.country?.name || 'Unknown country',
           city: feature.properties?.context?.place?.name || 'Unknown city',
           region: feature.properties?.context?.region?.name || 'Unknown region',
@@ -70,7 +59,7 @@ export class MapboxPoiAdapterService {
         return PoiSearchResultSchema.parse(location);
       });
     } catch (error) {
-      this.logger.error('Error searching POI:', error);
+      this.logger.error('Error fetching POI data', error);
       throw new Error('Failed to search POI');
     }
   }

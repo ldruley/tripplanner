@@ -1,3 +1,5 @@
+import { createHash } from 'crypto';
+
 type Coordinate = { lat: number; lng: number };
 
 type QueryValue =
@@ -59,8 +61,20 @@ function encodeValue(key: string, value: QueryValue, url: URL): void {
   url.searchParams.set(key, value.toString());
 }
 
-function buildCacheKey(ns: string, parts: unknown[]): string {
-  const suffix = parts.map((part) => {
+export function buildCacheKey(ns: string, parts: unknown[], useHash = false): string {
+  const normalizedParts = parts.map((part) => {
+    if (typeof part === 'string') {
+      return normalizeInput(part);
+    }
+    return part;
+  });
+
+  if (useHash) {
+    const hash = stableHash(normalizedParts);
+    return `${ns}:${hash}`;
+  }
+
+  const suffix = normalizedParts.map((part) => {
     if (part && typeof part === 'object') {
       return JSON.stringify(sortObjectKeys(part));
     }
@@ -88,4 +102,18 @@ function sortObjectKeys(obj: unknown): unknown {
 
   // Return primitive values as is
   return obj;
+}
+
+function stableHash(input: unknown): string {
+  return createHash('sha256')
+    .update(JSON.stringify(sortObjectKeys(input)))
+    .digest('hex');
+}
+
+function normalizeInput(input: string, collapseWhitespace = true): string {
+  let result = input.trim().toLowerCase();
+  if (collapseWhitespace) {
+    result = result.replace(/\s+/g, ' ');
+  }
+  return result;
 }
