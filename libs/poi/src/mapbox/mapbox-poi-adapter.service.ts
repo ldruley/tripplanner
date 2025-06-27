@@ -34,6 +34,7 @@ export class MapboxPoiAdapterService {
   }
 
   async searchPoi(query: PoiSearchQueryDto): Promise<PoiSearchResult[]> {
+    //TODO missing api key
     const url = buildUrl(this.baseUrl, this.SEARCH_URL, { q: query.search });
     this.logger.debug(`Searching POI with URL: ${url}`);
     try {
@@ -45,7 +46,7 @@ export class MapboxPoiAdapterService {
           longitude: feature.properties?.coordinates?.longitude,
           name: feature.properties?.name || 'Unknown',
           fullAddress: feature.properties?.full_address || 'No address available',
-          streetAddress: feature.properties.address || 'No street address available',
+          streetAddress: feature.properties?.address || 'No street address available',
           provider: 'mapbox',
           providerId: feature.properties?.mapbox_id,
           country: feature.properties?.context?.country?.name || 'Unknown country',
