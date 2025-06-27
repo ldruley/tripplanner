@@ -75,8 +75,8 @@ model Location {
   updatedAt   DateTime           @updatedAt @map("updated_at")
 
   // Relations
-  stops          Stop[] // Locations used in actual itinerary stops
-  bankedForTrips TripBankedLocation[] // Locations saved in a trip's bank
+  stops          Stop[]
+  bankedForTrips TripBankedLocation[]
 
   //@@index([geom], type: Gist, map: "location_geom_idx") // Spatial index
   @@map("locations")
@@ -93,8 +93,8 @@ model Trip {
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  stops           Stop[] // Ordered itinerary stops for this trip
-  bankedLocations TripBankedLocation[] // Locations banked for this trip but not yet in itinerary
+  stops           Stop[]
+  bankedLocations TripBankedLocation[]
   travelSegments  TravelSegment[]
 
   @@index([userId], name: "idx_trip_user")
@@ -106,7 +106,7 @@ model TripBankedLocation {
   id         String   @id @default(cuid()) @map("trip_banked_location_id")
   tripId     String   @map("trip_id")
   locationId String   @map("location_id")
-  addedAt    DateTime @default(now()) @map("added_at") // When it was added to the bank
+  addedAt    DateTime @default(now()) @map("added_at")
 
   trip     Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
   location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
@@ -154,8 +154,8 @@ model TravelSegment {
   id String @id @default(cuid()) @map("travel_segment_id")
 
   tripId            String @map("trip_id")
-  originStopId      String @unique @map("origin_stop_id") // Foreign key to the originating Stop
-  destinationStopId String @unique @map("destination_stop_id") // Foreign key to the destination Stop
+  originStopId      String @unique @map("origin_stop_id")
+  destinationStopId String @unique @map("destination_stop_id")
 
   travelMode TravelMode? @map("travel_mode")
   distance   Float?
