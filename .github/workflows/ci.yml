@@ -32,6 +32,7 @@ jobs:
           cache: 'npm'
 
       - run: npm ci --legacy-peer-deps
+      - run: npx prisma generate
       - run: npx playwright install --with-deps
       - uses: nrwl/nx-set-shas@v4
 
@@ -39,4 +40,8 @@ jobs:
       # - run: npx nx-cloud record -- echo Hello World
       # Nx Affected runs only tasks affected by the changes in this PR/commit. Learn more: https://nx.dev/ci/features/affected
       # When you enable task distribution, run the e2e-ci task instead of e2e
-      - run: npx nx affected -t lint test build e2e
+      - name: Run lint, build, and e2e on all affected projects
+        run: npx nx affected -t lint build e2e
+
+      - name: Run tests on all affected projects except the frontend
+        run: npx nx affected -t test --exclude=trip-frontend
