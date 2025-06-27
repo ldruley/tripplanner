@@ -40,6 +40,7 @@ export class TripEditorComponent {
   // Input for the initial trip data (from TripContainerComponent)
   initialTripData = input.required<Trip | null>();
 
+
   // Output event when the trip is saved
   readonly tripSaved = output<Trip>();
 
@@ -61,7 +62,6 @@ export class TripEditorComponent {
 
 
   // private tripService = inject(TripService);  For intermediate saves/persistence
-  // private matrixApiService = inject(MatrixApiService);
 
   constructor() {
       // Effect to initialize/update local state when initialTripData changes
@@ -202,6 +202,30 @@ export class TripEditorComponent {
     // Implement opening an edit modal or inline editing for the stop
   }
 
+  handleBankDragStart(draggedLocation: Location): void {
+    console.log(`TripEditor: Drag started for "${draggedLocation.name}". Triggering matrix calculation for ALL locations.`);
+
+    // 1. Get current locations from itinerary stops.
+    const itineraryLocations = this.itineraryStops()
+      .map(stop => stop.locationDetails)
+      .filter((loc): loc is Location => loc != null); // Type guard to filter out nulls
+
+    // 2. Get all locations currently in the bank.
+    const bankLocations = this.bankedLocations();
+
+    // 3. Combine and de-duplicate them to get the full set of locations.
+    // Using a Map is an easy way to ensure uniqueness based on location ID.
+    const allLocationsMap = new Map<string, Location>();
+    [...itineraryLocations, ...bankLocations].forEach(loc => {
+      allLocationsMap.set(loc.id, loc);
+    });
+
+    const uniqueLocations = Array.from(allLocationsMap.values());
+
+    // 4. Call the service with the complete, unique list.
+    this.matrixService.calculateMatrix(uniqueLocations);
+  }
+
   /**
    * Simulates fetching matrix data.
    * In a real app, this would call MatrixApiService.
@@ -248,11 +272,6 @@ export class TripEditorComponent {
       // console.log('TripEditor: Mock matrix data set.');
     }, 1000); // Simulate API delay
   }*/
-
-  handleBankDragStart(draggedLocation: Location): void {
-    console.log(`TripEditor: Drag started for "${draggedLocation.name}". Triggering matrix calculation.`);
-    this.matrixService.calculateMatrixForDrag(this.itineraryStops(), draggedLocation);
-  }
 
   /**
    * Prepares the final trip object and emits it to be saved by the parent container.

@@ -28,7 +28,7 @@ export class MatrixCalculationService {
 
   /**
    * Public-facing computed signal that transforms the raw matrix into the format
-   * the ItineraryBuilderComponent expects. Components should consume this.
+   * the ItineraryBuilderComponent expects for component rendering.
    */
   public readonly formattedMatrix = computed(() => {
     const rawMatrix = this.matrix();
@@ -38,23 +38,16 @@ export class MatrixCalculationService {
     return this.transformMatrixToSegments(rawMatrix);
   });
 
-  /**
-   * Main method to trigger a matrix calculation.
-   * It's smart enough to use the cache or avoid re-fetching for the same data set.
-   * @param itineraryStops The current list of stops in the itinerary.
-   * @param draggedLocation The new location being dragged from the bank.
-   */
-  public calculateMatrixForDrag(itineraryStops: Stop[], draggedLocation: Location): void {
-    // Consolidate all unique locations for the potential new itinerary.
-    const allLocations = this.getUniqueLocations(itineraryStops, draggedLocation);
-
-    if (allLocations.length < 2) {
-      this.matrix.set(null);
+  public calculateMatrix(allRelevantLocations: Location[]): void {
+    // The calling component is now responsible for providing the full list.
+    if (allRelevantLocations.length < 2) {
+      this.matrix.set(null); // Not enough locations to calculate a matrix
+      this.lastCalculatedKey = null;
       return;
     }
 
     // Create a stable cache key from the location IDs.
-    const cacheKey = allLocations.map(loc => loc.id).sort().join(',');
+    const cacheKey = allRelevantLocations.map(loc => loc.id).sort().join(',');
 
     // Check if this exact matrix has already been calculated and is active.
     if (cacheKey === this.lastCalculatedKey) {
@@ -70,13 +63,13 @@ export class MatrixCalculationService {
       return;
     }
 
-    // 5. If not cached, fetch from the API.
-    console.log('MatrixService: Fetching new matrix from API.');
+    // If not cached, fetch from the API.
+    console.log('MatrixService: Fetching new matrix from API for locations:', allRelevantLocations.map(l => l.name));
     this.isLoading.set(true);
     this.error.set(null);
     this.lastCalculatedKey = null; // Invalidate last key until new one succeeds
 
-    const coordinates = allLocations.map(loc => ({
+    const coordinates = allRelevantLocations.map(loc => ({
       lat: loc.latitude,
       lng: loc.longitude,
     }));
@@ -103,20 +96,6 @@ export class MatrixCalculationService {
         return EMPTY; // Gracefully end the stream on error
       })
     ).subscribe();
-  }
-
-  /**
-   * Helper to get a unique list of locations from itinerary stops and a new location.
-   */
-  private getUniqueLocations(stops: Stop[], newLocation: Location): Location[] {
-    const locationsMap = new Map<string, Location>();
-    stops.forEach(stop => {
-      if (stop.locationDetails) {
-        locationsMap.set(stop.locationDetails.id, stop.locationDetails);
-      }
-    });
-    locationsMap.set(newLocation.id, newLocation);
-    return Array.from(locationsMap.values());
   }
 
   /**
