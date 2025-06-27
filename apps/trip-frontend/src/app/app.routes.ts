@@ -25,7 +25,7 @@ export const appRoutes: Route[] = [
     path: 'profile',
     loadComponent: () =>
       import('./features/profile/containers/profile-container/profile-container.component').then(m => m.ProfileContainerComponent),
-    title: 'Profile Settings - Trip Planner',
+    title: 'My Profile - Trip Planner',
     canActivate: [authGuard]
   },
   {
@@ -35,5 +35,11 @@ export const appRoutes: Route[] = [
         (m) => m.TRIP_PLANNING_ROUTES
       ),
     canActivate: [authGuard],
+  },
+  {
+    path: 'settings',
+    loadComponent: () =>
+      import('./features/settings/containers/settings-container.component').then(m => m.SettingsContainerComponent),
+    title: 'My Settings - Trip Planner',
   },
 ];

@@ -1,0 +1,24 @@
+<div class="profile-container">
+  <div class="profile-content">
+    <div class="profile-header">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">User Settings</h1>
+      <p class="text-gray-600 mb-8">Manage preferences and display options.</p>
+    </div>
+
+    @if (vm().toastMessage) {
+      <div class="toast-container mb-6">
+        <div class="bg-green-50 border border-green-200 rounded-md p-4 flex items-start">
+          <p class="text-sm text-green-700">{{ vm().toastMessage }}</p>
+        </div>
+      </div>
+    }
+
+    <app-settings-form
+      [form]="vm().form"
+      [loading]="vm().loading"
+      [error]="vm().error"
+      (saveRequested)="onSave()"
+      (cancelRequested)="onCancel()">
+    </app-settings-form>
+  </div>
+</div>

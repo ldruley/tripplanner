@@ -1,0 +1,34 @@
+<form [formGroup]="form" (ngSubmit)="saveRequested.emit()">
+  <div class="form-section">
+    <label class="field-label">Timezone</label>
+    <input type="text" formControlName="timezone" class="form-input" [class.error]="isFieldInvalid('timezone')" />
+    <p class="field-error" *ngIf="form.get('timezone')?.errors?.['required']">Required</p>
+    <p class="field-error" *ngIf="form.get('timezone')?.errors?.['zod']">{{ form.get('timezone')?.errors?.['zod'] }}</p>
+  </div>
+
+  <div class="form-section">
+    <label class="field-label">Distance Units</label>
+    <select formControlName="distanceUnits" class="form-input">
+      <option value="km">Kilometers</option>
+      <option value="mi">Miles</option>
+    </select>
+  </div>
+
+  <div class="form-section">
+    <label class="field-label">Dark Mode</label>
+    <input type="checkbox" formControlName="darkMode" />
+  </div>
+
+  <div class="form-actions">
+    <tp-button type="submit" variant="primary" [disabled]="form.invalid || loading">
+      Save
+    </tp-button>
+    <tp-button type="button" variant="outline" (buttonClick)="cancelRequested.emit()" [disabled]="loading">
+      Cancel
+    </tp-button>
+  </div>
+
+  <div *ngIf="error" class="form-error mt-4">
+    {{ error }}
+  </div>
+</form>

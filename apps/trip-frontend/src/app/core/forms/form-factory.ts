@@ -41,3 +41,11 @@ export function buildChangePasswordForm(fb: FormBuilder): FormGroup {
     confirmPassword: ['', Validators.required],
   }, { validators: matchNewPasswords });
 }
+
+export function buildSettingsForm(fb: FormBuilder) {
+  return fb.group({
+    timezone: ['', Validators.required],
+    distanceUnits: ['km', Validators.required],
+    darkMode: [false],
+  });
+}
