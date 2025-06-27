@@ -16,6 +16,9 @@
     "token:admin": "node generate-token.js"
   },
   "private": true,
+  "prisma": {
+      "schema": "libs/shared/prisma/prisma/schema.prisma"
+  },
   "dependencies": {
     "@anatine/zod-nestjs": "^2.0.12",
     "@anatine/zod-openapi": "^2.2.8",
