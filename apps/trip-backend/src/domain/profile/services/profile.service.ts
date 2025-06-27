@@ -77,13 +77,13 @@ export class ProfileService {
       const validatedData = UpdateProfileSchema.parse(data);
 
       // Check if profile exists
-      const existingProfile = await this.profileRepository.findById(id);
+      const existingProfile = await this.profileRepository.findByUserId(id);
       if (!existingProfile) {
         throw new NotFoundException(`Profile with ID ${id} not found`);
       }
 
       // Update profile
-      const updatedProfile = await this.profileRepository.update(id, validatedData);
+      const updatedProfile = await this.profileRepository.update(existingProfile.id, validatedData);
 
       this.logger.log(`Profile updated successfully: ${id}`);
       return updatedProfile;

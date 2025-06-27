@@ -9,7 +9,7 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid()) @map("user_id")
+  id        String   @id @default(uuid()) @map("user_id")
   email     String   @unique
   password  String   @db.Text
   role      UserRole
