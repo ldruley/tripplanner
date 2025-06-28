@@ -3,6 +3,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '@trip-planner/prisma';
 import { CreateUser, SafeUser } from '@trip-planner/types';
+import { DistanceUnit } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -58,6 +59,15 @@ export class AuthService {
           displayName: `${firstName} ${lastName}`,
         },
       });
+
+      await tx.userSettings.create({
+        data: {
+          userId: user.id,
+          timezone: 'UTC', // Default timezone
+          distanceUnit: DistanceUnit.MILES,
+          darkMode: false
+        }
+      })
 
       const { password: _, ...safeUser } = user;
       return safeUser;

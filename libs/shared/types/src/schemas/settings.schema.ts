@@ -1,9 +1,6 @@
 import { z } from 'zod';
+import { DistanceUnit } from '@prisma/client';
 
-export enum DistanceUnit {
-  MILES = 'MILES',
-  KILOMETERS = 'KILOMETERS',
-}
 
 export const UserSettingsSchema = z.object({
   id: z.string().uuid(),
@@ -14,6 +11,7 @@ export const UserSettingsSchema = z.object({
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 });
+
 
 export const CreateUserSettingsSchema = UserSettingsSchema.omit({
   id: true,

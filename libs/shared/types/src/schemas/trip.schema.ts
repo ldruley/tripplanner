@@ -2,7 +2,6 @@
 
 import {z} from 'zod';
 import { StopSchema } from './stop.schema';
-//import {extendApi} from '@anatine/zod-openapi';
 
 export const TripSchema = z.object({
   id: z.string().uuid(),

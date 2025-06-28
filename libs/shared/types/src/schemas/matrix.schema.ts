@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { coordinatesArraySchema, coordinateSchema } from './base.schema';
-import { createZodDto } from '@anatine/zod-nestjs';
 
 export const MatrixCellSchema = z.object({
   time: z.number(),     // in seconds

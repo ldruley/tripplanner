@@ -1,7 +1,8 @@
 import { Controller, HttpCode, Post, UseGuards, HttpStatus, Req, Request, Body, Logger } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
-import { CreateUser, CreateUserDto, SafeUser } from '@trip-planner/types';
+import { CreateUser, SafeUser } from '@trip-planner/types';
+import { CreateUserDto } from '@trip-planner/shared/dtos';
 
 
 

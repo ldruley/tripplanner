@@ -1,13 +1,9 @@
 import { z } from 'zod';
-import { extendApi } from '@anatine/zod-openapi';
-import { UserRole } from '@prisma/client';
 import { nameSchema, emailSchema, uuidSchema, passwordSchema } from './base.schema';
+import { UserRole } from '@prisma/client';
 
-const roleSchema = extendApi(z.nativeEnum(UserRole), {
-  title: 'User Role',
-  description: 'The current role of the user account',
-  example: 'user',
-});
+
+const roleSchema = z.nativeEnum(UserRole);
 
 
 export const UserSchema = z.object({

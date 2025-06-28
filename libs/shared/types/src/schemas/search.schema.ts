@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { createZodDto } from '@anatine/zod-nestjs';
 import { citySchema, countrySchema, fullAddressSchema, latitudeSchema, longitudeSchema, postalCodeSchema, regionSchema, streetAddressSchema } from './base.schema';
 
 export const PoiSearchResultSchema = z.object({

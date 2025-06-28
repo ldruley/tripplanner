@@ -23,16 +23,17 @@ import {
 } from '@nestjs/swagger';
 import { ProfileService } from '../services/profile.service';
 import {
-  CreateProfileDto,
-  UpdateProfileDto,
-  ProfileResponseDto,
-  ProfilesListResponseDto,
-  ProfileQueryDto,
-  ErrorResponseDto, UpdateProfile
+  UpdateProfile
 } from '@trip-planner/types';
 import { JwtAuthGuard } from '../../../infrastructure/auth/guards/jwt-auth-guard';
 import { CurrentUser } from '../../../infrastructure/auth/decorators/current-user.decorator';
 import { ZodValidationPipe } from '@anatine/zod-nestjs';
+import {
+  ErrorResponseDto, ProfileQueryDto,
+  ProfileResponseDto,
+  ProfilesListResponseDto,
+  UpdateProfileDto
+} from '@trip-planner/shared/dtos';
 
 @ApiTags('Profiles')
 @Controller('profiles')
