@@ -1,0 +1,109 @@
+.edit-form {
+  @apply space-y-8;
+}
+
+.form-section {
+  @apply space-y-4;
+}
+
+.section-title {
+  @apply text-lg font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4;
+}
+
+.form-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-4;
+}
+
+.form-field {
+  @apply space-y-2;
+}
+
+.form-field.full-width {
+  @apply md:col-span-2;
+}
+
+.field-label {
+  @apply block text-sm font-medium text-gray-700;
+}
+
+.form-input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-colors;
+}
+
+.form-input.error {
+  @apply border-red-500 focus:ring-red-500 focus:border-red-500;
+}
+
+.field-error {
+  @apply text-sm text-red-600;
+}
+
+.form-error {
+  @apply bg-red-50 border border-red-200 rounded-md p-4 flex items-start gap-3;
+}
+
+.form-actions {
+  @apply flex flex-wrap gap-3 pt-6 border-t border-gray-200;
+}
+
+.dark-mode-field {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* Spacing between label and switch */
+}
+
+/* The main container for the switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px; /* Width of the switch */
+  height: 26px; /* Height of the switch */
+}
+
+/* Hide the default checkbox input */
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The track of the switch */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc; /* Color when OFF */
+  border-radius: 26px; /* Makes it pill-shaped */
+  transition: .4s;
+}
+
+/* The moving circle (thumb) of the switch */
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px; /* Size of the circle */
+  width: 20px;  /* Size of the circle */
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%; /* Makes it a circle */
+  transition: .4s;
+}
+
+/* The magic: styles for when the checkbox is CHECKED */
+input:checked + .slider {
+  background-color: #2196F3; /* Color when ON */
+}
+
+input:checked + .slider:before {
+  /* Moves the circle to the right */
+  transform: translateX(24px);
+}
+
+/* Focus style for accessibility */
+input:focus-visible + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}

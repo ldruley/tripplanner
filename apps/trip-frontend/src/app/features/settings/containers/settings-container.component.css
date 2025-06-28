@@ -1,0 +1,19 @@
+.settings-container {
+  @apply min-h-screen bg-gray-50 py-8 px-4;
+}
+
+.settings-content {
+  @apply max-w-4xl mx-auto bg-white shadow-sm rounded-lg p-6;
+}
+
+.settings-header {
+  @apply text-center mb-8;
+}
+
+.toast-container {
+  @apply mb-6;
+}
+
+.toast-message {
+  @apply bg-green-50 border border-green-200 rounded-md p-4 text-green-700 text-sm;
+}

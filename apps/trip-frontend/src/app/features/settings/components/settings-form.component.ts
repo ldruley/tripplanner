@@ -7,7 +7,8 @@ import { ButtonComponent } from '../../shared/components/button/button.component
   standalone: true,
   selector: 'app-settings-form',
   templateUrl: './settings-form.component.html',
-  imports: [NgIf, ButtonComponent, ReactiveFormsModule],
+  styleUrl: 'settings-form.component.css',
+  imports: [ButtonComponent, ReactiveFormsModule],
 })
 export class SettingsFormComponent {
   @Input() form!: FormGroup;
@@ -20,5 +21,20 @@ export class SettingsFormComponent {
   isFieldInvalid(field: string): boolean {
     const control = this.form.get(field);
     return !!(control && control.invalid && (control.dirty || control.touched));
+  }
+
+  onSave(): void {
+    if (this.form.valid) {
+      this.saveRequested.emit();
+    } else {
+      // Mark all fields as touched to show validation errors
+      Object.keys(this.form.controls).forEach(key => {
+        this.form.get(key)?.markAsTouched();
+      });
+    }
+  }
+
+  onCancel(): void {
+    this.cancelRequested.emit();
   }
 }

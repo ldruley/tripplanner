@@ -4,71 +4,80 @@ import { z } from 'zod';
 import { buildSettingsForm } from '../../../core/forms/form-factory';
 import { SettingsFormComponent } from '../components/settings-form.component';
 import { SettingsService } from '../services/settings.service';
-import { UserSettingsSchema } from '@trip-planner/types';
+import { UpdateUserSettingsSchema } from '@trip-planner/types';
 
 @Component({
   standalone: true,
   selector: 'app-settings-container',
   templateUrl: './settings-container.component.html',
+  styleUrl: './settings-container.component.css',
   imports: [SettingsFormComponent],
 })
 export class SettingsContainerComponent {
-  private fb = inject(FormBuilder);
-  private settingsService = inject(SettingsService);
+  private readonly fb = inject(FormBuilder);
+  private readonly settingsService = inject(SettingsService);
 
-  form = buildSettingsForm(this.fb);
+  public readonly form = buildSettingsForm(this.fb);
+  public readonly toastMessage = signal<string | null>(null);
 
-  private _loading = signal(true);
-  private _error = signal<string | null>(null);
-  private _toastMessage = signal<string | null>(null);
+  // Get service state
+  private readonly serviceState = this.settingsService.state$;
 
+  // Enhanced view model that includes form and toast
   readonly vm = computed(() => ({
-    loading: this._loading(),
-    error: this._error(),
-    toastMessage: this._toastMessage(),
+    loading: this.serviceState().loading,
+    error: this.serviceState().error,
+    settings: this.serviceState().settings,
+    toastMessage: this.toastMessage(),
     form: this.form,
   }));
 
   constructor() {
     this.load();
-  }
 
-  load() {
-    this._loading.set(true);
-    this.settingsService.getUserSettings().subscribe({
-      next: (settings) => {
-        this.form.patchValue(settings);
-        this._loading.set(false);
-      },
-      error: (err) => {
-        this._error.set('Failed to load settings.');
-        this._loading.set(false);
-      },
+    effect(() => {
+      const state = this.serviceState();
+
+      if (state.settings && !state.loading) {
+        // Patch form when settings are loaded
+        console.log('Patching form with settings:', state.settings);
+        // Use setTimeout to ensure form is ready
+        setTimeout(() => {
+          this.form.patchValue(state.settings!);
+          this.form.markAsPristine(); // Mark as pristine after loading
+        });
+      }
     });
   }
 
-  onSave() {
+  load(): void {
+    this.settingsService.loadSettings();
+  }
+
+  onSave(): void {
     const raw = this.form.getRawValue();
-    const result = UserSettingsSchema.safeParse(raw);
+    const result = UpdateUserSettingsSchema.safeParse(raw);
+
     if (!result.success) {
       this.mapZodErrorsToForm(result.error);
+      console.log('zod validation failed', result.error);
+      console.log('form errors', raw);
       return;
     }
 
-    this._loading.set(true);
-    this.settingsService.updateUserSettings(result.data).subscribe({
-      next: () => {
-        this._toastMessage.set('Settings saved!');
-        this._loading.set(false);
-      },
-      error: () => {
-        this._error.set('Could not save settings');
-        this._loading.set(false);
-      },
-    });
+    this.settingsService.updateSettings(result.data);
+    this.showToast('Settings saved!');
   }
 
-  private mapZodErrorsToForm(error: z.ZodError) {
+  onCancel(): void {
+    this.load();
+  }
+
+  clearToast(): void {
+    this.toastMessage.set(null);
+  }
+
+  private mapZodErrorsToForm(error: z.ZodError): void {
     const fieldErrors = error.flatten().fieldErrors;
     for (const key in fieldErrors) {
       const control = this.form.get(key);
@@ -78,11 +87,12 @@ export class SettingsContainerComponent {
     }
   }
 
-  onCancel() {
-    this.load();
-  }
+  private showToast(message: string): void {
+    this.toastMessage.set(message);
 
-  clearToast() {
-    this._toastMessage.set(null);
+    // Auto-hide toast after 3 seconds
+    setTimeout(() => {
+      this.toastMessage.set(null);
+    }, 3000);
   }
 }

@@ -1,34 +1,66 @@
-<form [formGroup]="form" (ngSubmit)="saveRequested.emit()">
+<form [formGroup]="form" (ngSubmit)="onSave()" class="edit-form">
+  <!-- Preferences Section -->
   <div class="form-section">
-    <label class="field-label">Timezone</label>
-    <input type="text" formControlName="timezone" class="form-input" [class.error]="isFieldInvalid('timezone')" />
-    <p class="field-error" *ngIf="form.get('timezone')?.errors?.['required']">Required</p>
-    <p class="field-error" *ngIf="form.get('timezone')?.errors?.['zod']">{{ form.get('timezone')?.errors?.['zod'] }}</p>
+    <h3 class="section-title">Preferences</h3>
+    <div class="form-grid">
+      <!-- Timezone -->
+      <div class="form-field">
+        <label class="field-label">Timezone</label>
+        <input
+          type="text"
+          formControlName="timezone"
+          class="form-input"
+          [class.error]="isFieldInvalid('timezone')">
+        @if (form.get('timezone')?.errors?.['required']) {
+          <p class="field-error">Timezone is required</p>
+        }
+        @if (form.get('timezone')?.errors?.['zod']; as zodError) {
+          <p class="field-error">{{ zodError }}</p>
+        }
+      </div>
+
+      <!-- Distance Units -->
+      <div class="form-field">
+        <label class="field-label">Distance Units</label>
+        <select formControlName="distanceUnit" class="form-input">
+          <option value="KILOMETERS">Kilometers</option>
+          <option value="MILES">Miles</option>
+        </select>
+      </div>
+
+      <!-- Dark Mode -->
+      <div class="form-field full-width dark-mode-field">
+        <label class="field-label" for="darkModeToggle">Dark Mode</label>
+        <label class="toggle-switch">
+          <input type="checkbox" formControlName="darkMode" id="darkModeToggle" />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
   </div>
 
-  <div class="form-section">
-    <label class="field-label">Distance Units</label>
-    <select formControlName="distanceUnits" class="form-input">
-      <option value="km">Kilometers</option>
-      <option value="mi">Miles</option>
-    </select>
-  </div>
+  <!-- Global Error -->
+  @if (error; as message) {
+    <div class="form-error">
+      {{ message }}
+    </div>
+  }
 
-  <div class="form-section">
-    <label class="field-label">Dark Mode</label>
-    <input type="checkbox" formControlName="darkMode" />
-  </div>
-
+  <!-- Actions -->
   <div class="form-actions">
-    <tp-button type="submit" variant="primary" [disabled]="form.invalid || loading">
-      Save
+    <tp-button
+      type="submit"
+      variant="primary"
+      [disabled]="form.invalid || loading"
+      [loading]="loading">
+      {{ loading ? 'Saving...' : 'Save Changes' }}
     </tp-button>
-    <tp-button type="button" variant="outline" (buttonClick)="cancelRequested.emit()" [disabled]="loading">
+    <tp-button
+      type="button"
+      variant="outline"
+      (buttonClick)="onCancel()"
+      [disabled]="loading">
       Cancel
     </tp-button>
-  </div>
-
-  <div *ngIf="error" class="form-error mt-4">
-    {{ error }}
   </div>
 </form>
