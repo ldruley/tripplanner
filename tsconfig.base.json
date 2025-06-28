@@ -24,6 +24,7 @@
       "@trip-planner/quota": ["libs/quota/src/index.ts"],
       "@trip-planner/redis": ["libs/redis/src/index.ts"],
       "@trip-planner/shared/dtos": ["libs/shared/dtos/src/index.ts"],
+      "@trip-planner/timezone": ["libs/timezone/src/index.ts"],
       "@trip-planner/types": ["libs/shared/types/src/index.ts"],
       "@trip-planner/ui": ["/libs/shared/ui/src/index.ts"],
       "@trip-planner/user-settings": ["libs/user-settings/src/index.ts"],
