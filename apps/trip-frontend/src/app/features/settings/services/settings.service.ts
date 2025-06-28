@@ -63,7 +63,6 @@ export class SettingsService {
     // RxJS Update Settings
     this.updateRequest$
       .pipe(
-        debounceTime(300),
         tap(() => {
           this.isLoading.set(true);
           this.error.set(null);
