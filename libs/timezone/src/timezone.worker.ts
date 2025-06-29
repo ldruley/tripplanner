@@ -2,18 +2,19 @@ import { Injectable, Logger, LoggerService, OnModuleInit } from '@nestjs/common'
 import { BullMQService } from '@trip-planner/bullmq';
 import { Job, Worker } from 'bullmq';
 import { ConfigService } from '@nestjs/config';
-import { TimezoneRequest, TimezoneResponse } from '@trip-planner/types';
+import { TimezoneRequest, TimezoneResponse, TimezoneResponseSchema } from '@trip-planner/types';
 import { buildUrl } from '@trip-planner/utils';
 import { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 
+@Injectable()
 export class TimezoneWorker implements OnModuleInit {
-  private worker: Worker;
-  private readonly apiKey: string;
-  private readonly baseUrl: string;
+  private worker!: Worker;
+  private apiKey!: string;
+  private baseUrl!: string;
   private readonly QUEUE_NAME = 'timezone-requests';
-  private readonly logger = new Logger(MapboxPoiAdapterService.name);
+  private readonly logger = new Logger(TimezoneWorker.name);
 
   constructor(
     private readonly bullmqService: BullMQService,
@@ -50,13 +51,14 @@ export class TimezoneWorker implements OnModuleInit {
 
     try {
       let timezoneData: TimezoneResponse;
-
+      if(query.requestId === undefined) {
+        this.logger.warn('Timezone job is missing requestId, generating a new one');
+        query.requestId = crypto.randomUUID();
+      }
       if (query.latitude !== undefined && query.longitude !== undefined) {
         timezoneData = await this.fetchTimezoneByCoordinates(query.latitude, query.longitude, query.requestId);
-      } else if (query.city) {
-        timezoneData = await this.fetchTimezoneByCity(query.city, query.requestId);
       } else { // should never happen due to validation
-        throw new Error('Either coordinates or city must be provided');
+        throw new Error('Cooridinates are required for timezone lookup');
       }
 
       // Add processing delay to ensure we don't exceed rate limit
@@ -74,21 +76,47 @@ export class TimezoneWorker implements OnModuleInit {
     longitude: number,
     requestId: string,
   ): Promise<TimezoneResponse> {
-    const url = buildUrl(this.baseUrl, '/get-time-zone', { latitude, longitude, key: this.apiKey, format: 'json', by: 'position' });
+    const url = buildUrl(this.baseUrl, '/get-time-zone', { lat: latitude, lng: longitude, key: this.apiKey, format: 'json', by: 'position' });
     this.logger.debug(`Seaching timezone with url: ${url}`);
     try {
       const response: AxiosResponse<any> = await firstValueFrom(this.httpService.get(url));
       this.logger.debug(`Timezone response: ${JSON.stringify(response.data)}`);
+      const timezone: TimezoneResponse = {
+        timezone: response.data.zoneName,
+        requestId,
+      }
+      return TimezoneResponseSchema.parse(timezone);
 
+    } catch (error) {
+      this.logger.error(`Failed to fetch timezone by coordinates: ${error}`);
+      throw new Error('Failed to fetch timezone by coordinates');
     }
-    if (!response.ok) {
-      throw new Error(`Failed to fetch timezone for coordinates: ${latitude}, ${longitude}`);
+  }
+
+  // we may be able to split out request logic if we don't need any custom logic per endpoint
+  private async fetchTimezoneByCity(
+    city: string,
+    requestId: string,
+  ): Promise<TimezoneResponse> {
+    const url = buildUrl(this.baseUrl, '/get-time-zone', { city, key: this.apiKey, format: 'json', by: 'position' });
+    this.logger.debug(`Seaching timezone with url: ${url}`);
+    try {
+      const response: AxiosResponse<any> = await firstValueFrom(this.httpService.get(url));
+      this.logger.debug(`Timezone response: ${JSON.stringify(response.data)}`);
+      const timezone: TimezoneResponse = {
+        timezone: response.data.zoneName,
+        requestId,
+      }
+      return TimezoneResponseSchema.parse(timezone);
+
+    } catch (error) {
+      this.logger.error(`Failed to fetch timezone by coordinates: ${error}`);
+      throw new Error('Failed to fetch timezone by coordinates');
     }
-    const data = await response.json();
-    return {
-      requestId,
-      ...data,
-    };
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
 }

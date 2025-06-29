@@ -1,6 +1,6 @@
 import { Controller, Get, Query, UsePipes } from '@nestjs/common';
 import { PoiService } from './poi.service';
-import { PoiSearchQuery } from '../../shared/types/src/schemas/search.schema';
+import { PoiSearchQuery, PoiSearchResult } from '../../shared/types/src/schemas/search.schema';
 import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { PoiSearchQueryDto, PoiSearchResultDto } from '@trip-planner/shared/dtos';
@@ -18,7 +18,7 @@ export class PoiController {
     type: [PoiSearchResultDto]
   })
   @Get('poi-search')
-  async poiSearch(@Query() query: PoiSearchQueryDto) {
+  async poiSearch(@Query() query: PoiSearchQueryDto): Promise<PoiSearchResult[] | null> {
     return this.poiService.poiSearch(query as PoiSearchQuery);
   }
 }

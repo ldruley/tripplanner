@@ -14,14 +14,11 @@ export class TimezoneService implements OnModuleInit, OnModuleDestroy {
   private readonly CACHE_TTL = 7 * 24 * 60 * 60;
   private readonly logger = new Logger(TimezoneService.name);
   private readonly QUEUE_NAME = 'timezone-requests';
-  private readonly apiKey: string;
-  private readonly baseUrl: string;
 
 
   constructor(
     private readonly bullmqService: BullMQService,
     private readonly redisService: RedisService,
-    private readonly configService: ConfigService,
   ) {}
 
   async onModuleInit() {
@@ -45,7 +42,9 @@ export class TimezoneService implements OnModuleInit, OnModuleDestroy {
   }
 
   async getTimezoneByCoordinates(query: TimezoneRequest): Promise<TimezoneResponse> {
-    const cacheKey = buildCacheKey('timezone:coords', [query], true);
+    // Remove requestId from query to avoid cache key issues
+    const { requestId, ...queryWithoutRequestId } = query;
+    const cacheKey = buildCacheKey('timezone:coords', [queryWithoutRequestId], true);
     const cachedResponse = await this.redisService.get<TimezoneResponse>(cacheKey);
     if (cachedResponse) {
       this.logger.debug(`Cache hit for key: ${cacheKey}`);
@@ -60,7 +59,9 @@ export class TimezoneService implements OnModuleInit, OnModuleDestroy {
         priority: 1 // TODO: This will change later likely
       }
     )
-    return  this.waitForJobCompletion(job, cacheKey);
+    const response = this.waitForJobCompletion(job, cacheKey);
+    await this.redisService.set(cacheKey, response, this.CACHE_TTL);
+    return response;
   }
 
   async getTimezoneByCity(query: TimezoneRequest): Promise<TimezoneResponse> {

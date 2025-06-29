@@ -4,13 +4,14 @@ import { PrismaModule } from '../../../../libs/shared/prisma/src';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ProfilesModule } from '../domain/profile/profiles.module';
-import { BullModule } from '@nestjs/bullmq';
 import { AuthModule } from '../infrastructure/auth/auth.module';
 import { GeocodingModule } from '../../../../libs/geocoding/src';
 import { PoiModule } from '@trip-planner/poi';
 import { MatrixRoutingModule } from '@trip-planner/matrix-routing';
 import { RedisModule } from '@trip-planner/redis';
 import { UserSettingsModule } from '@trip-planner/user-settings';
+import { BullMQModule } from '@trip-planner/bullmq';
+import { TimezoneModule } from '@trip-planner/timezone';
 
 @Module({
   imports: [
@@ -29,7 +30,9 @@ import { UserSettingsModule } from '@trip-planner/user-settings';
     PoiModule,
     MatrixRoutingModule,
     RedisModule,
-    UserSettingsModule
+    BullMQModule,
+    TimezoneModule,
+    UserSettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
