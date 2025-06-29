@@ -1,1 +1,1 @@
-export * from './lib/timezone.module';
+export * from './timezone.module';
