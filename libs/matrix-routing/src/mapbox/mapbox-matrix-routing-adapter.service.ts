@@ -5,7 +5,7 @@ import {
   Coordinate, CoordinateMatrix,
   CoordinateMatrixSchema,
   MatrixQuery,
-  toCoordinateKey
+  toCoordinateKey, toReverseCoordinateKey
 } from '@trip-planner/types';
 import { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
@@ -37,7 +37,7 @@ export class MapboxMatrixRoutingAdapterService {
   async getMatrixRouting(query: MatrixQuery): Promise<CoordinateMatrix> {
     const origins = this.buildMapboxOriginsParam(query.origins);
     Logger.log('query:' + JSON.stringify(query), MapboxMatrixRoutingAdapterService.name);
-    const url = `${this.baseUrl}/${this.matrixEndpoint}${origins}?access_token=${this.apiKey}`;
+    const url = `${this.baseUrl}/${this.matrixEndpoint}${origins}?annotations=duration,distance&access_token=${this.apiKey}`;
     this.logger.debug('URL: ' + url);
     try {
       const response: AxiosResponse<any> = await firstValueFrom(
@@ -83,6 +83,6 @@ export class MapboxMatrixRoutingAdapterService {
   }
 
   buildMapboxOriginsParam(coords: Coordinate[]): string {
-    return coords.map(toCoordinateKey).join(';');
+    return coords.map(toReverseCoordinateKey).join(';');
   }
 }

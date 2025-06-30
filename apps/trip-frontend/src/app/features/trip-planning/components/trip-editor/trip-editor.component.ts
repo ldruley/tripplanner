@@ -84,8 +84,8 @@ export class TripEditorComponent {
             // include a property for 'bankedLocations'? If so, use it here.
             // If 'bankedLocations' are purely session-based and not loaded with the trip,
             // then you should initialize it to [] only if tripId changes, or manage it outside this effect.
-            if (tripData.hasOwnProperty('bankedLocations') && Array.isArray((tripData as any).bankedLocations)) {
-              this.bankedLocations.set([...(tripData as any).bankedLocations]);
+            if ('bankedLocations' in tripData && Array.isArray(tripData.bankedLocations)) {
+              this.bankedLocations.set([...tripData.bankedLocations]);
               console.log('TripEditor: BankedLocations initialized from tripData.');
             } else {
               // If tripData doesn't contain bankedLocations, and we're loading a new trip,

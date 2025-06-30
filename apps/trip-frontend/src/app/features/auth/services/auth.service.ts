@@ -5,7 +5,7 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { jwtDecode } from 'jwt-decode';
 
-import { CreateUser, LoginUser, SafeUser } from '@trip-planner/types';
+import { CreateUser, LoginUser, SafeUser, ChangePassword } from '@trip-planner/types';
 
 import { environment } from '../../../../environments/environment';
 
@@ -157,7 +157,7 @@ export class AuthService {
     return { success: false, error: 'Not implemented' };
   }
 
-  async updatePassword(credentials: any): Promise<{ success: boolean; error?: string }> {
+  async updatePassword(credentials: ChangePassword): Promise<{ success: boolean; error?: string }> {
     console.warn('updatePassword functionality requires a backend endpoint.');
     return { success: false, error: 'Not implemented' };
   }

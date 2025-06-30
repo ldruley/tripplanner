@@ -51,19 +51,19 @@
       <h3 class="section-title">Personal Information</h3>
       <div class="info-grid">
         <div class="info-item">
-          <label class="info-label">First Name</label>
+          <span class="info-label">First Name</span>
           <span class="info-value">{{ userProfile.firstName || 'Not provided' }}</span>
         </div>
         <div class="info-item">
-          <label class="info-label">Last Name</label>
+          <span class="info-label">Last Name</span>
           <span class="info-value">{{ userProfile.lastName || 'Not provided' }}</span>
         </div>
         <div class="info-item">
-          <label class="info-label">Display Name</label>
+          <span class="info-label">Display Name</span>
           <span class="info-value">{{ userProfile.displayName || 'Not provided' }}</span>
         </div>
         <div class="info-item">
-          <label class="info-label">Email Address</label>
+          <span class="info-label">Email Address</span>
           <span class="info-value">{{ userProfile.email }}</span>
         </div>
       </div>
@@ -74,19 +74,19 @@
       <h3 class="section-title">Account Information</h3>
       <div class="info-grid">
         <div class="info-item">
-          <label class="info-label">Account Role</label>
+          <span class="info-label">Account Role</span>
           <span class="info-value">{{ getRoleDisplay() }}</span>
         </div>
         <div class="info-item">
-          <label class="info-label">Account Status</label>
+          <span class="info-label">Account Status</span>
           <span class="info-value">{{ getStatusDisplay() }}</span>
         </div>
         <div class="info-item">
-          <label class="info-label">Last Sign In</label>
+          <span class="info-label">Last Sign In</span>
           <span class="info-value">{{ formatDate(userProfile.lastSignInAt) }}</span>
         </div>
         <div class="info-item">
-          <label class="info-label">Member Since</label>
+          <span class="info-label">Member Since</span>
           <span class="info-value">{{ formatDate(userProfile.createdAt) }}</span>
         </div>
       </div>

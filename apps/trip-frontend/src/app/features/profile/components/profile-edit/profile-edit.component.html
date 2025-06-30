@@ -29,9 +29,10 @@
 
         <div class="avatar-controls">
           <div class="form-field">
-            <label class="field-label">Avatar URL</label>
+            <label class="field-label" for="avatarUrl">Avatar URL</label>
             <input
               type="url"
+              id="avatarUrl"
               formControlName="avatarUrl"
               placeholder="https://example.com/avatar.jpg"
               class="form-input"
@@ -63,9 +64,10 @@
       <div class="form-grid">
         <!-- First Name -->
         <div class="form-field">
-          <label class="field-label">First Name</label>
+          <label class="field-label" for="firstName">First Name</label>
           <input
             type="text"
+            id="firstName"
             formControlName="firstName"
             placeholder="Enter your first name"
             class="form-input"
@@ -85,9 +87,10 @@
 
         <!-- Last Name -->
         <div class="form-field">
-          <label class="field-label">Last Name</label>
+          <label class="field-label" for="lastName">Last Name</label>
           <input
             type="text"
+            id="lastName"
             formControlName="lastName"
             placeholder="Enter your last name"
             class="form-input"
@@ -107,9 +110,10 @@
 
         <!-- Display Name -->
         <div class="form-field full-width">
-          <label class="field-label">Display Name</label>
+          <label class="field-label" for="displayName">Display Name</label>
           <input
             type="text"
+            id="displayName"
             formControlName="displayName"
             placeholder="Enter your display name"
             class="form-input"
@@ -131,19 +135,19 @@
       <h3 class="section-title">Account Information</h3>
       <div class="readonly-info">
         <div class="readonly-field">
-          <label class="field-label">Email Address</label>
+          <span class="field-label">Email Address</span>
           <span class="readonly-value">{{ userProfile.email }}</span>
           <p class="field-hint">Contact support to change your email address</p>
         </div>
 
         <div class="readonly-grid">
           <div class="readonly-field">
-            <label class="field-label">Account Role</label>
+            <span class="field-label">Account Role</span>
             <span class="readonly-value">{{ getRoleDisplay() }}</span>
           </div>
 
           <div class="readonly-field">
-            <label class="field-label">Account Status</label>
+            <span class="field-label">Account Status</span>
             <span class="readonly-value">{{ getStatusDisplay() }}</span>
           </div>
         </div>
