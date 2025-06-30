@@ -5,8 +5,8 @@ import { ApiUsageService } from '../../api-usage/src/api-usage.service';
 import { HerePoiAdapterService } from './here/here-poi-adapter.service';
 import { MapboxPoiAdapterService } from './mapbox/mapbox-poi-adapter.service';
 import { mock } from 'jest-mock-extended';
-import { PoiSearchQuery, PoiSearchResultSchema } from '../../shared/types/src/schemas/search.schema';
 import { ConfigService } from '@nestjs/config';
+import { PoiSearchQuery, PoiSearchResultSchema } from '@trip-planner/types';
 
 describe('PoiService', () => {
   let service: PoiService;

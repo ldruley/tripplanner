@@ -1,11 +1,12 @@
 import { LoggerService } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { MapboxPoiAdapterService } from './mapbox-poi-adapter.service';
-import { PoiSearchQueryDto, PoiSearchResultSchema } from '../../../shared/types/src/schemas/search.schema';
 import { AxiosHeaders, AxiosResponse } from 'axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { of, throwError } from 'rxjs';
+import { PoiSearchQueryDto } from '@trip-planner/shared/dtos';
+import { PoiSearchResultSchema } from '@trip-planner/types';
 
 
 const mockLogger: LoggerService = {

@@ -4,9 +4,10 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { of, throwError } from 'rxjs';
 import { AxiosResponse } from 'axios';
-import { PoiSearchQueryDto, PoiSearchResultSchema } from '../../../shared/types/src/schemas/search.schema';
 import { AxiosHeaders } from 'axios';
 import { LoggerService } from '@nestjs/common';
+import { PoiSearchQueryDto } from '@trip-planner/shared/dtos';
+import { PoiSearchResultSchema } from '@trip-planner/types';
 
 const mockLogger: LoggerService = {
   log: jest.fn(),
