@@ -6,11 +6,15 @@
       <!-- Timezone -->
       <div class="form-field">
         <label class="field-label">Timezone</label>
-        <input
-          type="text"
+        <select
           formControlName="timezone"
           class="form-input"
           [class.error]="isFieldInvalid('timezone')">
+          <option value="" disabled>Select a timezone</option>
+          @for (timezone of timezones; track timezone.value) {
+            <option [value]="timezone.value">{{ timezone.label }}</option>
+          }
+        </select>
         @if (form.get('timezone')?.errors?.['required']) {
           <p class="field-error">Timezone is required</p>
         }

@@ -44,8 +44,8 @@ export function buildChangePasswordForm(fb: FormBuilder): FormGroup {
 
 export function buildSettingsForm(fb: FormBuilder) {
   return fb.group({
-    timezone: ['', Validators.required],
-    distanceUnit: ['', Validators.required],
+    timezone: ['Europe/London', Validators.required], // GMT/UTC equivalent
+    distanceUnit: ['MILES', Validators.required],
     darkMode: [false],
   });
 }

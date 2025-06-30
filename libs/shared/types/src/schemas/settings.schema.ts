@@ -1,11 +1,22 @@
 import { z } from 'zod';
 import { DistanceUnit } from '@prisma/client';
+import { getTimeZones } from '@vvo/tzdb';
 
+const validTimezones = getTimeZones().map(tz => tz.name);
+
+const timezoneSchema = z.string().refine(
+  (value) => {
+    return validTimezones.includes(value);
+  },
+  {
+    message: 'Invalid timezone. Must be a valid IANA timezone identifier.',
+  }
+);
 
 export const UserSettingsSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),
-  timezone: z.string().default('UTC'),
+  timezone: timezoneSchema.default('Europe/London'),
   distanceUnit: z.nativeEnum(DistanceUnit).default(DistanceUnit.MILES),
   darkMode: z.boolean().default(false),
   createdAt: z.date().optional(),
