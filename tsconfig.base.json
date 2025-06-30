@@ -17,6 +17,7 @@
     "baseUrl": ".",
     "paths": {
       "@trip-planner/api-usage": ["libs/api-usage/src/index.ts"],
+      "@trip-planner/auth": ["libs/auth/src/index.ts"],
       "@trip-planner/bullmq": ["libs/bullmq/src/index.ts"],
       "@trip-planner/geocoding": ["libs/src/geocoding/src/index.ts"],
       "@trip-planner/matrix-routing": ["libs/matrix-routing/src/index.ts"],

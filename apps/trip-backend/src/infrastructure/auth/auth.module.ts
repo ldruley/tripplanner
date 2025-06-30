@@ -5,7 +5,7 @@ import { PrismaModule } from '@trip-planner/prisma';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
-import { JwtStrategy } from './strategies/jwt.strategy';
+import { AuthModule as SharedAuthModule } from '@trip-planner/auth';
 import { LocalStrategy } from './strategies/local.strategy';
 
 @Module({
@@ -23,9 +23,10 @@ import { LocalStrategy } from './strategies/local.strategy';
       }),
       inject: [ConfigService],
     }),
+    SharedAuthModule, // Import shared auth components
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy], // Add LocalStrategy
+  providers: [AuthService, LocalStrategy], // JwtStrategy now comes from SharedAuthModule
   exports: [AuthService, PassportModule, JwtModule],
 })
 export class AuthModule {}

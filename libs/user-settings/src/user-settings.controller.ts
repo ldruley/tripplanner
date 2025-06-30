@@ -1,7 +1,6 @@
 import { Body, Controller, Get, Patch, Post, Put, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../../../apps/trip-backend/src/infrastructure/auth/guards/jwt-auth-guard';
+import { JwtAuthGuard, CurrentUser } from '@trip-planner/auth';
 import { UserSettingsService } from './user-settings.service';
-import { CurrentUser } from '../../../apps/trip-backend/src/infrastructure/auth/decorators/current-user.decorator';
 import {
   CreateUserSettings,
   SafeUser, UpdateUserSettings,

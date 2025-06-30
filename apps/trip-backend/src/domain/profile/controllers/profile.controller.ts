@@ -25,8 +25,7 @@ import { ProfileService } from '../services/profile.service';
 import {
   UpdateProfile
 } from '@trip-planner/types';
-import { JwtAuthGuard } from '../../../infrastructure/auth/guards/jwt-auth-guard';
-import { CurrentUser } from '../../../infrastructure/auth/decorators/current-user.decorator';
+import { JwtAuthGuard, CurrentUser } from '@trip-planner/auth';
 import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import {
   ErrorResponseDto, ProfileQueryDto,
