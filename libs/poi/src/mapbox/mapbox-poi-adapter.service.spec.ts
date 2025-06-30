@@ -1,4 +1,4 @@
-import { LoggerService } from '@nestjs/common';
+import { LoggerService, InternalServerErrorException, BadGatewayException, BadRequestException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { MapboxPoiAdapterService } from './mapbox-poi-adapter.service';
 import { AxiosHeaders, AxiosResponse } from 'axios';
@@ -166,6 +166,15 @@ describe('MapboxPoiAdapterService', () => {
     });
   });
 
+  it('should throw BadGatewayException if Mapbox API returns an error', async () => {
+    const error = new Error('Mapbox API failed');
+    httpService.get.mockReturnValueOnce(throwError(() => error));
+
+    await expect(service.searchPoi(query)).rejects.toThrow(BadGatewayException);
+    await expect(service.searchPoi(query)).rejects.toThrow('Failed to search POI');
+    expect(mockLogger.error).toHaveBeenCalledWith('Error fetching POI data', error, 'MapboxPoiAdapterService');
+  });
+
   describe('Configuration Errors', () => {
     it('should throw an error if MAPBOX_API_KEY is missing', async () => {
       const moduleBuilder = Test.createTestingModule({
@@ -181,6 +190,7 @@ describe('MapboxPoiAdapterService', () => {
         ],
       }).setLogger(mockLogger);
 
+      await expect(moduleBuilder.compile()).rejects.toThrow(InternalServerErrorException);
       await expect(moduleBuilder.compile()).rejects.toThrow(
         'Mapbox access token is required',
       );
@@ -200,6 +210,7 @@ describe('MapboxPoiAdapterService', () => {
         ],
       }).setLogger(mockLogger);
 
+      await expect(moduleBuilder.compile()).rejects.toThrow(InternalServerErrorException);
       await expect(moduleBuilder.compile()).rejects.toThrow(
         'Mapbox base URL is required',
       );

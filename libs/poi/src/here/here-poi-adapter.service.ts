@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, InternalServerErrorException, BadGatewayException } from '@nestjs/common';
 import { ConfigService} from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
@@ -18,7 +18,7 @@ export class HerePoiAdapterService {
   ) {
     this.apiKey = this.configService.get<string>('HERE_API_KEY') ?? (() => {
       this.logger.error('Here access token is not configured.');
-      throw new Error('Here access token is required');
+      throw new InternalServerErrorException('Here access token is required');
     })();
   }
 
@@ -63,7 +63,7 @@ export class HerePoiAdapterService {
       return results.filter((item): item is PoiSearchResult => item !== null);
     } catch (error) {
       this.logger.error('Error fetching POI data', error);
-      throw new Error('Failed to search POI');
+      throw new BadGatewayException('Failed to search POI');
     }
   }
 }

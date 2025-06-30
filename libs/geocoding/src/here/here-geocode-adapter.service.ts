@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, InternalServerErrorException, BadGatewayException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 
@@ -25,7 +25,7 @@ export class HereGeocodeAdapterService {
   ) {
     this.apiKey = this.configService.get<string>('HERE_API_KEY') ?? (() => {
       this.logger.error('Here access token is not configured');
-      throw new Error('Here access token is required');
+      throw new InternalServerErrorException('Here access token is required');
     })();
   }
 
@@ -39,7 +39,7 @@ export class HereGeocodeAdapterService {
       return this.processResponse(response);
     } catch (error) {
       this.logger.error(`Error during forward geocoding with "${query.search}"`, error);
-      throw new Error('Failed to perform forward geocoding');
+      throw new BadGatewayException('Failed to perform forward geocoding');
     }
   }
 
@@ -51,8 +51,8 @@ export class HereGeocodeAdapterService {
       );
       return this.processResponse(response);
       } catch (error) {
-      this.logger.error(`Error during forward geocoding with ${query.latitude} - ${query.longitude}`, error);
-      throw new Error('Failed to perform forward geocoding');
+      this.logger.error(`Error during reverse geocoding with ${query.latitude} - ${query.longitude}`, error);
+      throw new BadGatewayException('Failed to perform reverse geocoding');
     }
   }
 

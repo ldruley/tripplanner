@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { MapboxPoiAdapterService } from './mapbox/mapbox-poi-adapter.service';
 import { HerePoiAdapterService } from './here/here-poi-adapter.service';
-import { RedisService } from '../../redis/src/redis.service';
-import { ApiUsageService } from '../../api-usage/src/api-usage.service';
+import { ApiUsageService } from '@trip-planner/api-usage';
 import { buildCacheKey } from '@trip-planner/utils';
 import { PoiSearchQuery, PoiSearchResult } from '@trip-planner/types';
+import { RedisService } from '@trip-planner/redis';
 
 
 @Injectable()
@@ -19,12 +19,12 @@ export class PoiService {
     private readonly apiUsageService: ApiUsageService
   ) {}
 
-  async poiSearch(query: PoiSearchQuery): Promise<PoiSearchResult[] | null> {
+  async poiSearch(query: PoiSearchQuery): Promise<PoiSearchResult[]> {
     const cacheKey = buildCacheKey('poi:search', [query], true);
     return this.redisService.getOrSet(cacheKey, this.CACHE_TTL_MS, () => this.implementStrategy(query));
   }
 
-  async implementStrategy(query: PoiSearchQuery): Promise<PoiSearchResult[] | null> {
+  async implementStrategy(query: PoiSearchQuery): Promise<PoiSearchResult[]> {
     let results;
     if(await this.apiUsageService.checkQuota('here', 'poi')) {
       results = await this.hereAdapter.searchPoi(query);
@@ -33,7 +33,7 @@ export class PoiService {
       results = await this.mapboxAdapter.searchPoi(query);
       await this.apiUsageService.increment('mapbox', 'poi');
     } else {
-      throw new Error('No API quota available for POI search');
+      throw new ServiceUnavailableException('No API quota available for POI search');
     }
     return results;
   }

@@ -1,9 +1,7 @@
 import {
   Controller,
   Get,
-  Post,
   Put,
-  Delete,
   Body,
   Param,
   Query,
@@ -18,7 +16,6 @@ import {
   ApiResponse,
   ApiParam,
   ApiQuery,
-  ApiSecurity,
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ProfileService } from '../services/profile.service';

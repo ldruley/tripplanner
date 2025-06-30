@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { HereMatrixRoutingAdapterService } from './here/here-matrix-routing-adapter.service';
-import { RedisService } from '../../redis/src/redis.service';
-import { ApiUsageService } from '../../api-usage/src/api-usage.service';
+import { RedisService } from '@trip-planner/redis';
+import { ApiUsageService } from '@trip-planner/api-usage';
 import { buildCacheKey } from '@trip-planner/utils';
 import { CoordinateMatrix, MatrixQuery } from '@trip-planner/types';
 
@@ -34,7 +34,7 @@ export class MatrixRoutingService {
       results = await this.hereAdapter.getMatrixRouting(query);
       await this.apiUsageService.increment('here', 'matrix-routing');
     } else {
-      throw new Error('No API quota available for matrix routing');
+      throw new ServiceUnavailableException('No API quota available for matrix routing');
     }
     return results;
   }

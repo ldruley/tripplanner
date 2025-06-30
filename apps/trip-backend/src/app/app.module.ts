@@ -1,17 +1,17 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { PrismaModule } from '../../../../libs/shared/prisma/src';
+import { PrismaModule } from '@trip-planner/prisma';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ProfilesModule } from '../domain/profile/profiles.module';
 import { AuthModule } from '../infrastructure/auth/auth.module';
-import { GeocodingModule } from '../../../../libs/geocoding/src';
 import { PoiModule } from '@trip-planner/poi';
 import { MatrixRoutingModule } from '@trip-planner/matrix-routing';
 import { RedisModule } from '@trip-planner/redis';
 import { UserSettingsModule } from '@trip-planner/user-settings';
 import { BullMQModule } from '@trip-planner/bullmq';
 import { TimezoneModule } from '@trip-planner/timezone';
+import { GeocodingModule } from '@trip-planner/geocoding';
 
 @Module({
   imports: [

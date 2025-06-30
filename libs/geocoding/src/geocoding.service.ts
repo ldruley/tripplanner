@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { MapboxGeocodeAdapterService } from './mapbox/mapbox-geocode-adapter.service';
 import { HereGeocodeAdapterService } from './here/here-geocode-adapter.service';
-import { RedisService } from '../../redis/src/redis.service';
-import { ApiUsageService } from '../../api-usage/src/api-usage.service';
+import { RedisService } from '@trip-planner/redis';
+import { ApiUsageService } from '@trip-planner/api-usage';
 import { buildCacheKey } from '@trip-planner/utils';
 import {
   ForwardGeocodeQuery,
@@ -36,7 +36,7 @@ export class GeocodingService {
       results = await this.mapboxAdapter.forwardGeocode(query);
       await this.apiUsageService.increment("mapbox", "geocoding");
     } else {
-      throw new Error("No geocoding provider available or quota exceeded");
+      throw new ServiceUnavailableException("No geocoding provider available or quota exceeded");
     }
     return results;
   }
@@ -55,7 +55,7 @@ export class GeocodingService {
       results = await this.hereAdapter.reverseGeocode(query);
       await this.apiUsageService.increment('mapbox', 'geocoding');
     } else {
-      throw new Error('No geocoding provider available or quota exceeded');
+      throw new ServiceUnavailableException('No geocoding provider available or quota exceeded');
     }
     return results;
   }

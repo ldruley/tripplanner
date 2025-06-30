@@ -1,10 +1,9 @@
 import { PrismaClient } from '@trip-planner/prisma';
 import {
-  CreateProfile,
   Profile,
   ProfileQuery,
   UpdateProfile
-} from '../../../../../../libs/shared/types/src/schemas/profile.schema';
+} from '@trip-planner/types';
 
 
 export abstract class ProfileRepository {

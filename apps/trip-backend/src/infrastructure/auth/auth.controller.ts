@@ -4,9 +4,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { CreateUser, SafeUser } from '@trip-planner/types';
 import { CreateUserDto } from '@trip-planner/shared/dtos';
 
-
-
-
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

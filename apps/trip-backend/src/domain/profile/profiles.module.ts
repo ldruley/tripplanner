@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from '../../../../../libs/shared/prisma/src';
+import { PrismaModule } from '@trip-planner/prisma';
 import { ProfileService } from './services/profile.service';
 import { ProfileRepository } from './repositories/profile.repository';
 import { PrismaProfileRepository } from './repositories/prisma-profile.repository';

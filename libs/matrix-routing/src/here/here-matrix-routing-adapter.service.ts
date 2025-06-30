@@ -1,7 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, InternalServerErrorException, BadGatewayException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
-import { buildUrl } from '@trip-planner/utils';
 import { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -24,7 +23,7 @@ export class HereMatrixRoutingAdapterService {
   ) {
       this.apiKey = this.configService.get<string>('HERE_API_KEY') ?? (() => {
       this.logger.error('HERE_API_KEY is not set');
-      throw new Error('HERE_API_KEY is required');
+      throw new InternalServerErrorException('HERE_API_KEY is required');
     })();
   }
 
@@ -56,7 +55,7 @@ export class HereMatrixRoutingAdapterService {
       });
     } catch(error) {
       this.logger.error('Error fetching matrix data', error);
-      throw new Error('Failed to fetch matrix data from HERE API');
+      throw new BadGatewayException('Failed to fetch matrix data from HERE API');
     }
   }
 

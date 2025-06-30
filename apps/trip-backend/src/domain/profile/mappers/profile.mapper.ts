@@ -1,5 +1,5 @@
 import { Prisma, Profile as PrismaProfile } from '@trip-planner/prisma';
-import { Profile, UpdateProfile } from '@trip-planner/types'; // Zod-inferred type
+import { Profile, UpdateProfile } from '@trip-planner/types';
 
 export function toProfileDto(profile: PrismaProfile): Profile {
   return {

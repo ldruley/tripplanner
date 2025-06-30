@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, InternalServerErrorException, BadGatewayException } from '@nestjs/common';
 import { ConfigService} from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
@@ -20,12 +20,12 @@ export class MapboxPoiAdapterService {
 
     this.apiKey = this.configService.get<string>('MAPBOX_API_KEY') ?? (() => {
       this.logger.error('Mapbox access token is not configured.');
-      throw new Error('Mapbox access token is required');
+      throw new InternalServerErrorException('Mapbox access token is required');
     })();
 
     this.baseUrl = this.configService.get<string>('MAPBOX_BASE_URL') ?? (() => {
       this.logger.error('Mapbox base URL is not configured.');
-      throw new Error('Mapbox base URL is required');
+      throw new InternalServerErrorException('Mapbox base URL is required');
     })();
   }
 
@@ -36,28 +36,38 @@ export class MapboxPoiAdapterService {
     try {
       const response: AxiosResponse<any>  = await firstValueFrom(this.httpService.get(url));
       Logger.log(response);
-      return response.data.features.map((feature: any) => {
-        const location: Partial<PoiSearchResult> = {
-          latitude: feature.properties?.coordinates?.latitude,
-          longitude: feature.properties?.coordinates?.longitude,
-          name: feature.properties?.name || 'Unknown',
-          fullAddress: feature.properties?.full_address || 'No address available',
-          streetAddress: feature.properties?.address || 'No street address available',
-          provider: 'mapbox',
-          providerId: feature.properties?.mapbox_id,
-          country: feature.properties?.context?.country?.name || 'Unknown country',
-          city: feature.properties?.context?.place?.name || 'Unknown city',
-          region: feature.properties?.context?.region?.name || 'Unknown region',
-          postalCode: feature.properties?.context?.postcode?.name || 'Unknown postal code',
-          rawResponse:
-            process.env['NODE_ENV'] === 'development' ? feature : undefined,
-        };
+      return response.data.features
+        .map((feature: any) => {
+          const location: Partial<PoiSearchResult> = {
+            latitude: feature.properties?.coordinates?.latitude,
+            longitude: feature.properties?.coordinates?.longitude,
+            name: feature.properties?.name || 'Unknown',
+            fullAddress: feature.properties?.full_address || 'No address available',
+            streetAddress: feature.properties?.address || 'No street address available',
+            provider: 'mapbox',
+            providerId: feature.properties?.mapbox_id,
+            country: feature.properties?.context?.country?.name || 'Unknown country',
+            city: feature.properties?.context?.place?.name || 'Unknown city',
+            region: feature.properties?.context?.region?.name || 'Unknown region',
+            postalCode: feature.properties?.context?.postcode?.name || 'Unknown postal code',
+            rawResponse:
+              process.env['NODE_ENV'] === 'development' ? feature : undefined,
+          };
 
-        return PoiSearchResultSchema.parse(location);
-      });
+          const parsed = PoiSearchResultSchema.safeParse(location);
+          if (!parsed.success) {
+            this.logger.warn('Invalid POI result from Mapbox', {
+              errors: parsed.error.flatten(),
+              source: feature
+            });
+            return null;
+          }
+          return parsed.data;
+        })
+        .filter((result: any): result is PoiSearchResult => result !== null);
     } catch (error) {
       this.logger.error('Error fetching POI data', error);
-      throw new Error('Failed to search POI');
+      throw new BadGatewayException('Failed to search POI');
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, InternalServerErrorException, BadGatewayException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
@@ -22,7 +22,7 @@ export class MapboxGeocodeAdapterService {
   ) {
     this.apiKey = this.configService.get<string>('MAPBOX_API_KEY') ?? (() => {
       this.logger.error('Mapbox access token is not configured');
-      throw new Error('Mapbox access token is required');
+      throw new InternalServerErrorException('Mapbox access token is required');
     })();
   }
 
@@ -36,7 +36,7 @@ export class MapboxGeocodeAdapterService {
       return this.processResponse(response);
     } catch (error) {
       this.logger.error(`Error during forward geocoding with "${query.search}"`, error);
-      throw new Error('Failed to perform forward geocoding');
+      throw new BadGatewayException('Failed to perform forward geocoding');
     }
   }
 
@@ -51,7 +51,7 @@ export class MapboxGeocodeAdapterService {
       return this.processResponse(response);
     } catch (error) {
       this.logger.error(`Error during forward geocoding with "${query.latitude} - ${query.longitude}"`, error);
-      throw new Error('Failed to perform forward geocoding');
+      throw new BadGatewayException('Failed to perform reverse geocoding');
     }
   }
 

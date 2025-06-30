@@ -4,7 +4,7 @@ import { toPrismaUpdateInput, toProfileDto, toProfileDtoArray } from '../mappers
 
 import { PrismaClient } from '@prisma/client';
 import { ProfileRepository } from './profile.repository';
-import { CreateProfile, Profile, ProfileQuery, UpdateProfile } from '../../../../../../libs/shared/types/src/schemas/profile.schema';
+import { Profile, ProfileQuery, UpdateProfile } from '@trip-planner/types';
 
 @Injectable()
 export class PrismaProfileRepository implements ProfileRepository {

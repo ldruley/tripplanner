@@ -1,4 +1,4 @@
-import { Injectable, Logger, LoggerService, OnModuleInit } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, Injectable, InternalServerErrorException, Logger, OnModuleInit } from '@nestjs/common';
 import { BullMQService } from '@trip-planner/bullmq';
 import { Job, Worker } from 'bullmq';
 import { ConfigService } from '@nestjs/config';
@@ -23,7 +23,7 @@ export class TimezoneWorker implements OnModuleInit {
   ) {
     this.apiKey = this.configService.get<string>('TIMEZONEDB_API_KEY') ?? (() => {
       this.logger.error('TIMEZONEDB_API_KEY is not set');
-      throw new Error('TIMEZONEDB_API_KEY is reguired');
+      throw new InternalServerErrorException('TIMEZONEDB_API_KEY is required');
     })();
 
     this.baseUrl = this.configService.get<string>('TIMEZONEDB_BASE_URL') ?? 'https://api.timezonedb.com/v2.1';
@@ -58,7 +58,7 @@ export class TimezoneWorker implements OnModuleInit {
       if (query.latitude !== undefined && query.longitude !== undefined) {
         timezoneData = await this.fetchTimezoneByCoordinates(query.latitude, query.longitude, query.requestId);
       } else { // should never happen due to validation
-        throw new Error('Cooridinates are required for timezone lookup');
+        throw new BadRequestException('Coordinates are required for timezone lookup');
       }
 
       // Add processing delay to ensure we don't exceed rate limit
@@ -89,7 +89,7 @@ export class TimezoneWorker implements OnModuleInit {
 
     } catch (error) {
       this.logger.error(`Failed to fetch timezone by coordinates: ${error}`);
-      throw new Error('Failed to fetch timezone by coordinates');
+      throw new BadGatewayException('Failed to fetch timezone by coordinates');
     }
   }
 
@@ -110,8 +110,8 @@ export class TimezoneWorker implements OnModuleInit {
       return TimezoneResponseSchema.parse(timezone);
 
     } catch (error) {
-      this.logger.error(`Failed to fetch timezone by coordinates: ${error}`);
-      throw new Error('Failed to fetch timezone by coordinates');
+      this.logger.error(`Failed to fetch timezone by city: ${error}`);
+      throw new BadGatewayException('Failed to fetch timezone by city');
     }
   }
 

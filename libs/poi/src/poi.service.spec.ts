@@ -6,6 +6,7 @@ import { HerePoiAdapterService } from './here/here-poi-adapter.service';
 import { MapboxPoiAdapterService } from './mapbox/mapbox-poi-adapter.service';
 import { mock } from 'jest-mock-extended';
 import { ConfigService } from '@nestjs/config';
+import { ServiceUnavailableException } from '@nestjs/common';
 import { PoiSearchQuery, PoiSearchResultSchema } from '@trip-planner/types';
 
 describe('PoiService', () => {
@@ -120,10 +121,11 @@ describe('PoiService', () => {
       expect(result).toEqual(mapboxResults);
     });
 
-    it('throws error when no providers are available', async () => {
+    it('throws ServiceUnavailableException when no providers are available', async () => {
       mockApiUsageService.checkQuota.mockResolvedValue(false);
 
-      await expect(service.implementStrategy(query)).rejects.toThrow('No API quota');
+      await expect(service.implementStrategy(query)).rejects.toThrow(ServiceUnavailableException);
+      await expect(service.implementStrategy(query)).rejects.toThrow('No API quota available for POI search');
     });
   });
 
@@ -134,7 +136,7 @@ describe('PoiService', () => {
 
       const result = await service.poiSearch(query);
 
-      for (const item of result ?? []) {
+      for (const item of result) {
         const parsed = PoiSearchResultSchema.safeParse(item);
         expect(parsed.success).toBe(true);
       }
@@ -157,7 +159,7 @@ describe('PoiService', () => {
       ]);
 
       const result = await service.poiSearch(query);
-      for (const item of result ?? []) {
+      for (const item of result) {
         const parsed = PoiSearchResultSchema.safeParse(item);
         expect(parsed.success).toBe(false);
       }

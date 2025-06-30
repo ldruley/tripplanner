@@ -1,8 +1,7 @@
-// api-usage.service.ts
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { RedisService } from '../../redis/src/redis.service';
+import { RedisService } from '@trip-planner/redis';
 import { Redis } from 'ioredis';
-import { QuotaService } from '../../quota/src/quote.service';
+import { QuotaService } from '@trip-planner/quota';
 
 type Provider = 'here' | 'mapbox' | 'google';
 type Action = 'geocoding' | 'routing' | 'matrix-routing' | 'poi';

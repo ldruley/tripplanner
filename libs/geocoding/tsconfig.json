@@ -14,7 +14,7 @@
   "include": [],
   "references": [
     {
-      "path": "../../geocoding/tsconfig.lib.json"
+      "path": "./tsconfig.lib.json"
     }
   ]
 }

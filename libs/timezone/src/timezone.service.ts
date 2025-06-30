@@ -1,10 +1,9 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit, ServiceUnavailableException, RequestTimeoutException } from '@nestjs/common';
 import { BullMQService } from '@trip-planner/bullmq';
 import { RedisService } from '@trip-planner/redis';
 import { Job, Queue, QueueEvents } from 'bullmq';
-import { Coordinate, TimezoneRequest, TimezoneResponse } from '@trip-planner/types';
+import { TimezoneRequest, TimezoneResponse } from '@trip-planner/types';
 import { buildCacheKey } from '@trip-planner/utils';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class TimezoneService implements OnModuleInit, OnModuleDestroy {
@@ -59,7 +58,7 @@ export class TimezoneService implements OnModuleInit, OnModuleDestroy {
         priority: 1 // TODO: This will change later likely
       }
     )
-    const response = this.waitForJobCompletion(job, cacheKey);
+    const response = await this.waitForJobCompletion(job, cacheKey);
     await this.redisService.set(cacheKey, response, this.CACHE_TTL);
     return response;
   }
@@ -88,17 +87,26 @@ export class TimezoneService implements OnModuleInit, OnModuleDestroy {
     job: Job,
     cacheKey: string
   ): Promise<TimezoneResponse> {
-    const result = await job.waitUntilFinished(
-      this.queueEvents,
-      30000
-    );
+    try {
+      const result = await job.waitUntilFinished(
+        this.queueEvents,
+        30000
+      );
 
-    // Cache the result
-    if (result) {
+      if (!result) {
+        this.logger.error(`Job ${job.id} completed but returned no result`);
+      }
+
+      // Cache the result
       await this.redisService.set(cacheKey, result, this.CACHE_TTL);
+      return result;
+    } catch (error: any) {
+      this.logger.error(`Job ${job.id} failed or timed out:`, error);
+      if (error.message?.includes('timeout') || error.name === 'TimeoutError') {
+        throw new RequestTimeoutException('Timezone lookup request timed out');
+      }
+      throw new ServiceUnavailableException('Timezone service is currently unavailable');
     }
-
-    return result;
   }
 
   async onModuleDestroy() {

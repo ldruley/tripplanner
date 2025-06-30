@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { of, throwError } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import { AxiosHeaders } from 'axios';
-import { LoggerService } from '@nestjs/common';
+import { LoggerService, InternalServerErrorException, BadGatewayException } from '@nestjs/common';
 import { PoiSearchQueryDto } from '@trip-planner/shared/dtos';
 import { PoiSearchResultSchema } from '@trip-planner/types';
 
@@ -178,10 +178,11 @@ describe('HerePoiAdapterService', () => {
     });
   });
 
-  it('should throw if HERE API returns an error', async () => {
+  it('should throw BadGatewayException if HERE API returns an error', async () => {
     const error = new Error('HERE API failed');
     httpService.get.mockReturnValueOnce(throwError(() => error));
 
+    await expect(service.searchPoi(query)).rejects.toThrow(BadGatewayException);
     await expect(service.searchPoi(query)).rejects.toThrow('Failed to search POI');
     expect(mockLogger.error).toHaveBeenCalledWith('Error fetching POI data', error, 'HerePoiAdapterService');
   });
@@ -203,6 +204,7 @@ describe('HerePoiAdapterService', () => {
       }).setLogger(mockLogger);
 
       // Assert that the module fails to compile, which is the expected behavior
+      await expect(moduleBuilder.compile()).rejects.toThrow(InternalServerErrorException);
       await expect(moduleBuilder.compile()).rejects.toThrow(
         'Here access token is required',
       );

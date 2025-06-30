@@ -1,7 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
-import { Injectable, Logger } from '@nestjs/common';
-import { buildUrl } from '@trip-planner/utils';
+import { Injectable, Logger, InternalServerErrorException, BadGatewayException } from '@nestjs/common';
 import {
   Coordinate, CoordinateMatrix,
   CoordinateMatrixSchema,
@@ -25,12 +24,12 @@ export class MapboxMatrixRoutingAdapterService {
   ) {
       this.apiKey = this.configService.get<string>('MAPBOX_API_KEY') ?? (() => {
         this.logger.error('MAPBOX_API_KEY is not set');
-        throw new Error('MAPBOX_API_KEY is not set');
+        throw new InternalServerErrorException('MAPBOX_API_KEY is not set');
       }) ();
 
       this.baseUrl = this.configService.get<string>('MAPBOX_BASE_URL') ?? (() => {
           this.logger.error('MAPBOX_BASE_URL is not set');
-          throw new Error('MAPBOX_BASE_URL is not set');
+          throw new InternalServerErrorException('MAPBOX_BASE_URL is not set');
       }) ();
   }
 
@@ -53,7 +52,7 @@ export class MapboxMatrixRoutingAdapterService {
       });
     } catch(error) {
       this.logger.error('Error fetching matrix routing: ' + error);
-      throw new Error('Failed to fetch matrix routing from Mapbox');
+      throw new BadGatewayException('Failed to fetch matrix routing from Mapbox');
     }
   }
 
