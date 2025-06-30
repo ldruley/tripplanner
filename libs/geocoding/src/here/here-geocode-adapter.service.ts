@@ -58,23 +58,25 @@ export class HereGeocodeAdapterService {
 
   async processResponse(response: any): Promise<GeocodingResult[]> {
     if (response) {
-      return response.data.items.map((feature: any) => {
-        const location: Partial<GeocodingResult> = {
-          latitude: feature.position.lat,
-          longitude: feature.position.lng,
-          fullAddress: feature.address?.label || 'No address available',
-          streetAddress: feature.address?.houseNumber + " " + feature.address?.street || 'No street address available',
-          provider: 'here',
-          providerId: feature.id,
-          country: feature.address?.countryName || 'Unknown country',
-          city: feature.address?.city || 'Unknown city',
-          region: feature.address?.state || 'Unknown region',
-          postalCode: feature.address?.postalCode || 'Unknown postal code',
-          rawResponse:
-            process.env['NODE_ENV'] === 'development' ? feature : undefined,
-        };
-        return GeocodingResultSchema.parse(location);
-      });
+      return response.data.items
+        .filter((feature: any) => feature.position && feature.position.lat != null && feature.position.lng != null)
+        .map((feature: any) => {
+          const location: Partial<GeocodingResult> = {
+            latitude: feature.position.lat,
+            longitude: feature.position.lng,
+            fullAddress: feature.address?.label || 'No address available',
+            streetAddress: [feature.address?.houseNumber, feature.address?.street].filter(Boolean).join(' ') || 'Unknown street address',
+            provider: 'here',
+            providerId: feature.id,
+            country: feature.address?.countryName || 'Unknown country',
+            city: feature.address?.city || 'Unknown city',
+            region: feature.address?.state || 'Unknown region',
+            postalCode: feature.address?.postalCode || 'Unknown postal code',
+            rawResponse:
+              process.env['NODE_ENV'] === 'development' ? feature : undefined,
+          };
+          return GeocodingResultSchema.parse(location);
+        });
     }
     return [];
   }

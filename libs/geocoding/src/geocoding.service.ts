@@ -49,10 +49,10 @@ export class GeocodingService {
   async implementReverseGeocodeStrategy(query: ReverseGeocodeQuery): Promise<GeocodingResult[]> {
     let results: GeocodingResult[] = [];
     if(await this.apiUsageService.checkQuota('here', 'geocoding')) {
-      results = await this.mapboxAdapter.reverseGeocode(query);
+      results = await this.hereAdapter.reverseGeocode(query);
       await this.apiUsageService.increment('here', 'geocoding');
     } else if(await this.apiUsageService.checkQuota('mapbox', 'geocoding')) {
-      results = await this.hereAdapter.reverseGeocode(query);
+      results = await this.mapboxAdapter.reverseGeocode(query);
       await this.apiUsageService.increment('mapbox', 'geocoding');
     } else {
       throw new ServiceUnavailableException('No geocoding provider available or quota exceeded');

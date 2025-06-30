@@ -1,5 +1,6 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { HereMatrixRoutingAdapterService } from './here/here-matrix-routing-adapter.service';
+import { MapboxMatrixRoutingAdapterService } from './mapbox/mapbox-matrix-routing-adapter.service';
 import { RedisService } from '@trip-planner/redis';
 import { ApiUsageService } from '@trip-planner/api-usage';
 import { buildCacheKey } from '@trip-planner/utils';
@@ -13,7 +14,7 @@ export class MatrixRoutingService {
 
   constructor(
     private readonly hereAdapter: HereMatrixRoutingAdapterService,
-    private readonly mapBoxAdapter: HereMatrixRoutingAdapterService,
+    private readonly mapBoxAdapter: MapboxMatrixRoutingAdapterService,
     private readonly redisService: RedisService,
     private readonly apiUsageService: ApiUsageService
   ) {}

@@ -8,7 +8,7 @@ import { buildCacheKey } from '@trip-planner/utils';
 @Injectable()
 export class TimezoneService implements OnModuleInit, OnModuleDestroy {
   private timezoneQueue!: Queue;
-  private queueEvents!: QueueEvents;
+  private queueEvents?: QueueEvents;
 
   private readonly CACHE_TTL = 7 * 24 * 60 * 60;
   private readonly logger = new Logger(TimezoneService.name);
@@ -87,6 +87,10 @@ export class TimezoneService implements OnModuleInit, OnModuleDestroy {
     job: Job,
     cacheKey: string
   ): Promise<TimezoneResponse> {
+    if (!this.queueEvents) {
+      throw new ServiceUnavailableException('Queue events not initialized');
+    }
+    
     try {
       const result = await job.waitUntilFinished(
         this.queueEvents,
@@ -110,7 +114,9 @@ export class TimezoneService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    await this.queueEvents.close();
+    if (this.queueEvents) {
+      await this.queueEvents.close();
+    }
   }
 
   async getQueueStats() {

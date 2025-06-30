@@ -71,6 +71,6 @@ export class ApiUsageService implements OnModuleInit {
     const quota = this.quotaService.getQuota(provider, action, endpoint);
     const currentUsage = await this.getCurrent(provider, action, endpoint);
     //TODO: Better strategy for handling undefined quotas
-    return currentUsage < (quota ? quota : Number.MAX_SAFE_INTEGER) ;
+    return currentUsage < (quota !== null && quota !== undefined ? quota : Number.MAX_SAFE_INTEGER) ;
   }
 }

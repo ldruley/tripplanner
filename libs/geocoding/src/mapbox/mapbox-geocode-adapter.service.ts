@@ -57,25 +57,27 @@ export class MapboxGeocodeAdapterService {
 
   async processResponse(response: any): Promise<GeocodingResult[]> {
     if(response && response.data.features) {
-      return response.data.features.map((feature: any) => {
-        const location: Partial<GeocodingResult> = {
-          latitude: feature.properties.coordinates.latitude,
-          longitude: feature.properties.coordinates.longitude,
-          fullAddress: feature.properties?.full_address || 'No address found',
-          streetAddress: feature.properties?.name || 'No street address found',
-          provider: 'mapbox',
-          providerId: feature.id,
-          country: feature.properties?.context?.country?.name || 'No country found',
-          region: feature.properties?.context?.region?.name || 'No region found',
-          city: feature.properties?.context?.place?.name || 'No city found',
-          postalCode: feature.properties?.context?.postcode?.name || 'No postal code found',
-          rawResponse:
-            process.env['NODE_ENV'] === 'development' ? feature : undefined,
-        };
+      return response.data.features
+        .filter((feature: any) => feature.properties?.coordinates?.latitude != null && feature.properties?.coordinates?.longitude != null)
+        .map((feature: any) => {
+          const location: Partial<GeocodingResult> = {
+            latitude: feature.properties.coordinates.latitude,
+            longitude: feature.properties.coordinates.longitude,
+            fullAddress: feature.properties?.full_address || 'No address found',
+            streetAddress: feature.properties?.name || 'No street address found',
+            provider: 'mapbox',
+            providerId: feature.id,
+            country: feature.properties?.context?.country?.name || 'No country found',
+            region: feature.properties?.context?.region?.name || 'No region found',
+            city: feature.properties?.context?.place?.name || 'No city found',
+            postalCode: feature.properties?.context?.postcode?.name || 'No postal code found',
+            rawResponse:
+              process.env['NODE_ENV'] === 'development' ? feature : undefined,
+          };
 
-        // Use Zod to parse. This will throw an error if the data doesn't match our schema.
-        return GeocodingResultSchema.parse(location);
-      });
+          // Use Zod to parse. This will throw an error if the data doesn't match our schema.
+          return GeocodingResultSchema.parse(location);
+        });
     }
     return [];
   }
