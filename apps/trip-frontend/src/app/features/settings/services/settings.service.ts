@@ -3,12 +3,12 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { UpdateUserSettings } from '@trip-planner/types';
 import { Subject, of } from 'rxjs';
 import {
-  debounceTime,
   switchMap,
   catchError,
   tap,
 } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
+import { LocalStorageService } from '../../../core/services/local-storage.service';
 
 export interface SettingsState {
   settings: UpdateUserSettings | null;
@@ -16,10 +16,17 @@ export interface SettingsState {
   error: string | null;
 }
 
+export interface CachedUserSettings {
+  settings: UpdateUserSettings;
+  lastSynced: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SettingsService {
   private readonly http = inject(HttpClient);
+  private readonly localStorage = inject(LocalStorageService);
   private readonly backendApiUrl = environment.backendApiUrl;
+  private readonly SETTINGS_CACHE_KEY = 'user_settings';
 
   // Internal State Signals
   private readonly settings: WritableSignal<UpdateUserSettings | null> = signal(null);
@@ -45,18 +52,28 @@ export class SettingsService {
           this.isLoading.set(true);
           this.error.set(null);
         }),
-        switchMap(() =>
-          this.http.get<UpdateUserSettings>(`${this.backendApiUrl}/user-settings`).pipe(
+        switchMap(() => {
+          // Check localStorage first
+          const cached = this.getCachedSettings();
+          if (cached) {
+            this.settings.set(cached.settings);
+            this.isLoading.set(false);
+            return of(cached.settings);
+          }
+          
+          // Fall back to API
+          return this.http.get<UpdateUserSettings>(`${this.backendApiUrl}/user-settings`).pipe(
             tap((settings) => {
               this.settings.set(settings);
+              this.setCachedSettings(settings);
             }),
             catchError((err) => {
               this.error.set(this.getErrorMessage(err));
               return of(null);
             }),
             tap(() => this.isLoading.set(false))
-          )
-        )
+          );
+        })
       )
       .subscribe();
 
@@ -71,6 +88,7 @@ export class SettingsService {
           this.http.put<void>(`${this.backendApiUrl}/user-settings`, payload).pipe(
             tap(() => {
               this.settings.set(payload);
+              this.setCachedSettings(payload);
             }),
             catchError((err) => {
               this.error.set(this.getErrorMessage(err));
@@ -94,6 +112,32 @@ export class SettingsService {
 
   clearError(): void {
     this.error.set(null);
+  }
+
+  loadSettingsFromCache(): UpdateUserSettings | null {
+    const cached = this.getCachedSettings();
+    if (cached) {
+      this.settings.set(cached.settings);
+      return cached.settings;
+    }
+    return null;
+  }
+
+  clearSettingsCache(): void {
+    this.localStorage.remove(this.SETTINGS_CACHE_KEY);
+    this.settings.set(null);
+  }
+
+  private getCachedSettings(): CachedUserSettings | null {
+    return this.localStorage.get<CachedUserSettings>(this.SETTINGS_CACHE_KEY);
+  }
+
+  private setCachedSettings(settings: UpdateUserSettings): void {
+    const cached: CachedUserSettings = {
+      settings,
+      lastSynced: new Date().toISOString()
+    };
+    this.localStorage.set(this.SETTINGS_CACHE_KEY, cached);
   }
 
   private getErrorMessage(error: HttpErrorResponse): string {
