@@ -1,9 +1,9 @@
 .profile-display {
-  @apply p-6;
+  @apply p-6 bg-tp-bg-light dark:bg-tp-bg-secondary;
 }
 
 .profile-header {
-  @apply flex flex-col sm:flex-row items-start sm:items-center gap-6 pb-6 border-b border-gray-200 mb-6;
+  @apply flex flex-col sm:flex-row items-start sm:items-center gap-6 pb-6 border-b border-tp-border-light dark:border-tp-border mb-6;
 }
 
 .avatar-section {
@@ -15,11 +15,11 @@
 }
 
 .profile-name {
-  @apply text-2xl font-bold text-gray-900 mb-1;
+  @apply text-2xl font-bold text-tp-text-light-primary dark:text-tp-text-primary mb-1;
 }
 
 .profile-email {
-  @apply text-gray-600 mb-3;
+  @apply text-tp-text-light-secondary dark:text-tp-text-secondary mb-3;
 }
 
 .profile-badges {
@@ -31,27 +31,27 @@
 }
 
 .role-badge.admin {
-  @apply bg-purple-100 text-purple-800;
+  @apply bg-purple-100 dark:bg-purple-500/20 text-purple-800 dark:text-purple-400;
 }
 
 .role-badge.moderator {
-  @apply bg-blue-100 text-blue-800;
+  @apply bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-400;
 }
 
 .role-badge.user {
-  @apply bg-gray-100 text-gray-800;
+  @apply bg-tp-bg-light-secondary dark:bg-tp-bg-tertiary text-tp-text-light-primary dark:text-tp-text-primary;
 }
 
 .status-badge.active {
-  @apply bg-green-100 text-green-800;
+  @apply bg-green-100 dark:bg-green-500/20 text-green-800 dark:text-green-400;
 }
 
 .status-badge.suspended {
-  @apply bg-red-100 text-red-800;
+  @apply bg-red-100 dark:bg-red-500/20 text-red-800 dark:text-red-400;
 }
 
 .status-badge.pending {
-  @apply bg-yellow-100 text-yellow-800;
+  @apply bg-yellow-100 dark:bg-yellow-500/20 text-yellow-800 dark:text-yellow-400;
 }
 
 .profile-actions {
@@ -67,7 +67,7 @@
 }
 
 .section-title {
-  @apply text-lg font-semibold text-gray-900 border-b border-gray-100 pb-2;
+  @apply text-lg font-semibold text-tp-text-light-primary dark:text-tp-text-primary border-b border-tp-border-light dark:border-tp-border-subtle pb-2;
 }
 
 .info-grid {
@@ -79,11 +79,11 @@
 }
 
 .info-label {
-  @apply block text-sm font-medium text-gray-700;
+  @apply block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary;
 }
 
 .info-value {
-  @apply block text-sm text-gray-900;
+  @apply block text-sm text-tp-text-light-primary dark:text-tp-text-secondary;
 }
 
 .completion-status {

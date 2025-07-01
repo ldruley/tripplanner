@@ -1,6 +1,6 @@
 @if (isLoading()) {
   <div class="flex justify-center items-center h-64">
-    <p class="text-lg text-gray-600">Loading trip data...</p>
+    <p class="text-lg text-tp-text-light-secondary dark:text-tp-text-secondary">Loading trip data...</p>
   </div>
 } @else if (trip()) {
   <app-trip-editor
@@ -9,6 +9,6 @@
   </app-trip-editor>
 } @else {
   <div class="p-6 text-center">
-    <p class="text-lg text-red-600">Could not load trip data.</p>
+    <p class="text-lg text-red-600 dark:text-red-400">Could not load trip data.</p>
   </div>
 }

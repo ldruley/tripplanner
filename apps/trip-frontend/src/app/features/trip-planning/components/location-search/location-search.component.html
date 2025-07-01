@@ -1,24 +1,28 @@
-<div class="p-4 border rounded-md shadow-sm">
-  <h3 class="text-lg font-semibold mb-2">Add Location</h3>
+<div class="p-4 border rounded-md shadow-sm border-tp-border-light dark:border-tp-border bg-white dark:bg-tp-bg-secondary">
+  <h3 class="text-lg font-semibold mb-2 text-tp-text-light-primary dark:text-tp-text-primary">Add Location</h3>
 
   <div class="flex items-center space-x-2 mb-3">
     <button
       (click)="setSearchMode('place')"
-      [class.bg-blue-500]="searchMode() === 'place'"
+      [class.bg-tp-orange]="searchMode() === 'place'"
       [class.text-white]="searchMode() === 'place'"
-      [class.bg-gray-200]="searchMode() !== 'place'"
-      [class.hover:bg-gray-300]="searchMode() !== 'place'"
-      class="px-4 py-1.5 text-sm font-medium rounded-md transition-colors"
+      [class.bg-tp-bg-light-secondary]="searchMode() !== 'place'"
+      [class.dark:bg-tp-bg-tertiary]="searchMode() !== 'place'"
+      [class.hover:bg-tp-bg-light-tertiary]="searchMode() !== 'place'"
+      [class.dark:hover:bg-tp-bg-secondary]="searchMode() !== 'place'"
+      class="px-4 py-1.5 text-sm font-medium rounded-md transition-colors text-tp-text-light-primary dark:text-tp-text-primary"
     >
       By Place Name
     </button>
     <button
       (click)="setSearchMode('address')"
-      [class.bg-blue-500]="searchMode() === 'address'"
+      [class.bg-tp-orange]="searchMode() === 'address'"
       [class.text-white]="searchMode() === 'address'"
-      [class.bg-gray-200]="searchMode() !== 'address'"
-      [class.hover:bg-gray-300]="searchMode() !== 'address'"
-      class="px-4 py-1.5 text-sm font-medium rounded-md transition-colors"
+      [class.bg-tp-bg-light-secondary]="searchMode() !== 'address'"
+      [class.dark:bg-tp-bg-tertiary]="searchMode() !== 'address'"
+      [class.hover:bg-tp-bg-light-tertiary]="searchMode() !== 'address'"
+      [class.dark:hover:bg-tp-bg-secondary]="searchMode() !== 'address'"
+      class="px-4 py-1.5 text-sm font-medium rounded-md transition-colors text-tp-text-light-primary dark:text-tp-text-primary"
     >
       By Address
     </button>
@@ -28,7 +32,7 @@
     <input
       type="text"
       placeholder="Enter place or address..."
-      class="flex-grow px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      class="flex-grow px-3 py-2 border border-tp-border-light dark:border-tp-border rounded-md focus:outline-none focus:ring-2 focus:ring-tp-orange focus:border-transparent bg-white dark:bg-tp-bg-tertiary text-tp-text-light-primary dark:text-tp-text-primary"
       [ngModel]="searchQuery()"
       (ngModelChange)="searchQuery.set($event)"
       (keyup.enter)="performSearch()"
@@ -37,33 +41,33 @@
     <button
       (click)="performSearch()"
       [disabled]="isLoading()"
-      class="px-4 py-2 bg-blue-500 text-white font-semibold rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+      class="px-4 py-2 bg-tp-orange text-white font-semibold rounded-md hover:bg-tp-orange/90 disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <span *ngIf="!isLoading()">Search</span>
       <span *ngIf="isLoading()">Searching...</span> </button>
   </div>
 
   @if (isLoading()) {
-    <div class="text-sm text-gray-500">Loading results...</div>
+    <div class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">Loading results...</div>
   }
 
   @if (!isLoading() && searchResults().length > 0) {
-    <div class="border rounded-md max-h-60 overflow-y-auto">
-      <ul class="divide-y divide-gray-200">
+    <div class="border rounded-md max-h-60 overflow-y-auto border-tp-border-light dark:border-tp-border bg-white dark:bg-tp-bg-tertiary">
+      <ul class="divide-y divide-tp-border-light dark:divide-tp-border">
         @for (location of searchResults(); track location.id) {
           <li
             (click)="selectLocation(location)"
-            class="p-3 hover:bg-gray-100 cursor-pointer"
+            class="p-3 hover:bg-tp-bg-light-secondary dark:hover:bg-tp-bg-secondary cursor-pointer"
             role="button"
             tabindex="0"
             (keydown.enter)="selectLocation(location)"
             (keydown.space)="selectLocation(location)"
           >
-            <div class="font-medium">{{ location.name }}</div>
+            <div class="font-medium text-tp-text-light-primary dark:text-tp-text-primary">{{ location.name }}</div>
             @if (location.fullAddress) {
-              <div class="text-sm text-gray-600">{{ location.fullAddress }}</div>
+              <div class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">{{ location.fullAddress }}</div>
             } @else if (location.city || location.country) {
-              <div class="text-sm text-gray-600">
+              <div class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">
                 {{ location.city }}{{ location.city && location.country ? ', ' : '' }}{{ location.country }}
               </div>
             }
@@ -72,7 +76,7 @@
       </ul>
     </div>
   } @else if (!isLoading() && hasAttemptedSearch() && searchQuery().trim().length > 0 && !searchResults().length) {
-    <div class="text-sm text-gray-500">
+    <div class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">
       No results found for "{{ searchQuery() }}".
     </div>
   }

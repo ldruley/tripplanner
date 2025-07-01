@@ -4,7 +4,7 @@
   [cdkDropListData]="itineraryStops()"
   [cdkDropListConnectedTo]="connectedDropLists()"
   (cdkDropListDropped)="onDrop($event)"
-  class="itinerary-list space-y-2 p-2 bg-gray-100 rounded-md min-h-[200px] border border-dashed border-gray-300 hover:border-blue-400 transition-colors"
+  class="itinerary-list space-y-2 p-2 bg-tp-bg-light-secondary dark:bg-tp-bg-tertiary rounded-md min-h-[200px] border border-dashed border-tp-border-light dark:border-tp-border hover:border-tp-orange transition-colors"
 >
   @for (stop of itineraryStops(); track stop.id; let i = $index; let isLast = $last) {
     <div cdkDrag [cdkDragData]="stop" class="draggable-stop-item-wrapper">
@@ -17,13 +17,13 @@
         (editStop)="handleEditStop($event)"
       ></app-itinerary-stop>
 
-      <div *cdkDragPlaceholder class="drag-placeholder h-16 bg-blue-50 border-2 border-dashed border-blue-300 rounded-md flex items-center justify-center text-blue-500">
+      <div *cdkDragPlaceholder class="drag-placeholder h-16 bg-tp-orange/10 dark:bg-tp-orange/20 border-2 border-dashed border-tp-orange rounded-md flex items-center justify-center text-tp-orange">
         <p>Drop here</p>
       </div>
     </div>
   } @empty {
-    <div class="empty-list-message flex flex-col items-center justify-center text-gray-500 p-6 min-h-[150px]">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 mb-2 text-gray-400">
+    <div class="empty-list-message flex flex-col items-center justify-center text-tp-text-light-secondary dark:text-tp-text-secondary p-6 min-h-[150px]">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 mb-2 text-tp-text-light-tertiary dark:text-tp-text-tertiary">
         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" />
       </svg>
       <p>Your itinerary is empty.</p>

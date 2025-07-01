@@ -1,13 +1,2 @@
-:host {
-  display: block;
-}
-
-.password-toggle-btn {
-  @apply absolute inset-y-0 right-0 pr-3 flex items-center;
-  @apply hover:text-gray-600 focus:outline-none focus:text-gray-600;
-  @apply transition-colors duration-200;
-}
-
-.password-toggle-btn:focus {
-  @apply ring-2 ring-blue-500 ring-opacity-50 rounded;
-}
+/* Login form styles
+   Using global .password-toggle class from components.css */

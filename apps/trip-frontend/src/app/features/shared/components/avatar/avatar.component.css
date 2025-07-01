@@ -1,6 +1,7 @@
 /* Base avatar styles */
 .avatar, .avatar-placeholder {
   @apply relative rounded-full overflow-hidden flex items-center justify-center bg-gray-100;
+  @apply dark:bg-tp-bg-tertiary;
   transition: all 0.2s ease;
 }
 
@@ -28,6 +29,7 @@
 /* Border styling */
 .avatar-border {
   @apply border-4 border-white shadow-lg;
+  @apply dark:border-tp-bg-quaternary;
 }
 
 .avatar-xs.avatar-border, .avatar-placeholder.avatar-xs.avatar-border {

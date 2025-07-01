@@ -1,14 +1,9 @@
 .cdk-drag-placeholder {
-  opacity: 0.5;
-  background: #f0f0f0;
-  border: 1px dashed #ccc;
+  @apply opacity-50 bg-tp-bg-light-secondary dark:bg-tp-bg-tertiary border border-dashed border-tp-border-light dark:border-tp-border;
 }
 
 .cdk-drag-preview { /* Styling for the element being dragged */
-  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.1),
-  0 8px 10px 1px rgba(0, 0, 0, 0.07),
-  0 3px 14px 2px rgba(0, 0, 0, 0.06);
-  border-radius: 4px;
+  @apply shadow-xl rounded;
 }
 
 /* Make the item being dragged a bit more prominent */

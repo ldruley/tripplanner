@@ -1,7 +1,29 @@
-@plugin "daisyui";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import './components.css';
+/* Global dark mode styles */
+@layer base {
+  /* Light mode (default) */
+  html {
+    @apply bg-white text-text-main;
+  }
 
+  body {
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* Dark mode */
+  html.dark {
+    @apply bg-tp-bg-primary text-tp-text-primary;
+  }
+
+  /* Ensure smooth transitions */
+  * {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+}
 
 /* You can add global styles to this file, and also import other style files */

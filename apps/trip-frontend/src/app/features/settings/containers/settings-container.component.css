@@ -1,13 +1,13 @@
 .settings-container {
-  @apply min-h-screen bg-gray-50 py-8 px-4;
+  @apply min-h-screen bg-gray-50 dark:bg-dark-bg py-8 px-4;
 }
 
 .settings-content {
-  @apply max-w-4xl mx-auto bg-white shadow-sm rounded-lg p-6;
+  @apply max-w-4xl mx-auto bg-white dark:bg-tp-bg-secondary shadow-sm rounded-lg p-6;
 }
 
 .settings-header {
-  @apply text-center mb-8;
+  @apply text-center mb-8 ;
 }
 
 .toast-container {

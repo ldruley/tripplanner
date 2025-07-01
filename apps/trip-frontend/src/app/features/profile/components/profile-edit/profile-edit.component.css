@@ -1,9 +1,9 @@
 .profile-edit {
-  @apply p-6;
+  @apply p-6 bg-tp-bg-light dark:bg-tp-bg-secondary;
 }
 
 .edit-header {
-  @apply border-b border-gray-200 pb-6 mb-6;
+  @apply border-b border-tp-border-light dark:border-tp-border pb-6 mb-6;
 }
 
 .edit-form {
@@ -15,7 +15,7 @@
 }
 
 .section-title {
-  @apply text-lg font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4;
+  @apply text-lg font-semibold text-tp-text-light-primary dark:text-tp-text-primary border-b border-tp-border-light dark:border-tp-border-subtle pb-2 mb-4;
 }
 
 .avatar-edit-section {
@@ -31,7 +31,7 @@
 }
 
 .avatar-placeholder {
-  @apply w-20 h-20 rounded-full bg-gray-100 border-4 border-white shadow-lg flex items-center justify-center;
+  @apply w-20 h-20 rounded-full bg-tp-bg-light-secondary dark:bg-tp-bg-tertiary border-4 border-white dark:border-tp-bg-secondary shadow-lg flex items-center justify-center;
 }
 
 .avatar-controls {
@@ -55,11 +55,11 @@
 }
 
 .field-label {
-  @apply block text-sm font-medium text-gray-700;
+  @apply block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary;
 }
 
 .form-input {
-  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors;
+  @apply w-full px-3 py-2 border border-tp-border-light dark:border-tp-border rounded-md shadow-sm bg-white dark:bg-tp-bg-tertiary text-tp-text-light-primary dark:text-tp-text-primary focus:outline-none focus:ring-2 focus:ring-tp-orange focus:border-tp-orange transition-colors;
 }
 
 .form-input.error {
@@ -67,7 +67,7 @@
 }
 
 .field-hint {
-  @apply text-xs text-gray-500;
+  @apply text-xs text-tp-text-light-secondary dark:text-tp-text-muted;
 }
 
 .field-error {
@@ -87,7 +87,7 @@
 }
 
 .readonly-value {
-  @apply block text-sm text-gray-900 font-medium;
+  @apply block text-sm text-tp-text-light-primary dark:text-tp-text-primary font-medium;
 }
 
 .form-error {
@@ -95,11 +95,11 @@
 }
 
 .form-actions {
-  @apply flex flex-wrap gap-3 pt-6 border-t border-gray-200;
+  @apply flex flex-wrap gap-3 pt-6 border-t border-tp-border-light dark:border-tp-border;
 }
 
 .reset-btn {
-  @apply text-sm text-gray-600 hover:text-gray-500 disabled:text-gray-400 disabled:cursor-not-allowed;
+  @apply text-sm text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-tp-orange disabled:text-tp-text-muted disabled:cursor-not-allowed;
 }
 
 @media (max-width: 640px) {

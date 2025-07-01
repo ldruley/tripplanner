@@ -30,8 +30,7 @@ export const CreateUserSettingsSchema = UserSettingsSchema.omit({
   updatedAt: true,
 });
 
-export const UpdateUserSettingsSchema = CreateUserSettingsSchema.partial();
-
+export const UpdateUserSettingsSchema = CreateUserSettingsSchema.omit({ userId: true}).partial();
 export type UserSettings = z.infer<typeof UserSettingsSchema>;
 export type CreateUserSettings = z.infer<typeof CreateUserSettingsSchema>;
 export type UpdateUserSettings = z.infer<typeof UpdateUserSettingsSchema>;

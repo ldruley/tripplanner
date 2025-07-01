@@ -7,23 +7,29 @@
 /* Variants */
 .btn-primary {
   @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+  @apply dark:bg-tp-orange dark:hover:bg-tp-orange-hover dark:focus:ring-tp-border;
 }
 
 .btn-secondary {
   @apply bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500;
+  @apply dark:bg-gray-500 dark:hover:bg-gray-600 dark:focus:ring-gray-400;
 }
 
 .btn-outline {
   @apply border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500;
+  @apply dark:border-tp-bg-quaternary dark:bg-tp-bg-tertiary dark:text-tp-text-secondary dark:hover:bg-tp-bg-quaternary dark:focus:shadow-tp-orange-hover;
 }
 
 .btn-ghost {
   @apply text-gray-700 hover:bg-gray-100 focus:ring-gray-500;
+  @apply dark:text-gray-200 dark:hover:bg-gray-800 dark:focus:ring-gray-400;
 }
 
 .btn-danger {
   @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+  @apply dark:bg-red-500 dark:hover:bg-red-600 dark:focus:ring-red-400;
 }
+
 
 /* Sizes */
 .btn-sm {

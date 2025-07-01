@@ -8,6 +8,7 @@ import { jwtDecode } from 'jwt-decode';
 import { CreateUser, LoginUser, SafeUser, ChangePassword } from '@trip-planner/types';
 
 import { environment } from '../../../../environments/environment';
+import { SettingsService } from '../../settings/services/settings.service';
 
 export interface LoginCredentials {
   email: string;
@@ -47,6 +48,7 @@ export interface AuthState {
 export class AuthService {
   private readonly router = inject(Router);
   private readonly http = inject(HttpClient);
+  private readonly settingsService = inject(SettingsService);
   private readonly apiUrl = `${environment.backendApiUrl}/auth`;
   private readonly TOKEN_KEY = 'auth_token';
 
@@ -119,6 +121,8 @@ export class AuthService {
 
   signOut(): void {
     localStorage.removeItem(this.TOKEN_KEY);
+    // Clear settings cache on logout
+    this.settingsService.clearSettingsCache();
     this.authStateSubject.next({ user: null, loading: false, error: null });
     this.router.navigate(['/auth/login']);
   }
@@ -128,6 +132,10 @@ export class AuthService {
     const decodedToken = jwtDecode<JwtPayload>(token);
     const user = this.mapPayloadToSafeUser(decodedToken);
     this.authStateSubject.next({ user, loading: false, error: null });
+    
+    // Load settings from database and cache them
+    this.settingsService.loadSettings();
+    
     this.handleRedirect();
   }
 

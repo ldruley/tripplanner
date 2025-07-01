@@ -1,25 +1,25 @@
-<div class="container mx-auto p-4 md:p-6 space-y-6">
+<div class="container mx-auto p-4 md:p-6 space-y-6 bg-tp-bg-light dark:bg-tp-bg-primary">
   <header class="mb-6">
     <input
       type="text"
       aria-label="Trip Name"
       placeholder="Trip Name (e.g., Summer Vacation)"
-      class="text-3xl font-bold text-gray-800 border-b-2 border-transparent focus:border-blue-500 outline-none w-full"
+      class="text-3xl font-bold text-tp-text-light-primary dark:text-tp-text-primary border-b-2 border-transparent focus:border-tp-orange outline-none w-full bg-transparent"
       [ngModel]="currentTripName()"
       (ngModelChange)="currentTripName.set($event)"
     />
     <textarea
       aria-label="Trip Description"
       placeholder="Trip description (optional)"
-      class="mt-2 text-sm text-gray-600 border border-gray-300 rounded-md p-2 focus:border-blue-500 outline-none w-full"
+      class="mt-2 text-sm text-tp-text-light-secondary dark:text-tp-text-secondary border border-tp-border-light dark:border-tp-border rounded-md p-2 focus:border-tp-orange outline-none w-full bg-white dark:bg-tp-bg-secondary"
       [ngModel]="currentTripDescription()"
       (ngModelChange)="currentTripDescription.set($event)"
       rows="2">
     </textarea>
   </header>
 
-  <section class="p-4 bg-white shadow-lg rounded-lg mb-6">
-    <h2 class="text-xl font-semibold mb-4 text-gray-700">Add Locations</h2>
+  <section class="p-4 bg-white dark:bg-tp-bg-secondary shadow-lg rounded-lg mb-6 border border-tp-border-light dark:border-tp-border">
+    <h2 class="text-xl font-semibold mb-4 text-tp-text-light-primary dark:text-tp-text-primary">Add Locations</h2>
     <app-location-search
       (locationSelected)="onLocationSelectedFromSearch($event)">
     </app-location-search>
@@ -50,10 +50,10 @@
     </div>
   </div>
 
-  @if (tripId()) { <footer class="mt-8 pt-4 border-t">
+  @if (tripId()) { <footer class="mt-8 pt-4 border-t border-tp-border-light dark:border-tp-border">
     <button
       (click)="saveTrip()"
-      class="px-6 py-2 bg-green-500 text-white font-semibold rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
+      class="px-6 py-2 bg-green-500 dark:bg-tp-orange text-white font-semibold rounded-md hover:bg-green-600 dark:hover:bg-tp-orange/90 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
       Save Trip
     </button>
   </footer>
