@@ -9,6 +9,7 @@ import {
 } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { LocalStorageService } from '../../../core/services/local-storage.service';
+import { ThemeService } from '../../../core/services/theme.service';
 
 export interface SettingsState {
   settings: UpdateUserSettings | null;
@@ -25,6 +26,7 @@ export interface CachedUserSettings {
 export class SettingsService {
   private readonly http = inject(HttpClient);
   private readonly localStorage = inject(LocalStorageService);
+  private readonly themeService = inject(ThemeService);
   private readonly backendApiUrl = environment.backendApiUrl;
   private readonly SETTINGS_CACHE_KEY = 'user_settings';
 
@@ -66,6 +68,7 @@ export class SettingsService {
             tap((settings) => {
               this.settings.set(settings);
               this.setCachedSettings(settings);
+              this.syncTheme(settings);
             }),
             catchError((err) => {
               this.error.set(this.getErrorMessage(err));
@@ -89,6 +92,7 @@ export class SettingsService {
             tap(() => {
               this.settings.set(payload);
               this.setCachedSettings(payload);
+              this.syncTheme(payload);
             }),
             catchError((err) => {
               this.error.set(this.getErrorMessage(err));
@@ -118,6 +122,7 @@ export class SettingsService {
     const cached = this.getCachedSettings();
     if (cached) {
       this.settings.set(cached.settings);
+      this.syncTheme(cached.settings);
       return cached.settings;
     }
     return null;
@@ -138,6 +143,13 @@ export class SettingsService {
       lastSynced: new Date().toISOString()
     };
     this.localStorage.set(this.SETTINGS_CACHE_KEY, cached);
+  }
+
+  private syncTheme(settings: UpdateUserSettings): void {
+    if (settings.darkMode !== undefined) {
+      const theme = settings.darkMode ? 'dark' : 'light';
+      this.themeService.updateThemeInStorage(theme);
+    }
   }
 
   private getErrorMessage(error: HttpErrorResponse): string {

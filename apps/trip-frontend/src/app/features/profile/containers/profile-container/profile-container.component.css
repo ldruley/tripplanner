@@ -1,5 +1,5 @@
 .profile-container {
-  @apply min-h-screen bg-gray-50 py-8 px-4;
+  @apply min-h-screen bg-tp-bg-light dark:bg-tp-bg-primary py-8 px-4;
 }
 
 .profile-content {
@@ -35,7 +35,7 @@
 }
 
 .profile-content-wrapper {
-  @apply bg-white rounded-lg shadow-sm;
+  @apply bg-white dark:bg-tp-bg-secondary rounded-lg shadow-sm border border-tp-border-light dark:border-tp-border;
 }
 
 .profile-footer {

@@ -5,11 +5,13 @@ import { ButtonComponent } from '../button/button.component';
 import { AuthService } from '../../../auth/services/auth.service';
 import { AvatarComponent } from '../avatar/avatar.component';
 import { ProfileService } from '../../../profile/services/profile.service';
+import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
+import { DropdownComponent, DropdownItem } from '../dropdown/dropdown.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-header',
-  imports: [CommonModule, ButtonComponent, AvatarComponent],
+  imports: [CommonModule, ButtonComponent, AvatarComponent, ThemeToggleComponent, DropdownComponent],
   standalone: true,
   templateUrl: './header.component.html',
   styleUrl: './header.component.css',
@@ -25,6 +27,31 @@ export class HeaderComponent {
 
   public readonly isAuthenticated = computed(() => !!this.authState()?.user);
   public readonly user = computed(() => this.authState()?.user);
+
+  public isProfileDropdownOpen = false;
+  public profileDropdownItems: DropdownItem[] = [
+    {
+      id: 'profile',
+      label: 'Profile',
+      action: () => this.onProfile()
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      action: () => this.onSettings()
+    },
+    {
+      id: 'divider',
+      label: '',
+      divider: true,
+      action: () => {}
+    },
+    {
+      id: 'logout',
+      label: 'Logout',
+      action: () => this.onSignOut()
+    }
+  ];
 
   public readonly userAvatarUrl = computed(() => {
     return this.userProfile()?.avatarUrl || null;
@@ -78,5 +105,25 @@ export class HeaderComponent {
   onSignOut(): void {
     this.authService.signOut();
     // Navigation is handled automatically by the AuthService upon state change
+  }
+
+  onSettings(): void {
+    this.router.navigate(['/settings']).catch(err => {
+      console.error('Navigation failed:', err);
+    });
+  }
+
+  onNewTrip(): void {
+    this.router.navigate(['/trip-planning/new']).catch(err => {
+      console.error('Navigation failed:', err);
+    });
+  }
+
+  toggleProfileDropdown(): void {
+    this.isProfileDropdownOpen = !this.isProfileDropdownOpen;
+  }
+
+  closeProfileDropdown(): void {
+    this.isProfileDropdownOpen = false;
   }
 }

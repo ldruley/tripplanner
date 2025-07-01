@@ -2,14 +2,14 @@
   <div class="profile-content">
     <!-- Header -->
     <div class="profile-header">
-      <h1 class="text-3xl font-bold text-gray-900 mb-2">Profile Settings</h1>
-      <p class="text-gray-600 mb-8">Manage your account information and preferences.</p>
+      <h1 class="text-3xl font-bold text-tp-text-light-primary dark:text-tp-text-primary mb-2">Profile Settings</h1>
+      <p class="text-tp-text-light-secondary dark:text-tp-text-secondary mb-8">Manage your account information and preferences.</p>
     </div>
 
     <!-- Toast Message -->
     @if (toastMessage()) {
       <div class="toast-container mb-6">
-        <div class="bg-green-50 border border-green-200 rounded-md p-4 flex items-start">
+        <div class="alert-success">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-400 mt-0.5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -24,14 +24,14 @@
     @if (state().loading && !state().userProfile) {
       <div class="loading-container">
         <app-loading-spinner></app-loading-spinner>
-        <p class="text-gray-600 mt-4">Loading your profile...</p>
+        <p class="text-tp-text-light-secondary dark:text-tp-text-secondary mt-4">Loading your profile...</p>
       </div>
     }
 
     <!-- Error State -->
     @if (state().error && !state().userProfile) {
       <div class="error-container">
-        <div class="bg-red-50 border border-red-200 rounded-md p-4 flex items-start">
+        <div class="alert-error">
           <!-- ... svg icon ... -->
           <div>
             <h3 class="text-sm font-medium text-red-800">Error loading profile</h3>

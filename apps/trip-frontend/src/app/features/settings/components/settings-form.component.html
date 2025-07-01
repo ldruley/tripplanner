@@ -9,7 +9,7 @@
         <select
           id="timezone"
           formControlName="timezone"
-          class="form-input"
+          class="form-input dark:bg-zinc-300"
           [class.error]="isFieldInvalid('timezone')">
           <option value="" disabled>Select a timezone</option>
           @for (timezone of timezones; track timezone.value) {
@@ -27,7 +27,7 @@
       <!-- Distance Units -->
       <div class="form-field">
         <label class="field-label" for="distanceUnit">Distance Units</label>
-        <select id="distanceUnit" formControlName="distanceUnit" class="form-input">
+        <select id="distanceUnit" formControlName="distanceUnit" class="form-input dark:bg-zinc-300">
           <option value="KILOMETERS">Kilometers</option>
           <option value="MILES">Miles</option>
         </select>

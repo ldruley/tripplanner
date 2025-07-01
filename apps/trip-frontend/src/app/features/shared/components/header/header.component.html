@@ -1,39 +1,55 @@
-
-<header class="header-container">
+<header class="header-container bg-white dark:bg-tp-bg-secondary">
   <div class="header-content">
-    <!-- Logo and Title -->
+    <!-- Logo and Title with left edge spacing -->
     <div class="header-left">
-      <button (click)="onHome()" class="logo-button">
-        <!-- Replace -->
+      <button (click)="onHome()" class="logo-button text-text-main dark:text-tp-text-primary">
         <svg class="logo-svg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.5-10.5h-7a2.25 2.25 0 00-2.25 2.25v10.5a2.25 2.25 0 002.25 2.25h7.5a2.25 2.25 0 002.25-2.25v-10.5a2.25 2.25 0 00-2.25-2.25z" />
         </svg>
         <span class="logo-text">TripPlanner</span>
       </button>
+      
+      <!-- Welcome text with New Trip button -->
+      @if (isAuthenticated()) {
+        <div class="welcome-section">
+          <span class="welcome-text text-text-muted dark:text-tp-text-secondary">Welcome, {{ userDisplayName() }}</span>
+          <app-button
+            variant="primary"
+            size="sm"
+            (buttonClick)="onNewTrip()">
+            New Trip
+          </app-button>
+        </div>
+      }
     </div>
 
     <!-- Right Side Actions -->
     <div class="header-right">
+      <!-- Theme Toggle -->
+      <app-theme-toggle></app-theme-toggle>
+
       <!-- Authenticated User View -->
       @if (isAuthenticated()) {
-        <div class="user-menu">
-          <span class="user-greeting">Welcome, {{ userDisplayName() }}</span>
-          <div class="user-actions">
-            <button (click)="onProfile()" class="profile-button">
-              <app-avatar
-                [src]="userAvatarUrl()"
-                [alt]="userDisplayName() + ' avatar'"
-                size="sm"
-                [showBorder]="true"
-              ></app-avatar>
-            </button>
-            <app-button
-              variant="outline"
+        <!-- Profile Avatar with Dropdown -->
+        <div class="profile-dropdown-container" #profileContainer>
+          <button 
+            (click)="toggleProfileDropdown()" 
+            class="profile-button"
+            #profileTrigger>
+            <app-avatar
+              [src]="userAvatarUrl()"
+              [alt]="userDisplayName() + ' avatar'"
               size="sm"
-              (buttonClick)="onSignOut()">
-              Sign Out
-            </app-button>
-          </div>
+              [showBorder]="true"
+            ></app-avatar>
+          </button>
+          
+          <app-dropdown
+            [items]="profileDropdownItems"
+            [isOpen]="isProfileDropdownOpen"
+            [triggerElement]="profileTrigger"
+            (closeDropdown)="closeProfileDropdown()"
+          ></app-dropdown>
         </div>
       } @else {
         <!-- Unauthenticated User View -->

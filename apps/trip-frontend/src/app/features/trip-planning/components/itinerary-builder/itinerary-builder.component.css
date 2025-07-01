@@ -13,8 +13,5 @@
 
 /* CDK adds classes like cdk-drag-preview, cdk-drag-animating, cdk-drop-list-dragging */
 .cdk-drag-preview { /* Style for the element being dragged (the clone) */
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-  border-radius: 8px;
-  background: white; /* Ensure it has a background */
-  opacity: 0.9;
+  @apply shadow-lg rounded-lg bg-white dark:bg-tp-bg-secondary opacity-90;
 }

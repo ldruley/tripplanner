@@ -1,28 +1,33 @@
 /*
- *  Corrected CSS for header.component.css
+ *  Updated CSS for header.component.css - full width header
  */
 
 .header-container {
-  /* This main container centers the content and provides padding */
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
+  /* Full width header that extends to page edges */
+  width: 100%;
   height: 64px;
-  /* Use Flexbox to manage the layout of the direct child (.header-content) */
   display: flex;
   align-items: center;
   border-bottom: 1px solid #e5e7eb;
+  padding: 0;
 }
 
 .header-content {
-  /* This is the key container for the left/right sections */
+  /* Full width container with edge spacing */
   display: flex;
   align-items: center;
-  justify-content: space-between; /* This pushes the logo and actions to opposite ends */
+  justify-content: space-between;
   width: 100%;
+  padding: 0 1.5rem; /* Edge spacing for content */
 }
 
-/* Left side styling (Logo and Title) */
+/* Left side styling - Logo, Title, and Welcome text */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 2rem; /* Space between logo and welcome text */
+}
+
 .header-left .logo-button {
   display: flex;
   align-items: center;
@@ -31,7 +36,6 @@
   border: none;
   cursor: pointer;
   padding: 0;
-  color: #1f2937;
   transition: opacity 0.2s ease;
 }
 
@@ -49,29 +53,29 @@
   font-weight: 600;
 }
 
+/* Welcome section with text and New Trip button */
+.welcome-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* Space between welcome text and New Trip button */
+}
 
-/* Right side styling (User Menu or Guest Actions) */
+.welcome-text {
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+
+/* Right side styling - Theme toggle and Profile dropdown */
 .header-right {
   display: flex;
   align-items: center;
+  gap: 1rem;
 }
 
-/* Styles for the authenticated user view */
-.user-menu {
-  display: flex;
-  align-items: center;
-  gap: 1rem; /* Space between "Welcome" text and the buttons */
-}
-
-.user-greeting {
-  font-size: 0.875rem;
-  color: #4b5563;
-}
-
-.user-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem; /* Space between avatar and Sign Out button */
+/* Profile dropdown container */
+.profile-dropdown-container {
+  position: relative;
 }
 
 .profile-button {
@@ -79,7 +83,12 @@
   border: none;
   padding: 0;
   cursor: pointer;
-  border-radius: 9999px; /* Make it round */
+  border-radius: 9999px;
+  transition: opacity 0.2s ease;
+}
+
+.profile-button:hover {
+  opacity: 0.8;
 }
 
 /* Styles for the unauthenticated user view */
