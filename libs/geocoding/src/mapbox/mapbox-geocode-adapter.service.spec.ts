@@ -43,6 +43,7 @@ describe('MapboxGeocodeAdapterService', () => {
           properties: {
             name: 'New York',
             full_address: 'New York, NY, USA',
+            mapbox_id: 'mapbox123',
             coordinates: {
               latitude: 40.7128,
               longitude: -74.0060
@@ -75,6 +76,7 @@ describe('MapboxGeocodeAdapterService', () => {
           properties: {
             name: 'Broadway',
             full_address: 'Broadway, New York, NY, USA',
+            mapbox_id: 'mapbox456',
             coordinates: {
               latitude: 40.7128,
               longitude: -74.0060
@@ -198,6 +200,7 @@ describe('MapboxGeocodeAdapterService', () => {
               properties: {
                 name: 'Incomplete Location',
                 full_address: 'Incomplete Location',
+                mapbox_id: 'mapbox789',
                 coordinates: {
                   latitude: 40.7128,
                   longitude: -74.0060
@@ -442,6 +445,7 @@ describe('MapboxGeocodeAdapterService', () => {
               properties: {
                 name: 'Valid Location',
                 full_address: 'Valid Location, USA',
+                mapbox_id: 'valid123',
                 coordinates: {
                   latitude: 40.7128,
                   longitude: -74.0060
@@ -487,6 +491,7 @@ describe('MapboxGeocodeAdapterService', () => {
               properties: {
                 name: 'Test Location',
                 full_address: 'Test Location, USA',
+                mapbox_id: 'coord123',
                 coordinates: {
                   latitude: 37.7749,
                   longitude: -122.4194
@@ -520,6 +525,7 @@ describe('MapboxGeocodeAdapterService', () => {
               properties: {
                 name: 'Main Street',
                 full_address: 'Main St, City, State',
+                mapbox_id: 'street123',
                 coordinates: {
                   latitude: 40.7128,
                   longitude: -74.0060

@@ -185,7 +185,7 @@ describe('TimezoneWorker', () => {
 
     it('should generate requestId when missing', async () => {
       // Arrange
-      const requestWithoutId: TimezoneRequest = {
+      const requestWithoutId: Partial<TimezoneRequest> & { latitude: number; longitude: number } = {
         latitude: 40.7128,
         longitude: -74.0060
       };
@@ -206,7 +206,7 @@ describe('TimezoneWorker', () => {
       const processorFunction = bullmqService.createWorker.mock.calls[0][0].processor;
 
       // Act
-      const result = await processorFunction(mockJob);
+      const result = await processorFunction(mockJob) as TimezoneResponse;
 
       // Assert
       expect(result.requestId).toBe(mockUuid);

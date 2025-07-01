@@ -134,7 +134,7 @@ describe('MapboxMatrixRoutingAdapterService', () => {
 
       // Assert
       expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('https://api.mapbox.com/directions-matrix/v1/mapbox/driving/40.7128,-74.006;34.0522,-118.2437?access_token=test-mapbox-api-key')
+        expect.stringContaining('https://api.mapbox.com/directions-matrix/v1/mapbox/driving/-74.006,40.7128;-118.2437,34.0522?annotations=duration,distance&access_token=test-mapbox-api-key')
       );
     });
 
@@ -287,7 +287,7 @@ describe('MapboxMatrixRoutingAdapterService', () => {
       const result = service.buildMapboxOriginsParam(coordinates);
 
       // Assert
-      expect(result).toBe('40.7128,-74.006;34.0522,-118.2437');
+      expect(result).toBe('-74.006,40.7128;-118.2437,34.0522');
     });
 
     it('should handle single coordinate', () => {
@@ -298,7 +298,7 @@ describe('MapboxMatrixRoutingAdapterService', () => {
       const result = service.buildMapboxOriginsParam(coordinates);
 
       // Assert
-      expect(result).toBe('40.7128,-74.006');
+      expect(result).toBe('-74.006,40.7128');
     });
 
     it('should handle multiple coordinates', () => {
@@ -313,7 +313,7 @@ describe('MapboxMatrixRoutingAdapterService', () => {
       const result = service.buildMapboxOriginsParam(coordinates);
 
       // Assert
-      expect(result).toBe('40.7128,-74.006;34.0522,-118.2437;41.8781,-87.6298');
+      expect(result).toBe('-74.006,40.7128;-118.2437,34.0522;-87.6298,41.8781');
     });
 
     it('should handle coordinates with more decimal places', () => {
@@ -324,7 +324,7 @@ describe('MapboxMatrixRoutingAdapterService', () => {
       const result = service.buildMapboxOriginsParam(coordinates);
 
       // Assert
-      expect(result).toBe('40.712776,-74.005974');
+      expect(result).toBe('-74.005974,40.712776');
     });
   });
 
@@ -443,7 +443,7 @@ describe('MapboxMatrixRoutingAdapterService', () => {
         expect.stringContaining('directions-matrix/v1/mapbox/driving/')
       );
       expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('40.7128,-74.006;34.0522,-118.2437')
+        expect.stringContaining('-74.006,40.7128;-118.2437,34.0522')
       );
       expect(httpService.get).toHaveBeenCalledWith(
         expect.stringContaining('access_token=test-mapbox-api-key')
