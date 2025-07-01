@@ -1,0 +1,21 @@
+@if (isOpen) {
+  <div class="absolute top-full right-0 z-50 mt-2">
+    <div class="dropdown-menu min-w-48 border bg-white dark:bg-tp-bg-tertiary border-gray-200 dark:border-tp-border shadow-lg rounded-lg overflow-hidden">
+      @for (item of items; track item.id) {
+        @if (item.divider) {
+          <hr class="my-1 border-t border-gray-200 dark:border-tp-border-subtle">
+        } @else {
+          <button
+            class="dropdown-item w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-tp-text-primary hover:bg-gray-50 dark:hover:bg-tp-bg-quaternary transition-colors duration-150 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed border-none bg-transparent cursor-pointer focus:outline-none focus:bg-gray-50 dark:focus:bg-tp-bg-quaternary"
+            [disabled]="item.disabled"
+            (click)="onItemClick(item)">
+            @if (item.icon) {
+              <i [class]="item.icon + ' text-gray-500 dark:text-tp-text-secondary'"></i>
+            }
+            <span>{{ item.label }}</span>
+          </button>
+        }
+      }
+    </div>
+  </div>
+}

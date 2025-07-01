@@ -51,6 +51,17 @@
     @apply bg-white dark:bg-tp-bg-tertiary border border-tp-border-light dark:border-tp-border text-tp-text-light-primary dark:text-tp-text-primary placeholder-tp-text-light-secondary dark:placeholder-tp-text-muted px-4 py-3 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-tp-orange focus:border-tp-orange dark:focus:border-tp-orange min-h-[120px];
   }
 
+  /* Password Toggle Button (shared across auth components) */
+  .password-toggle {
+    @apply absolute inset-y-0 right-0 pr-3 flex items-center;
+    @apply hover:text-tp-text-light-secondary dark:hover:text-tp-text-secondary focus:outline-none focus:text-tp-text-light-secondary dark:focus:text-tp-text-secondary;
+    @apply transition-colors duration-200;
+  }
+
+  .password-toggle:focus {
+    @apply ring-2 ring-tp-orange ring-opacity-50 rounded;
+  }
+
   /* Link Components */
   .link {
     @apply text-tp-orange hover:text-tp-orange-hover dark:text-tp-orange dark:hover:text-tp-orange-light underline-offset-4 hover:underline;
