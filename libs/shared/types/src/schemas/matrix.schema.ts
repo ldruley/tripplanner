@@ -18,6 +18,10 @@ export function toCoordinateKey(coord: { lat: number; lng: number }): string {
   return `${coord.lat},${coord.lng}`;
 }
 
+export function toReverseCoordinateKey(coord: { lat: number; lng: number }): string {
+  return `${coord.lng},${coord.lat}`;
+}
+
 const coordinateFromJsonString = z
   .string()
   .transform((val, ctx) => {

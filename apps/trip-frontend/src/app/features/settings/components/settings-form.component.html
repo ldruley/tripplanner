@@ -5,8 +5,9 @@
     <div class="form-grid">
       <!-- Timezone -->
       <div class="form-field">
-        <label class="field-label">Timezone</label>
+        <label class="field-label" for="timezone">Timezone</label>
         <select
+          id="timezone"
           formControlName="timezone"
           class="form-input"
           [class.error]="isFieldInvalid('timezone')">
@@ -25,8 +26,8 @@
 
       <!-- Distance Units -->
       <div class="form-field">
-        <label class="field-label">Distance Units</label>
-        <select formControlName="distanceUnit" class="form-input">
+        <label class="field-label" for="distanceUnit">Distance Units</label>
+        <select id="distanceUnit" formControlName="distanceUnit" class="form-input">
           <option value="KILOMETERS">Kilometers</option>
           <option value="MILES">Miles</option>
         </select>
@@ -52,19 +53,19 @@
 
   <!-- Actions -->
   <div class="form-actions">
-    <tp-button
+    <app-button
       type="submit"
       variant="primary"
       [disabled]="form.invalid || loading"
       [loading]="loading">
       {{ loading ? 'Saving...' : 'Save Changes' }}
-    </tp-button>
-    <tp-button
+    </app-button>
+    <app-button
       type="button"
       variant="outline"
       (buttonClick)="onCancel()"
       [disabled]="loading">
       Cancel
-    </tp-button>
+    </app-button>
   </div>
 </form>

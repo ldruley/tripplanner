@@ -39,10 +39,10 @@ export class AppController {
         count: profileCount,
         timestamp: new Date().toISOString(),
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         profilesTable: 'error',
-        error: error.message,
+        error: (error as Error).message,
         timestamp: new Date().toISOString(),
       };
     }

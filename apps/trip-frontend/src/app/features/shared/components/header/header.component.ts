@@ -1,10 +1,8 @@
-import { Component, computed, effect, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ButtonComponent } from '../button/button.component';
 import { AuthService } from '../../../auth/services/auth.service';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { AvatarComponent } from '../avatar/avatar.component';
 import { ProfileService } from '../../../profile/services/profile.service';
 import { toSignal } from '@angular/core/rxjs-interop';

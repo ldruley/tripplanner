@@ -9,6 +9,14 @@ type QueryValue =
   | Coordinate[]
   | (string | number | boolean)[];
 
+const coordToString = ({ lat, lng }: Coordinate) => `${lat},${lng}`;
+
+/**
+ * Builds a URL with optional endpoint and query parameters.
+ * @param baseUrl
+ * @param endpoint
+ * @param queryParams
+ */
 export function buildUrl(
   baseUrl: string,
   endpoint?: string,
@@ -27,9 +35,16 @@ export function buildUrl(
   return url.toString();
 }
 
-const coordToString = ({ lat, lng }: Coordinate) => `${lat},${lng}`;
-
-/** Decide how to serialise any QueryValue */
+/**
+ * Encodes a query parameter value into a URL's search parameters.
+ * Handles various types of values including arrays, single coordinates,
+ * and primitive types. Empty arrays are ignored.
+ *
+ * @param key - The query parameter key.
+ * @param value - The value to encode (can be a string, number, boolean, null, undefined,
+ *                single coordinate object, or an array of coordinates or primitives).
+ * @param url - The URL object to which the search parameter will be added.
+ */
 function encodeValue(key: string, value: QueryValue, url: URL): void {
   if (value == null) return;
 
@@ -61,6 +76,25 @@ function encodeValue(key: string, value: QueryValue, url: URL): void {
   url.searchParams.set(key, value.toString());
 }
 
+/**
+ * Builds a cache key based on a namespace and an array of parts.
+ * The parts are normalized and can be hashed for a stable representation.
+ *
+ * @param ns - The namespace for the cache key.
+ * @param parts - An array of parts to include in the cache key.
+ * @param useHash - Whether to use a hash of the parts for the cache key (default: false).
+ * @returns A string representing the cache key.
+ *
+ * @example
+ * // Without hashing
+ * buildCacheKey('myNamespace', ['part1', { key: 'value' }, 123]);
+ * // Returns: 'myNamespace:part1:{"key":"value"}:123'
+ *
+ * @example
+ * // With hashing
+ * buildCacheKey('myNamespace', ['part1', { key: 'value' }, 123], true);
+ * // Returns: 'myNamespace:<hash>'
+ */
 export function buildCacheKey(ns: string, parts: unknown[], useHash = false): string {
   const normalizedParts = parts.map((part) => {
     if (typeof part === 'string') {
@@ -84,6 +118,14 @@ export function buildCacheKey(ns: string, parts: unknown[], useHash = false): st
   return `${ns}:${suffix}`;
 }
 
+/**
+ * Recursively sorts the keys of an object or array to ensure a stable representation.
+ * This is useful for generating consistent hashes or comparisons of objects with
+ * unordered properties.
+ *
+ * @param obj - The object or array to sort.
+ * @returns A new object or array with sorted keys.
+ */
 function sortObjectKeys(obj: unknown): unknown {
   // Handle arrays
   if (Array.isArray(obj)) {
@@ -104,12 +146,28 @@ function sortObjectKeys(obj: unknown): unknown {
   return obj;
 }
 
+/**
+ * Generates a stable hash for an input object or value.
+ * The hash is based on the JSON representation of the input with sorted keys,
+ * ensuring that equivalent inputs always produce the same hash.
+ *
+ * @param input - The input to hash, can be any type (object, array, string, number, etc.).
+ * @returns A SHA-256 hex string representing the hash of the input.
+ */
 function stableHash(input: unknown): string {
   return createHash('sha256')
     .update(JSON.stringify(sortObjectKeys(input)))
     .digest('hex');
 }
 
+/**
+ * Normalizes a string input by trimming whitespace, converting to lowercase,
+ * and optionally collapsing multiple whitespace into a single space.
+ *
+ * @param input - The string to normalize.
+ * @param collapseWhitespace - Whether to collapse multiple whitespace into a single space (default: true).
+ * @returns The normalized string.
+ */
 function normalizeInput(input: string, collapseWhitespace = true): string {
   let result = input.trim().toLowerCase();
   if (collapseWhitespace) {

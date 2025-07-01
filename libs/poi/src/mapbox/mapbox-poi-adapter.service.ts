@@ -4,7 +4,13 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import { buildUrl } from '@trip-planner/utils';
-import { PoiSearchQuery, PoiSearchResult, PoiSearchResultSchema } from '@trip-planner/types';
+import {
+  MapboxPoiApiResponse,
+  MapboxPoiFeature,
+  PoiSearchQuery,
+  PoiSearchResult,
+  PoiSearchResultSchema,
+} from '@trip-planner/types';
 
 @Injectable()
 export class MapboxPoiAdapterService {
@@ -30,14 +36,13 @@ export class MapboxPoiAdapterService {
   }
 
   async searchPoi(query: PoiSearchQuery): Promise<PoiSearchResult[]> {
-    //TODO missing api key
-    const url = buildUrl(this.baseUrl, this.SEARCH_URL, { q: query.search });
+    const url = buildUrl(this.baseUrl, this.SEARCH_URL, { q: query.search, access_token: this.apiKey });
     this.logger.debug(`Searching POI with URL: ${url}`);
     try {
-      const response: AxiosResponse<any>  = await firstValueFrom(this.httpService.get(url));
+      const response: AxiosResponse<MapboxPoiApiResponse>  = await firstValueFrom(this.httpService.get(url));
       Logger.log(response);
-      return response.data.features
-        .map((feature: any) => {
+      const results = response.data.features
+        .map((feature: MapboxPoiFeature) => {
           const location: Partial<PoiSearchResult> = {
             latitude: feature.properties?.coordinates?.latitude,
             longitude: feature.properties?.coordinates?.longitude,
@@ -63,8 +68,8 @@ export class MapboxPoiAdapterService {
             return null;
           }
           return parsed.data;
-        })
-        .filter((result: any): result is PoiSearchResult => result !== null);
+        });
+      return results.filter((item): item is PoiSearchResult => item !== null);
     } catch (error) {
       this.logger.error('Error fetching POI data', error);
       throw new BadGatewayException('Failed to search POI');

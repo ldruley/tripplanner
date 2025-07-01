@@ -2,9 +2,7 @@ import { z } from 'zod';
 import { nameSchema, emailSchema, uuidSchema, passwordSchema } from './base.schema';
 import { UserRole } from '@prisma/client';
 
-
 const roleSchema = z.nativeEnum(UserRole);
-
 
 export const UserSchema = z.object({
   id: uuidSchema,
@@ -47,3 +45,7 @@ export type User = z.infer<typeof UserSchema>;
 export type CreateUser = z.infer<typeof CreateUserSchema>;
 export type LoginUser = z.infer<typeof LoginUserSchema>;
 export type ChangePassword = z.infer<typeof ChangePasswordSchema>;
+
+export interface AuthenticatedRequest extends Request {
+  user: SafeUser;
+}

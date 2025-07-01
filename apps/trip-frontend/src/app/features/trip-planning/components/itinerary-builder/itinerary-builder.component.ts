@@ -1,6 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CdkDrag, CdkDragDrop, CdkDropList, CdkDropListGroup, moveItemInArray } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Location } from '../../models/location.model';
 import { Stop } from '../../models/stop.model';
 import { ItineraryStopComponent} from '../itinerary-stop/itinerary-stop.component';
@@ -35,11 +35,9 @@ export class ItineraryBuilderComponent {
   readonly removeStopRequested = output<string>(); // Bubbles up stop.id
   readonly editStopRequested = output<string>();   // Bubbles up stop.id
 
-  readonly dropListId = 'itinerary-drop-list';
+  //readonly dropListId = 'itinerary-drop-list';
 
-  constructor() {}
-
-  onDrop(event: CdkDragDrop<Stop[], any, Location | Stop /* Data can be Stop (internal) or Location (from bank) */>): void {
+  onDrop(event: CdkDragDrop<Stop[], unknown, Location | Stop /* Data can be Stop (internal) or Location (from bank) */>): void {
     console.log('ItineraryBuilder: onDrop fired:', event);
     if (event.previousContainer === event.container) {
       // Item was reordered within this itinerary list

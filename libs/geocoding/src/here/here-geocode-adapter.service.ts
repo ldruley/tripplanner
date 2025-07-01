@@ -1,14 +1,17 @@
 import { Injectable, Logger, InternalServerErrorException, BadGatewayException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
-
 import { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
 import { buildUrl } from '@trip-planner/utils';
 import {
   ForwardGeocodeQuery,
-  GeocodingResult, GeocodingResultSchema,
-  ReverseGeocodeQuery
+  GeocodingResult,
+  GeocodingResultSchema,
+  ReverseGeocodeQuery,
+  HerePoiApiResponse,
+  HereGeocodeApiResponse,
+  HereBaseFeature
 } from '@trip-planner/types';
 
 
@@ -33,7 +36,7 @@ export class HereGeocodeAdapterService {
     const url = buildUrl(this.geocodeUrl, '', { q: query.search, apiKey: this.apiKey });
     Logger.log(url);
     try {
-      const response: AxiosResponse<any> = await firstValueFrom(
+      const response: AxiosResponse<HerePoiApiResponse> = await firstValueFrom(
         this.httpService.get(url)
       );
       return this.processResponse(response);
@@ -46,7 +49,7 @@ export class HereGeocodeAdapterService {
   async reverseGeocode(query: ReverseGeocodeQuery): Promise<GeocodingResult[]> {
     const url = buildUrl(this.reverseGeocodeUrl, '', { at: `${query.latitude},${query.longitude}`, apiKey: this.apiKey});
     try {
-      const response: AxiosResponse<any> = await firstValueFrom(
+      const response: AxiosResponse<HerePoiApiResponse> = await firstValueFrom(
         this.httpService.get(url)
       );
       return this.processResponse(response);
@@ -56,14 +59,14 @@ export class HereGeocodeAdapterService {
     }
   }
 
-  async processResponse(response: any): Promise<GeocodingResult[]> {
+  async processResponse(response: AxiosResponse<HereGeocodeApiResponse>): Promise<GeocodingResult[]> {
     if (response) {
       return response.data.items
-        .filter((feature: any) => feature.position && feature.position.lat != null && feature.position.lng != null)
-        .map((feature: any) => {
+        .filter((feature: HereBaseFeature) => feature.position && feature.position.lat != null && feature.position.lng != null)
+        .map((feature: HereBaseFeature) => {
           const location: Partial<GeocodingResult> = {
-            latitude: feature.position.lat,
-            longitude: feature.position.lng,
+            latitude: feature.position?.lat,
+            longitude: feature.position?.lng,
             fullAddress: feature.address?.label || 'No address available',
             streetAddress: [feature.address?.houseNumber, feature.address?.street].filter(Boolean).join(' ') || 'Unknown street address',
             provider: 'here',
