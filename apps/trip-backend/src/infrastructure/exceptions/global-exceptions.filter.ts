@@ -15,7 +15,7 @@ export interface ZodFieldError {
   field: string;
   message: string;
   code: string;
-  received?: any;
+  received?: unknown;
 }
 
 @Catch()
@@ -28,6 +28,8 @@ export class GlobalExceptionsFilter extends BaseExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     const errorResponse = this.buildErrorResponse(exception, request);
+    
+    response.status(errorResponse.statusCode).json(errorResponse);
 
     if (errorResponse.statusCode >= 500) {
       this.logger.error(
@@ -68,7 +70,7 @@ export class GlobalExceptionsFilter extends BaseExceptionFilter {
 
       // Handle BadRequestException from ZodValidationPipe
       if (exception instanceof BadRequestException && typeof exceptionResponse === 'object') {
-        const response = exceptionResponse as any;
+        const response = exceptionResponse as { message?: string[] | string; [key: string]: unknown };
 
         // Check if it's from ZodValidationPipe
         if (response.message && Array.isArray(response.message)) {
@@ -89,10 +91,10 @@ export class GlobalExceptionsFilter extends BaseExceptionFilter {
           success: false,
           error: typeof exceptionResponse === 'string' ? exceptionResponse : exception.message,
           message: typeof exceptionResponse === 'object' && 'message' in exceptionResponse
-            ? (exceptionResponse as any).message
+            ? (exceptionResponse as { message: string }).message
             : exception.message,
           details: typeof exceptionResponse === 'object' && 'details' in exceptionResponse
-            ? (exceptionResponse as any).details
+            ? (exceptionResponse as { details: Record<string, unknown> }).details
             : undefined,
           timestamp,
           path,

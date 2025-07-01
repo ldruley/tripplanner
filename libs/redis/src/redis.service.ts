@@ -41,7 +41,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return fresh;
   }
 
-  async set(key: string, value: any, ttlSec?: number) {
+  async set(key: string, value: unknown, ttlSec?: number) {
     const str = JSON.stringify(value);
     if (ttlSec) {
       await this.client.set(key, str, 'EX', ttlSec);
@@ -50,7 +50,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async get<T = any>(key: string): Promise<T | null> {
+  async get<T = unknown>(key: string): Promise<T | null> {
     const result = await this.client.get(key);
     return result ? JSON.parse(result) : null;
   }

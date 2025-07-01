@@ -9,3 +9,4 @@ export * from './stop.schema';
 export * from './trip.schema';
 export * from './user.schema';
 export * from './timezone.schema';
+export * from './external-api.schema';

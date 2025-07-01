@@ -4,7 +4,7 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import { buildUrl } from '@trip-planner/utils';
-import { PoiSearchQuery, PoiSearchResult, PoiSearchResultSchema } from '@trip-planner/types';
+import { PoiSearchQuery, PoiSearchResult, PoiSearchResultSchema, HerePoiApiResponse, HerePoiFeature } from '@trip-planner/types';
 
 @Injectable()
 export class HerePoiAdapterService {
@@ -27,11 +27,11 @@ export class HerePoiAdapterService {
     const url = buildUrl(this.baseUrl, '', {at: '36.97693,-122.030645', q: query.search, apiKey: this.apiKey});
 
     try {
-      const response: AxiosResponse<any> = await firstValueFrom(
+      const response: AxiosResponse<HerePoiApiResponse> = await firstValueFrom(
         this.httpService.get(url),
       );
       Logger.log(response);
-      const results: Array<PoiSearchResult | null> = response.data.items.map((feature: any) => {
+      const results: Array<PoiSearchResult | null> = response.data.items.map((feature: HerePoiFeature) => {
         const location: Partial<PoiSearchResult> = {
           latitude: feature.position?.lat,
           longitude: feature.position?.lng,

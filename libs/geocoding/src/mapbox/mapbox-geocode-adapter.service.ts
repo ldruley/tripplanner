@@ -6,7 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { buildUrl } from '@trip-planner/utils';
 import {
   ForwardGeocodeQuery,
-  GeocodingResult, GeocodingResultSchema,
+  GeocodingResult, GeocodingResultSchema, MapboxGeocodeApiResponse, MapboxGeocodeFeature,
   ReverseGeocodeQuery
 } from '@trip-planner/types';
 
@@ -33,7 +33,7 @@ export class MapboxGeocodeAdapterService {
         this.httpService.get(url)
       );
       Logger.log(`Forward geocoding response for "${query.search}":`, response.data);
-      return this.processResponse(response);
+      return this.processResponse(response.data);
     } catch (error) {
       this.logger.error(`Error during forward geocoding with "${query.search}"`, error);
       throw new BadGatewayException('Failed to perform forward geocoding');
@@ -48,29 +48,34 @@ export class MapboxGeocodeAdapterService {
         this.httpService.get(url)
       );
       Logger.log(`Reverse geocoding response for [${query.longitude}, ${query.latitude}]:`, response.data);
-      return this.processResponse(response);
+      return this.processResponse(response.data);
     } catch (error) {
       this.logger.error(`Error during forward geocoding with "${query.latitude} - ${query.longitude}"`, error);
       throw new BadGatewayException('Failed to perform reverse geocoding');
     }
   }
 
-  async processResponse(response: any): Promise<GeocodingResult[]> {
-    if(response && response.data.features) {
-      return response.data.features
-        .filter((feature: any) => feature.properties?.coordinates?.latitude != null && feature.properties?.coordinates?.longitude != null)
-        .map((feature: any) => {
+  async processResponse(response: MapboxGeocodeApiResponse): Promise<GeocodingResult[]> {
+    if(response && response.features) {
+      return response.features
+        .filter((feature: MapboxGeocodeFeature) => feature.properties?.coordinates?.latitude != null && feature.properties?.coordinates?.longitude != null)
+        .map((feature: MapboxGeocodeFeature) => {
           const location: Partial<GeocodingResult> = {
-            latitude: feature.properties.coordinates.latitude,
-            longitude: feature.properties.coordinates.longitude,
+            latitude: feature.properties?.coordinates?.latitude,
+            longitude: feature.properties?.coordinates?.longitude,
             fullAddress: feature.properties?.full_address || 'No address found',
-            streetAddress: feature.properties?.name || 'No street address found',
+            streetAddress:
+              feature.properties?.name || 'No street address found',
             provider: 'mapbox',
-            providerId: feature.id,
-            country: feature.properties?.context?.country?.name || 'No country found',
-            region: feature.properties?.context?.region?.name || 'No region found',
+            providerId: feature.properties?.mapbox_id,
+            country:
+              feature.properties?.context?.country?.name || 'No country found',
+            region:
+              feature.properties?.context?.region?.name || 'No region found',
             city: feature.properties?.context?.place?.name || 'No city found',
-            postalCode: feature.properties?.context?.postcode?.name || 'No postal code found',
+            postalCode:
+              feature.properties?.context?.postcode?.name ||
+              'No postal code found',
             rawResponse:
               process.env['NODE_ENV'] === 'development' ? feature : undefined,
           };
@@ -81,9 +86,4 @@ export class MapboxGeocodeAdapterService {
     }
     return [];
   }
-
-  private findInContext(feature: any, type: string): string | null {
-      const context = feature.context?.find((ctx: any) => ctx.id.startsWith(type));
-      return context?.text || null;
-    }
 }

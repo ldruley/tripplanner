@@ -104,9 +104,9 @@ export class TimezoneService implements OnModuleInit, OnModuleDestroy {
       // Cache the result
       await this.redisService.set(cacheKey, result, this.CACHE_TTL);
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.logger.error(`Job ${job.id} failed or timed out:`, error);
-      if (error.message?.includes('timeout') || error.name === 'TimeoutError') {
+      if ((error as Error).message?.includes('timeout') || (error as Error).name === 'TimeoutError') {
         throw new RequestTimeoutException('Timezone lookup request timed out');
       }
       throw new ServiceUnavailableException('Timezone service is currently unavailable');

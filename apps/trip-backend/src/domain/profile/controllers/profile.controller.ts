@@ -20,7 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { ProfileService } from '../services/profile.service';
 import {
-  UpdateProfile
+  UpdateProfile, SafeUser
 } from '@trip-planner/types';
 import { JwtAuthGuard, CurrentUser } from '@trip-planner/auth';
 import { ZodValidationPipe } from '@anatine/zod-nestjs';
@@ -62,7 +62,7 @@ export class ProfileController {
       description: 'User not authenticated',
       type: ErrorResponseDto,
     })
-    async getCurrentUserProfile(@CurrentUser() user: any) {
+    async getCurrentUserProfile(@CurrentUser() user: SafeUser) {
       this.logger.debug(`GET /profiles/me - User: ${user.id}`);
 
       const profile = await this.profileService.findByUserId(user.id);
@@ -99,7 +99,7 @@ export class ProfileController {
       type: ErrorResponseDto,
     })
     async updateCurrentUserProfile(
-      @CurrentUser() user: any,
+      @CurrentUser() user: SafeUser,
       @Body() updateProfileDto: UpdateProfileDto
     ) {
       this.logger.debug(`PUT /profiles/me - User: ${user.id} - Data: ${JSON.stringify(updateProfileDto)}`);

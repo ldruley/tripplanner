@@ -166,21 +166,21 @@
 
     <!-- Form Actions -->
     <div class="form-actions">
-      <tp-button
+      <app-button
         type="submit"
         variant="primary"
         [disabled]="profileForm.invalid || loading || !hasChanges()"
         [loading]="loading">
         {{ loading ? 'Saving...' : 'Save Changes' }}
-      </tp-button>
+      </app-button>
 
-      <tp-button
+      <app-button
         type="button"
         variant="outline"
         (buttonClick)="onCancel()"
         [disabled]="loading">
         Cancel
-      </tp-button>
+      </app-button>
 
       @if (hasChanges()) {
         <button

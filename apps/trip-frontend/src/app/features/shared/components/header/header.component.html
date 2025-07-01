@@ -27,29 +27,29 @@
                 [showBorder]="true"
               ></app-avatar>
             </button>
-            <tp-button
+            <app-button
               variant="outline"
               size="sm"
               (buttonClick)="onSignOut()">
               Sign Out
-            </tp-button>
+            </app-button>
           </div>
         </div>
       } @else {
         <!-- Unauthenticated User View -->
         <div class="guest-actions">
-          <tp-button
+          <app-button
             variant="ghost"
             size="sm"
             (buttonClick)="onLogin()">
             Sign In
-          </tp-button>
-          <tp-button
+          </app-button>
+          <app-button
             variant="primary"
             size="sm"
             (buttonClick)="onRegister()">
             Register
-          </tp-button>
+          </app-button>
         </div>
       }
     </div>

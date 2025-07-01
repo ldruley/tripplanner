@@ -5,7 +5,7 @@ export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'dan
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 @Component({
-  selector: 'tp-button',
+  selector: 'app-button',
   templateUrl: './button.component.html',
   styleUrls: ['./button.component.css'],
   standalone: true,

@@ -3,16 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CdkDropListGroup } from '@angular/cdk/drag-drop';
 
-// Child Components
 import { LocationSearchComponent } from '../location-search/location-search.component';
 import { LocationBankComponent } from '../location-bank/location-bank.component';
 import {
   ItineraryBuilderComponent,
-  MatrixData,
-  TravelSegmentData
 } from '../itinerary-builder/itinerary-builder.component';
 
-// Models
 import { Location } from '../../models/location.model';
 import { Trip } from '../../models/trip.model';
 import { Stop } from '../../models/stop.model';

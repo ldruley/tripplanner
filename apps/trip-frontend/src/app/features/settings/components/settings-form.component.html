@@ -53,19 +53,19 @@
 
   <!-- Actions -->
   <div class="form-actions">
-    <tp-button
+    <app-button
       type="submit"
       variant="primary"
       [disabled]="form.invalid || loading"
       [loading]="loading">
       {{ loading ? 'Saving...' : 'Save Changes' }}
-    </tp-button>
-    <tp-button
+    </app-button>
+    <app-button
       type="button"
       variant="outline"
       (buttonClick)="onCancel()"
       [disabled]="loading">
       Cancel
-    </tp-button>
+    </app-button>
   </div>
 </form>

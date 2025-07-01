@@ -65,7 +65,7 @@ export const ErrorResponseSchema = z.object({
   success: z.literal(false).describe('Indicates if the request was successful; always false for errors.'),
   error: z.string().describe('A code or short description of the error type.'),
   message: z.string().optional().describe('A human-readable message explaining the error.'),
-  details: z.record(z.any()).optional().describe('Optional detailed information about the error, such as validation errors.'),
+  details: z.record(z.unknown()).optional().describe('Optional detailed information about the error, such as validation errors.'),
   timestamp: z.string().datetime().describe('The ISO 8601 timestamp of when the error occurred.'),
   path: z.string().describe('The request path that caused the error.'),
   statusCode: z.number().int().describe('The HTTP status code of the response.'),

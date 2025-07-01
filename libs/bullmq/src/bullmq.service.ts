@@ -1,5 +1,5 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { Queue, Worker, Job, QueueOptions, WorkerOptions } from 'bullmq';
+import { Injectable, InternalServerErrorException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Queue, Worker, Job, QueueOptions, WorkerOptions, JobsOptions } from 'bullmq';
 import { Redis } from 'ioredis';
 
 export interface BullMQConfig {
@@ -14,9 +14,9 @@ export interface QueueConfig extends Partial<QueueOptions> {
   name: string;
 }
 
-export interface WorkerConfig extends Partial<WorkerOptions> {
+export interface WorkerConfig<T = unknown> extends Partial<WorkerOptions> {
   name: string;
-  processor: (job: Job) => Promise<any>;
+  processor: (job: Job<T>) => Promise<unknown>;
 }
 
 @Injectable()
@@ -54,7 +54,11 @@ export class BullMQService implements OnModuleInit, OnModuleDestroy {
    */
   createQueue(config: QueueConfig): Queue {
     if (this.queues.has(config.name)) {
-      return this.queues.get(config.name)!;
+      const queue = this.queues.get(config.name);
+      if (!queue) {
+        throw new InternalServerErrorException(`Queue with name ${config.name} does not exist`);
+      }
+      return queue;
     }
 
     const queue = new Queue(config.name, {
@@ -78,14 +82,18 @@ export class BullMQService implements OnModuleInit, OnModuleDestroy {
   /**
    * Create a worker for processing jobs
    */
-  createWorker(config: WorkerConfig): Worker {
+  createWorker<T = unknown>(config: WorkerConfig<T>): Worker<T> {
     if (this.workers.has(config.name)) {
-      return this.workers.get(config.name)!;
+      const worker = this.workers.get(config.name);
+      if (!worker) {
+        throw new InternalServerErrorException(`Worker with name ${config.name} does not exist`);
+      }
+      return worker;
     }
 
     const worker = new Worker(
       config.name,
-      async (job: Job) => {
+      async (job: Job<T>) => {
         try {
           return await config.processor(job);
         } catch (error) {
@@ -123,18 +131,18 @@ export class BullMQService implements OnModuleInit, OnModuleDestroy {
   /**
    * Get an existing worker
    */
-  getWorker(name: string): Worker | undefined {
+  getWorker<T = unknown>(name: string): Worker<T> | undefined {
     return this.workers.get(name);
   }
 
   /**
    * Add a job to a queue
    */
-  async addJob<T = any>(
+  async addJob<T = unknown>(
     queueName: string,
     jobName: string,
     data: T,
-    options?: any
+    options?: JobsOptions
   ): Promise<Job<T>> {
     const queue = this.getQueue(queueName);
     if (!queue) {
