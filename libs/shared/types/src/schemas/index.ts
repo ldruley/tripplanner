@@ -1,4 +1,5 @@
 export * from './base.schema';
+export * from './email.schema';
 export * from './geocoding.schema';
 export * from './location.schema';
 export * from './matrix.schema';
