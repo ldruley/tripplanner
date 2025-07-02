@@ -10,11 +10,11 @@ import { buildLoginForm } from '../../../../core/forms/form-factory';
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule, // For formGroup, formControlName, ngSubmit
-    RouterLink // For routerLink directive
+    ReactiveFormsModule,
+    RouterLink
   ],
   templateUrl: './login-form.component.html',
-  styleUrl: './login-form.component.css' // Using styleUrl for a single CSS file
+  styleUrl: './login-form.component.css'
 })
 export class LoginFormComponent {
   @Input() isLoading = false;
