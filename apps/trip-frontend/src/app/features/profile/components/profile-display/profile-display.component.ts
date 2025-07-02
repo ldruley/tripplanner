@@ -44,7 +44,16 @@ export class ProfileDisplayComponent {
   }
 
   getStatusBadgeClass(): string {
-    return `status-badge ${this.userProfile.status}`;
+    switch (this.userProfile.status) {
+      case 'active':
+        return 'bg-green-100 dark:bg-green-500/20 text-green-800 dark:text-green-400';
+      case 'suspended':
+        return 'bg-red-100 dark:bg-red-500/20 text-red-800 dark:text-red-400';
+      case 'pending':
+        return 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-800 dark:text-yellow-400';
+      default:
+        return 'bg-gray-100 dark:bg-gray-500/20 text-gray-800 dark:text-gray-400';
+    }
   }
 
   getRoleDisplay(): string {
@@ -53,7 +62,15 @@ export class ProfileDisplayComponent {
   }
 
   getRoleBadgeClass(): string {
-    return `role-badge ${this.userProfile.role}`;
+    switch (this.userProfile.role) {
+      case 'admin':
+        return 'bg-purple-100 dark:bg-purple-500/20 text-purple-800 dark:text-purple-400';
+      case 'moderator':
+        return 'bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-400';
+      case 'user':
+      default:
+        return 'bg-tp-bg-light-secondary dark:bg-tp-bg-tertiary text-tp-text-light-primary dark:text-tp-text-primary';
+    }
   }
 
   formatDate(date: Date | string | null): string {

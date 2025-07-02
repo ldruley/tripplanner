@@ -1,20 +1,6 @@
-.profile-container {
-  @apply min-h-screen bg-tp-bg-light dark:bg-tp-bg-primary py-8 px-4;
-}
+/* Profile container styles converted to inline Tailwind classes */
 
-.profile-content {
-  @apply max-w-4xl mx-auto;
-}
-
-.profile-header {
-  @apply text-center mb-8;
-}
-
-.toast-container {
-  @apply fixed top-4 right-4 z-50 max-w-sm;
-  animation: slideInRight 0.3s ease-out;
-}
-
+/* Keyframe animation for toast slide-in effect */
 @keyframes slideInRight {
   from {
     transform: translateX(100%);
@@ -26,28 +12,16 @@
   }
 }
 
-.loading-container {
-  @apply text-center py-12;
-}
-
-.error-container {
-  @apply max-w-md mx-auto;
-}
-
-.profile-content-wrapper {
-  @apply bg-white dark:bg-tp-bg-secondary rounded-lg shadow-sm border border-tp-border-light dark:border-tp-border;
-}
-
-.profile-footer {
-  @apply mt-8 text-center;
-}
-
+/* Responsive toast positioning */
 @media (max-width: 640px) {
-  .profile-content {
-    @apply px-2;
-  }
-
   .toast-container {
-    @apply left-4 right-4 max-w-none;
+    left: 1rem;
+    right: 1rem;
+    max-width: none;
+  }
+  
+  .profile-content {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
   }
 }

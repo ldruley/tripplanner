@@ -51,7 +51,7 @@ export class AuthContainerComponent {
         const path = segments[0]?.path;
         switch (path) {
           case 'register': return 'register' as AuthFormType;
-          case 'recover-password': return 'recover' as AuthFormType;
+          case 'forgot': return 'recover' as AuthFormType;
           case 'change-password': return 'change-password' as AuthFormType;
           default: return 'login' as AuthFormType;
         }
@@ -109,5 +109,14 @@ export class AuthContainerComponent {
 
   public dismissToast(): void {
     this.toastMessage.set(null);
+  }
+
+  public getToastClasses(type: 'success' | 'error'): string {
+    const baseClasses = 'flex items-center justify-between p-4 rounded-lg shadow-lg border';
+    if (type === 'success') {
+      return `${baseClasses} bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-400`;
+    } else {
+      return `${baseClasses} bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-400`;
+    }
   }
 }

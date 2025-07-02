@@ -1,14 +1,14 @@
-<div class="profile-container">
-  <div class="profile-content">
+<div class="min-h-screen bg-tp-bg-light dark:bg-tp-bg-primary py-8 px-4">
+  <div class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="profile-header">
+    <div class="text-center mb-8">
       <h1 class="text-3xl font-bold text-tp-text-light-primary dark:text-tp-text-primary mb-2">Profile Settings</h1>
       <p class="text-tp-text-light-secondary dark:text-tp-text-secondary mb-8">Manage your account information and preferences.</p>
     </div>
 
     <!-- Toast Message -->
     @if (toastMessage()) {
-      <div class="toast-container mb-6">
+      <div class="fixed top-4 right-4 z-50 max-w-sm mb-6" style="animation: slideInRight 0.3s ease-out">
         <div class="alert-success">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-400 mt-0.5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -22,7 +22,7 @@
 
     <!-- Loading State -->
     @if (state().loading && !state().userProfile) {
-      <div class="loading-container">
+      <div class="text-center py-12">
         <app-loading-spinner></app-loading-spinner>
         <p class="text-tp-text-light-secondary dark:text-tp-text-secondary mt-4">Loading your profile...</p>
       </div>
@@ -30,7 +30,7 @@
 
     <!-- Error State -->
     @if (state().error && !state().userProfile) {
-      <div class="error-container">
+      <div class="max-w-md mx-auto">
         <div class="alert-error">
           <!-- ... svg icon ... -->
           <div>
@@ -50,7 +50,7 @@
 
     <!-- Profile Content -->
     @if (state().userProfile; as userProfile) {
-      <div class="profile-content-wrapper">
+      <div class="bg-white dark:bg-tp-bg-secondary rounded-lg shadow-sm border border-tp-border-light dark:border-tp-border">
         <!-- Display Mode -->
         @if (!state().isEditing) {
           <app-profile-display
@@ -77,7 +77,7 @@
 
 
     <!-- Actions Footer -->
-    <div class="profile-footer">
+    <div class="mt-8 text-center">
       <app-button
         variant="ghost"
         (buttonClick)="handleBackToDashboard()">

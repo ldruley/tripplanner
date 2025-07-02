@@ -1,109 +1,14 @@
-.profile-display {
-  @apply p-6 bg-tp-bg-light dark:bg-tp-bg-secondary;
-}
+/* Profile display styles converted to inline Tailwind classes in HTML template */
+/* Badge classes moved to TypeScript component methods */
 
-.profile-header {
-  @apply flex flex-col sm:flex-row items-start sm:items-center gap-6 pb-6 border-b border-tp-border-light dark:border-tp-border mb-6;
-}
-
-.avatar-section {
-  @apply flex-shrink-0;
-}
-
-.profile-info {
-  @apply flex-grow;
-}
-
-.profile-name {
-  @apply text-2xl font-bold text-tp-text-light-primary dark:text-tp-text-primary mb-1;
-}
-
-.profile-email {
-  @apply text-tp-text-light-secondary dark:text-tp-text-secondary mb-3;
-}
-
-.profile-badges {
-  @apply flex gap-2 flex-wrap;
-}
-
-.role-badge, .status-badge {
-  @apply px-2 py-1 text-xs font-medium rounded-full;
-}
-
-.role-badge.admin {
-  @apply bg-purple-100 dark:bg-purple-500/20 text-purple-800 dark:text-purple-400;
-}
-
-.role-badge.moderator {
-  @apply bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-400;
-}
-
-.role-badge.user {
-  @apply bg-tp-bg-light-secondary dark:bg-tp-bg-tertiary text-tp-text-light-primary dark:text-tp-text-primary;
-}
-
-.status-badge.active {
-  @apply bg-green-100 dark:bg-green-500/20 text-green-800 dark:text-green-400;
-}
-
-.status-badge.suspended {
-  @apply bg-red-100 dark:bg-red-500/20 text-red-800 dark:text-red-400;
-}
-
-.status-badge.pending {
-  @apply bg-yellow-100 dark:bg-yellow-500/20 text-yellow-800 dark:text-yellow-400;
-}
-
-.profile-actions {
-  @apply flex gap-2 flex-shrink-0;
-}
-
-.profile-details {
-  @apply space-y-6;
-}
-
-.info-section {
-  @apply space-y-4;
-}
-
-.section-title {
-  @apply text-lg font-semibold text-tp-text-light-primary dark:text-tp-text-primary border-b border-tp-border-light dark:border-tp-border-subtle pb-2;
-}
-
-.info-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 gap-4;
-}
-
-.info-item {
-  @apply space-y-1;
-}
-
-.info-label {
-  @apply block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary;
-}
-
-.info-value {
-  @apply block text-sm text-tp-text-light-primary dark:text-tp-text-secondary;
-}
-
-.completion-status {
-  @apply pt-2;
-}
-
-.status-complete, .status-incomplete {
-  @apply flex items-center;
-}
-
+/* Responsive breakpoints for mobile - targeting the inline classes in HTML */
 @media (max-width: 640px) {
-  .profile-header {
-    @apply flex-col text-center;
+  .flex.gap-2.flex-shrink-0 {
+    flex-direction: column;
+    width: 100%;
   }
 
-  .profile-actions {
-    @apply flex-col w-full;
-  }
-
-  .info-grid {
-    @apply grid-cols-1;
+  .grid.grid-cols-1.md\\:grid-cols-2.gap-4 {
+    grid-template-columns: 1fr;
   }
 }

@@ -1,13 +1,23 @@
+/* Location bank styles converted to Angular class binding and inline styles */
+
+/* CDK drag placeholder - using global CDK classes with Tailwind utilities in HTML */
 .cdk-drag-placeholder {
-  @apply opacity-50 bg-tp-bg-light-secondary dark:bg-tp-bg-tertiary border border-dashed border-tp-border-light dark:border-tp-border;
+  opacity: 0.5;
+  background-color: theme('colors.tp.bg-light-secondary');
+  border: 1px dashed theme('colors.tp.border-light');
 }
 
-.cdk-drag-preview { /* Styling for the element being dragged */
-  @apply shadow-xl rounded;
+@media (prefers-color-scheme: dark) {
+  .cdk-drag-placeholder {
+    background-color: theme('colors.tp.bg-tertiary');
+    border-color: theme('colors.tp.border');
+  }
 }
 
-/* Make the item being dragged a bit more prominent */
-.cdk-drag-dragging {
-  opacity: 0.8;
-  transform: scale(1.02); /* Slightly enlarge */
+/* CDK drag preview - enhanced shadow and border radius */
+.cdk-drag-preview {
+  box-shadow: theme('boxShadow.xl');
+  border-radius: theme('borderRadius.DEFAULT');
 }
+
+/* CDK drag active state - handled via inline styles in HTML */

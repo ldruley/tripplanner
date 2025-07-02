@@ -1,17 +1,20 @@
-.itinerary-list {
-  /* Basic styling for the list container */
+/* Itinerary builder styles converted to inline Tailwind classes */
+
+/* CDK drag preview - global styling for drag operations */
+.cdk-drag-preview {
+  box-shadow: theme('boxShadow.lg');
+  border-radius: theme('borderRadius.lg');
+  background-color: white;
+  opacity: 0.9;
 }
 
-.draggable-stop-item-wrapper {
-  /* Wrapper for each draggable stop, useful if cdkDragPreview needs a specific context */
+@media (prefers-color-scheme: dark) {
+  .cdk-drag-preview {
+    background-color: theme('colors.dark-text-secondary');
+  }
 }
 
+/* Drag placeholder animation */
 .drag-placeholder {
-  /* Styles for the placeholder shown when dragging over */
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
-}
-
-/* CDK adds classes like cdk-drag-preview, cdk-drag-animating, cdk-drop-list-dragging */
-.cdk-drag-preview { /* Style for the element being dragged (the clone) */
-  @apply shadow-lg rounded-lg bg-white dark:bg-tp-bg-secondary opacity-90;
 }

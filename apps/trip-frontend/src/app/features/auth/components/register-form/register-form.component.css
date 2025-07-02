@@ -1,11 +1,2 @@
-/* Register form styles
-   Using global .password-toggle class from components.css */
-
-/* Custom styling for checkboxes */
-input[type="checkbox"]:checked {
-  @apply bg-tp-orange border-tp-orange;
-}
-
-input[type="checkbox"]:focus {
-  @apply ring-2 ring-tp-orange ring-opacity-50;
-}
+/* Register form styles converted to inline Tailwind classes */
+/* Checkbox styling moved to HTML template */

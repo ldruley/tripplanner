@@ -1,4 +1,4 @@
-<div class="bg-white dark:bg-tp-bg-secondary shadow-xl rounded-lg w-full max-w-md border border-tp-border-light dark:border-tp-border">
+<div class="bg-white dark:bg-tp-bg-secondary shadow-xl rounded-lg w-full max-w-lg border border-tp-border-light dark:border-tp-border">
   <div class="p-8">
     <h2 class="text-2xl font-bold text-center mb-6 text-tp-text-light-primary dark:text-tp-text-primary">Sign In</h2>
 
@@ -8,26 +8,27 @@
         <label class="block text-sm font-medium text-tp-text-light-primary dark:text-tp-text-primary mb-1" for="email">
           Email
         </label>
-        <input
-          id="email"
-          type="email"
-          formControlName="email"
-          placeholder="Enter your email"
-          class="w-full px-3 py-2 border border-tp-border-light dark:border-tp-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-tp-orange focus:border-tp-orange bg-white dark:bg-tp-bg-tertiary text-tp-text-light-primary dark:text-tp-text-primary"
-          [class.border-red-500]="isFieldInvalid('email')"
-          [class.focus:ring-red-500]="isFieldInvalid('email')"
-          [class.focus:border-red-500]="isFieldInvalid('email')"
-          autocomplete="email"
-        />
-        @if (isFieldInvalid('email')) {
-          <p class="mt-1 text-sm text-red-600 dark:text-red-400">
-            @if (loginForm.get('email')?.errors?.['required']) {
-              Email is required
-            } @else if (loginForm.get('email')?.errors?.['email']) {
-              Please enter a valid email address
-            }
-          </p>
-        }
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="Enter your email"
+            class="w-full px-3 py-2 bg-white dark:bg-tp-bg-tertiary border border-tp-border-light dark:border-tp-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-tp-orange focus:border-tp-orange text-tp-text-light-primary dark:text-tp-text-primary"
+            style="color-scheme: light dark;"
+            [class.border-red-500]="isFieldInvalid('email')"
+            [class.focus:ring-red-500]="isFieldInvalid('email')"
+            [class.focus:border-red-500]="isFieldInvalid('email')"
+            autocomplete="email"
+          />
+          @if (isFieldInvalid('email')) {
+            <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+              @if (loginForm.get('email')?.errors?.['required']) {
+                Email is required
+              } @else if (loginForm.get('email')?.errors?.['email']) {
+                Please enter a valid email address
+              }
+            </p>
+          }
       </div>
 
       <!-- Password Field -->
@@ -42,6 +43,7 @@
             formControlName="password"
             placeholder="Enter your password"
             class="w-full px-3 py-2 pr-12 border border-tp-border-light dark:border-tp-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-tp-orange focus:border-tp-orange bg-white dark:bg-tp-bg-tertiary text-tp-text-light-primary dark:text-tp-text-primary"
+            style="color-scheme: light dark;"
             [class.border-red-500]="isFieldInvalid('password')"
             [class.focus:ring-red-500]="isFieldInvalid('password')"
             [class.focus:border-red-500]="isFieldInvalid('password')"
@@ -49,7 +51,7 @@
           />
           <button
             type="button"
-            class="password-toggle-btn"
+            class="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-tp-text-light-secondary dark:hover:text-tp-text-secondary focus:outline-none focus:text-tp-text-light-secondary dark:focus:text-tp-text-secondary transition-colors duration-200 focus:ring-2 focus:ring-tp-orange focus:ring-opacity-50 rounded"
             (click)="togglePasswordVisibility()"
           >
             @if (showPasswordSignal()) {
@@ -128,7 +130,7 @@
       <!-- Sign Up Link -->
       <div class="text-center">
         <span class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">Don't have an account? </span>
-        <a routerLink="/auth/signup" class="text-sm text-tp-orange font-medium hover:text-tp-orange/80 hover:underline">
+        <a routerLink="/auth/register" class="text-sm text-tp-orange font-medium hover:text-tp-orange/80 hover:underline">
           Sign up
         </a>
       </div>

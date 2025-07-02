@@ -1,7 +1,7 @@
-<div class="profile-display">
+<div class="p-6 bg-tp-bg-light dark:bg-tp-bg-secondary">
   <!-- Header with avatar and main info -->
-  <div class="profile-header">
-    <div class="avatar-section">
+  <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6 pb-6 border-b border-tp-border-light dark:border-tp-border mb-6">
+    <div class="flex-shrink-0">
       <app-avatar
         [src]="userProfile.avatarUrl"
         [alt]="getDisplayName() + ' avatar'"
@@ -10,20 +10,20 @@
       </app-avatar>
     </div>
 
-    <div class="profile-info">
-      <h2 class="profile-name">{{ getDisplayName() }}</h2>
-      <p class="profile-email">{{ userProfile.email }}</p>
-      <div class="profile-badges">
-        <span class="role-badge" [class]="getRoleBadgeClass()">
+    <div class="flex-grow">
+      <h2 class="text-2xl font-bold text-tp-text-light-primary dark:text-tp-text-primary mb-1">{{ getDisplayName() }}</h2>
+      <p class="text-tp-text-light-secondary dark:text-tp-text-secondary mb-3">{{ userProfile.email }}</p>
+      <div class="flex gap-2 flex-wrap">
+        <span class="px-2 py-1 text-xs font-medium rounded-full" [class]="getRoleBadgeClass()">
           {{ getRoleDisplay() }}
         </span>
-        <span class="status-badge" [class]="getStatusBadgeClass()">
+        <span class="px-2 py-1 text-xs font-medium rounded-full" [class]="getStatusBadgeClass()">
           {{ getStatusDisplay() }}
         </span>
       </div>
     </div>
 
-    <div class="profile-actions">
+    <div class="flex gap-2 flex-shrink-0">
       <app-button
         variant="primary"
         size="sm"
@@ -45,67 +45,67 @@
   </div>
 
   <!-- Detailed information sections -->
-  <div class="profile-details">
+  <div class="space-y-6">
     <!-- Personal Information -->
-    <div class="info-section">
-      <h3 class="section-title">Personal Information</h3>
-      <div class="info-grid">
-        <div class="info-item">
-          <span class="info-label">First Name</span>
-          <span class="info-value">{{ userProfile.firstName || 'Not provided' }}</span>
+    <div class="space-y-4">
+      <h3 class="text-lg font-semibold text-tp-text-light-primary dark:text-tp-text-primary border-b border-tp-border-light dark:border-tp-border pb-2">Personal Information</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="space-y-1">
+          <span class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary">First Name</span>
+          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{ userProfile.firstName || 'Not provided' }}</span>
         </div>
-        <div class="info-item">
-          <span class="info-label">Last Name</span>
-          <span class="info-value">{{ userProfile.lastName || 'Not provided' }}</span>
+        <div class="space-y-1">
+          <span class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary">Last Name</span>
+          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{ userProfile.lastName || 'Not provided' }}</span>
         </div>
-        <div class="info-item">
-          <span class="info-label">Display Name</span>
-          <span class="info-value">{{ userProfile.displayName || 'Not provided' }}</span>
+        <div class="space-y-1">
+          <span class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary">Display Name</span>
+          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{ userProfile.displayName || 'Not provided' }}</span>
         </div>
-        <div class="info-item">
-          <span class="info-label">Email Address</span>
-          <span class="info-value">{{ userProfile.email }}</span>
+        <div class="space-y-1">
+          <span class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary">Email Address</span>
+          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{ userProfile.email }}</span>
         </div>
       </div>
     </div>
 
     <!-- Account Information -->
-    <div class="info-section">
-      <h3 class="section-title">Account Information</h3>
-      <div class="info-grid">
-        <div class="info-item">
-          <span class="info-label">Account Role</span>
-          <span class="info-value">{{ getRoleDisplay() }}</span>
+    <div class="space-y-4">
+      <h3 class="text-lg font-semibold text-tp-text-light-primary dark:text-tp-text-primary border-b border-tp-border-light dark:border-tp-border pb-2">Account Information</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="space-y-1">
+          <span class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary">Account Role</span>
+          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{ getRoleDisplay() }}</span>
         </div>
-        <div class="info-item">
-          <span class="info-label">Account Status</span>
-          <span class="info-value">{{ getStatusDisplay() }}</span>
+        <div class="space-y-1">
+          <span class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary">Account Status</span>
+          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{ getStatusDisplay() }}</span>
         </div>
-        <div class="info-item">
-          <span class="info-label">Last Sign In</span>
-          <span class="info-value">{{ formatDate(userProfile.lastSignInAt) }}</span>
+        <div class="space-y-1">
+          <span class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary">Last Sign In</span>
+          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{ formatDate(userProfile.lastSignInAt) }}</span>
         </div>
-        <div class="info-item">
-          <span class="info-label">Member Since</span>
-          <span class="info-value">{{ formatDate(userProfile.createdAt) }}</span>
+        <div class="space-y-1">
+          <span class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary">Member Since</span>
+          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{ formatDate(userProfile.createdAt) }}</span>
         </div>
       </div>
     </div>
 
     <!-- Profile Completion -->
     @if (userProfile.onboardingCompleted !== null) {
-      <div class="info-section">
-        <h3 class="section-title">Onboarding Status</h3>
-        <div class="completion-status">
+      <div class="space-y-4">
+        <h3 class="text-lg font-semibold text-tp-text-light-primary dark:text-tp-text-primary border-b border-tp-border-light dark:border-tp-border pb-2">Onboarding Status</h3>
+        <div class="pt-2">
           @if (userProfile.onboardingCompleted) {
-            <div class="status-complete">
+            <div class="flex items-center">
               <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span class="text-green-700 dark:text-green-400">Onboarding completed</span>
             </div>
           } @else {
-            <div class="status-incomplete">
+            <div class="flex items-center">
               <svg class="w-5 h-5 text-amber-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
