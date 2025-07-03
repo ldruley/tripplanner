@@ -13,6 +13,11 @@ model User {
   email     String   @unique
   password  String   @db.Text
   role      UserRole
+  emailVerified Boolean @default(false) @map("email_verified")
+  verificationToken String? @map("verification_token")
+  verificationTokenExpiry DateTime? @map("verification_token_expiry")
+  resetToken String? @map("reset_token")
+  resetTokenExpiry DateTime? @map("reset_token_expiry")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

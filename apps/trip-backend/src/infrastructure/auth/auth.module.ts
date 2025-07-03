@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthModule as SharedAuthModule } from '@trip-planner/auth';
+import { EmailModule } from '@trip-planner/email';
 import { LocalStrategy } from './strategies/local.strategy';
 
 @Module({
@@ -24,6 +25,7 @@ import { LocalStrategy } from './strategies/local.strategy';
       inject: [ConfigService],
     }),
     SharedAuthModule, // Import shared auth components
+    EmailModule, // Import email module for sending emails
   ],
   controllers: [AuthController],
   providers: [AuthService, LocalStrategy], // JwtStrategy now comes from SharedAuthModule

@@ -34,6 +34,27 @@ export const ChangePasswordSchema = z.object({
   confirmPassword: passwordSchema,
 });
 
+export const RequestPasswordResetSchema = z.object({
+  email: emailSchema,
+});
+
+export const ResetPasswordSchema = z.object({
+  token: z.string().min(1, 'Reset token is required'),
+  newPassword: passwordSchema,
+  confirmPassword: passwordSchema,
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+export const VerifyEmailSchema = z.object({
+  token: z.string().min(1, 'Verification token is required'),
+});
+
+export const ResendVerificationSchema = z.object({
+  email: emailSchema,
+});
+
 export const UserResponseSchema = z.object({
   success: z.boolean().default(true),
   data: UserSchema.omit({ password: true }),
@@ -45,6 +66,10 @@ export type User = z.infer<typeof UserSchema>;
 export type CreateUser = z.infer<typeof CreateUserSchema>;
 export type LoginUser = z.infer<typeof LoginUserSchema>;
 export type ChangePassword = z.infer<typeof ChangePasswordSchema>;
+export type RequestPasswordReset = z.infer<typeof RequestPasswordResetSchema>;
+export type ResetPassword = z.infer<typeof ResetPasswordSchema>;
+export type VerifyEmail = z.infer<typeof VerifyEmailSchema>;
+export type ResendVerification = z.infer<typeof ResendVerificationSchema>;
 
 export interface AuthenticatedRequest extends Request {
   user: SafeUser;
