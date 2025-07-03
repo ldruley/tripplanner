@@ -23,6 +23,7 @@ describe('UserSettingsController', () => {
     role: 'user',
     createdAt: new Date('2024-01-01T00:00:00Z'),
     updatedAt: new Date('2024-01-01T00:00:00Z'),
+    emailVerified: true,
   };
 
   const mockUserSettings = {
@@ -128,7 +129,7 @@ describe('UserSettingsController', () => {
         darkMode: mockCreateDto.darkMode,
       };
       const createdSettings = { ...mockUserSettings, ...expectedServiceCall };
-      
+
       mockService.create.mockResolvedValue(createdSettings);
 
       const result = await controller.createSettings(mockUser, mockCreateDto);
@@ -176,7 +177,7 @@ describe('UserSettingsController', () => {
 
     it('should handle service rejecting user ID mismatch', async () => {
       const mismatchDto = { ...mockCreateDto, userId: 'different-user-id' };
-      
+
       // Service should still be called with the authenticated user's ID
       const createdSettings = { ...mockUserSettings, userId: mockUser.id };
       mockService.create.mockResolvedValue(createdSettings);
@@ -203,7 +204,7 @@ describe('UserSettingsController', () => {
     it('should update only provided fields', async () => {
       const partialUpdate: UpdateUserSettingsDto = { darkMode: true };
       const updatedSettings = { ...mockUserSettings, darkMode: true };
-      
+
       mockService.update.mockResolvedValue(updatedSettings);
 
       const result = await controller.updateSettings(mockUser, partialUpdate);
@@ -222,14 +223,14 @@ describe('UserSettingsController', () => {
     });
 
     it('should handle timezone updates', async () => {
-      const timezoneUpdate: UpdateUserSettingsDto = { 
-        timezone: 'Asia/Tokyo' 
+      const timezoneUpdate: UpdateUserSettingsDto = {
+        timezone: 'Asia/Tokyo'
       };
-      const updatedSettings = { 
-        ...mockUserSettings, 
-        timezone: 'Asia/Tokyo' 
+      const updatedSettings = {
+        ...mockUserSettings,
+        timezone: 'Asia/Tokyo'
       };
-      
+
       mockService.update.mockResolvedValue(updatedSettings);
 
       const result = await controller.updateSettings(mockUser, timezoneUpdate);
@@ -239,14 +240,14 @@ describe('UserSettingsController', () => {
     });
 
     it('should handle distance unit updates', async () => {
-      const distanceUpdate: UpdateUserSettingsDto = { 
-        distanceUnit: DistanceUnit.KILOMETERS 
+      const distanceUpdate: UpdateUserSettingsDto = {
+        distanceUnit: DistanceUnit.KILOMETERS
       };
-      const updatedSettings = { 
-        ...mockUserSettings, 
-        distanceUnit: DistanceUnit.KILOMETERS 
+      const updatedSettings = {
+        ...mockUserSettings,
+        distanceUnit: DistanceUnit.KILOMETERS
       };
-      
+
       mockService.update.mockResolvedValue(updatedSettings);
 
       const result = await controller.updateSettings(mockUser, distanceUpdate);
@@ -270,7 +271,7 @@ describe('UserSettingsController', () => {
     it('should upsert settings successfully when updating existing', async () => {
       const existingSettings = { ...mockUserSettings };
       const updatedSettings = { ...existingSettings, ...mockUpdateDto };
-      
+
       mockService.upsert.mockResolvedValue(updatedSettings);
 
       const result = await controller.upsertSettings(mockUser, mockUpdateDto);
@@ -285,11 +286,11 @@ describe('UserSettingsController', () => {
         distanceUnit: DistanceUnit.KILOMETERS,
         darkMode: true,
       };
-      const upsertedSettings = { 
-        ...mockUserSettings, 
-        ...completeUpdate 
+      const upsertedSettings = {
+        ...mockUserSettings,
+        ...completeUpdate
       };
-      
+
       mockService.upsert.mockResolvedValue(upsertedSettings);
 
       const result = await controller.upsertSettings(mockUser, completeUpdate);
@@ -340,7 +341,7 @@ describe('UserSettingsController', () => {
         id: 'admin-user-id',
         role: 'admin',
       };
-      
+
       mockService.findByUserId.mockResolvedValue({
         ...mockUserSettings,
         userId: adminUser.id,
@@ -360,7 +361,7 @@ describe('UserSettingsController', () => {
 
       await expect(controller.getSettings(mockUser))
         .rejects.toThrow(BadRequestException);
-      
+
       expect(mockService.findByUserId).toHaveBeenCalledWith(mockUser.id);
     });
 
@@ -370,7 +371,7 @@ describe('UserSettingsController', () => {
 
       await expect(controller.createSettings(mockUser, mockCreateDto))
         .rejects.toThrow(ConflictException);
-      
+
       expect(mockService.create).toHaveBeenCalledWith(mockUser.id, mockCreateDto);
     });
 
@@ -380,7 +381,7 @@ describe('UserSettingsController', () => {
 
       await expect(controller.updateSettings(mockUser, mockUpdateDto))
         .rejects.toThrow(NotFoundException);
-      
+
       expect(mockService.update).toHaveBeenCalledWith(mockUser.id, mockUpdateDto);
     });
 
@@ -390,7 +391,7 @@ describe('UserSettingsController', () => {
 
       await expect(controller.upsertSettings(mockUser, mockUpdateDto))
         .rejects.toThrow(ServiceUnavailableException);
-      
+
       expect(mockService.upsert).toHaveBeenCalledWith(mockUser.id, mockUpdateDto);
     });
   });
@@ -436,7 +437,7 @@ describe('UserSettingsController', () => {
         distanceUnit: DistanceUnit.KILOMETERS,
         darkMode: true,
       };
-      
+
       const upsertedSettings = {
         ...mockUserSettings,
         ...upsertData,
