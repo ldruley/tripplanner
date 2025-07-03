@@ -1,82 +1,153 @@
 # TripPlanner
 
+A comprehensive trip planning application built with modern web technologies. Plan your trips, discover locations, and optimize your travel routes with integrated mapping and point-of-interest services.
+
 <a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is almost ready ✨.
+Built with Nx monorepo for scalable development.
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/tutorials/angular-monorepo-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+## Features
 
-## Finish your CI setup
+- **Trip Planning**: Create and manage detailed trip itineraries
+- **Location Discovery**: Search and discover points of interest
+- **Route Optimization**: Calculate optimal travel routes and distances
+- **User Management**: Secure authentication with email verification
+- **Profile Management**: Customize user profiles and preferences
+- **Multi-Provider Support**: Integrated with HERE and Mapbox APIs
+- **Dark/Light Theme**: Responsive design with theme switching
+- **Real-time Updates**: Background processing for time-sensitive operations
 
-[Click here to finish setting up your workspace!](https://cloud.nx.app/connect/UJnggL3kdP)
+## Tech Stack
 
+### Frontend
+- **Angular 19** with standalone components and signals
+- **Tailwind CSS** for styling
+- **RxJS** for reactive programming
+- **Storybook** for component documentation
 
-## Run tasks
+### Backend
+- **NestJS** with TypeScript
+- **PostgreSQL** with Prisma ORM
+- **Redis** for caching and session management
+- **BullMQ** for background job processing
+- **JWT** authentication with email verification
 
-To run the dev server for your app, use:
+### External Services
+- **HERE Maps API** for geocoding and routing
+- **Mapbox API** for geocoding and routing
+- **Email Service** for user notifications
 
-```sh
-npx nx serve trip-frontend
+## Getting Started
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL database
+- Redis server
+- HERE and/or Mapbox API keys
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables (create `.env` files based on examples)
+
+4. Set up the database:
+   ```bash
+   npm run db:generate
+   npm run db:push
+   ```
+
+### Development
+
+Start both frontend and backend in development mode:
+```bash
+npm run dev
 ```
 
-To create a production bundle:
+Or start them individually:
+```bash
+# Frontend only
+npm run start:frontend
 
-```sh
-npx nx build trip-frontend
+# Backend only
+npm run start:backend
 ```
 
-To see all available targets to run for a project, run:
+### Building for Production
 
-```sh
-npx nx show project trip-frontend
+```bash
+npm run build:frontend
+npm run build:backend
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+## Project Structure
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+This is an Nx monorepo with the following structure:
 
-## Add new projects
+- `apps/trip-frontend/` - Angular frontend application
+- `apps/trip-backend/` - NestJS backend application
+- `libs/` - Shared libraries and domain modules
+  - `auth/` - Authentication utilities
+  - `geocoding/` - Location and geocoding services
+  - `email/` - Email service and templates
+  - `shared/` - Common types, DTOs, and utilities
 
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
+## Database Management
 
-Use the plugin's generator to create new projects.
+```bash
+# Generate Prisma client after schema changes
+npm run db:generate
 
-To generate a new application, use:
+# Push schema changes to database (development)
+npm run db:push
 
-```sh
-npx nx g @nx/angular:app demo
+# Create and run migrations (production)
+npm run db:migrate
+
+# Open Prisma Studio
+npm run db:studio
 ```
 
-To generate a new library, use:
+## Testing
 
-```sh
-npx nx g @nx/angular:lib mylib
+```bash
+# Unit tests
+nx test trip-frontend
+nx test trip-backend
+
+# E2E tests
+nx e2e trip-frontend-e2e
+nx e2e trip-backend-e2e
+
+# Linting
+nx lint trip-frontend
+nx lint trip-backend
 ```
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
+## Development Tools
 
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Nx Commands
 
+```bash
+# Visualize project dependencies
+nx graph
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+# Show available tasks for a project
+nx show project trip-frontend
 
-## Install Nx Console
+# Generate new components/libraries
+nx g @nx/angular:component <name>
+nx g @nx/angular:lib <name>
+```
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+### Nx Console
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Install [Nx Console](https://nx.dev/getting-started/editor-setup) for VS Code or IntelliJ to get enhanced IDE support for running tasks and generating code.
 
-## Useful links
+## License
 
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/getting-started/tutorials/angular-monorepo-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+MIT
