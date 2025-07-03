@@ -1,22 +1,21 @@
-
 export enum TravelMode {
   'DRIVING',
   'WALKING',
   'BICYCLING',
   'TRANSIT',
-  'PUBLIC_TRANSPORT'
+  'PUBLIC_TRANSPORT',
 }
 
 export enum UserRole {
   'user',
   'admin',
-  'moderator'
+  'moderator',
 }
 
 export enum UserStatus {
   'active',
   'suspended',
-  'pending'
+  'pending',
 }
 
 export enum ApiSourceProvider {
@@ -26,7 +25,7 @@ export enum ApiSourceProvider {
   'HERE',
   'MAPBOX',
   'USER_INPUT',
-  'INTERNAL_SEED'
+  'INTERNAL_SEED',
 }
 
 export enum LocationCategory {
@@ -48,5 +47,5 @@ export enum LocationCategory {
 
 export enum DistanceUnit {
   'MILES',
-  'KILOMETERS'
+  'KILOMETERS',
 }

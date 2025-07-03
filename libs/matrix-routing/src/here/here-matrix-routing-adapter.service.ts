@@ -1,4 +1,9 @@
-import { Injectable, Logger, InternalServerErrorException, BadGatewayException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  InternalServerErrorException,
+  BadGatewayException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
@@ -6,10 +11,10 @@ import { firstValueFrom } from 'rxjs';
 import {
   Coordinate,
   CoordinateMatrix,
-  CoordinateMatrixSchema, MatrixQuery,
-  toCoordinateKey
+  CoordinateMatrixSchema,
+  MatrixQuery,
+  toCoordinateKey,
 } from '@trip-planner/types';
-
 
 @Injectable()
 export class HereMatrixRoutingAdapterService {
@@ -21,10 +26,12 @@ export class HereMatrixRoutingAdapterService {
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
   ) {
-      this.apiKey = this.configService.get<string>('HERE_API_KEY') ?? (() => {
-      this.logger.error('HERE_API_KEY is not set');
-      throw new InternalServerErrorException('HERE_API_KEY is required');
-    })();
+    this.apiKey =
+      this.configService.get<string>('HERE_API_KEY') ??
+      (() => {
+        this.logger.error('HERE_API_KEY is not set');
+        throw new InternalServerErrorException('HERE_API_KEY is required');
+      })();
   }
 
   async getMatrixRouting(query: MatrixQuery): Promise<CoordinateMatrix> {
@@ -44,7 +51,7 @@ export class HereMatrixRoutingAdapterService {
     this.logger.debug('Matrix URL: ' + url);
     try {
       const response: AxiosResponse<any> = await firstValueFrom(
-        this.httpService.post(url, body, {params})
+        this.httpService.post(url, body, { params }),
       );
 
       this.logger.debug(`Matrix response: ${JSON.stringify(response.data)}`);
@@ -53,17 +60,17 @@ export class HereMatrixRoutingAdapterService {
         travelTimes: response.data.matrix.travelTimes,
         distances: response.data.matrix.distances,
       });
-    } catch(error) {
+    } catch (error) {
       this.logger.error('Error fetching matrix data', error);
       throw new BadGatewayException('Failed to fetch matrix data from HERE API');
     }
   }
 
   mapMatrixResponseToCoordinateMatrix({
-      origins,
-      travelTimes,
-      distances,
-    }: {
+    origins,
+    travelTimes,
+    distances,
+  }: {
     origins: Coordinate[];
     travelTimes: number[];
     distances: number[];

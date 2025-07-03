@@ -9,7 +9,7 @@ import {
   RequestPasswordResetSchema,
   ResetPasswordSchema,
   VerifyEmailSchema,
-  ResendVerificationSchema
+  ResendVerificationSchema,
 } from '@trip-planner/types';
 
 export class UserDto extends createZodDto(UserSchema) {}

@@ -9,14 +9,17 @@ export function buildLoginForm(fb: FormBuilder): FormGroup {
 }
 
 export function buildRegisterForm(fb: FormBuilder): FormGroup {
-  return fb.group({
-    firstName: ['', Validators.required],
-    lastName: ['', Validators.required],
-    email: ['', emailValidator],
-    password: ['', passwordValidator],
-    confirmPassword: ['', Validators.required],
-    acceptTerms: [false, Validators.requiredTrue],
-  }, { validators: matchPasswords });
+  return fb.group(
+    {
+      firstName: ['', Validators.required],
+      lastName: ['', Validators.required],
+      email: ['', emailValidator],
+      password: ['', passwordValidator],
+      confirmPassword: ['', Validators.required],
+      acceptTerms: [false, Validators.requiredTrue],
+    },
+    { validators: matchPasswords },
+  );
 }
 
 export function buildForgotPasswordForm(fb: FormBuilder): FormGroup {
@@ -26,11 +29,14 @@ export function buildForgotPasswordForm(fb: FormBuilder): FormGroup {
 }
 
 export function buildChangePasswordForm(fb: FormBuilder): FormGroup {
-  return fb.group({
-    currentPassword: ['', passwordValidator],
-    newPassword: ['', passwordValidator],
-    confirmPassword: ['', Validators.required],
-  }, { validators: matchNewPasswords });
+  return fb.group(
+    {
+      currentPassword: ['', passwordValidator],
+      newPassword: ['', passwordValidator],
+      confirmPassword: ['', Validators.required],
+    },
+    { validators: matchNewPasswords },
+  );
 }
 
 export function buildSettingsForm(fb: FormBuilder): FormGroup {
@@ -45,9 +51,9 @@ export function buildSettingsForm(fb: FormBuilder): FormGroup {
 type FormControlConfig = [string | null, ValidatorFn | ValidatorFn[] | null];
 
 export function buildDynamicForm(
-  fb: FormBuilder, 
+  fb: FormBuilder,
   controls: Record<string, FormControlConfig>,
-  formValidators?: ValidatorFn | ValidatorFn[]
+  formValidators?: ValidatorFn | ValidatorFn[],
 ): FormGroup {
   return fb.group(controls, { validators: formValidators });
 }

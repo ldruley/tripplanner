@@ -1,18 +1,25 @@
 <div class="p-6 bg-tp-bg-light dark:bg-tp-bg-secondary">
   <!-- Header with avatar and main info -->
-  <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6 pb-6 border-b border-tp-border-light dark:border-tp-border mb-6">
+  <div
+    class="flex flex-col sm:flex-row items-start sm:items-center gap-6 pb-6 border-b border-tp-border-light dark:border-tp-border mb-6"
+  >
     <div class="flex-shrink-0">
       <app-avatar
         [src]="userProfile.avatarUrl"
         [alt]="getDisplayName() + ' avatar'"
         size="xl"
-        [showBorder]="true">
+        [showBorder]="true"
+      >
       </app-avatar>
     </div>
 
     <div class="flex-grow">
-      <h2 class="text-2xl font-bold text-tp-text-light-primary dark:text-tp-text-primary mb-1">{{ getDisplayName() }}</h2>
-      <p class="text-tp-text-light-secondary dark:text-tp-text-secondary mb-3">{{ userProfile.email }}</p>
+      <h2 class="text-2xl font-bold text-tp-text-light-primary dark:text-tp-text-primary mb-1">
+        {{ getDisplayName() }}
+      </h2>
+      <p class="text-tp-text-light-secondary dark:text-tp-text-secondary mb-3">
+        {{ userProfile.email }}
+      </p>
       <div class="flex gap-2 flex-wrap">
         <span class="px-2 py-1 text-xs font-medium rounded-full" [class]="getRoleBadgeClass()">
           {{ getRoleDisplay() }}
@@ -28,16 +35,23 @@
         variant="primary"
         size="sm"
         (buttonClick)="editRequested.emit()"
-        [disabled]="loading">
+        [disabled]="loading"
+      >
         Edit Profile
       </app-button>
       <app-button
         variant="outline"
         size="sm"
         (buttonClick)="changePasswordRequested.emit()"
-        [disabled]="loading">
+        [disabled]="loading"
+      >
         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+          />
         </svg>
         Change Password
       </app-button>
@@ -48,46 +62,94 @@
   <div class="space-y-6">
     <!-- Personal Information -->
     <div class="space-y-4">
-      <h3 class="text-lg font-semibold text-tp-text-light-primary dark:text-tp-text-primary border-b border-tp-border-light dark:border-tp-border pb-2">Personal Information</h3>
+      <h3
+        class="text-lg font-semibold text-tp-text-light-primary dark:text-tp-text-primary border-b border-tp-border-light dark:border-tp-border pb-2"
+      >
+        Personal Information
+      </h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="space-y-1">
-          <span class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary">First Name</span>
-          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{ userProfile.firstName || 'Not provided' }}</span>
+          <span
+            class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary"
+            >First Name</span
+          >
+          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{
+            userProfile.firstName || 'Not provided'
+          }}</span>
         </div>
         <div class="space-y-1">
-          <span class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary">Last Name</span>
-          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{ userProfile.lastName || 'Not provided' }}</span>
+          <span
+            class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary"
+            >Last Name</span
+          >
+          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{
+            userProfile.lastName || 'Not provided'
+          }}</span>
         </div>
         <div class="space-y-1">
-          <span class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary">Display Name</span>
-          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{ userProfile.displayName || 'Not provided' }}</span>
+          <span
+            class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary"
+            >Display Name</span
+          >
+          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{
+            userProfile.displayName || 'Not provided'
+          }}</span>
         </div>
         <div class="space-y-1">
-          <span class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary">Email Address</span>
-          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{ userProfile.email }}</span>
+          <span
+            class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary"
+            >Email Address</span
+          >
+          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{
+            userProfile.email
+          }}</span>
         </div>
       </div>
     </div>
 
     <!-- Account Information -->
     <div class="space-y-4">
-      <h3 class="text-lg font-semibold text-tp-text-light-primary dark:text-tp-text-primary border-b border-tp-border-light dark:border-tp-border pb-2">Account Information</h3>
+      <h3
+        class="text-lg font-semibold text-tp-text-light-primary dark:text-tp-text-primary border-b border-tp-border-light dark:border-tp-border pb-2"
+      >
+        Account Information
+      </h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="space-y-1">
-          <span class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary">Account Role</span>
-          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{ getRoleDisplay() }}</span>
+          <span
+            class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary"
+            >Account Role</span
+          >
+          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{
+            getRoleDisplay()
+          }}</span>
         </div>
         <div class="space-y-1">
-          <span class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary">Account Status</span>
-          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{ getStatusDisplay() }}</span>
+          <span
+            class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary"
+            >Account Status</span
+          >
+          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{
+            getStatusDisplay()
+          }}</span>
         </div>
         <div class="space-y-1">
-          <span class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary">Last Sign In</span>
-          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{ formatDate(userProfile.lastSignInAt) }}</span>
+          <span
+            class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary"
+            >Last Sign In</span
+          >
+          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{
+            formatDate(userProfile.lastSignInAt)
+          }}</span>
         </div>
         <div class="space-y-1">
-          <span class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary">Member Since</span>
-          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{ formatDate(userProfile.createdAt) }}</span>
+          <span
+            class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary"
+            >Member Since</span
+          >
+          <span class="block text-sm text-tp-text-light-primary dark:text-tp-text-primary">{{
+            formatDate(userProfile.createdAt)
+          }}</span>
         </div>
       </div>
     </div>
@@ -95,19 +157,43 @@
     <!-- Profile Completion -->
     @if (userProfile.onboardingCompleted !== null) {
       <div class="space-y-4">
-        <h3 class="text-lg font-semibold text-tp-text-light-primary dark:text-tp-text-primary border-b border-tp-border-light dark:border-tp-border pb-2">Onboarding Status</h3>
+        <h3
+          class="text-lg font-semibold text-tp-text-light-primary dark:text-tp-text-primary border-b border-tp-border-light dark:border-tp-border pb-2"
+        >
+          Onboarding Status
+        </h3>
         <div class="pt-2">
           @if (userProfile.onboardingCompleted) {
             <div class="flex items-center">
-              <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                class="w-5 h-5 text-green-500 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <span class="text-green-700 dark:text-green-400">Onboarding completed</span>
             </div>
           } @else {
             <div class="flex items-center">
-              <svg class="w-5 h-5 text-amber-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+              <svg
+                class="w-5 h-5 text-amber-500 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"
+                />
               </svg>
               <span class="text-amber-700 dark:text-amber-400">Onboarding pending</span>
             </div>

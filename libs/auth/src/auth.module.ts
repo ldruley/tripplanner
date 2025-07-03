@@ -5,11 +5,7 @@ import { PrismaModule } from '@trip-planner/prisma';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
-  imports: [
-    ConfigModule,
-    PassportModule,
-    PrismaModule,
-  ],
+  imports: [ConfigModule, PassportModule, PrismaModule],
   providers: [JwtStrategy],
   exports: [JwtStrategy],
 })

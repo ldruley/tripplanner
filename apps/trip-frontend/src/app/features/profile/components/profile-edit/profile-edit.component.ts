@@ -35,20 +35,14 @@ export class ProfileEditComponent implements OnInit {
     this.profileForm = this.formBuilder.group({
       firstName: [
         this.userProfile.firstName || '',
-        [Validators.minLength(2), Validators.maxLength(100)]
+        [Validators.minLength(2), Validators.maxLength(100)],
       ],
       lastName: [
         this.userProfile.lastName || '',
-        [Validators.minLength(2), Validators.maxLength(100)]
+        [Validators.minLength(2), Validators.maxLength(100)],
       ],
-      displayName: [
-        this.userProfile.displayName || '',
-        [Validators.maxLength(200)]
-      ],
-      avatarUrl: [
-        this.userProfile.avatarUrl || '',
-        [Validators.pattern(/^https?:\/\/.+/)]
-      ]
+      displayName: [this.userProfile.displayName || '', [Validators.maxLength(200)]],
+      avatarUrl: [this.userProfile.avatarUrl || '', [Validators.pattern(/^https?:\/\/.+/)]],
     });
 
     // Store initial form value for change detection

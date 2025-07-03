@@ -17,10 +17,10 @@ export class PrismaProfileRepository implements ProfileRepository {
   async findById(id: string, client?: PrismaClient): Promise<Profile | null> {
     const prismaClient = this.getClient(client);
     const result = await prismaClient.profile.findUnique({
-      where: { id }
+      where: { id },
     });
 
-    if(!result) {
+    if (!result) {
       return null;
     }
 
@@ -30,10 +30,10 @@ export class PrismaProfileRepository implements ProfileRepository {
   async findByUserId(userId: string, client?: PrismaClient): Promise<Profile | null> {
     const prismaClient = this.getClient(client);
     const result = await prismaClient.profile.findUnique({
-      where: { userId } // Find by the unique 'userId' field
+      where: { userId }, // Find by the unique 'userId' field
     });
 
-    if(!result) {
+    if (!result) {
       return null;
     }
 
@@ -66,7 +66,7 @@ export class PrismaProfileRepository implements ProfileRepository {
   async delete(id: string, client?: PrismaClient): Promise<void> {
     const prismaClient = this.getClient(client);
     await prismaClient.profile.delete({
-      where: { id }
+      where: { id },
     });
   }
 
@@ -74,12 +74,15 @@ export class PrismaProfileRepository implements ProfileRepository {
     const prismaClient = this.getClient(client);
     const result = await prismaClient.profile.findUnique({
       where: { id },
-      select: { id: true }
+      select: { id: true },
     });
     return !!result;
   }
 
-  async findMany(query: ProfileQuery, client?: PrismaClient): Promise<{
+  async findMany(
+    query: ProfileQuery,
+    client?: PrismaClient,
+  ): Promise<{
     profiles: Profile[];
     total: number;
     page: number;
@@ -97,7 +100,7 @@ export class PrismaProfileRepository implements ProfileRepository {
         { user: { email: { contains: search, mode: 'insensitive' } } },
         { displayName: { contains: search, mode: 'insensitive' } },
         { firstName: { contains: search, mode: 'insensitive' } },
-        { lastName: { contains: search, mode: 'insensitive' } }
+        { lastName: { contains: search, mode: 'insensitive' } },
       ];
     }
 
@@ -112,14 +115,15 @@ export class PrismaProfileRepository implements ProfileRepository {
         include: {
           user: {
             select: {
-              email: true
-            }
-          }
+              email: true,
+            },
+          },
         },
         orderBy: { [sortBy]: sortOrder },
         skip: (page - 1) * limit,
-        take: limit }),
-      prismaClient.profile.count({ where })
+        take: limit,
+      }),
+      prismaClient.profile.count({ where }),
     ]);
 
     return {

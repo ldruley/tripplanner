@@ -1,4 +1,11 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit, ServiceUnavailableException, RequestTimeoutException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+  ServiceUnavailableException,
+  RequestTimeoutException,
+} from '@nestjs/common';
 import { BullMQService } from '@trip-planner/bullmq';
 import { RedisService } from '@trip-planner/redis';
 import { Job, Queue, QueueEvents } from 'bullmq';
@@ -13,7 +20,6 @@ export class TimezoneService implements OnModuleInit, OnModuleDestroy {
   private readonly CACHE_TTL = 7 * 24 * 60 * 60;
   private readonly logger = new Logger(TimezoneService.name);
   private readonly QUEUE_NAME = 'timezone-requests';
-
 
   constructor(
     private readonly bullmqService: BullMQService,
@@ -50,14 +56,9 @@ export class TimezoneService implements OnModuleInit, OnModuleDestroy {
       return cachedResponse;
     }
 
-    const job = await this.bullmqService.addJob(
-      this.QUEUE_NAME,
-      'fetch-timezone-coords',
-      query,
-      {
-        priority: 1 // TODO: This will change later likely
-      }
-    )
+    const job = await this.bullmqService.addJob(this.QUEUE_NAME, 'fetch-timezone-coords', query, {
+      priority: 1, // TODO: This will change later likely
+    });
     const response = await this.waitForJobCompletion(job, cacheKey);
     await this.redisService.set(cacheKey, response, this.CACHE_TTL);
     return response;
@@ -71,31 +72,20 @@ export class TimezoneService implements OnModuleInit, OnModuleDestroy {
       return cachedResponse;
     }
 
-    const job = await this.bullmqService.addJob(
-      this.QUEUE_NAME,
-      'fetch-timezone-city',
-      query,
-      {
-        priority: 2 // TODO: This will change later likely
-      }
-    )
-    return  this.waitForJobCompletion(job, cacheKey);
+    const job = await this.bullmqService.addJob(this.QUEUE_NAME, 'fetch-timezone-city', query, {
+      priority: 2, // TODO: This will change later likely
+    });
+    return this.waitForJobCompletion(job, cacheKey);
   }
 
   //Temporary method to handle job completion and caching
-  private async waitForJobCompletion(
-    job: Job,
-    cacheKey: string
-  ): Promise<TimezoneResponse> {
+  private async waitForJobCompletion(job: Job, cacheKey: string): Promise<TimezoneResponse> {
     if (!this.queueEvents) {
       throw new ServiceUnavailableException('Queue events not initialized');
     }
-    
+
     try {
-      const result = await job.waitUntilFinished(
-        this.queueEvents,
-        30000
-      );
+      const result = await job.waitUntilFinished(this.queueEvents, 30000);
 
       if (!result) {
         this.logger.error(`Job ${job.id} completed but returned no result`);
@@ -106,7 +96,10 @@ export class TimezoneService implements OnModuleInit, OnModuleDestroy {
       return result;
     } catch (error: unknown) {
       this.logger.error(`Job ${job.id} failed or timed out:`, error);
-      if ((error as Error).message?.includes('timeout') || (error as Error).name === 'TimeoutError') {
+      if (
+        (error as Error).message?.includes('timeout') ||
+        (error as Error).name === 'TimeoutError'
+      ) {
         throw new RequestTimeoutException('Timezone lookup request timed out');
       }
       throw new ServiceUnavailableException('Timezone service is currently unavailable');
@@ -130,7 +123,4 @@ export class TimezoneService implements OnModuleInit, OnModuleDestroy {
       failed: failed.length,
     };
   }
-
 }
-
-

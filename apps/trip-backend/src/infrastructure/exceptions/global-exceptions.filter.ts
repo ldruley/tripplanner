@@ -3,7 +3,8 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
-  Logger, BadRequestException
+  Logger,
+  BadRequestException,
 } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
 import { ZodError, ZodIssue } from 'zod';
@@ -28,7 +29,7 @@ export class GlobalExceptionsFilter extends BaseExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     const errorResponse = this.buildErrorResponse(exception, request);
-    
+
     response.status(errorResponse.statusCode).json(errorResponse);
 
     if (errorResponse.statusCode >= 500) {
@@ -37,9 +38,7 @@ export class GlobalExceptionsFilter extends BaseExceptionFilter {
         exception instanceof Error ? exception.stack : exception,
       );
     } else if (errorResponse.statusCode >= 400 && errorResponse.statusCode < 500) {
-      this.logger.warn(
-        `${request.method} ${request.url} - ${errorResponse.error}`,
-      );
+      this.logger.warn(`${request.method} ${request.url} - ${errorResponse.error}`);
     }
   }
 
@@ -70,7 +69,10 @@ export class GlobalExceptionsFilter extends BaseExceptionFilter {
 
       // Handle BadRequestException from ZodValidationPipe
       if (exception instanceof BadRequestException && typeof exceptionResponse === 'object') {
-        const response = exceptionResponse as { message?: string[] | string; [key: string]: unknown };
+        const response = exceptionResponse as {
+          message?: string[] | string;
+          [key: string]: unknown;
+        };
 
         // Check if it's from ZodValidationPipe
         if (response.message && Array.isArray(response.message)) {
@@ -90,12 +92,14 @@ export class GlobalExceptionsFilter extends BaseExceptionFilter {
         return {
           success: false,
           error: typeof exceptionResponse === 'string' ? exceptionResponse : exception.message,
-          message: typeof exceptionResponse === 'object' && 'message' in exceptionResponse
-            ? (exceptionResponse as { message: string }).message
-            : exception.message,
-          details: typeof exceptionResponse === 'object' && 'details' in exceptionResponse
-            ? (exceptionResponse as { details: Record<string, unknown> }).details
-            : undefined,
+          message:
+            typeof exceptionResponse === 'object' && 'message' in exceptionResponse
+              ? (exceptionResponse as { message: string }).message
+              : exception.message,
+          details:
+            typeof exceptionResponse === 'object' && 'details' in exceptionResponse
+              ? (exceptionResponse as { details: Record<string, unknown> }).details
+              : undefined,
           timestamp,
           path,
           statusCode: status,
@@ -125,7 +129,7 @@ export class GlobalExceptionsFilter extends BaseExceptionFilter {
         message: 'Invalid data provided to database operation',
         details: {
           type: 'prisma_validation',
-          raw: exception.message
+          raw: exception.message,
         },
         timestamp,
         path,
@@ -138,12 +142,9 @@ export class GlobalExceptionsFilter extends BaseExceptionFilter {
     return {
       success: false,
       error: 'Internal Server Error',
-      message: process.env.NODE_ENV === 'production'
-        ? 'An unexpected error occurred'
-        : error.message,
-      details: process.env.NODE_ENV === 'production'
-        ? undefined
-        : { stack: error.stack },
+      message:
+        process.env.NODE_ENV === 'production' ? 'An unexpected error occurred' : error.message,
+      details: process.env.NODE_ENV === 'production' ? undefined : { stack: error.stack },
       timestamp,
       path,
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -175,14 +176,34 @@ export class GlobalExceptionsFilter extends BaseExceptionFilter {
     // Handle only the most common cases for now
     switch (error.code) {
       case 'P2002': // Unique constraint
-        return { statusCode: 409, error: 'Resource already exists', message: error.message, details: error.meta };
+        return {
+          statusCode: 409,
+          error: 'Resource already exists',
+          message: error.message,
+          details: error.meta,
+        };
       case 'P2025': // Record not found
-        return { statusCode: 404, error: 'Resource not found', message: error.message, details: error.meta };
+        return {
+          statusCode: 404,
+          error: 'Resource not found',
+          message: error.message,
+          details: error.meta,
+        };
       case 'P2003': // Foreign key constraint
-        return { statusCode: 400, error: 'Invalid reference', message: error.message, details: error.meta };
+        return {
+          statusCode: 400,
+          error: 'Invalid reference',
+          message: error.message,
+          details: error.meta,
+        };
       default:
         // Generic database error for everything else
-        return { statusCode: 500, error: 'Database operation failed', message: error.message, details: error.meta };
+        return {
+          statusCode: 500,
+          error: 'Database operation failed',
+          message: error.message,
+          details: error.meta,
+        };
     }
   }
 }

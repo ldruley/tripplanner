@@ -5,7 +5,14 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { jwtDecode } from 'jwt-decode';
 
-import { CreateUser, LoginUser, SafeUser, ChangePassword, VerifyEmail, ResendVerification } from '@trip-planner/types';
+import {
+  CreateUser,
+  LoginUser,
+  SafeUser,
+  ChangePassword,
+  VerifyEmail,
+  ResendVerification,
+} from '@trip-planner/types';
 
 import { environment } from '../../../../environments/environment';
 import { SettingsService } from '../../settings/services/settings.service';
@@ -43,7 +50,7 @@ export interface AuthState {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private readonly router = inject(Router);
@@ -55,7 +62,7 @@ export class AuthService {
   private authStateSubject = new BehaviorSubject<AuthState>({
     user: null,
     loading: true,
-    error: null
+    error: null,
   });
 
   public authState$ = this.authStateSubject.asObservable();
@@ -88,35 +95,33 @@ export class AuthService {
 
   signIn(credentials: LoginUser): Observable<{ success: boolean; error?: string }> {
     this.setLoading(true);
-    return this.http.post<{ access_token: string }>(`${this.apiUrl}/login`, credentials)
-      .pipe(
-        tap(response => {
-          this.handleSuccessfulAuthentication(response.access_token);
-        }),
-        map(() => ({ success: true })),
-        catchError((err: HttpErrorResponse) => {
-          const message = err.error?.message || 'Invalid email or password';
-          this.setError(message);
-          return of({ success: false, error: message });
-        })
-      );
+    return this.http.post<{ access_token: string }>(`${this.apiUrl}/login`, credentials).pipe(
+      tap(response => {
+        this.handleSuccessfulAuthentication(response.access_token);
+      }),
+      map(() => ({ success: true })),
+      catchError((err: HttpErrorResponse) => {
+        const message = err.error?.message || 'Invalid email or password';
+        this.setError(message);
+        return of({ success: false, error: message });
+      }),
+    );
   }
 
   signUp(credentials: CreateUser): Observable<{ success: boolean; error?: string }> {
     this.setLoading(true);
-    return this.http.post<SafeUser>(`${this.apiUrl}/register`, credentials)
-      .pipe(
-        tap(() => {
-          // On successful registration, set loading to false. The user needs to login separately.
-          this.setLoading(false);
-        }),
-        map(() => ({ success: true })),
-        catchError((err: HttpErrorResponse) => {
-          const message = err.error?.message || 'An error occurred during registration.';
-          this.setError(message);
-          return of({ success: false, error: message });
-        })
-      );
+    return this.http.post<SafeUser>(`${this.apiUrl}/register`, credentials).pipe(
+      tap(() => {
+        // On successful registration, set loading to false. The user needs to login separately.
+        this.setLoading(false);
+      }),
+      map(() => ({ success: true })),
+      catchError((err: HttpErrorResponse) => {
+        const message = err.error?.message || 'An error occurred during registration.';
+        this.setError(message);
+        return of({ success: false, error: message });
+      }),
+    );
   }
 
   signOut(): void {
@@ -132,10 +137,10 @@ export class AuthService {
     const decodedToken = jwtDecode<JwtPayload>(token);
     const user = this.mapPayloadToSafeUser(decodedToken);
     this.authStateSubject.next({ user, loading: false, error: null });
-    
+
     // Load settings from database and cache them
     this.settingsService.loadSettings();
-    
+
     this.handleRedirect();
   }
 
@@ -163,25 +168,25 @@ export class AuthService {
 
   verifyEmail(token: string): Observable<{ success: boolean; error?: string }> {
     const verifyData: VerifyEmail = { token };
-    return this.http.post<{ message: string }>(`${this.apiUrl}/verify-email`, verifyData)
-      .pipe(
-        map(() => ({ success: true })),
-        catchError((err: HttpErrorResponse) => {
-          const message = err.error?.message || 'Email verification failed';
-          return of({ success: false, error: message });
-        })
-      );
+    return this.http.post<{ message: string }>(`${this.apiUrl}/verify-email`, verifyData).pipe(
+      map(() => ({ success: true })),
+      catchError((err: HttpErrorResponse) => {
+        const message = err.error?.message || 'Email verification failed';
+        return of({ success: false, error: message });
+      }),
+    );
   }
 
   resendVerificationEmail(email: string): Observable<{ success: boolean; error?: string }> {
     const resendData: ResendVerification = { email };
-    return this.http.post<{ message: string }>(`${this.apiUrl}/resend-verification`, resendData)
+    return this.http
+      .post<{ message: string }>(`${this.apiUrl}/resend-verification`, resendData)
       .pipe(
         map(() => ({ success: true })),
         catchError((err: HttpErrorResponse) => {
           const message = err.error?.message || 'Failed to resend verification email';
           return of({ success: false, error: message });
-        })
+        }),
       );
   }
 
@@ -216,7 +221,7 @@ export class AuthService {
     this.authStateSubject.next({
       ...currentState,
       loading,
-      error: loading ? null : currentState.error
+      error: loading ? null : currentState.error,
     });
   }
 
@@ -225,7 +230,7 @@ export class AuthService {
     this.authStateSubject.next({
       ...currentState,
       loading: false,
-      error
+      error,
     });
   }
 }

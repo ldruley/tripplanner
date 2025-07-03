@@ -2,18 +2,21 @@ import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { delay, map } from 'rxjs/operators';
 import { Location } from '../models/location.model';
-import { PoiSearchResult, SearchMode } from '../../../../../../../libs/shared/types/src/schemas/search.schema';
+import {
+  PoiSearchResult,
+  SearchMode,
+} from '../../../../../../../libs/shared/types/src/schemas/search.schema';
 import { GeocodingResult } from '../../../../../../../libs/shared/types/src/schemas/geocoding.schema';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class LocationSearchService {
   private readonly apiUrl = environment.backendApiUrl;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   /**
    * Searches for locations by calling the appropriate backend endpoint based on the search mode.
@@ -37,9 +40,9 @@ export class LocationSearchService {
     const params = new HttpParams().set('search', query);
     const endpoint = `${this.apiUrl}/geocoding/forward`;
 
-    return this.http.get<GeocodingResult[]>(endpoint, { params }).pipe(
-      map(results => results.map(this.transformGeocodingResultToLocation))
-    );
+    return this.http
+      .get<GeocodingResult[]>(endpoint, { params })
+      .pipe(map(results => results.map(this.transformGeocodingResultToLocation)));
   }
 
   /**
@@ -50,9 +53,9 @@ export class LocationSearchService {
     const params = new HttpParams().set('search', query);
     const endpoint = `${this.apiUrl}/poi/poi-search`;
 
-    return this.http.get<PoiSearchResult[]>(endpoint, { params }).pipe(
-      map(results => results.map(this.transformPoiResultToLocation))
-    );
+    return this.http
+      .get<PoiSearchResult[]>(endpoint, { params })
+      .pipe(map(results => results.map(this.transformPoiResultToLocation)));
   }
 
   /**
@@ -107,9 +110,8 @@ export class LocationSearchService {
 
   mockSearchLocations(query: string, mode: SearchMode): Observable<Location[]> {
     console.log(`Mock LocationSearchService: Searching for "${query}"`);
-    const results = mode === 'address'
-      ? this.getMockAddressResults(query)
-      : this.getMockPlaceResults(query);
+    const results =
+      mode === 'address' ? this.getMockAddressResults(query) : this.getMockPlaceResults(query);
 
     return of(results).pipe(delay(500));
   }
@@ -143,7 +145,7 @@ export class LocationSearchService {
         state: 'CA',
         country: 'USA',
         postalCode: '90210',
-        latitude: 34.0530,
+        latitude: 34.053,
         longitude: -118.2445,
         geocodingProvider: 'manual',
         geocodingProviderId: 'manual-123',
@@ -154,8 +156,8 @@ export class LocationSearchService {
       },
       {
         id: crypto.randomUUID(),
-          name: `Mock Result for "${query}" 3`,
-        latitude: 34.0540,
+        name: `Mock Result for "${query}" 3`,
+        latitude: 34.054,
         longitude: -118.2455,
         // Some fields might be undefined for POIs
         fullAddress: null,
@@ -169,7 +171,7 @@ export class LocationSearchService {
         geocodedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
-      }
+      },
     ];
   }
 
@@ -202,7 +204,7 @@ export class LocationSearchService {
         state: 'CA',
         country: 'USA',
         postalCode: '90210',
-        latitude: 34.0530,
+        latitude: 34.053,
         longitude: -118.2445,
         geocodingProvider: 'manual',
         geocodingProviderId: 'manual-123',
@@ -214,7 +216,7 @@ export class LocationSearchService {
       {
         id: crypto.randomUUID(),
         name: `Point of Interest for "${query}" 3`,
-        latitude: 34.0540,
+        latitude: 34.054,
         longitude: -118.2455,
         // Some fields might be undefined for POIs
         fullAddress: null,
@@ -228,7 +230,7 @@ export class LocationSearchService {
         geocodedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
-      }
+      },
     ];
   }
 }

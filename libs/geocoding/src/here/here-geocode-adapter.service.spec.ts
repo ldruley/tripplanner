@@ -28,12 +28,12 @@ describe('HereGeocodeAdapterService', () => {
   });
 
   const mockForwardQuery: ForwardGeocodeQuery = {
-    search: 'New York, NY'
+    search: 'New York, NY',
   };
 
   const mockReverseQuery: ReverseGeocodeQuery = {
     latitude: 40.7128,
-    longitude: -74.0060
+    longitude: -74.006,
   };
 
   const mockHereForwardResponse = {
@@ -47,16 +47,16 @@ describe('HereGeocodeAdapterService', () => {
             state: 'New York',
             city: 'New York',
             postalCode: '10001',
-            street: 'Broadway'
+            street: 'Broadway',
           },
           position: {
             lat: 40.7128,
-            lng: -74.0060
+            lng: -74.006,
           },
-          id: 'here123'
-        }
-      ]
-    }
+          id: 'here123',
+        },
+      ],
+    },
   };
 
   const mockHereReverseResponse = {
@@ -70,38 +70,38 @@ describe('HereGeocodeAdapterService', () => {
             state: 'New York',
             city: 'New York',
             postalCode: '10001',
-            street: 'Broadway'
+            street: 'Broadway',
           },
           position: {
             lat: 40.7128,
-            lng: -74.0060
+            lng: -74.006,
           },
-          id: 'here456'
-        }
-      ]
-    }
+          id: 'here456',
+        },
+      ],
+    },
   };
 
   beforeEach(async () => {
     httpService = mock<HttpService>();
-    
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         HereGeocodeAdapterService,
         {
           provide: ConfigService,
           useValue: {
-            get: jest.fn().mockReturnValue('test-here-api-key')
-          }
+            get: jest.fn().mockReturnValue('test-here-api-key'),
+          },
         },
         {
           provide: HttpService,
-          useValue: httpService
-        }
+          useValue: httpService,
+        },
       ],
     })
-    .setLogger(createMockLogger())
-    .compile();
+      .setLogger(createMockLogger())
+      .compile();
 
     service = module.get<HereGeocodeAdapterService>(HereGeocodeAdapterService);
     configService = module.get<ConfigService>(ConfigService);
@@ -125,7 +125,7 @@ describe('HereGeocodeAdapterService', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
@@ -136,7 +136,7 @@ describe('HereGeocodeAdapterService', () => {
       expect(results).toHaveLength(1);
       expect(results[0]).toMatchObject({
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
         fullAddress: 'New York, NY, USA',
         streetAddress: 'Broadway',
         city: 'New York',
@@ -144,7 +144,7 @@ describe('HereGeocodeAdapterService', () => {
         country: 'United States',
         postalCode: '10001',
         provider: 'here',
-        providerId: 'here123'
+        providerId: 'here123',
       });
 
       // Validate with Zod schema
@@ -160,7 +160,7 @@ describe('HereGeocodeAdapterService', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(emptyResponse));
 
@@ -180,21 +180,21 @@ describe('HereGeocodeAdapterService', () => {
               title: 'Incomplete Location',
               address: {
                 label: 'Incomplete Location',
-                countryName: 'United States'
+                countryName: 'United States',
                 // Missing other fields
               },
               position: {
                 lat: 40.7128,
-                lng: -74.0060
+                lng: -74.006,
               },
-              id: 'here789'
-            }
-          ]
+              id: 'here789',
+            },
+          ],
         },
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(incompleteResponse));
 
@@ -205,7 +205,7 @@ describe('HereGeocodeAdapterService', () => {
       expect(results).toHaveLength(1);
       expect(results[0]).toMatchObject({
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
         fullAddress: 'Incomplete Location',
         streetAddress: 'Unknown street address',
         city: 'Unknown city',
@@ -213,7 +213,7 @@ describe('HereGeocodeAdapterService', () => {
         country: 'United States',
         postalCode: 'Unknown postal code',
         provider: 'here',
-        providerId: 'here789'
+        providerId: 'here789',
       });
     });
 
@@ -223,23 +223,23 @@ describe('HereGeocodeAdapterService', () => {
       httpService.get.mockReturnValueOnce(throwError(() => error));
 
       // Act & Assert
-      await expect(service.forwardGeocode(mockForwardQuery))
-        .rejects.toThrow(BadGatewayException);
-      await expect(service.forwardGeocode(mockForwardQuery))
-        .rejects.toThrow('Failed to perform forward geocoding');
+      await expect(service.forwardGeocode(mockForwardQuery)).rejects.toThrow(BadGatewayException);
+      await expect(service.forwardGeocode(mockForwardQuery)).rejects.toThrow(
+        'Failed to perform forward geocoding',
+      );
     });
 
     it('should include rawResponse in development mode', async () => {
       // Arrange
       const originalEnv = process.env['NODE_ENV'];
       process.env['NODE_ENV'] = 'development';
-      
+
       const mockAxiosResponse: AxiosResponse = {
         ...mockHereForwardResponse,
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
@@ -258,13 +258,13 @@ describe('HereGeocodeAdapterService', () => {
       // Arrange
       const originalEnv = process.env['NODE_ENV'];
       process.env['NODE_ENV'] = 'production';
-      
+
       const mockAxiosResponse: AxiosResponse = {
         ...mockHereForwardResponse,
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
@@ -287,7 +287,7 @@ describe('HereGeocodeAdapterService', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
@@ -298,7 +298,7 @@ describe('HereGeocodeAdapterService', () => {
       expect(results).toHaveLength(1);
       expect(results[0]).toMatchObject({
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
         fullAddress: 'Broadway, New York, NY, USA',
         streetAddress: 'Broadway',
         city: 'New York',
@@ -306,7 +306,7 @@ describe('HereGeocodeAdapterService', () => {
         country: 'United States',
         postalCode: '10001',
         provider: 'here',
-        providerId: 'here456'
+        providerId: 'here456',
       });
 
       // Validate with Zod schema
@@ -322,7 +322,7 @@ describe('HereGeocodeAdapterService', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(emptyResponse));
 
@@ -339,10 +339,10 @@ describe('HereGeocodeAdapterService', () => {
       httpService.get.mockReturnValueOnce(throwError(() => error));
 
       // Act & Assert
-      await expect(service.reverseGeocode(mockReverseQuery))
-        .rejects.toThrow(BadGatewayException);
-      await expect(service.reverseGeocode(mockReverseQuery))
-        .rejects.toThrow('Failed to perform reverse geocoding');
+      await expect(service.reverseGeocode(mockReverseQuery)).rejects.toThrow(BadGatewayException);
+      await expect(service.reverseGeocode(mockReverseQuery)).rejects.toThrow(
+        'Failed to perform reverse geocoding',
+      );
     });
 
     it('should format coordinates correctly in API call', async () => {
@@ -352,7 +352,7 @@ describe('HereGeocodeAdapterService', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
@@ -360,9 +360,7 @@ describe('HereGeocodeAdapterService', () => {
       await service.reverseGeocode(mockReverseQuery);
 
       // Assert
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('at=40.7128%2C-74.006')
-      );
+      expect(httpService.get).toHaveBeenCalledWith(expect.stringContaining('at=40.7128%2C-74.006'));
     });
   });
 
@@ -375,18 +373,17 @@ describe('HereGeocodeAdapterService', () => {
           {
             provide: ConfigService,
             useValue: {
-              get: jest.fn().mockReturnValue(null)
-            }
+              get: jest.fn().mockReturnValue(null),
+            },
           },
           {
             provide: HttpService,
-            useValue: httpService
-          }
+            useValue: httpService,
+          },
         ],
       });
 
-      await expect(moduleBuilder.compile())
-        .rejects.toThrow(InternalServerErrorException);
+      await expect(moduleBuilder.compile()).rejects.toThrow(InternalServerErrorException);
     });
 
     it('should throw InternalServerErrorException with correct message for missing API key', async () => {
@@ -396,18 +393,17 @@ describe('HereGeocodeAdapterService', () => {
           {
             provide: ConfigService,
             useValue: {
-              get: jest.fn().mockReturnValue(undefined)
-            }
+              get: jest.fn().mockReturnValue(undefined),
+            },
           },
           {
             provide: HttpService,
-            useValue: httpService
-          }
+            useValue: httpService,
+          },
         ],
       });
 
-      await expect(moduleBuilder.compile())
-        .rejects.toThrow('Here access token is required');
+      await expect(moduleBuilder.compile()).rejects.toThrow('Here access token is required');
     });
   });
 
@@ -426,29 +422,29 @@ describe('HereGeocodeAdapterService', () => {
                 state: 'New York',
                 city: 'New York',
                 postalCode: '10001',
-                street: 'Broadway'
+                street: 'Broadway',
               },
               position: {
                 lat: 40.7128,
-                lng: -74.0060
+                lng: -74.006,
               },
-              id: 'valid123'
+              id: 'valid123',
             },
             // Invalid item (missing position)
             {
               title: 'Invalid Location',
               address: {
-                label: 'Invalid Location'
+                label: 'Invalid Location',
               },
               position: null, // Invalid position
-              id: 'invalid456'
-            }
-          ]
+              id: 'invalid456',
+            },
+          ],
         },
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(mixedResponse));
 

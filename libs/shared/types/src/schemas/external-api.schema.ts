@@ -17,7 +17,7 @@ export type HereBaseFeature = {
 
 export type HerePoiFeature = HereBaseFeature & {
   name?: string;
-}
+};
 
 export type HerePoiApiResponse = {
   items: HerePoiFeature[];
@@ -25,27 +25,26 @@ export type HerePoiApiResponse = {
 
 export type HereGeocodeApiResponse = {
   items: HereBaseFeature[];
-}
+};
 
 export type BaseMapboxProperties = {
-    coordinates?: {
-      latitude?: number;
-      longitude?: number;
-    };
-    full_address?: string;
-    name?: string;
-    address?: string;
-    mapbox_id?: string;
-    context?: {
-      country?: { name?: string };
-      place?: { name?: string };
-      region?: { name?: string };
-      postcode?: { name?: string };
-      [key: string]: unknown;
-    };
+  coordinates?: {
+    latitude?: number;
+    longitude?: number;
+  };
+  full_address?: string;
+  name?: string;
+  address?: string;
+  mapbox_id?: string;
+  context?: {
+    country?: { name?: string };
+    place?: { name?: string };
+    region?: { name?: string };
+    postcode?: { name?: string };
     [key: string]: unknown;
   };
-
+  [key: string]: unknown;
+};
 
 export type MapboxPoiFeature = {
   properties?: BaseMapboxProperties;
@@ -65,7 +64,7 @@ export type MapboxGeocodeFeature = {
 
 export type MapboxGeocodeApiResponse = {
   features: MapboxGeocodeFeature[];
-}
+};
 
 export type GenericApiResponse = {
   [key: string]: unknown;

@@ -10,14 +10,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authToken = authService.getToken();
 
   if (req.method === 'OPTIONS') {
-      return next(req);
-    }
+    return next(req);
+  }
 
   if (authToken && req.url.startsWith(backendApiBaseUrl)) {
     const authReq = req.clone({
       setHeaders: {
-        Authorization: `Bearer ${authToken}`
-      }
+        Authorization: `Bearer ${authToken}`,
+      },
     });
     return next(authReq);
   }

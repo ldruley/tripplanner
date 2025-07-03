@@ -4,7 +4,6 @@ import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import { MatrixQueryDto } from '@trip-planner/shared/dtos';
 import { MatrixQuery } from '@trip-planner/types';
 
-
 @Controller('matrix-routing')
 export class MatrixRoutingController {
   constructor(private readonly matrixRoutingService: MatrixRoutingService) {}

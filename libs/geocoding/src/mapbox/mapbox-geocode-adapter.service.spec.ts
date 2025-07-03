@@ -28,12 +28,12 @@ describe('MapboxGeocodeAdapterService', () => {
   });
 
   const mockForwardQuery: ForwardGeocodeQuery = {
-    search: 'New York, NY'
+    search: 'New York, NY',
   };
 
   const mockReverseQuery: ReverseGeocodeQuery = {
     latitude: 40.7128,
-    longitude: -74.0060
+    longitude: -74.006,
   };
 
   const mockMapboxForwardResponse = {
@@ -46,27 +46,27 @@ describe('MapboxGeocodeAdapterService', () => {
             mapbox_id: 'mapbox123',
             coordinates: {
               latitude: 40.7128,
-              longitude: -74.0060
+              longitude: -74.006,
             },
             context: {
               place: {
-                name: 'New York'
+                name: 'New York',
               },
               region: {
-                name: 'New York'
+                name: 'New York',
               },
               country: {
-                name: 'United States'
+                name: 'United States',
               },
               postcode: {
-                name: '10001'
-              }
-            }
+                name: '10001',
+              },
+            },
           },
-          id: 'mapbox123'
-        }
-      ]
-    }
+          id: 'mapbox123',
+        },
+      ],
+    },
   };
 
   const mockMapboxReverseResponse = {
@@ -79,49 +79,49 @@ describe('MapboxGeocodeAdapterService', () => {
             mapbox_id: 'mapbox456',
             coordinates: {
               latitude: 40.7128,
-              longitude: -74.0060
+              longitude: -74.006,
             },
             context: {
               place: {
-                name: 'New York'
+                name: 'New York',
               },
               region: {
-                name: 'New York'
+                name: 'New York',
               },
               country: {
-                name: 'United States'
+                name: 'United States',
               },
               postcode: {
-                name: '10001'
-              }
-            }
+                name: '10001',
+              },
+            },
           },
-          id: 'mapbox456'
-        }
-      ]
-    }
+          id: 'mapbox456',
+        },
+      ],
+    },
   };
 
   beforeEach(async () => {
     httpService = mock<HttpService>();
-    
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MapboxGeocodeAdapterService,
         {
           provide: ConfigService,
           useValue: {
-            get: jest.fn().mockReturnValue('test-mapbox-api-key')
-          }
+            get: jest.fn().mockReturnValue('test-mapbox-api-key'),
+          },
         },
         {
           provide: HttpService,
-          useValue: httpService
-        }
+          useValue: httpService,
+        },
       ],
     })
-    .setLogger(createMockLogger())
-    .compile();
+      .setLogger(createMockLogger())
+      .compile();
 
     service = module.get<MapboxGeocodeAdapterService>(MapboxGeocodeAdapterService);
     configService = module.get<ConfigService>(ConfigService);
@@ -145,7 +145,7 @@ describe('MapboxGeocodeAdapterService', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
@@ -156,7 +156,7 @@ describe('MapboxGeocodeAdapterService', () => {
       expect(results).toHaveLength(1);
       expect(results[0]).toMatchObject({
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
         fullAddress: 'New York, NY, USA',
         streetAddress: 'New York',
         city: 'New York',
@@ -164,7 +164,7 @@ describe('MapboxGeocodeAdapterService', () => {
         country: 'United States',
         postalCode: '10001',
         provider: 'mapbox',
-        providerId: 'mapbox123'
+        providerId: 'mapbox123',
       });
 
       // Validate with Zod schema
@@ -180,7 +180,7 @@ describe('MapboxGeocodeAdapterService', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(emptyResponse));
 
@@ -203,18 +203,18 @@ describe('MapboxGeocodeAdapterService', () => {
                 mapbox_id: 'mapbox789',
                 coordinates: {
                   latitude: 40.7128,
-                  longitude: -74.0060
-                }
+                  longitude: -74.006,
+                },
                 // Missing context
               },
-              id: 'mapbox789'
-            }
-          ]
+              id: 'mapbox789',
+            },
+          ],
         },
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(incompleteResponse));
 
@@ -225,7 +225,7 @@ describe('MapboxGeocodeAdapterService', () => {
       expect(results).toHaveLength(1);
       expect(results[0]).toMatchObject({
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
         fullAddress: 'Incomplete Location',
         streetAddress: 'Incomplete Location',
         city: 'No city found',
@@ -233,7 +233,7 @@ describe('MapboxGeocodeAdapterService', () => {
         country: 'No country found',
         postalCode: 'No postal code found',
         provider: 'mapbox',
-        providerId: 'mapbox789'
+        providerId: 'mapbox789',
       });
     });
 
@@ -243,23 +243,23 @@ describe('MapboxGeocodeAdapterService', () => {
       httpService.get.mockReturnValueOnce(throwError(() => error));
 
       // Act & Assert
-      await expect(service.forwardGeocode(mockForwardQuery))
-        .rejects.toThrow(BadGatewayException);
-      await expect(service.forwardGeocode(mockForwardQuery))
-        .rejects.toThrow('Failed to perform forward geocoding');
+      await expect(service.forwardGeocode(mockForwardQuery)).rejects.toThrow(BadGatewayException);
+      await expect(service.forwardGeocode(mockForwardQuery)).rejects.toThrow(
+        'Failed to perform forward geocoding',
+      );
     });
 
     it('should include rawResponse in development mode', async () => {
       // Arrange
       const originalEnv = process.env['NODE_ENV'];
       process.env['NODE_ENV'] = 'development';
-      
+
       const mockAxiosResponse: AxiosResponse = {
         ...mockMapboxForwardResponse,
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
@@ -278,13 +278,13 @@ describe('MapboxGeocodeAdapterService', () => {
       // Arrange
       const originalEnv = process.env['NODE_ENV'];
       process.env['NODE_ENV'] = 'production';
-      
+
       const mockAxiosResponse: AxiosResponse = {
         ...mockMapboxForwardResponse,
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
@@ -307,7 +307,7 @@ describe('MapboxGeocodeAdapterService', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
@@ -318,7 +318,7 @@ describe('MapboxGeocodeAdapterService', () => {
       expect(results).toHaveLength(1);
       expect(results[0]).toMatchObject({
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
         fullAddress: 'Broadway, New York, NY, USA',
         streetAddress: 'Broadway',
         city: 'New York',
@@ -326,7 +326,7 @@ describe('MapboxGeocodeAdapterService', () => {
         country: 'United States',
         postalCode: '10001',
         provider: 'mapbox',
-        providerId: 'mapbox456'
+        providerId: 'mapbox456',
       });
 
       // Validate with Zod schema
@@ -342,7 +342,7 @@ describe('MapboxGeocodeAdapterService', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(emptyResponse));
 
@@ -359,10 +359,10 @@ describe('MapboxGeocodeAdapterService', () => {
       httpService.get.mockReturnValueOnce(throwError(() => error));
 
       // Act & Assert
-      await expect(service.reverseGeocode(mockReverseQuery))
-        .rejects.toThrow(BadGatewayException);
-      await expect(service.reverseGeocode(mockReverseQuery))
-        .rejects.toThrow('Failed to perform reverse geocoding');
+      await expect(service.reverseGeocode(mockReverseQuery)).rejects.toThrow(BadGatewayException);
+      await expect(service.reverseGeocode(mockReverseQuery)).rejects.toThrow(
+        'Failed to perform reverse geocoding',
+      );
     });
 
     it('should format coordinates correctly in API call', async () => {
@@ -372,7 +372,7 @@ describe('MapboxGeocodeAdapterService', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
@@ -380,12 +380,8 @@ describe('MapboxGeocodeAdapterService', () => {
       await service.reverseGeocode(mockReverseQuery);
 
       // Assert
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('longitude=-74.006')
-      );
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('latitude=40.7128')
-      );
+      expect(httpService.get).toHaveBeenCalledWith(expect.stringContaining('longitude=-74.006'));
+      expect(httpService.get).toHaveBeenCalledWith(expect.stringContaining('latitude=40.7128'));
     });
   });
 
@@ -398,18 +394,17 @@ describe('MapboxGeocodeAdapterService', () => {
           {
             provide: ConfigService,
             useValue: {
-              get: jest.fn().mockReturnValue(null)
-            }
+              get: jest.fn().mockReturnValue(null),
+            },
           },
           {
             provide: HttpService,
-            useValue: httpService
-          }
+            useValue: httpService,
+          },
         ],
       });
 
-      await expect(moduleBuilder.compile())
-        .rejects.toThrow(InternalServerErrorException);
+      await expect(moduleBuilder.compile()).rejects.toThrow(InternalServerErrorException);
     });
 
     it('should throw InternalServerErrorException with correct message for missing API key', async () => {
@@ -419,18 +414,17 @@ describe('MapboxGeocodeAdapterService', () => {
           {
             provide: ConfigService,
             useValue: {
-              get: jest.fn().mockReturnValue(undefined)
-            }
+              get: jest.fn().mockReturnValue(undefined),
+            },
           },
           {
             provide: HttpService,
-            useValue: httpService
-          }
+            useValue: httpService,
+          },
         ],
       });
 
-      await expect(moduleBuilder.compile())
-        .rejects.toThrow('Mapbox access token is required');
+      await expect(moduleBuilder.compile()).rejects.toThrow('Mapbox access token is required');
     });
   });
 
@@ -448,29 +442,29 @@ describe('MapboxGeocodeAdapterService', () => {
                 mapbox_id: 'valid123',
                 coordinates: {
                   latitude: 40.7128,
-                  longitude: -74.0060
+                  longitude: -74.006,
                 },
                 context: {
-                  country: { name: 'United States' }
-                }
+                  country: { name: 'United States' },
+                },
               },
-              id: 'valid123'
+              id: 'valid123',
             },
             // Invalid item (missing coordinates)
             {
               properties: {
                 name: 'Invalid Location',
                 full_address: 'Invalid Location',
-                coordinates: null // Invalid coordinates
+                coordinates: null, // Invalid coordinates
               },
-              id: 'invalid456'
-            }
-          ]
+              id: 'invalid456',
+            },
+          ],
         },
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(mixedResponse));
 
@@ -494,17 +488,17 @@ describe('MapboxGeocodeAdapterService', () => {
                 mapbox_id: 'coord123',
                 coordinates: {
                   latitude: 37.7749,
-                  longitude: -122.4194
-                }
+                  longitude: -122.4194,
+                },
               },
-              id: 'coord123'
-            }
-          ]
+              id: 'coord123',
+            },
+          ],
         },
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(coordResponse));
 
@@ -528,22 +522,22 @@ describe('MapboxGeocodeAdapterService', () => {
                 mapbox_id: 'street123',
                 coordinates: {
                   latitude: 40.7128,
-                  longitude: -74.0060
+                  longitude: -74.006,
                 },
                 context: {
                   place: {
-                    name: 'City'
-                  }
-                }
+                    name: 'City',
+                  },
+                },
               },
-              id: 'street123'
-            }
-          ]
+              id: 'street123',
+            },
+          ],
         },
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any
+        config: {} as any,
       };
       httpService.get.mockReturnValueOnce(of(streetResponse));
 

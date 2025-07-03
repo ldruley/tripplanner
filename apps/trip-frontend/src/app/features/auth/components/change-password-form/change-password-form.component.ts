@@ -44,8 +44,10 @@ export class ChangePasswordFormComponent {
   }
 
   public hasPasswordMismatch(): boolean {
-    return !!(this.changePasswordForm.errors?.['passwordMismatch'] &&
-      this.changePasswordForm.get('confirmPassword')?.touched);
+    return !!(
+      this.changePasswordForm.errors?.['passwordMismatch'] &&
+      this.changePasswordForm.get('confirmPassword')?.touched
+    );
   }
 
   handleCancelClick(): void {
@@ -54,7 +56,7 @@ export class ChangePasswordFormComponent {
 
   public onSubmit(): void {
     this.markAllFieldsAsTouched();
-    if(this.changePasswordForm.invalid) {
+    if (this.changePasswordForm.invalid) {
       return;
     }
 
@@ -63,7 +65,7 @@ export class ChangePasswordFormComponent {
     const credentials: ChangePasswordCredentials = {
       currentPassword,
       newPassword,
-      confirmPassword
+      confirmPassword,
     };
 
     this.changePasswordSubmit.emit(credentials);

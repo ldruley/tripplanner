@@ -20,7 +20,7 @@ describe('PoiService', () => {
   const query: PoiSearchQuery = {
     search: 'coffee',
     proximity: `40.7128,-74.006`,
-    limit: 2
+    limit: 2,
   };
 
   const hereResults = [
@@ -36,8 +36,8 @@ describe('PoiService', () => {
       postalCode: '10001',
       provider: 'here' as const,
       providerId: 'here-abc',
-      rawResponse: '{"some":"raw data"}'
-    }
+      rawResponse: '{"some":"raw data"}',
+    },
   ];
 
   const mapboxResults = [
@@ -53,8 +53,8 @@ describe('PoiService', () => {
       postalCode: '10002',
       provider: 'mapbox' as const,
       providerId: 'mapbox-xyz',
-      rawResponse: '{"some":"raw data"}'
-    }
+      rawResponse: '{"some":"raw data"}',
+    },
   ];
 
   beforeEach(async () => {
@@ -64,14 +64,14 @@ describe('PoiService', () => {
         { provide: RedisService, useValue: mockRedisService },
         { provide: ApiUsageService, useValue: mockApiUsageService },
         { provide: HerePoiAdapterService, useValue: mockHereAdapter },
-        { provide: MapboxPoiAdapterService, useValue: mockMapboxAdapter},
+        { provide: MapboxPoiAdapterService, useValue: mockMapboxAdapter },
         {
           provide: ConfigService,
           useValue: {
-            get: jest.fn().mockReturnValue('mock-here-key')
-          }
-        }
-      ]
+            get: jest.fn().mockReturnValue('mock-here-key'),
+          },
+        },
+      ],
     }).compile();
 
     service = module.get<PoiService>(PoiService);
@@ -111,7 +111,7 @@ describe('PoiService', () => {
 
     it('falls back to Mapbox if HERE quota is exceeded', async () => {
       mockApiUsageService.checkQuota.mockResolvedValueOnce(false); // HERE
-      mockApiUsageService.checkQuota.mockResolvedValueOnce(true);  // Mapbox
+      mockApiUsageService.checkQuota.mockResolvedValueOnce(true); // Mapbox
       mockMapboxAdapter.searchPoi.mockResolvedValueOnce(mapboxResults);
 
       const result = await service.implementStrategy(query);
@@ -125,7 +125,9 @@ describe('PoiService', () => {
       mockApiUsageService.checkQuota.mockResolvedValue(false);
 
       await expect(service.implementStrategy(query)).rejects.toThrow(ServiceUnavailableException);
-      await expect(service.implementStrategy(query)).rejects.toThrow('No API quota available for POI search');
+      await expect(service.implementStrategy(query)).rejects.toThrow(
+        'No API quota available for POI search',
+      );
     });
   });
 
@@ -154,9 +156,7 @@ describe('PoiService', () => {
 
     it('throws on malformed adapter result', async () => {
       mockApiUsageService.checkQuota.mockResolvedValueOnce(true);
-      mockHereAdapter.searchPoi.mockResolvedValueOnce([
-        { invalid: 'value' } as any
-      ]);
+      mockHereAdapter.searchPoi.mockResolvedValueOnce([{ invalid: 'value' } as any]);
 
       const result = await service.poiSearch(query);
       for (const item of result) {

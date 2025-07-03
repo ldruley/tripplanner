@@ -18,7 +18,7 @@ import { UpdateProfile } from '@trip-planner/types';
     ProfileDisplayComponent,
     ProfileEditComponent,
     ButtonComponent,
-    LoadingSpinnerComponent
+    LoadingSpinnerComponent,
   ],
   templateUrl: './profile-container.component.html',
   styleUrl: './profile-container.component.css',
@@ -50,8 +50,8 @@ export class ProfileContainerComponent {
 
   handleChangePasswordRequested(): void {
     this.router.navigate(['/auth/change-password']).catch(err => {
-     console.error('Navigation failed:', err);
-   });
+      console.error('Navigation failed:', err);
+    });
   }
 
   handleBackToDashboard(): void {

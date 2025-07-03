@@ -6,11 +6,7 @@ import { Location } from '../../models/location.model';
 @Component({
   selector: 'app-location-bank',
   standalone: true,
-  imports: [
-    CommonModule,
-    CdkDrag,
-    CdkDropList
-  ],
+  imports: [CommonModule, CdkDrag, CdkDropList],
   templateUrl: './location-bank.component.html',
   styleUrl: './location-bank.component.css',
 })

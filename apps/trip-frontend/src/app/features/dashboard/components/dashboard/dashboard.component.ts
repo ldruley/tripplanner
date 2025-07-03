@@ -19,7 +19,7 @@ export class DashboardComponent implements OnInit {
   //public readonly userDisplayName$: Observable<string | null>;
 
   constructor() {
-   /* this.userDisplayName$ = this.authService.authState$.pipe(
+    /* this.userDisplayName$ = this.authService.authState$.pipe(
       map(state => {
         if (state.user?.userMetadata?.['display_name']) {
           return state.user.user_metadata['display_name'];

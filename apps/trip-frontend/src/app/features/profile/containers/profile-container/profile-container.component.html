@@ -2,16 +2,34 @@
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
     <div class="text-center mb-8">
-      <h1 class="text-3xl font-bold text-tp-text-light-primary dark:text-tp-text-primary mb-2">Profile Settings</h1>
-      <p class="text-tp-text-light-secondary dark:text-tp-text-secondary mb-8">Manage your account information and preferences.</p>
+      <h1 class="text-3xl font-bold text-tp-text-light-primary dark:text-tp-text-primary mb-2">
+        Profile Settings
+      </h1>
+      <p class="text-tp-text-light-secondary dark:text-tp-text-secondary mb-8">
+        Manage your account information and preferences.
+      </p>
     </div>
 
     <!-- Toast Message -->
     @if (toastMessage()) {
-      <div class="fixed top-4 right-4 z-50 max-w-sm mb-6" style="animation: slideInRight 0.3s ease-out">
+      <div
+        class="fixed top-4 right-4 z-50 max-w-sm mb-6"
+        style="animation: slideInRight 0.3s ease-out"
+      >
         <div class="alert-success">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-400 mt-0.5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-green-400 mt-0.5 mr-3 flex-shrink-0"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <div>
             <p class="text-sm text-green-700">{{ toastMessage() }}</p>
@@ -24,7 +42,9 @@
     @if (state().loading && !state().userProfile) {
       <div class="text-center py-12">
         <app-loading-spinner></app-loading-spinner>
-        <p class="text-tp-text-light-secondary dark:text-tp-text-secondary mt-4">Loading your profile...</p>
+        <p class="text-tp-text-light-secondary dark:text-tp-text-secondary mt-4">
+          Loading your profile...
+        </p>
       </div>
     }
 
@@ -39,28 +59,26 @@
           </div>
         </div>
         <div class="mt-4">
-          <app-button
-            variant="outline"
-            (buttonClick)="handleRefresh()">
-            Try Again
-          </app-button>
+          <app-button variant="outline" (buttonClick)="handleRefresh()"> Try Again </app-button>
         </div>
       </div>
     }
 
     <!-- Profile Content -->
     @if (state().userProfile; as userProfile) {
-      <div class="bg-white dark:bg-tp-bg-secondary rounded-lg shadow-sm border border-tp-border-light dark:border-tp-border">
+      <div
+        class="bg-white dark:bg-tp-bg-secondary rounded-lg shadow-sm border border-tp-border-light dark:border-tp-border"
+      >
         <!-- Display Mode -->
         @if (!state().isEditing) {
           <app-profile-display
             [userProfile]="userProfile"
             [loading]="state().loading"
             (editRequested)="handleEditRequested()"
-            (changePasswordRequested)="handleChangePasswordRequested()">
+            (changePasswordRequested)="handleChangePasswordRequested()"
+          >
           </app-profile-display>
         }
-
 
         <!-- Edit Mode -->
         @if (state().isEditing) {
@@ -69,18 +87,16 @@
             [loading]="state().loading"
             [error]="state().error"
             (saveRequested)="handleSaveRequested($event)"
-            (cancelRequested)="handleCancelRequested()">
+            (cancelRequested)="handleCancelRequested()"
+          >
           </app-profile-edit>
         }
       </div>
     }
 
-
     <!-- Actions Footer -->
     <div class="mt-8 text-center">
-      <app-button
-        variant="ghost"
-        (buttonClick)="handleBackToDashboard()">
+      <app-button variant="ghost" (buttonClick)="handleBackToDashboard()">
         ← Back to Dashboard
       </app-button>
     </div>

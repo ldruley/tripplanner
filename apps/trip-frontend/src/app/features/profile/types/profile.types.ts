@@ -1,8 +1,4 @@
-import {
-  Profile,
-  UpdateProfile,
-  ProfileResponse
-} from '@trip-planner/types';
+import { Profile, UpdateProfile, ProfileResponse } from '@trip-planner/types';
 
 //TODO: reconsider this, maybe just export the types directly from the package
 

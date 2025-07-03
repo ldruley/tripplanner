@@ -1,4 +1,9 @@
-import { LoggerService, InternalServerErrorException, BadGatewayException, BadRequestException } from '@nestjs/common';
+import {
+  LoggerService,
+  InternalServerErrorException,
+  BadGatewayException,
+  BadRequestException,
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { MapboxPoiAdapterService } from './mapbox-poi-adapter.service';
 import { AxiosHeaders, AxiosResponse } from 'axios';
@@ -7,7 +12,6 @@ import { ConfigService } from '@nestjs/config';
 import { of, throwError } from 'rxjs';
 import { PoiSearchQueryDto } from '@trip-planner/shared/dtos';
 import { PoiSearchResultSchema } from '@trip-planner/types';
-
 
 const mockLogger: LoggerService = {
   log: jest.fn(),
@@ -28,7 +32,7 @@ describe('MapboxPoiAdapterService', () => {
   const query: PoiSearchQueryDto = {
     search: 'coffee',
     proximity: `40.7128,-74.006`,
-    limit: 1
+    limit: 1,
   };
 
   const mockMapboxResponse: AxiosResponse = {
@@ -72,23 +76,23 @@ describe('MapboxPoiAdapterService', () => {
               if (key === 'MAPBOX_BASE_URL') return mockBaseUrl;
               return null;
             }),
-          }
+          },
         },
         {
           provide: HttpService,
           useValue: {
             get: jest.fn(),
           },
-        }
-      ]
+        },
+      ],
     })
-    .setLogger(mockLogger)
-    .compile();
+      .setLogger(mockLogger)
+      .compile();
 
     service = module.get<MapboxPoiAdapterService>(MapboxPoiAdapterService);
     httpService = module.get(HttpService);
     configService = module.get(ConfigService);
-  })
+  });
 
   afterEach(() => {
     jest.clearAllMocks();
@@ -172,7 +176,11 @@ describe('MapboxPoiAdapterService', () => {
 
     await expect(service.searchPoi(query)).rejects.toThrow(BadGatewayException);
     await expect(service.searchPoi(query)).rejects.toThrow('Failed to search POI');
-    expect(mockLogger.error).toHaveBeenCalledWith('Error fetching POI data', error, 'MapboxPoiAdapterService');
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Error fetching POI data',
+      error,
+      'MapboxPoiAdapterService',
+    );
   });
 
   describe('Configuration Errors', () => {
@@ -191,9 +199,7 @@ describe('MapboxPoiAdapterService', () => {
       }).setLogger(mockLogger);
 
       await expect(moduleBuilder.compile()).rejects.toThrow(InternalServerErrorException);
-      await expect(moduleBuilder.compile()).rejects.toThrow(
-        'Mapbox access token is required',
-      );
+      await expect(moduleBuilder.compile()).rejects.toThrow('Mapbox access token is required');
     });
 
     it('should throw an error if MAPBOX_BASE_URL is missing', async () => {
@@ -211,9 +217,7 @@ describe('MapboxPoiAdapterService', () => {
       }).setLogger(mockLogger);
 
       await expect(moduleBuilder.compile()).rejects.toThrow(InternalServerErrorException);
-      await expect(moduleBuilder.compile()).rejects.toThrow(
-        'Mapbox base URL is required',
-      );
+      await expect(moduleBuilder.compile()).rejects.toThrow('Mapbox base URL is required');
     });
   });
 });

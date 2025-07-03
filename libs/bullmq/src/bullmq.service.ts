@@ -1,4 +1,9 @@
-import { Injectable, InternalServerErrorException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { Queue, Worker, Job, QueueOptions, WorkerOptions, JobsOptions } from 'bullmq';
 import { Redis } from 'ioredis';
 
@@ -105,11 +110,11 @@ export class BullMQService implements OnModuleInit, OnModuleDestroy {
         connection: this.redisConnection,
         concurrency: 1, // Default to 1 for rate limiting
         ...config,
-      }
+      },
     );
 
     // Add event listeners for monitoring
-    worker.on('completed', (job) => {
+    worker.on('completed', job => {
       console.log(`Job ${job.id} completed in queue ${config.name}`);
     });
 
@@ -142,7 +147,7 @@ export class BullMQService implements OnModuleInit, OnModuleDestroy {
     queueName: string,
     jobName: string,
     data: T,
-    options?: JobsOptions
+    options?: JobsOptions,
   ): Promise<Job<T>> {
     const queue = this.getQueue(queueName);
     if (!queue) {

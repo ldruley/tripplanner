@@ -45,32 +45,32 @@ module.exports = {
 
         tp: {
           // Dark backgrounds
-          'bg-primary': '#191716',    // Main dark background
-          'bg-secondary': '#211f1e',  // Slightly lighter panels
-          'bg-tertiary': '#2c2a28',   // Cards and elevated surfaces
+          'bg-primary': '#191716', // Main dark background
+          'bg-secondary': '#211f1e', // Slightly lighter panels
+          'bg-tertiary': '#2c2a28', // Cards and elevated surfaces
           'bg-quaternary': '#38352f', // Hover states
 
           // Light backgrounds
-          'bg-light': '#faf9f8',      // Main light background
+          'bg-light': '#faf9f8', // Main light background
           'bg-light-secondary': '#f5f4f3', // Light panels
 
           // Text colors
-          'text-primary': '#ededec',   // Primary text in dark
+          'text-primary': '#ededec', // Primary text in dark
           'text-secondary': '#9b9a99', // Secondary text in dark
-          'text-muted': '#706f6e',     // Muted text in dark
+          'text-muted': '#706f6e', // Muted text in dark
           'text-light-primary': '#2d3748', // Primary text in light
           'text-light-secondary': '#4a5568', // Secondary text in light
 
           // Orange accent
-          'orange': '#cc785c',         // Trip planner's signature orange
-          'orange-hover': '#b8654a',   // Darker orange for hover
-          'orange-light': '#f7931e',   // Lighter orange variant
+          orange: '#cc785c', // Trip planner's signature orange
+          'orange-hover': '#b8654a', // Darker orange for hover
+          'orange-light': '#f7931e', // Lighter orange variant
 
           // Borders
-          'border': '#38352f',         // Default border in dark
-          'border-light': '#e2e1df',   // Default border in light
-          'border-subtle': '#2c2a28',  // Subtle borders in dark
-        }
+          border: '#38352f', // Default border in dark
+          'border-light': '#e2e1df', // Default border in light
+          'border-subtle': '#2c2a28', // Subtle borders in dark
+        },
       },
       animation: {
         'fade-in': 'fadeIn 0.2s ease-in-out',
@@ -92,8 +92,8 @@ module.exports = {
         },
       },
       fontFamily: {
-        'sans': ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-        'mono': ['SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'monospace'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        mono: ['SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'monospace'],
       },
     },
   },

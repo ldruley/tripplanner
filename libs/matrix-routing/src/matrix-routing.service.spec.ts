@@ -7,11 +7,7 @@ import { ApiUsageService } from '@trip-planner/api-usage';
 import { ServiceUnavailableException } from '@nestjs/common';
 import { mock } from 'jest-mock-extended';
 import { createMockLogger } from '@trip-planner/test-utils';
-import {
-  MatrixQuery,
-  CoordinateMatrix,
-  CoordinateMatrixSchema,
-} from '@trip-planner/types';
+import { MatrixQuery, CoordinateMatrix, CoordinateMatrixSchema } from '@trip-planner/types';
 
 describe('MatrixRoutingService', () => {
   let service: MatrixRoutingService;
@@ -23,22 +19,22 @@ describe('MatrixRoutingService', () => {
 
   const mockMatrixQuery: MatrixQuery = {
     origins: [
-      { lat: 40.7128, lng: -74.0060 }, // New York
-      { lat: 34.0522, lng: -118.2437 } // Los Angeles
+      { lat: 40.7128, lng: -74.006 }, // New York
+      { lat: 34.0522, lng: -118.2437 }, // Los Angeles
     ],
     profile: 'carFast',
-    routingMode: 'fast'
+    routingMode: 'fast',
   };
 
   const mockCoordinateMatrix: CoordinateMatrix = {
     '40.7128,-74.006': {
       '40.7128,-74.006': { time: 0, distance: 0 },
-      '34.0522,-118.2437': { time: 14400, distance: 4500000 }
+      '34.0522,-118.2437': { time: 14400, distance: 4500000 },
     },
     '34.0522,-118.2437': {
       '40.7128,-74.006': { time: 14400, distance: 4500000 },
-      '34.0522,-118.2437': { time: 0, distance: 0 }
-    }
+      '34.0522,-118.2437': { time: 0, distance: 0 },
+    },
   };
 
   beforeEach(async () => {
@@ -48,11 +44,11 @@ describe('MatrixRoutingService', () => {
         { provide: HereMatrixRoutingAdapterService, useValue: mockHereAdapter },
         { provide: MapboxMatrixRoutingAdapterService, useValue: mockMapboxAdapter },
         { provide: RedisService, useValue: mockRedisService },
-        { provide: ApiUsageService, useValue: mockApiUsageService }
+        { provide: ApiUsageService, useValue: mockApiUsageService },
       ],
     })
-    .setLogger(createMockLogger())
-    .compile();
+      .setLogger(createMockLogger())
+      .compile();
 
     service = module.get<MatrixRoutingService>(MatrixRoutingService);
 
@@ -73,7 +69,7 @@ describe('MatrixRoutingService', () => {
       expect(mockRedisService.getOrSet).toHaveBeenCalledWith(
         expect.stringContaining('matrix:routing'),
         service['CACHE_TTL_MS'],
-        expect.any(Function)
+        expect.any(Function),
       );
     });
 
@@ -126,10 +122,12 @@ describe('MatrixRoutingService', () => {
       });
 
       // Act & Assert
-      await expect(service.getMatrixRouting(mockMatrixQuery))
-        .rejects.toThrow(ServiceUnavailableException);
-      await expect(service.getMatrixRouting(mockMatrixQuery))
-        .rejects.toThrow('No API quota available for matrix routing');
+      await expect(service.getMatrixRouting(mockMatrixQuery)).rejects.toThrow(
+        ServiceUnavailableException,
+      );
+      await expect(service.getMatrixRouting(mockMatrixQuery)).rejects.toThrow(
+        'No API quota available for matrix routing',
+      );
     });
 
     it('should validate results with Zod schema', async () => {
@@ -201,8 +199,7 @@ describe('MatrixRoutingService', () => {
       });
 
       // Act & Assert
-      await expect(service.getMatrixRouting(mockMatrixQuery))
-        .rejects.toThrow('Adapter error');
+      await expect(service.getMatrixRouting(mockMatrixQuery)).rejects.toThrow('Adapter error');
     });
 
     it('should propagate BadGatewayException from adapters', async () => {
@@ -217,8 +214,9 @@ describe('MatrixRoutingService', () => {
       });
 
       // Act & Assert
-      await expect(service.getMatrixRouting(mockMatrixQuery))
-        .rejects.toThrow('Failed to fetch matrix data from HERE API');
+      await expect(service.getMatrixRouting(mockMatrixQuery)).rejects.toThrow(
+        'Failed to fetch matrix data from HERE API',
+      );
     });
   });
 
@@ -234,7 +232,7 @@ describe('MatrixRoutingService', () => {
       expect(mockRedisService.getOrSet).toHaveBeenCalledWith(
         expect.any(String),
         86400, // 24 * 60 * 60 seconds
-        expect.any(Function)
+        expect.any(Function),
       );
     });
 
@@ -249,7 +247,7 @@ describe('MatrixRoutingService', () => {
       expect(mockRedisService.getOrSet).toHaveBeenCalledWith(
         expect.stringContaining('matrix:routing'),
         expect.any(Number),
-        expect.any(Function)
+        expect.any(Function),
       );
     });
   });

@@ -23,18 +23,18 @@ describe('GeocodingService', () => {
   const mockApiUsageService = mock<ApiUsageService>();
 
   const forwardQuery: ForwardGeocodeQuery = {
-    search: 'New York, NY'
+    search: 'New York, NY',
   };
 
   const reverseQuery: ReverseGeocodeQuery = {
     latitude: 40.7128,
-    longitude: -74.0060
+    longitude: -74.006,
   };
 
   const mockGeocodingResults: GeocodingResult[] = [
     {
       latitude: 40.7128,
-      longitude: -74.0060,
+      longitude: -74.006,
       fullAddress: 'New York, NY, USA',
       streetAddress: 'Broadway',
       provider: 'here',
@@ -42,8 +42,8 @@ describe('GeocodingService', () => {
       country: 'USA',
       city: 'New York',
       region: 'NY',
-      postalCode: '10001'
-    }
+      postalCode: '10001',
+    },
   ];
 
   beforeEach(async () => {
@@ -53,11 +53,11 @@ describe('GeocodingService', () => {
         { provide: MapboxGeocodeAdapterService, useValue: mockMapboxAdapter },
         { provide: HereGeocodeAdapterService, useValue: mockHereAdapter },
         { provide: RedisService, useValue: mockRedisService },
-        { provide: ApiUsageService, useValue: mockApiUsageService }
+        { provide: ApiUsageService, useValue: mockApiUsageService },
       ],
     })
-    .setLogger(createMockLogger())
-    .compile();
+      .setLogger(createMockLogger())
+      .compile();
 
     service = module.get<GeocodingService>(GeocodingService);
 
@@ -78,7 +78,7 @@ describe('GeocodingService', () => {
       expect(mockRedisService.getOrSet).toHaveBeenCalledWith(
         expect.stringContaining('geocode:forward'),
         service['CACHE_TTL_MS'],
-        expect.any(Function)
+        expect.any(Function),
       );
     });
 
@@ -131,10 +131,12 @@ describe('GeocodingService', () => {
       });
 
       // Act & Assert
-      await expect(service.forwardGeocode(forwardQuery))
-        .rejects.toThrow(ServiceUnavailableException);
-      await expect(service.forwardGeocode(forwardQuery))
-        .rejects.toThrow('No geocoding provider available or quota exceeded');
+      await expect(service.forwardGeocode(forwardQuery)).rejects.toThrow(
+        ServiceUnavailableException,
+      );
+      await expect(service.forwardGeocode(forwardQuery)).rejects.toThrow(
+        'No geocoding provider available or quota exceeded',
+      );
     });
 
     it('should validate results with Zod schema', async () => {
@@ -169,7 +171,7 @@ describe('GeocodingService', () => {
       expect(mockRedisService.getOrSet).toHaveBeenCalledWith(
         expect.stringContaining('geocode:reverse'),
         service['CACHE_TTL_MS'],
-        expect.any(Function)
+        expect.any(Function),
       );
     });
 
@@ -222,10 +224,12 @@ describe('GeocodingService', () => {
       });
 
       // Act & Assert
-      await expect(service.reverseGeocode(reverseQuery))
-        .rejects.toThrow(ServiceUnavailableException);
-      await expect(service.reverseGeocode(reverseQuery))
-        .rejects.toThrow('No geocoding provider available or quota exceeded');
+      await expect(service.reverseGeocode(reverseQuery)).rejects.toThrow(
+        ServiceUnavailableException,
+      );
+      await expect(service.reverseGeocode(reverseQuery)).rejects.toThrow(
+        'No geocoding provider available or quota exceeded',
+      );
     });
   });
 
@@ -284,8 +288,7 @@ describe('GeocodingService', () => {
       });
 
       // Act & Assert
-      await expect(service.forwardGeocode(forwardQuery))
-        .rejects.toThrow('Service error');
+      await expect(service.forwardGeocode(forwardQuery)).rejects.toThrow('Service error');
     });
 
     it('should handle service errors gracefully in reverse geocoding', async () => {
@@ -297,8 +300,7 @@ describe('GeocodingService', () => {
       });
 
       // Act & Assert
-      await expect(service.reverseGeocode(reverseQuery))
-        .rejects.toThrow('Service error');
+      await expect(service.reverseGeocode(reverseQuery)).rejects.toThrow('Service error');
     });
   });
 });

@@ -15,7 +15,7 @@ export class PoiController {
   @ApiResponse({
     status: 200,
     description: 'Returns a list of Points of Interest matching the search criteria.',
-    type: [PoiSearchResultDto]
+    type: [PoiSearchResultDto],
   })
   @Get('poi-search')
   async poiSearch(@Query() query: PoiSearchQueryDto): Promise<PoiSearchResult[]> {

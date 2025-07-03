@@ -1,4 +1,11 @@
-import { BadGatewayException, BadRequestException, Injectable, InternalServerErrorException, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
 import { BullMQService } from '@trip-planner/bullmq';
 import { Job, Worker } from 'bullmq';
 import { ConfigService } from '@nestjs/config';
@@ -21,12 +28,15 @@ export class TimezoneWorker implements OnModuleInit {
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
   ) {
-    this.apiKey = this.configService.get<string>('TIMEZONEDB_API_KEY') ?? (() => {
-      this.logger.error('TIMEZONEDB_API_KEY is not set');
-      throw new InternalServerErrorException('TIMEZONEDB_API_KEY is required');
-    })();
+    this.apiKey =
+      this.configService.get<string>('TIMEZONEDB_API_KEY') ??
+      (() => {
+        this.logger.error('TIMEZONEDB_API_KEY is not set');
+        throw new InternalServerErrorException('TIMEZONEDB_API_KEY is required');
+      })();
 
-    this.baseUrl = this.configService.get<string>('TIMEZONEDB_BASE_URL') ?? 'https://api.timezonedb.com/v2.1';
+    this.baseUrl =
+      this.configService.get<string>('TIMEZONEDB_BASE_URL') ?? 'https://api.timezonedb.com/v2.1';
   }
 
   async onModuleInit() {
@@ -51,13 +61,18 @@ export class TimezoneWorker implements OnModuleInit {
 
     try {
       let timezoneData: TimezoneResponse;
-      if(query.requestId === undefined) {
+      if (query.requestId === undefined) {
         this.logger.warn('Timezone job is missing requestId, generating a new one');
         query.requestId = crypto.randomUUID();
       }
       if (query.latitude !== undefined && query.longitude !== undefined) {
-        timezoneData = await this.fetchTimezoneByCoordinates(query.latitude, query.longitude, query.requestId);
-      } else { // should never happen due to validation
+        timezoneData = await this.fetchTimezoneByCoordinates(
+          query.latitude,
+          query.longitude,
+          query.requestId,
+        );
+      } else {
+        // should never happen due to validation
         throw new BadRequestException('Coordinates are required for timezone lookup');
       }
 
@@ -76,7 +91,13 @@ export class TimezoneWorker implements OnModuleInit {
     longitude: number,
     requestId: string,
   ): Promise<TimezoneResponse> {
-    const url = buildUrl(this.baseUrl, '/get-time-zone', { lat: latitude, lng: longitude, key: this.apiKey, format: 'json', by: 'position' });
+    const url = buildUrl(this.baseUrl, '/get-time-zone', {
+      lat: latitude,
+      lng: longitude,
+      key: this.apiKey,
+      format: 'json',
+      by: 'position',
+    });
     this.logger.debug(`Seaching timezone with url: ${url}`);
     try {
       const response: AxiosResponse<any> = await firstValueFrom(this.httpService.get(url));
@@ -84,9 +105,8 @@ export class TimezoneWorker implements OnModuleInit {
       const timezone: TimezoneResponse = {
         timezone: response.data.zoneName,
         requestId,
-      }
+      };
       return TimezoneResponseSchema.parse(timezone);
-
     } catch (error) {
       this.logger.error(`Failed to fetch timezone by coordinates: ${error}`);
       throw new BadGatewayException('Failed to fetch timezone by coordinates');
@@ -94,11 +114,13 @@ export class TimezoneWorker implements OnModuleInit {
   }
 
   // we may be able to split out request logic if we don't need any custom logic per endpoint
-  private async fetchTimezoneByCity(
-    city: string,
-    requestId: string,
-  ): Promise<TimezoneResponse> {
-    const url = buildUrl(this.baseUrl, '/get-time-zone', { city, key: this.apiKey, format: 'json', by: 'position' });
+  private async fetchTimezoneByCity(city: string, requestId: string): Promise<TimezoneResponse> {
+    const url = buildUrl(this.baseUrl, '/get-time-zone', {
+      city,
+      key: this.apiKey,
+      format: 'json',
+      by: 'position',
+    });
     this.logger.debug(`Seaching timezone with url: ${url}`);
     try {
       const response: AxiosResponse<any> = await firstValueFrom(this.httpService.get(url));
@@ -106,9 +128,8 @@ export class TimezoneWorker implements OnModuleInit {
       const timezone: TimezoneResponse = {
         timezone: response.data.zoneName,
         requestId,
-      }
+      };
       return TimezoneResponseSchema.parse(timezone);
-
     } catch (error) {
       this.logger.error(`Failed to fetch timezone by city: ${error}`);
       throw new BadGatewayException('Failed to fetch timezone by city');
@@ -118,6 +139,4 @@ export class TimezoneWorker implements OnModuleInit {
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
-
 }
-

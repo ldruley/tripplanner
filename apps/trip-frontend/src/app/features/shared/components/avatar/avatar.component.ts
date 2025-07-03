@@ -8,7 +8,7 @@ export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './avatar.component.html',
-  styleUrl: './avatar.component.css'
+  styleUrl: './avatar.component.css',
 })
 export class AvatarComponent {
   @Input() src: string | null = null;

@@ -3,8 +3,11 @@ import { createHash } from 'crypto';
 type Coordinate = { lat: number; lng: number };
 
 type QueryValue =
-  | string | number | boolean
-  | null | undefined
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
   | Coordinate
   | Coordinate[]
   | (string | number | boolean)[];
@@ -22,10 +25,10 @@ export function buildUrl(
   endpoint?: string,
   queryParams?: Record<string, QueryValue>,
 ): string {
-  const trimmedBase   = baseUrl.replace(/\/+$/, '');
-  const trimmedEndp   = endpoint?.replace(/^\/+/, '');
-  const fullUrl       = trimmedEndp ? `${trimmedBase}/${trimmedEndp}` : trimmedBase;
-  const url           = new URL(fullUrl);
+  const trimmedBase = baseUrl.replace(/\/+$/, '');
+  const trimmedEndp = endpoint?.replace(/^\/+/, '');
+  const fullUrl = trimmedEndp ? `${trimmedBase}/${trimmedEndp}` : trimmedBase;
+  const url = new URL(fullUrl);
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
@@ -53,7 +56,7 @@ function encodeValue(key: string, value: QueryValue, url: URL): void {
     if (!value.length) return; // ignore empty array
 
     // array of coordinates
-    if (typeof value[0] === "object") {
+    if (typeof value[0] === 'object') {
       (value as Coordinate[]).forEach((c, i) =>
         url.searchParams.append(`${key}${i}`, coordToString(c)),
       );
@@ -67,7 +70,7 @@ function encodeValue(key: string, value: QueryValue, url: URL): void {
   }
 
   // Single coordinate object
-  if (typeof value === "object") {
+  if (typeof value === 'object') {
     url.searchParams.set(key, coordToString(value as Coordinate));
     return;
   }
@@ -96,7 +99,7 @@ function encodeValue(key: string, value: QueryValue, url: URL): void {
  * // Returns: 'myNamespace:<hash>'
  */
 export function buildCacheKey(ns: string, parts: unknown[], useHash = false): string {
-  const normalizedParts = parts.map((part) => {
+  const normalizedParts = parts.map(part => {
     if (typeof part === 'string') {
       return normalizeInput(part);
     }
@@ -108,12 +111,14 @@ export function buildCacheKey(ns: string, parts: unknown[], useHash = false): st
     return `${ns}:${hash}`;
   }
 
-  const suffix = normalizedParts.map((part) => {
-    if (part && typeof part === 'object') {
-      return JSON.stringify(sortObjectKeys(part));
-    }
-    return String(part);
-  }).join(':');
+  const suffix = normalizedParts
+    .map(part => {
+      if (part && typeof part === 'object') {
+        return JSON.stringify(sortObjectKeys(part));
+      }
+      return String(part);
+    })
+    .join(':');
 
   return `${ns}:${suffix}`;
 }
@@ -136,10 +141,13 @@ function sortObjectKeys(obj: unknown): unknown {
   if (obj && typeof obj === 'object') {
     return Object.keys(obj)
       .sort()
-      .reduce((acc, key) => {
-        acc[key] = sortObjectKeys((obj as Record<string, unknown>)[key]);
-        return acc;
-      }, {} as Record<string, unknown>);
+      .reduce(
+        (acc, key) => {
+          acc[key] = sortObjectKeys((obj as Record<string, unknown>)[key]);
+          return acc;
+        },
+        {} as Record<string, unknown>,
+      );
   }
 
   // Return primitive values as is

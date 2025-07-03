@@ -5,9 +5,7 @@ import { CdkDropListGroup } from '@angular/cdk/drag-drop';
 
 import { LocationSearchComponent } from '../location-search/location-search.component';
 import { LocationBankComponent } from '../location-bank/location-bank.component';
-import {
-  ItineraryBuilderComponent,
-} from '../itinerary-builder/itinerary-builder.component';
+import { ItineraryBuilderComponent } from '../itinerary-builder/itinerary-builder.component';
 
 import { Location } from '../../models/location.model';
 import { Trip } from '../../models/trip.model';
@@ -27,15 +25,14 @@ import { MatrixCalculationService } from '../../services/matrix-calculation.serv
     LocationSearchComponent,
     LocationBankComponent,
     ItineraryBuilderComponent,
-    CdkDropListGroup
+    CdkDropListGroup,
   ],
   templateUrl: './trip-editor.component.html',
-  styleUrls: ['./trip-editor.component.css']
+  styleUrls: ['./trip-editor.component.css'],
 })
 export class TripEditorComponent {
   // Input for the initial trip data (from TripContainerComponent)
   initialTripData = input.required<Trip | null>();
-
 
   // Output event when the trip is saved
   readonly tripSaved = output<Trip>();
@@ -49,71 +46,76 @@ export class TripEditorComponent {
   bankedLocations: WritableSignal<Location[]> = signal([]);
   itineraryStops: WritableSignal<Stop[]> = signal([]);
 
-
   private matrixService = inject(MatrixCalculationService);
   // For Matrix API results
   matrixData = this.matrixService.formattedMatrix;
   isLoadingMatrix = this.matrixService.isLoading;
 
-
-
   // private tripService = inject(TripService);  For intermediate saves/persistence
 
   constructor() {
-      // Effect to initialize/update local state when initialTripData changes
-      effect(() => {
-        const tripData = this.initialTripData();
-        console.log('TripEditor: Effect for initialTripData triggered. Processing tripData:', tripData);
+    // Effect to initialize/update local state when initialTripData changes
+    effect(() => {
+      const tripData = this.initialTripData();
+      console.log(
+        'TripEditor: Effect for initialTripData triggered. Processing tripData:',
+        tripData,
+      );
 
-        if (tripData) {
-          // Only set these if it's truly a new trip load or different trip ID
-          // This check prevents wiping state if initialTripData reference changes but it's the same trip
-          if (this.tripId() !== tripData.id) {
-            console.log('TripEditor: New or different trip loaded. Resetting state.');
-            this.tripId.set(tripData.id);
-            this.currentTripName.set(tripData.name);
-            this.currentTripDescription.set(tripData.description);
-            this.itineraryStops.set([...tripData.stops].sort((a, b) => a.order - b.order));
+      if (tripData) {
+        // Only set these if it's truly a new trip load or different trip ID
+        // This check prevents wiping state if initialTripData reference changes but it's the same trip
+        if (this.tripId() !== tripData.id) {
+          console.log('TripEditor: New or different trip loaded. Resetting state.');
+          this.tripId.set(tripData.id);
+          this.currentTripName.set(tripData.name);
+          this.currentTripDescription.set(tripData.description);
+          this.itineraryStops.set([...tripData.stops].sort((a, b) => a.order - b.order));
 
-            // Initialize bankedLocations based on initialTripData
-            // IMPORTANT: Does your 'Trip' model from the backend/initialTripData actually
-            // include a property for 'bankedLocations'? If so, use it here.
-            // If 'bankedLocations' are purely session-based and not loaded with the trip,
-            // then you should initialize it to [] only if tripId changes, or manage it outside this effect.
-            if ('bankedLocations' in tripData && Array.isArray(tripData.bankedLocations)) {
-              this.bankedLocations.set([...tripData.bankedLocations]);
-              console.log('TripEditor: BankedLocations initialized from tripData.');
-            } else {
-              // If tripData doesn't contain bankedLocations, and we're loading a new trip,
-              // then it's appropriate to reset it.
-              // However, if we're just re-processing the same trip, we might want to preserve
-              // session-banked locations. This logic depends on your exact requirements.
-              // For now, let's assume if tripData.id changes, we reset bank.
-              this.bankedLocations.set([]);
-              console.log('TripEditor: BankedLocations reset as initialTripData does not contain them or trip ID changed.');
-            }
+          // Initialize bankedLocations based on initialTripData
+          // IMPORTANT: Does your 'Trip' model from the backend/initialTripData actually
+          // include a property for 'bankedLocations'? If so, use it here.
+          // If 'bankedLocations' are purely session-based and not loaded with the trip,
+          // then you should initialize it to [] only if tripId changes, or manage it outside this effect.
+          if ('bankedLocations' in tripData && Array.isArray(tripData.bankedLocations)) {
+            this.bankedLocations.set([...tripData.bankedLocations]);
+            console.log('TripEditor: BankedLocations initialized from tripData.');
           } else {
-            // initialTripData reference might have changed, but it's for the same trip.
-            // Potentially update name/description if they can change, but be careful with stops/bank.
-            // For now, we'll assume if the ID is the same, we don't re-initialize stops/bank from initialTripData
-            // as they are being actively managed by the user in this component.
-            console.log('TripEditor: initialTripData updated for the same trip. Name/Desc may update.');
-            this.currentTripName.set(tripData.name); // Still update these if they can change
-            this.currentTripDescription.set(tripData.description);
+            // If tripData doesn't contain bankedLocations, and we're loading a new trip,
+            // then it's appropriate to reset it.
+            // However, if we're just re-processing the same trip, we might want to preserve
+            // session-banked locations. This logic depends on your exact requirements.
+            // For now, let's assume if tripData.id changes, we reset bank.
+            this.bankedLocations.set([]);
+            console.log(
+              'TripEditor: BankedLocations reset as initialTripData does not contain them or trip ID changed.',
+            );
           }
-        } else { // initialTripData is null (e.g., explicitly for a new trip from container)
-          console.log('TripEditor: initialTripData is null. Setting up for a new trip.');
-          // This is for a "new trip" state if container passes null
-          const newTripId = crypto.randomUUID(); // Or handle ID generation as needed
-          this.tripId.set(newTripId);
-          this.currentTripName.set('Untitled Trip');
-          this.currentTripDescription.set(undefined);
-          this.itineraryStops.set([]);
-          this.bankedLocations.set([]); // Start with an empty bank for a new trip
+        } else {
+          // initialTripData reference might have changed, but it's for the same trip.
+          // Potentially update name/description if they can change, but be careful with stops/bank.
+          // For now, we'll assume if the ID is the same, we don't re-initialize stops/bank from initialTripData
+          // as they are being actively managed by the user in this component.
+          console.log(
+            'TripEditor: initialTripData updated for the same trip. Name/Desc may update.',
+          );
+          this.currentTripName.set(tripData.name); // Still update these if they can change
+          this.currentTripDescription.set(tripData.description);
         }
-        // The call to fetchMatrixData can remain here if it depends on initialized stops/bank.
-        // this.fetchMatrixData(); // This will be called when the signals it depends on are set
-      });
+      } else {
+        // initialTripData is null (e.g., explicitly for a new trip from container)
+        console.log('TripEditor: initialTripData is null. Setting up for a new trip.');
+        // This is for a "new trip" state if container passes null
+        const newTripId = crypto.randomUUID(); // Or handle ID generation as needed
+        this.tripId.set(newTripId);
+        this.currentTripName.set('Untitled Trip');
+        this.currentTripDescription.set(undefined);
+        this.itineraryStops.set([]);
+        this.bankedLocations.set([]); // Start with an empty bank for a new trip
+      }
+      // The call to fetchMatrixData can remain here if it depends on initialized stops/bank.
+      // this.fetchMatrixData(); // This will be called when the signals it depends on are set
+    });
   }
 
   /**
@@ -139,7 +141,13 @@ export class TripEditorComponent {
    * Called by ItineraryBuilderComponent when an item from the bank (Location)
    * is dropped into the itinerary.
    */
-  handleItemDroppedFromBank({ itemData, newIndex }: { itemData: Location, newIndex: number }): void {
+  handleItemDroppedFromBank({
+    itemData,
+    newIndex,
+  }: {
+    itemData: Location;
+    newIndex: number;
+  }): void {
     const locationToMove = itemData; // Now correctly accesses itemData which holds the Location
 
     // Create a new Stop object
@@ -149,7 +157,7 @@ export class TripEditorComponent {
       locationId: locationToMove.id,
       locationDetails: locationToMove,
       order: newIndex,
-      tempClientId: crypto.randomUUID()
+      tempClientId: crypto.randomUUID(),
     };
 
     // Remove from bankedLocations signal
@@ -183,10 +191,14 @@ export class TripEditorComponent {
    */
   handleRemoveStopRequest(stopIdToRemove: string): void {
     // TODO: Backend Call - Remove this stop from the trip's itinerary.
-    this.itineraryStops.update(stops => stops.filter(stop => {
-      // If using tempClientId for newly added stops not yet saved, check that too
-      return stop.id !== stopIdToRemove && stop.tempClientId !== stopIdToRemove;
-    }).map((stop, index) => ({ ...stop, order: index }))); // Re-order remaining
+    this.itineraryStops.update(stops =>
+      stops
+        .filter(stop => {
+          // If using tempClientId for newly added stops not yet saved, check that too
+          return stop.id !== stopIdToRemove && stop.tempClientId !== stopIdToRemove;
+        })
+        .map((stop, index) => ({ ...stop, order: index })),
+    ); // Re-order remaining
     console.log('TripEditor: Stop removal requested:', stopIdToRemove);
   }
 
@@ -199,7 +211,9 @@ export class TripEditorComponent {
   }
 
   handleBankDragStart(draggedLocation: Location): void {
-    console.log(`TripEditor: Drag started for "${draggedLocation.name}". Triggering matrix calculation for ALL locations.`);
+    console.log(
+      `TripEditor: Drag started for "${draggedLocation.name}". Triggering matrix calculation for ALL locations.`,
+    );
 
     // 1. Get current locations from itinerary stops.
     const itineraryLocations = this.itineraryStops()
@@ -275,7 +289,7 @@ export class TripEditorComponent {
   saveTrip(): void {
     const tripId = this.tripId();
     if (!tripId) {
-      console.error("TripEditor: Cannot save trip, ID is missing.");
+      console.error('TripEditor: Cannot save trip, ID is missing.');
       return;
     }
 
@@ -283,7 +297,7 @@ export class TripEditorComponent {
       id: tripId,
       name: this.currentTripName(),
       description: this.currentTripDescription(),
-      stops: this.itineraryStops().map((stop, index) => ({ ...stop, order: index })) // Ensure order is up-to-date
+      stops: this.itineraryStops().map((stop, index) => ({ ...stop, order: index })), // Ensure order is up-to-date
     };
 
     console.log('TripEditor: Emitting tripSaved event with:', finalTrip);

@@ -26,7 +26,9 @@ export const FullPageLayout: Story = {
 
     // Check that the main elements are present
     await expect(canvas.getByText('Trip Planner')).toBeInTheDocument();
-    await expect(canvas.getByText('Create your account to start planning amazing trips.')).toBeInTheDocument();
+    await expect(
+      canvas.getByText('Create your account to start planning amazing trips.'),
+    ).toBeInTheDocument();
     await expect(canvas.getByText('Create Account')).toBeInTheDocument();
     await expect(canvas.getByRole('button', { name: /create account/i })).toBeInTheDocument();
   },

@@ -5,7 +5,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { AuthService} from '../../services/auth.service';
+import { AuthService } from '../../services/auth.service';
 import { LoginUser, CreateUser, ChangePassword } from '@trip-planner/types';
 import { LoginFormComponent } from '../../components/login-form/login-form.component';
 import { RegisterFormComponent } from '../../components/register-form/register-form.component';
@@ -50,13 +50,18 @@ export class AuthContainerComponent {
       map(segments => {
         const path = segments[0]?.path;
         switch (path) {
-          case 'register': return 'register' as AuthFormType;
-          case 'forgot': return 'recover' as AuthFormType;
-          case 'change-password': return 'change-password' as AuthFormType;
-          default: return 'login' as AuthFormType;
+          case 'register':
+            return 'register' as AuthFormType;
+          case 'forgot':
+            return 'recover' as AuthFormType;
+          case 'change-password':
+            return 'change-password' as AuthFormType;
+          default:
+            return 'login' as AuthFormType;
         }
-      })
-    ), { initialValue: 'login' as AuthFormType }
+      }),
+    ),
+    { initialValue: 'login' as AuthFormType },
   );
 
   public async handleRegister(credentials: CreateUser): Promise<void> {

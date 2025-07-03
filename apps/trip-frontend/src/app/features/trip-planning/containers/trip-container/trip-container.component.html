@@ -1,11 +1,11 @@
 @if (isLoading()) {
   <div class="flex justify-center items-center h-64">
-    <p class="text-lg text-tp-text-light-secondary dark:text-tp-text-secondary">Loading trip data...</p>
+    <p class="text-lg text-tp-text-light-secondary dark:text-tp-text-secondary">
+      Loading trip data...
+    </p>
   </div>
 } @else if (trip()) {
-  <app-trip-editor
-    [initialTripData]="trip()"
-    (tripSaved)="handleTripSave($event)">
+  <app-trip-editor [initialTripData]="trip()" (tripSaved)="handleTripSave($event)">
   </app-trip-editor>
 } @else {
   <div class="p-6 text-center">

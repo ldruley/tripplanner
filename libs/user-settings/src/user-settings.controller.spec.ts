@@ -1,5 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConflictException, NotFoundException, BadRequestException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { DistanceUnit } from '@prisma/client';
 import { SafeUser } from '@trip-planner/types';
 import { CreateUserSettingsDto, UpdateUserSettingsDto } from '@trip-planner/shared/dtos';
@@ -58,9 +63,7 @@ describe('UserSettingsController', () => {
 
     module = await Test.createTestingModule({
       controllers: [UserSettingsController],
-      providers: [
-        { provide: UserSettingsService, useValue: mockService },
-      ],
+      providers: [{ provide: UserSettingsService, useValue: mockService }],
     })
       .setLogger(createMockLogger())
       .compile();
@@ -98,8 +101,7 @@ describe('UserSettingsController', () => {
       const serviceError = new BadRequestException('Invalid user ID format');
       mockService.findByUserId.mockRejectedValue(serviceError);
 
-      await expect(controller.getSettings(mockUser))
-        .rejects.toThrow(BadRequestException);
+      await expect(controller.getSettings(mockUser)).rejects.toThrow(BadRequestException);
       expect(mockService.findByUserId).toHaveBeenCalledWith(mockUser.id);
     });
 
@@ -107,16 +109,14 @@ describe('UserSettingsController', () => {
       const serviceError = new ServiceUnavailableException('Database unavailable');
       mockService.findByUserId.mockRejectedValue(serviceError);
 
-      await expect(controller.getSettings(mockUser))
-        .rejects.toThrow(ServiceUnavailableException);
+      await expect(controller.getSettings(mockUser)).rejects.toThrow(ServiceUnavailableException);
     });
 
     it('should handle unexpected errors from service', async () => {
       const unexpectedError = new Error('Unexpected service error');
       mockService.findByUserId.mockRejectedValue(unexpectedError);
 
-      await expect(controller.getSettings(mockUser))
-        .rejects.toThrow('Unexpected service error');
+      await expect(controller.getSettings(mockUser)).rejects.toThrow('Unexpected service error');
     });
   });
 
@@ -162,8 +162,9 @@ describe('UserSettingsController', () => {
       const conflictError = new ConflictException('User settings already exist');
       mockService.create.mockRejectedValue(conflictError);
 
-      await expect(controller.createSettings(mockUser, mockCreateDto))
-        .rejects.toThrow(ConflictException);
+      await expect(controller.createSettings(mockUser, mockCreateDto)).rejects.toThrow(
+        ConflictException,
+      );
       expect(mockService.create).toHaveBeenCalledWith(mockUser.id, mockCreateDto);
     });
 
@@ -171,8 +172,9 @@ describe('UserSettingsController', () => {
       const validationError = new BadRequestException('Invalid timezone');
       mockService.create.mockRejectedValue(validationError);
 
-      await expect(controller.createSettings(mockUser, mockCreateDto))
-        .rejects.toThrow(BadRequestException);
+      await expect(controller.createSettings(mockUser, mockCreateDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should handle service rejecting user ID mismatch', async () => {
@@ -217,18 +219,19 @@ describe('UserSettingsController', () => {
       const notFoundError = new NotFoundException('User settings not found');
       mockService.update.mockRejectedValue(notFoundError);
 
-      await expect(controller.updateSettings(mockUser, mockUpdateDto))
-        .rejects.toThrow(NotFoundException);
+      await expect(controller.updateSettings(mockUser, mockUpdateDto)).rejects.toThrow(
+        NotFoundException,
+      );
       expect(mockService.update).toHaveBeenCalledWith(mockUser.id, mockUpdateDto);
     });
 
     it('should handle timezone updates', async () => {
       const timezoneUpdate: UpdateUserSettingsDto = {
-        timezone: 'Asia/Tokyo'
+        timezone: 'Asia/Tokyo',
       };
       const updatedSettings = {
         ...mockUserSettings,
-        timezone: 'Asia/Tokyo'
+        timezone: 'Asia/Tokyo',
       };
 
       mockService.update.mockResolvedValue(updatedSettings);
@@ -241,11 +244,11 @@ describe('UserSettingsController', () => {
 
     it('should handle distance unit updates', async () => {
       const distanceUpdate: UpdateUserSettingsDto = {
-        distanceUnit: DistanceUnit.KILOMETERS
+        distanceUnit: DistanceUnit.KILOMETERS,
       };
       const updatedSettings = {
         ...mockUserSettings,
-        distanceUnit: DistanceUnit.KILOMETERS
+        distanceUnit: DistanceUnit.KILOMETERS,
       };
 
       mockService.update.mockResolvedValue(updatedSettings);
@@ -288,7 +291,7 @@ describe('UserSettingsController', () => {
       };
       const upsertedSettings = {
         ...mockUserSettings,
-        ...completeUpdate
+        ...completeUpdate,
       };
 
       mockService.upsert.mockResolvedValue(upsertedSettings);
@@ -303,8 +306,9 @@ describe('UserSettingsController', () => {
       const serviceError = new BadRequestException('Invalid foreign key');
       mockService.upsert.mockRejectedValue(serviceError);
 
-      await expect(controller.upsertSettings(mockUser, mockUpdateDto))
-        .rejects.toThrow(BadRequestException);
+      await expect(controller.upsertSettings(mockUser, mockUpdateDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -359,8 +363,7 @@ describe('UserSettingsController', () => {
       const serviceError = new BadRequestException('Test error message');
       mockService.findByUserId.mockRejectedValue(serviceError);
 
-      await expect(controller.getSettings(mockUser))
-        .rejects.toThrow(BadRequestException);
+      await expect(controller.getSettings(mockUser)).rejects.toThrow(BadRequestException);
 
       expect(mockService.findByUserId).toHaveBeenCalledWith(mockUser.id);
     });
@@ -369,8 +372,9 @@ describe('UserSettingsController', () => {
       const serviceError = new ConflictException('Test error message');
       mockService.create.mockRejectedValue(serviceError);
 
-      await expect(controller.createSettings(mockUser, mockCreateDto))
-        .rejects.toThrow(ConflictException);
+      await expect(controller.createSettings(mockUser, mockCreateDto)).rejects.toThrow(
+        ConflictException,
+      );
 
       expect(mockService.create).toHaveBeenCalledWith(mockUser.id, mockCreateDto);
     });
@@ -379,8 +383,9 @@ describe('UserSettingsController', () => {
       const serviceError = new NotFoundException('Test error message');
       mockService.update.mockRejectedValue(serviceError);
 
-      await expect(controller.updateSettings(mockUser, mockUpdateDto))
-        .rejects.toThrow(NotFoundException);
+      await expect(controller.updateSettings(mockUser, mockUpdateDto)).rejects.toThrow(
+        NotFoundException,
+      );
 
       expect(mockService.update).toHaveBeenCalledWith(mockUser.id, mockUpdateDto);
     });
@@ -389,8 +394,9 @@ describe('UserSettingsController', () => {
       const serviceError = new ServiceUnavailableException('Test error message');
       mockService.upsert.mockRejectedValue(serviceError);
 
-      await expect(controller.upsertSettings(mockUser, mockUpdateDto))
-        .rejects.toThrow(ServiceUnavailableException);
+      await expect(controller.upsertSettings(mockUser, mockUpdateDto)).rejects.toThrow(
+        ServiceUnavailableException,
+      );
 
       expect(mockService.upsert).toHaveBeenCalledWith(mockUser.id, mockUpdateDto);
     });

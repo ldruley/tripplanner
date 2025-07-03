@@ -64,7 +64,11 @@ export class EmailService implements OnModuleInit, OnModuleDestroy {
     };
 
     // Create a unique cache key for this email
-    const cacheKey = buildCacheKey('email:sent', [emailData.to, emailData.subject, Date.now().toString()], true);
+    const cacheKey = buildCacheKey(
+      'email:sent',
+      [emailData.to, emailData.subject, Date.now().toString()],
+      true,
+    );
 
     const jobOptions: { priority: number; delay?: number } = {
       priority,
@@ -74,19 +78,14 @@ export class EmailService implements OnModuleInit, OnModuleDestroy {
       jobOptions.delay = scheduledAt.getTime() - Date.now();
     }
 
-    const job = await this.bullmqService.addJob(
-      this.QUEUE_NAME,
-      'send-email',
-      jobData,
-      jobOptions
-    );
+    const job = await this.bullmqService.addJob(this.QUEUE_NAME, 'send-email', jobData, jobOptions);
 
     // For now, return immediately with queued status
     // In production, you might want to wait for completion for critical emails
     const response: EmailResponse = {
       id: job.id?.toString() || 'unknown',
       status: 'queued',
-      message: 'Email queued for delivery'
+      message: 'Email queued for delivery',
     };
 
     // Cache the initial response
@@ -95,7 +94,10 @@ export class EmailService implements OnModuleInit, OnModuleDestroy {
     return response;
   }
 
-  async sendWelcomeEmail(to: string, variables: WelcomeEmailVariables = {}): Promise<EmailResponse> {
+  async sendWelcomeEmail(
+    to: string,
+    variables: WelcomeEmailVariables = {},
+  ): Promise<EmailResponse> {
     return this.sendEmail({
       to,
       subject: 'Welcome to Trip Planner!',
@@ -105,7 +107,10 @@ export class EmailService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async sendPasswordResetEmail(to: string, variables: PasswordResetEmailVariables): Promise<EmailResponse> {
+  async sendPasswordResetEmail(
+    to: string,
+    variables: PasswordResetEmailVariables,
+  ): Promise<EmailResponse> {
     return this.sendEmail({
       to,
       subject: 'Reset Your Password - Trip Planner',
@@ -115,7 +120,10 @@ export class EmailService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async sendEmailVerification(to: string, variables: EmailVerificationVariables): Promise<EmailResponse> {
+  async sendEmailVerification(
+    to: string,
+    variables: EmailVerificationVariables,
+  ): Promise<EmailResponse> {
     return this.sendEmail({
       to,
       subject: 'Verify Your Email - Trip Planner',
@@ -127,24 +135,24 @@ export class EmailService implements OnModuleInit, OnModuleDestroy {
 
   private async generateEmailContent(
     template: EmailTemplateType,
-    variables: WelcomeEmailVariables | PasswordResetEmailVariables | EmailVerificationVariables
+    variables: WelcomeEmailVariables | PasswordResetEmailVariables | EmailVerificationVariables,
   ): Promise<{ html: string; text: string }> {
     // For now, return simple templates. In the future, this could use a template engine
     switch (template) {
       case 'welcome':
         return {
           html: this.getWelcomeEmailHtml(variables),
-          text: this.getWelcomeEmailText(variables)
+          text: this.getWelcomeEmailText(variables),
         };
       case 'password-reset':
         return {
           html: this.getPasswordResetEmailHtml(variables as PasswordResetEmailVariables),
-          text: this.getPasswordResetEmailText(variables as PasswordResetEmailVariables)
+          text: this.getPasswordResetEmailText(variables as PasswordResetEmailVariables),
         };
       case 'email-verification':
         return {
           html: this.getEmailVerificationHtml(variables as EmailVerificationVariables),
-          text: this.getEmailVerificationText(variables as EmailVerificationVariables)
+          text: this.getEmailVerificationText(variables as EmailVerificationVariables),
         };
       default:
         throw new Error(`Unknown email template: ${template}`);

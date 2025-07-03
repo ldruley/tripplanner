@@ -1,11 +1,16 @@
-<div class="p-4 border rounded-lg shadow-sm bg-tp-bg-light-secondary dark:bg-tp-bg-tertiary border-tp-border-light dark:border-tp-border">
-  <h3 class="text-lg font-semibold mb-3 text-tp-text-light-primary dark:text-tp-text-primary">Location Bank</h3>
+<div
+  class="p-4 border rounded-lg shadow-sm bg-tp-bg-light-secondary dark:bg-tp-bg-tertiary border-tp-border-light dark:border-tp-border"
+>
+  <h3 class="text-lg font-semibold mb-3 text-tp-text-light-primary dark:text-tp-text-primary">
+    Location Bank
+  </h3>
   @if (bankedLocations().length > 0) {
     <div
       cdkDropList
       id="bank-list"
       class="space-y-2 min-h-[100px] p-2 border border-dashed border-tp-border-light dark:border-tp-border rounded-md bg-white dark:bg-tp-bg-secondary"
-      [cdkDropListData]="bankedLocations()">
+      [cdkDropListData]="bankedLocations()"
+    >
       @for (location of bankedLocations(); track location.id) {
         <div
           cdkDrag
@@ -14,13 +19,18 @@
           class="p-3 bg-white dark:bg-tp-bg-secondary border border-tp-border-light dark:border-tp-border rounded-md shadow-sm cursor-grab hover:shadow-md transition-shadow cdk-drag"
           [style.opacity]="'0.8'"
           [style.transform]="'scale(1.02)'"
-          >
-          <div class="font-medium text-tp-text-light-primary dark:text-tp-text-primary">{{ location.name }}</div>
+        >
+          <div class="font-medium text-tp-text-light-primary dark:text-tp-text-primary">
+            {{ location.name }}
+          </div>
           @if (location.fullAddress) {
-            <div class="text-xs text-tp-text-light-secondary dark:text-tp-text-secondary mt-1">{{ location.fullAddress }}</div>
+            <div class="text-xs text-tp-text-light-secondary dark:text-tp-text-secondary mt-1">
+              {{ location.fullAddress }}
+            </div>
           } @else if (location.city || location.country) {
             <div class="text-xs text-tp-text-light-secondary dark:text-tp-text-secondary mt-1">
-              {{ location.city }}{{ location.city && location.country ? ', ' : '' }}{{ location.country }}
+              {{ location.city }}{{ location.city && location.country ? ', ' : ''
+              }}{{ location.country }}
             </div>
           }
         </div>

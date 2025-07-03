@@ -6,11 +6,11 @@ import { authGuard } from '../../core/guards/auth.guard';
 export const AUTH_ROUTES: Routes = [
   {
     path: 'login',
-    component: AuthContainerComponent
+    component: AuthContainerComponent,
   },
   {
     path: 'register',
-    component: AuthContainerComponent
+    component: AuthContainerComponent,
   },
   {
     path: 'change-password',
@@ -19,11 +19,11 @@ export const AUTH_ROUTES: Routes = [
   },
   {
     path: 'forgot',
-    component: AuthContainerComponent
+    component: AuthContainerComponent,
   },
   {
     path: 'verify-email',
-    component: EmailVerificationContainerComponent
+    component: EmailVerificationContainerComponent,
   },
   {
     path: '',

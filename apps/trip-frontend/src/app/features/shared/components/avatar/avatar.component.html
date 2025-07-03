@@ -2,10 +2,10 @@
   [class]="src && !imageError ? avatarClasses : placeholderClasses"
   [attr.tabindex]="clickable ? 0 : null"
   [attr.role]="clickable ? 'button' : null"
-  [attr.aria-label]="clickable ? (alt + ' (click to view)') : alt"
+  [attr.aria-label]="clickable ? alt + ' (click to view)' : alt"
   (click)="onClick()"
-  (keydown)="onKeyDown($event)">
-
+  (keydown)="onKeyDown($event)"
+>
   <!-- Avatar Image -->
   @if (src && !imageError) {
     <img
@@ -13,7 +13,8 @@
       [alt]="alt"
       class="avatar-image"
       (error)="onImageError()"
-      (load)="onImageLoad()">
+      (load)="onImageLoad()"
+    />
   }
 
   <!-- Placeholder Icon -->
@@ -22,12 +23,14 @@
       [class]="iconSize + ' text-gray-400'"
       fill="none"
       stroke="currentColor"
-      viewBox="0 0 24 24">
+      viewBox="0 0 24 24"
+    >
       <path
         stroke-linecap="round"
         stroke-linejoin="round"
         stroke-width="2"
-        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+      />
     </svg>
   }
 
@@ -38,20 +41,21 @@
         class="animate-spin w-4 h-4 text-blue-500"
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
-        viewBox="0 0 24 24">
+        viewBox="0 0 24 24"
+      >
         <circle
           class="opacity-25"
           cx="12"
           cy="12"
           r="10"
           stroke="currentColor"
-          stroke-width="4">
-        </circle>
+          stroke-width="4"
+        ></circle>
         <path
           class="opacity-75"
           fill="currentColor"
-          d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-        </path>
+          d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+        ></path>
       </svg>
     </div>
   }

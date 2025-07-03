@@ -25,7 +25,7 @@ describe('HerePoiAdapterService', () => {
   const query: PoiSearchQueryDto = {
     search: 'coffee',
     proximity: `40.7128,-74.006`,
-    limit: 1
+    limit: 1,
   };
 
   const mockResponse: AxiosResponse = {
@@ -62,19 +62,19 @@ describe('HerePoiAdapterService', () => {
         {
           provide: ConfigService,
           useValue: {
-            get: jest.fn().mockReturnValue(mockApiKey)
-          }
+            get: jest.fn().mockReturnValue(mockApiKey),
+          },
         },
         {
           provide: HttpService,
           useValue: {
-            get: jest.fn()
-          }
-        }
-      ]
+            get: jest.fn(),
+          },
+        },
+      ],
     })
-    .setLogger(mockLogger)
-    .compile();
+      .setLogger(mockLogger)
+      .compile();
 
     service = module.get<HerePoiAdapterService>(HerePoiAdapterService);
     httpService = module.get(HttpService);
@@ -98,7 +98,7 @@ describe('HerePoiAdapterService', () => {
       longitude: -122.0306,
       fullAddress: '123 Main St, Santa Cruz, CA',
       provider: 'here',
-      providerId: 'poi-123'
+      providerId: 'poi-123',
     });
   });
 
@@ -113,10 +113,10 @@ describe('HerePoiAdapterService', () => {
             id: 'poi-789-invalid',
             title: 'A broken item',
             // `position` is missing, which will cause Zod validation to fail
-            address: { label: 'some address' }
-          }
-        ]
-      }
+            address: { label: 'some address' },
+          },
+        ],
+      },
     };
     httpService.get.mockReturnValueOnce(of(mixedResponse));
 
@@ -128,7 +128,7 @@ describe('HerePoiAdapterService', () => {
     expect(mockLogger.warn).toHaveBeenCalledWith(
       'Invalid POI result from HERE',
       expect.any(Object),
-      'HerePoiAdapterService'
+      'HerePoiAdapterService',
     );
   });
 
@@ -157,10 +157,10 @@ describe('HerePoiAdapterService', () => {
             id: 'poi-456',
             title: 'Mystery Place',
             position: { lat: 1, lng: 2 },
-            address: {}
-          }
-        ]
-      }
+            address: {},
+          },
+        ],
+      },
     };
 
     httpService.get.mockReturnValueOnce(of(brokenData));
@@ -174,7 +174,7 @@ describe('HerePoiAdapterService', () => {
       city: 'Unknown city',
       region: 'Unknown region',
       country: 'Unknown country',
-      postalCode: 'Unknown postal code'
+      postalCode: 'Unknown postal code',
     });
   });
 
@@ -184,7 +184,11 @@ describe('HerePoiAdapterService', () => {
 
     await expect(service.searchPoi(query)).rejects.toThrow(BadGatewayException);
     await expect(service.searchPoi(query)).rejects.toThrow('Failed to search POI');
-    expect(mockLogger.error).toHaveBeenCalledWith('Error fetching POI data', error, 'HerePoiAdapterService');
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Error fetching POI data',
+      error,
+      'HerePoiAdapterService',
+    );
   });
 
   describe('Configuration Errors', () => {
@@ -205,9 +209,7 @@ describe('HerePoiAdapterService', () => {
 
       // Assert that the module fails to compile, which is the expected behavior
       await expect(moduleBuilder.compile()).rejects.toThrow(InternalServerErrorException);
-      await expect(moduleBuilder.compile()).rejects.toThrow(
-        'Here access token is required',
-      );
+      await expect(moduleBuilder.compile()).rejects.toThrow('Here access token is required');
     });
   });
 });

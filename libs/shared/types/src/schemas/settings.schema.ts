@@ -5,12 +5,12 @@ import { getTimeZones } from '@vvo/tzdb';
 const validTimezones = getTimeZones().map(tz => tz.name);
 
 const timezoneSchema = z.string().refine(
-  (value) => {
+  value => {
     return validTimezones.includes(value);
   },
   {
     message: 'Invalid timezone. Must be a valid IANA timezone identifier.',
-  }
+  },
 );
 
 export const UserSettingsSchema = z.object({
@@ -23,14 +23,13 @@ export const UserSettingsSchema = z.object({
   updatedAt: z.date().optional(),
 });
 
-
 export const CreateUserSettingsSchema = UserSettingsSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export const UpdateUserSettingsSchema = CreateUserSettingsSchema.omit({ userId: true}).partial();
+export const UpdateUserSettingsSchema = CreateUserSettingsSchema.omit({ userId: true }).partial();
 export type UserSettings = z.infer<typeof UserSettingsSchema>;
 export type CreateUserSettings = z.infer<typeof CreateUserSettingsSchema>;
 export type UpdateUserSettings = z.infer<typeof UpdateUserSettingsSchema>;

@@ -6,8 +6,8 @@ import { DatabaseService } from '../../../../libs/shared/prisma/src';
 export class AppController {
   constructor(
     private readonly appService: AppService,
-    private readonly databaseService: DatabaseService
-) {}
+    private readonly databaseService: DatabaseService,
+  ) {}
 
   @Get()
   getData() {
@@ -24,11 +24,11 @@ export class AppController {
   }
 
   /*
-  * Health check for the profiles table in the database.
-  *
-  * @remarks Checks if the profiles table is accessible and returns the count of profiles.
-  * @example ['1', '2', '3']
-  * */
+   * Health check for the profiles table in the database.
+   *
+   * @remarks Checks if the profiles table is accessible and returns the count of profiles.
+   * @example ['1', '2', '3']
+   * */
   @Get('health/profiles')
   async checkProfiles() {
     try {

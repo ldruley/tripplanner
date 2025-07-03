@@ -17,8 +17,8 @@ jest.mock('bullmq', () => {
       close: jest.fn().mockResolvedValue(undefined),
       on: jest.fn(),
       off: jest.fn(),
-      once: jest.fn()
-    }))
+      once: jest.fn(),
+    })),
   };
 });
 
@@ -47,8 +47,8 @@ describe('TimezoneService', () => {
         { provide: RedisService, useValue: redisService },
       ],
     })
-    .setLogger(createMockLogger())
-    .compile();
+      .setLogger(createMockLogger())
+      .compile();
 
     service = module.get<TimezoneService>(TimezoneService);
 
@@ -70,9 +70,9 @@ describe('TimezoneService', () => {
       const freshBullmqService = mock<BullMQService>();
       const freshRedisService = mock<RedisService>();
       const freshMockQueue = mock<Queue>();
-      
+
       freshBullmqService.createQueue.mockReturnValue(freshMockQueue);
-      
+
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           TimezoneService,
@@ -106,10 +106,10 @@ describe('TimezoneService', () => {
       const freshBullmqService = mock<BullMQService>();
       const freshRedisService = mock<RedisService>();
       const mockRedisClient = {};
-      
+
       freshBullmqService.createQueue.mockReturnValue(mockQueue);
       freshRedisService.getClient.mockReturnValue(mockRedisClient as any);
-      
+
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           TimezoneService,
@@ -128,7 +128,7 @@ describe('TimezoneService', () => {
 
       // Assert
       expect(QueueEvents).toHaveBeenCalledWith('timezone-requests', {
-        connection: mockRedisClient
+        connection: mockRedisClient,
       });
     });
   });
@@ -136,13 +136,13 @@ describe('TimezoneService', () => {
   describe('getTimezoneByCoordinates', () => {
     const mockRequest: TimezoneRequest = {
       latitude: 40.7128,
-      longitude: -74.0060,
-      requestId: '123e4567-e89b-12d3-a456-426614174000'
+      longitude: -74.006,
+      requestId: '123e4567-e89b-12d3-a456-426614174000',
     };
 
     const mockResponse: TimezoneResponse = {
       timezone: 'America/New_York',
-      requestId: '123e4567-e89b-12d3-a456-426614174000'
+      requestId: '123e4567-e89b-12d3-a456-426614174000',
     };
 
     it('should return cached response when available', async () => {
@@ -154,9 +154,7 @@ describe('TimezoneService', () => {
 
       // Assert
       expect(result).toEqual(mockResponse);
-      expect(redisService.get).toHaveBeenCalledWith(
-        expect.stringContaining('timezone:coords')
-      );
+      expect(redisService.get).toHaveBeenCalledWith(expect.stringContaining('timezone:coords'));
       expect(bullmqService.addJob).not.toHaveBeenCalled();
     });
 
@@ -175,18 +173,18 @@ describe('TimezoneService', () => {
         'timezone-requests',
         'fetch-timezone-coords',
         mockRequest,
-        { priority: 1 }
+        { priority: 1 },
       );
       expect(mockJob.waitUntilFinished).toHaveBeenCalledWith(
         expect.objectContaining({
-          close: expect.any(Function)
+          close: expect.any(Function),
         }),
-        30000
+        30000,
       );
       expect(redisService.set).toHaveBeenCalledWith(
         expect.stringContaining('timezone:coords'),
         mockResponse,
-        604800 // 7 days in seconds
+        604800, // 7 days in seconds
       );
     });
 
@@ -215,17 +213,19 @@ describe('TimezoneService', () => {
       redisService.get.mockResolvedValue(null);
       const timeoutError = new Error('timeout');
       timeoutError.name = 'TimeoutError';
-      
+
       // Reset and setup the job mock properly for this test
       bullmqService.addJob.mockResolvedValue(mockJob);
       mockJob.waitUntilFinished.mockRejectedValue(timeoutError);
       (mockJob as any).id = 'timeout-test-job';
 
       // Act & Assert
-      await expect(service.getTimezoneByCoordinates(mockRequest))
-        .rejects.toThrow(RequestTimeoutException);
-      await expect(service.getTimezoneByCoordinates(mockRequest))
-        .rejects.toThrow('Timezone lookup request timed out');
+      await expect(service.getTimezoneByCoordinates(mockRequest)).rejects.toThrow(
+        RequestTimeoutException,
+      );
+      await expect(service.getTimezoneByCoordinates(mockRequest)).rejects.toThrow(
+        'Timezone lookup request timed out',
+      );
     });
 
     it('should handle service unavailable errors', async () => {
@@ -235,10 +235,12 @@ describe('TimezoneService', () => {
       mockJob.waitUntilFinished.mockRejectedValue(serviceError);
 
       // Act & Assert
-      await expect(service.getTimezoneByCoordinates(mockRequest))
-        .rejects.toThrow(ServiceUnavailableException);
-      await expect(service.getTimezoneByCoordinates(mockRequest))
-        .rejects.toThrow('Timezone service is currently unavailable');
+      await expect(service.getTimezoneByCoordinates(mockRequest)).rejects.toThrow(
+        ServiceUnavailableException,
+      );
+      await expect(service.getTimezoneByCoordinates(mockRequest)).rejects.toThrow(
+        'Timezone service is currently unavailable',
+      );
     });
 
     it('should handle job completion with no result', async () => {
@@ -252,23 +254,19 @@ describe('TimezoneService', () => {
 
       // Assert
       expect(result).toBeNull();
-      expect(redisService.set).toHaveBeenCalledWith(
-        expect.any(String),
-        null,
-        604800
-      );
+      expect(redisService.set).toHaveBeenCalledWith(expect.any(String), null, 604800);
     });
   });
 
   describe('getTimezoneByCity', () => {
     const mockCityRequest: TimezoneRequest = {
       city: 'New York',
-      requestId: '123e4567-e89b-12d3-a456-426614174000'
+      requestId: '123e4567-e89b-12d3-a456-426614174000',
     };
 
     const mockResponse: TimezoneResponse = {
       timezone: 'America/New_York',
-      requestId: '123e4567-e89b-12d3-a456-426614174000'
+      requestId: '123e4567-e89b-12d3-a456-426614174000',
     };
 
     it('should return cached response when available', async () => {
@@ -280,9 +278,7 @@ describe('TimezoneService', () => {
 
       // Assert
       expect(result).toEqual(mockResponse);
-      expect(redisService.get).toHaveBeenCalledWith(
-        expect.stringContaining('timezone:city')
-      );
+      expect(redisService.get).toHaveBeenCalledWith(expect.stringContaining('timezone:city'));
       expect(bullmqService.addJob).not.toHaveBeenCalled();
     });
 
@@ -300,7 +296,7 @@ describe('TimezoneService', () => {
         'timezone-requests',
         'fetch-timezone-city',
         mockCityRequest,
-        { priority: 2 }
+        { priority: 2 },
       );
     });
 
@@ -317,7 +313,7 @@ describe('TimezoneService', () => {
         'timezone-requests',
         'fetch-timezone-city',
         mockCityRequest,
-        { priority: 2 } // Higher priority number (lower priority)
+        { priority: 2 }, // Higher priority number (lower priority)
       );
     });
   });
@@ -370,7 +366,7 @@ describe('TimezoneService', () => {
 
     const mockResponse: TimezoneResponse = {
       timezone: 'Europe/London',
-      requestId: '123e4567-e89b-12d3-a456-426614174000'
+      requestId: '123e4567-e89b-12d3-a456-426614174000',
     };
 
     it('should use 7-day TTL for caching', async () => {
@@ -385,7 +381,7 @@ describe('TimezoneService', () => {
       expect(redisService.set).toHaveBeenCalledWith(
         expect.any(String),
         mockResponse,
-        604800 // 7 * 24 * 60 * 60 seconds
+        604800, // 7 * 24 * 60 * 60 seconds
       );
     });
 
@@ -425,7 +421,7 @@ describe('TimezoneService', () => {
   describe('error scenarios', () => {
     const mockRequest: TimezoneRequest = {
       latitude: 40.7128,
-      longitude: -74.0060,
+      longitude: -74.006,
     };
 
     it('should handle Redis cache retrieval failures', async () => {
@@ -434,8 +430,9 @@ describe('TimezoneService', () => {
       redisService.get.mockRejectedValue(cacheError);
 
       // Act & Assert
-      await expect(service.getTimezoneByCoordinates(mockRequest))
-        .rejects.toThrow('Redis connection failed');
+      await expect(service.getTimezoneByCoordinates(mockRequest)).rejects.toThrow(
+        'Redis connection failed',
+      );
     });
 
     it('should handle BullMQ job creation failures', async () => {
@@ -445,8 +442,7 @@ describe('TimezoneService', () => {
       bullmqService.addJob.mockRejectedValue(jobError);
 
       // Act & Assert
-      await expect(service.getTimezoneByCoordinates(mockRequest))
-        .rejects.toThrow('Queue is full');
+      await expect(service.getTimezoneByCoordinates(mockRequest)).rejects.toThrow('Queue is full');
     });
 
     it('should handle job completion failures with generic error', async () => {
@@ -456,8 +452,9 @@ describe('TimezoneService', () => {
       mockJob.waitUntilFinished.mockRejectedValue(jobError);
 
       // Act & Assert
-      await expect(service.getTimezoneByCoordinates(mockRequest))
-        .rejects.toThrow(ServiceUnavailableException);
+      await expect(service.getTimezoneByCoordinates(mockRequest)).rejects.toThrow(
+        ServiceUnavailableException,
+      );
     });
   });
 
@@ -478,12 +475,12 @@ describe('TimezoneService', () => {
     const mockRequest: TimezoneRequest = {
       latitude: 48.8566,
       longitude: 2.3522,
-      requestId: '123e4567-e89b-12d3-a456-426614174000'
+      requestId: '123e4567-e89b-12d3-a456-426614174000',
     };
 
     const mockResponse: TimezoneResponse = {
       timezone: 'Europe/Paris',
-      requestId: '123e4567-e89b-12d3-a456-426614174000'
+      requestId: '123e4567-e89b-12d3-a456-426614174000',
     };
 
     it('should complete full timezone lookup workflow', async () => {
@@ -496,25 +493,23 @@ describe('TimezoneService', () => {
       const result = await service.getTimezoneByCoordinates(mockRequest);
 
       // Assert - Verify complete workflow
-      expect(redisService.get).toHaveBeenCalledWith(
-        expect.stringContaining('timezone:coords')
-      );
+      expect(redisService.get).toHaveBeenCalledWith(expect.stringContaining('timezone:coords'));
       expect(bullmqService.addJob).toHaveBeenCalledWith(
         'timezone-requests',
         'fetch-timezone-coords',
         mockRequest,
-        { priority: 1 }
+        { priority: 1 },
       );
       expect(mockJob.waitUntilFinished).toHaveBeenCalledWith(
         expect.objectContaining({
-          close: expect.any(Function)
+          close: expect.any(Function),
         }),
-        30000
+        30000,
       );
       expect(redisService.set).toHaveBeenCalledWith(
         expect.stringContaining('timezone:coords'),
         mockResponse,
-        604800
+        604800,
       );
       expect(result).toEqual(mockResponse);
     });

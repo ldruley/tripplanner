@@ -18,10 +18,7 @@ import { EmailModule } from '@trip-planner/email';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [
-        `.env.${process.env.NODE_ENV || 'development'}`,
-        `.env`,
-      ],
+      envFilePath: [`.env.${process.env.NODE_ENV || 'development'}`, `.env`],
       cache: true,
     }),
     AuthModule,

@@ -1,16 +1,23 @@
 <form [formGroup]="form" (ngSubmit)="onSave()" class="space-y-8">
   <!-- Preferences Section -->
   <div class="space-y-4">
-    <h3 class="text-lg font-semibold text-gray-900 dark:text-tp-text-primary border-b border-gray-100 dark:border-tp-border pb-2 mb-4">Preferences</h3>
+    <h3
+      class="text-lg font-semibold text-gray-900 dark:text-tp-text-primary border-b border-gray-100 dark:border-tp-border pb-2 mb-4"
+    >
+      Preferences
+    </h3>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <!-- Timezone -->
       <div class="space-y-2">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="timezone">Timezone</label>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="timezone"
+          >Timezone</label
+        >
         <select
           id="timezone"
           formControlName="timezone"
           class="w-full px-3 py-2 border border-gray-300 dark:border-tp-border dark:bg-tp-bg-tertiary dark:placeholder-tp-text-muted dark:text-tp-text-primary rounded-md shadow-sm focus:ring-blue-500 dark:focus:ring-offset-tp-bg-primary focus:border-blue-500 dark:focus:border-tp-orange transition-colors"
-          [class.error]="isFieldInvalid('timezone')">
+          [class.error]="isFieldInvalid('timezone')"
+        >
           <option value="" disabled>Select a timezone</option>
           @for (timezone of timezones; track timezone.value) {
             <option [value]="timezone.value">{{ timezone.label }}</option>
@@ -26,8 +33,14 @@
 
       <!-- Distance Units -->
       <div class="space-y-2">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="distanceUnit">Distance Units</label>
-        <select id="distanceUnit" formControlName="distanceUnit" class="w-full px-3 py-2 border border-gray-300 dark:border-tp-border dark:bg-tp-bg-tertiary dark:placeholder-tp-text-muted dark:text-tp-text-primary rounded-md shadow-sm focus:ring-blue-500 dark:focus:ring-offset-tp-bg-primary focus:border-blue-500 dark:focus:border-tp-orange transition-colors">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="distanceUnit"
+          >Distance Units</label
+        >
+        <select
+          id="distanceUnit"
+          formControlName="distanceUnit"
+          class="w-full px-3 py-2 border border-gray-300 dark:border-tp-border dark:bg-tp-bg-tertiary dark:placeholder-tp-text-muted dark:text-tp-text-primary rounded-md shadow-sm focus:ring-blue-500 dark:focus:ring-offset-tp-bg-primary focus:border-blue-500 dark:focus:border-tp-orange transition-colors"
+        >
           <option value="KILOMETERS">Kilometers</option>
           <option value="MILES">Miles</option>
         </select>
@@ -35,7 +48,11 @@
 
       <!-- Dark Mode -->
       <div class="md:col-span-2 dark-mode-field">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="darkModeToggle">Dark Mode</label>
+        <label
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          for="darkModeToggle"
+          >Dark Mode</label
+        >
         <label class="toggle-switch">
           <input type="checkbox" formControlName="darkMode" id="darkModeToggle" />
           <span class="slider"></span>
@@ -57,14 +74,11 @@
       type="submit"
       variant="primary"
       [disabled]="form.invalid || loading"
-      [loading]="loading">
+      [loading]="loading"
+    >
       {{ loading ? 'Saving...' : 'Save Changes' }}
     </app-button>
-    <app-button
-      type="button"
-      variant="outline"
-      (buttonClick)="onCancel()"
-      [disabled]="loading">
+    <app-button type="button" variant="outline" (buttonClick)="onCancel()" [disabled]="loading">
       Cancel
     </app-button>
   </div>

@@ -1,9 +1,11 @@
 import { createZodDto } from '@anatine/zod-nestjs';
 import {
-  CreateProfileSchema, ProfileQuerySchema,
+  CreateProfileSchema,
+  ProfileQuerySchema,
   ProfileResponseSchema,
-  ProfileSchema, ProfilesListResponseSchema,
-  UpdateProfileSchema
+  ProfileSchema,
+  ProfilesListResponseSchema,
+  UpdateProfileSchema,
 } from '../../types/src/schemas/profile.schema';
 
 import { ErrorResponseSchema } from '../../types/src/schemas/base.schema';

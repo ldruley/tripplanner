@@ -33,7 +33,7 @@ export const createSelectiveLogger = (allowLevels: string[] = []): LoggerService
 export const createTestLogger = (): LoggerService => {
   const isVerbose = process.env['TEST_VERBOSE'] === 'true';
   const isDebug = process.env['TEST_DEBUG'] === 'true';
-  
+
   return {
     log: isVerbose ? console.log : jest.fn(),
     error: isDebug ? console.error : jest.fn(),
@@ -55,7 +55,7 @@ export const mockLoggerClass = () => {
   jest.spyOn(Logger.prototype, 'warn').mockImplementation();
   jest.spyOn(Logger.prototype, 'debug').mockImplementation();
   jest.spyOn(Logger.prototype, 'verbose').mockImplementation();
-  
+
   // Mock static methods that might be called
   jest.spyOn(Logger, 'log').mockImplementation();
   jest.spyOn(Logger, 'error').mockImplementation();

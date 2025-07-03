@@ -5,7 +5,7 @@ export const EmailTemplateType = z.enum([
   'password-reset',
   'email-verification',
   'trip-confirmation',
-  'trip-reminder'
+  'trip-reminder',
 ]);
 
 export const EmailRequestSchema = z.object({
@@ -14,7 +14,7 @@ export const EmailRequestSchema = z.object({
   template: EmailTemplateType,
   variables: z.record(z.string(), z.unknown()).optional(),
   priority: z.number().min(1).max(10).optional().default(5),
-  scheduledAt: z.date().optional()
+  scheduledAt: z.date().optional(),
 });
 
 export const EmailResponseSchema = z.object({
@@ -22,7 +22,7 @@ export const EmailResponseSchema = z.object({
   status: z.enum(['queued', 'sent', 'failed', 'delivered']),
   message: z.string().optional(),
   sentAt: z.date().optional(),
-  deliveredAt: z.date().optional()
+  deliveredAt: z.date().optional(),
 });
 
 export const EmailJobDataSchema = z.object({
@@ -32,7 +32,7 @@ export const EmailJobDataSchema = z.object({
   text: z.string().optional(),
   priority: z.number().optional(),
   attempt: z.number().optional(),
-  maxAttempts: z.number().optional()
+  maxAttempts: z.number().optional(),
 });
 
 export const EmailTemplateSchema = z.object({
@@ -40,7 +40,7 @@ export const EmailTemplateSchema = z.object({
   subject: z.string(),
   html: z.string(),
   text: z.string().optional(),
-  variables: z.array(z.string()).optional()
+  variables: z.array(z.string()).optional(),
 });
 
 export const EmailConfigSchema = z.object({
@@ -49,23 +49,23 @@ export const EmailConfigSchema = z.object({
   baseUrl: z.string().url(),
   from: z.string().email(),
   replyTo: z.string().email().optional(),
-  testEmail: z.string().email().optional()
+  testEmail: z.string().email().optional(),
 });
 
 // Template variable schemas
 export const WelcomeEmailVariablesSchema = z.object({
   firstName: z.string().optional(),
-  email: z.string().email().optional()
+  email: z.string().email().optional(),
 });
 
 export const PasswordResetEmailVariablesSchema = z.object({
   resetToken: z.string(),
-  firstName: z.string().optional()
+  firstName: z.string().optional(),
 });
 
 export const EmailVerificationVariablesSchema = z.object({
   verificationToken: z.string(),
-  firstName: z.string().optional()
+  firstName: z.string().optional(),
 });
 
 // Type exports

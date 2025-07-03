@@ -6,11 +6,7 @@ import { EmailService } from './email.service';
 import { EmailWorker } from './email.worker';
 
 @Module({
-  imports: [
-    HttpModule,
-    BullMQModule,
-    RedisModule,
-  ],
+  imports: [HttpModule, BullMQModule, RedisModule],
   controllers: [],
   providers: [EmailService, EmailWorker],
   exports: [EmailService],

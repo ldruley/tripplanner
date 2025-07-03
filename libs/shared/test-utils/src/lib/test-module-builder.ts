@@ -1,7 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ModuleMetadata } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
-import { createMockLogger, createTestLogger, mockLoggerClass, restoreLoggerClass } from './logger-mock';
+import {
+  createMockLogger,
+  createTestLogger,
+  mockLoggerClass,
+  restoreLoggerClass,
+} from './logger-mock';
 
 /**
  * Creates a TestingModule with suppressed logging to prevent console pollution
@@ -11,11 +16,9 @@ import { createMockLogger, createTestLogger, mockLoggerClass, restoreLoggerClass
 export const createSilentTestModule = async (metadata: ModuleMetadata): Promise<TestingModule> => {
   // Mock Logger class before module compilation
   mockLoggerClass();
-  
-  const module = await Test.createTestingModule(metadata)
-    .setLogger(createMockLogger())
-    .compile();
-    
+
+  const module = await Test.createTestingModule(metadata).setLogger(createMockLogger()).compile();
+
   return module;
 };
 
@@ -25,13 +28,11 @@ export const createSilentTestModule = async (metadata: ModuleMetadata): Promise<
  */
 export const createTestModuleWithLogger = async (
   metadata: ModuleMetadata,
-  customLogger?: any
+  customLogger?: any,
 ): Promise<TestingModule> => {
   const logger = customLogger || createTestLogger();
-  
-  return await Test.createTestingModule(metadata)
-    .setLogger(logger)
-    .compile();
+
+  return await Test.createTestingModule(metadata).setLogger(logger).compile();
 };
 
 /**
@@ -40,10 +41,10 @@ export const createTestModuleWithLogger = async (
  */
 export const createTestModuleWithLoggerDI = async (
   metadata: ModuleMetadata,
-  customLogger?: any
+  customLogger?: any,
 ): Promise<TestingModule> => {
   const logger = customLogger || createMockLogger();
-  
+
   return await Test.createTestingModule({
     ...metadata,
     providers: [
@@ -54,8 +55,8 @@ export const createTestModuleWithLoggerDI = async (
       },
     ],
   })
-  .setLogger(logger)
-  .compile();
+    .setLogger(logger)
+    .compile();
 };
 
 /**

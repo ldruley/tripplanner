@@ -25,11 +25,11 @@ describe('ApiUsageService', () => {
       providers: [
         ApiUsageService,
         { provide: RedisService, useValue: redisService },
-        { provide: QuotaService, useValue: quotaService }
+        { provide: QuotaService, useValue: quotaService },
       ],
     })
-    .setLogger(createMockLogger())
-    .compile();
+      .setLogger(createMockLogger())
+      .compile();
 
     service = module.get<ApiUsageService>(ApiUsageService);
 
@@ -46,7 +46,7 @@ describe('ApiUsageService', () => {
       const freshRedisService = mock<RedisService>();
       const freshRedisClient = mock<Redis>();
       const mockScriptSha = 'abc123def456';
-      
+
       freshRedisService.getClient.mockReturnValue(freshRedisClient);
       freshRedisClient.script.mockResolvedValue(mockScriptSha);
 
@@ -54,7 +54,7 @@ describe('ApiUsageService', () => {
         providers: [
           ApiUsageService,
           { provide: RedisService, useValue: freshRedisService },
-          { provide: QuotaService, useValue: quotaService }
+          { provide: QuotaService, useValue: quotaService },
         ],
       }).compile();
 
@@ -66,7 +66,10 @@ describe('ApiUsageService', () => {
       // Assert
       expect(freshRedisService.getClient).toHaveBeenCalled();
       expect(freshRedisClient.script).toHaveBeenCalledWith('LOAD', expect.stringContaining('INCR'));
-      expect(freshRedisClient.script).toHaveBeenCalledWith('LOAD', expect.stringContaining('redis.call'));
+      expect(freshRedisClient.script).toHaveBeenCalledWith(
+        'LOAD',
+        expect.stringContaining('redis.call'),
+      );
     });
 
     it('should handle Lua script loading failure', async () => {
@@ -74,7 +77,7 @@ describe('ApiUsageService', () => {
       const freshRedisService = mock<RedisService>();
       const freshRedisClient = mock<Redis>();
       const scriptError = new Error('Redis script loading failed');
-      
+
       freshRedisService.getClient.mockReturnValue(freshRedisClient);
       freshRedisClient.script.mockRejectedValue(scriptError);
 
@@ -82,7 +85,7 @@ describe('ApiUsageService', () => {
         providers: [
           ApiUsageService,
           { provide: RedisService, useValue: freshRedisService },
-          { provide: QuotaService, useValue: quotaService }
+          { provide: QuotaService, useValue: quotaService },
         ],
       }).compile();
 
@@ -150,17 +153,19 @@ describe('ApiUsageService', () => {
       const fixedDate = new Date('2025-06-15T10:30:00.000Z');
 
       // Act & Assert
-      expect(service['makeKey']('here', 'geocoding', undefined, fixedDate))
-        .toBe('usage:2025-06:here:geocoding');
-      expect(service['makeKey']('mapbox', 'routing', undefined, fixedDate))
-        .toBe('usage:2025-06:mapbox:routing');
-      expect(service['makeKey']('google', 'poi', undefined, fixedDate))
-        .toBe('usage:2025-06:google:poi');
+      expect(service['makeKey']('here', 'geocoding', undefined, fixedDate)).toBe(
+        'usage:2025-06:here:geocoding',
+      );
+      expect(service['makeKey']('mapbox', 'routing', undefined, fixedDate)).toBe(
+        'usage:2025-06:mapbox:routing',
+      );
+      expect(service['makeKey']('google', 'poi', undefined, fixedDate)).toBe(
+        'usage:2025-06:google:poi',
+      );
     });
   });
 
   describe('increment', () => {
-
     it('should increment usage atomically and return new count', async () => {
       // Arrange
       const expectedCount = 5;
@@ -174,7 +179,7 @@ describe('ApiUsageService', () => {
       expect(redisClient.evalsha).toHaveBeenCalledWith(
         'mock-script-sha',
         1,
-        expect.stringMatching(/^usage:\d{4}-\d{2}:here:geocoding$/)
+        expect.stringMatching(/^usage:\d{4}-\d{2}:here:geocoding$/),
       );
     });
 
@@ -191,7 +196,7 @@ describe('ApiUsageService', () => {
       expect(redisClient.evalsha).toHaveBeenCalledWith(
         'mock-script-sha',
         1,
-        expect.stringMatching(/^usage:\d{4}-\d{2}:mapbox:routing\.directions$/)
+        expect.stringMatching(/^usage:\d{4}-\d{2}:mapbox:routing\.directions$/),
       );
     });
 
@@ -208,16 +213,18 @@ describe('ApiUsageService', () => {
       // Arrange
       const june2025 = new Date('2025-06-15T10:30:00.000Z');
       const july2025 = new Date('2025-07-15T10:30:00.000Z');
-      
-      jest.spyOn(service as any, 'makeKey')
+
+      jest
+        .spyOn(service as any, 'makeKey')
         .mockReturnValueOnce('usage:2025-06:here:geocoding')
         .mockReturnValueOnce('usage:2025-07:here:geocoding');
-      
+
       redisClient.evalsha.mockResolvedValue(1);
 
       // Mock Date constructor for different calls
       const originalDate = global.Date;
-      global.Date = jest.fn()
+      global.Date = jest
+        .fn()
         .mockImplementationOnce(() => june2025)
         .mockImplementationOnce(() => july2025) as any;
       global.Date.now = originalDate.now;
@@ -227,8 +234,18 @@ describe('ApiUsageService', () => {
       await service.increment('here', 'geocoding');
 
       // Assert
-      expect(redisClient.evalsha).toHaveBeenNthCalledWith(1, 'mock-script-sha', 1, 'usage:2025-06:here:geocoding');
-      expect(redisClient.evalsha).toHaveBeenNthCalledWith(2, 'mock-script-sha', 1, 'usage:2025-07:here:geocoding');
+      expect(redisClient.evalsha).toHaveBeenNthCalledWith(
+        1,
+        'mock-script-sha',
+        1,
+        'usage:2025-06:here:geocoding',
+      );
+      expect(redisClient.evalsha).toHaveBeenNthCalledWith(
+        2,
+        'mock-script-sha',
+        1,
+        'usage:2025-07:here:geocoding',
+      );
 
       // Cleanup
       global.Date = originalDate;
@@ -247,7 +264,7 @@ describe('ApiUsageService', () => {
       // Assert
       expect(result).toBe(expectedUsage);
       expect(redisClient.get).toHaveBeenCalledWith(
-        expect.stringMatching(/^usage:\d{4}-\d{2}:here:geocoding$/)
+        expect.stringMatching(/^usage:\d{4}-\d{2}:here:geocoding$/),
       );
     });
 
@@ -295,7 +312,7 @@ describe('ApiUsageService', () => {
       // Assert
       expect(result).toBe(7);
       expect(redisClient.get).toHaveBeenCalledWith(
-        expect.stringMatching(/^usage:\d{4}-\d{2}:mapbox:routing\.directions$/)
+        expect.stringMatching(/^usage:\d{4}-\d{2}:mapbox:routing\.directions$/),
       );
     });
 
@@ -412,7 +429,6 @@ describe('ApiUsageService', () => {
   });
 
   describe('integration workflows', () => {
-
     it('should complete full usage tracking workflow', async () => {
       // Arrange
       const quota = 1000;
@@ -463,7 +479,7 @@ describe('ApiUsageService', () => {
       const [count1, count2, count3] = await Promise.all([
         service.increment('here', 'geocoding'),
         service.increment('here', 'geocoding'),
-        service.increment('here', 'geocoding')
+        service.increment('here', 'geocoding'),
       ]);
 
       // Assert - All operations should complete
@@ -473,7 +489,6 @@ describe('ApiUsageService', () => {
   });
 
   describe('error handling', () => {
-
     it('should propagate Redis connection errors', async () => {
       // Arrange
       const connectionError = new Error('Connection lost');
@@ -492,7 +507,9 @@ describe('ApiUsageService', () => {
       redisClient.get.mockResolvedValue('100');
 
       // Act & Assert
-      await expect(service.checkQuota('here', 'geocoding')).rejects.toThrow('Quota config not found');
+      await expect(service.checkQuota('here', 'geocoding')).rejects.toThrow(
+        'Quota config not found',
+      );
     });
 
     it('should handle malformed Redis responses', async () => {
@@ -508,7 +525,6 @@ describe('ApiUsageService', () => {
   });
 
   describe('time-based operations', () => {
-
     it('should use different keys for different months', async () => {
       // Arrange
       const june2025 = new Date('2025-06-30T23:59:59.999Z'); // End of June
@@ -555,7 +571,7 @@ describe('ApiUsageService', () => {
       // Setup Redis responses
       redisClient.get
         .mockResolvedValueOnce('1000') // June usage
-        .mockResolvedValueOnce(null);  // July usage (new month, no data)
+        .mockResolvedValueOnce(null); // July usage (new month, no data)
 
       // Act
       const juneUsage = await service.getCurrent('here', 'geocoding');

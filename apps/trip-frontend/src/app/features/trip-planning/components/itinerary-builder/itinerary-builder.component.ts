@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Location } from '../../models/location.model';
 import { Stop } from '../../models/stop.model';
-import { ItineraryStopComponent} from '../itinerary-stop/itinerary-stop.component';
+import { ItineraryStopComponent } from '../itinerary-stop/itinerary-stop.component';
 
 export interface TravelSegmentData {
   time: string;
@@ -14,30 +14,30 @@ export type MatrixData = Map<string, TravelSegmentData>;
 @Component({
   selector: 'app-itinerary-builder',
   standalone: true,
-  imports: [
-    CommonModule,
-    CdkDrag,
-    CdkDropList,
-    ItineraryStopComponent
-  ],
+  imports: [CommonModule, CdkDrag, CdkDropList, ItineraryStopComponent],
   templateUrl: './itinerary-builder.component.html',
   styleUrl: './itinerary-builder.component.css',
 })
 export class ItineraryBuilderComponent {
-
   itineraryStops = input.required<Stop[]>();
   matrixData = input<MatrixData | null>(null);
   listId = input<string>('itinerary-list');
   connectedDropLists = input<string[]>([]);
 
   readonly stopsReordered = output<Stop[]>(); // Emits the new full list of stops with updated order
-  readonly itemDroppedFromOtherList = output<{ itemData: Location, newIndex: number }>(); // Data of item from external list & target index
+  readonly itemDroppedFromOtherList = output<{ itemData: Location; newIndex: number }>(); // Data of item from external list & target index
   readonly removeStopRequested = output<string>(); // Bubbles up stop.id
-  readonly editStopRequested = output<string>();   // Bubbles up stop.id
+  readonly editStopRequested = output<string>(); // Bubbles up stop.id
 
   //readonly dropListId = 'itinerary-drop-list';
 
-  onDrop(event: CdkDragDrop<Stop[], unknown, Location | Stop /* Data can be Stop (internal) or Location (from bank) */>): void {
+  onDrop(
+    event: CdkDragDrop<
+      Stop[],
+      unknown,
+      Location | Stop /* Data can be Stop (internal) or Location (from bank) */
+    >,
+  ): void {
     console.log('ItineraryBuilder: onDrop fired:', event);
     if (event.previousContainer === event.container) {
       // Item was reordered within this itinerary list
@@ -47,7 +47,7 @@ export class ItineraryBuilderComponent {
         // Update order property for all stops
         const reorderedStops = newStopsArray.map((stop, index) => ({
           ...stop,
-          order: index
+          order: index,
         }));
         this.stopsReordered.emit(reorderedStops);
       }
@@ -56,7 +56,7 @@ export class ItineraryBuilderComponent {
       // We expect the item.data to be a Location object from the bank
       this.itemDroppedFromOtherList.emit({
         itemData: event.item.data as Location, // Asserting type based on expectation
-        newIndex: event.currentIndex
+        newIndex: event.currentIndex,
       });
     }
   }
@@ -96,7 +96,7 @@ export class ItineraryBuilderComponent {
     const travelData = matrix.get(compositeKey);
 
     if (!travelData) {
-       console.warn(`No matrix data found for key: ${compositeKey}`);
+      console.warn(`No matrix data found for key: ${compositeKey}`);
     }
     return travelData || null;
   }

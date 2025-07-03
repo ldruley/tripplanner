@@ -1,28 +1,61 @@
-<div [class.stop-item]="true"
-     class="flex flex-col bg-white dark:bg-tp-bg-secondary border border-tp-border-light dark:border-tp-border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-
+<div
+  [class.stop-item]="true"
+  class="flex flex-col bg-white dark:bg-tp-bg-secondary border border-tp-border-light dark:border-tp-border rounded-lg shadow-sm hover:shadow-md transition-shadow"
+>
   <div class="stop-content p-3 flex items-center justify-between">
     <div class="flex items-center min-w-0">
-      <div cdkDragHandle class="cursor-move p-1 mr-2 text-tp-text-light-tertiary dark:text-tp-text-tertiary hover:text-tp-text-light-secondary dark:hover:text-tp-text-secondary" title="Drag to reorder">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+      <div
+        cdkDragHandle
+        class="cursor-move p-1 mr-2 text-tp-text-light-tertiary dark:text-tp-text-tertiary hover:text-tp-text-light-secondary dark:hover:text-tp-text-secondary"
+        title="Drag to reorder"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="w-5 h-5"
+        >
           <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
         </svg>
       </div>
       <div class="flex-grow min-w-0">
-        <span class="font-semibold text-tp-text-light-primary dark:text-tp-text-primary truncate">{{ index() + 1 }}. {{ stop().locationDetails.name || 'Unnamed Stop' }}</span>
+        <span class="font-semibold text-tp-text-light-primary dark:text-tp-text-primary truncate"
+          >{{ index() + 1 }}. {{ stop().locationDetails.name || 'Unnamed Stop' }}</span
+        >
         @if (stop().locationDetails.fullAddress) {
-          <p class="text-xs text-tp-text-light-secondary dark:text-tp-text-secondary truncate" title="{{stop().locationDetails.fullAddress}}">{{ stop().locationDetails.fullAddress }}</p>
+          <p
+            class="text-xs text-tp-text-light-secondary dark:text-tp-text-secondary truncate"
+            title="{{ stop().locationDetails.fullAddress }}"
+          >
+            {{ stop().locationDetails.fullAddress }}
+          </p>
         }
       </div>
     </div>
     <div class="actions flex-shrink-0 ml-2">
-      <button (click)="onEditClicked()" title="Edit details" class="p-1 text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-tp-orange">✏️</button>
-      <button (click)="onRemoveClicked()" title="Remove stop" class="p-1 text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-red-500 dark:hover:text-red-400">🗑️</button>
+      <button
+        (click)="onEditClicked()"
+        title="Edit details"
+        class="p-1 text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-tp-orange"
+      >
+        ✏️
+      </button>
+      <button
+        (click)="onRemoveClicked()"
+        title="Remove stop"
+        class="p-1 text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-red-500 dark:hover:text-red-400"
+      >
+        🗑️
+      </button>
     </div>
   </div>
 
   @if (!isLast() && travelInfoToNext(); as travel) {
-    <div class="travel-connector-info text-center py-3 text-xs text-tp-text-light-secondary dark:text-tp-text-secondary">
+    <div
+      class="travel-connector-info text-center py-3 text-xs text-tp-text-light-secondary dark:text-tp-text-secondary"
+    >
       <div class="inline-flex items-center space-x-2">
         <span>↓</span>
         <span>{{ travel.time }} / {{ travel.distance }}</span>
@@ -30,7 +63,9 @@
       </div>
     </div>
   } @else if (!isLast()) {
-    <div class="travel-connector-info text-center py-3 text-xs text-tp-text-light-tertiary dark:text-tp-text-tertiary">
+    <div
+      class="travel-connector-info text-center py-3 text-xs text-tp-text-light-tertiary dark:text-tp-text-tertiary"
+    >
       <span>↓ ...calculating... ↓</span>
     </div>
   }

@@ -37,12 +37,12 @@
 }
 
 @layer components {
-  /* 
-   * REFERENCE: Component classes with @apply patterns 
+  /*
+   * REFERENCE: Component classes with @apply patterns
    * These are commented out as we've migrated to inline Tailwind classes
    * Keep as reference for understanding the design system and color mappings
    */
-  
+
   /* Password Toggle Button (shared across auth components) - STILL ACTIVE */
   .password-toggle-btn {
     @apply absolute inset-y-0 right-0 pr-3 flex items-center;
@@ -54,11 +54,11 @@
     @apply ring-2 ring-tp-orange ring-opacity-50 rounded;
   }
 
-  /* 
+  /*
    * COMMENTED OUT - REFERENCE ONLY
    * These classes have been converted to inline Tailwind classes
    */
-  
+
   /*
   .btn-primary {
     @apply bg-tp-orange hover:bg-tp-orange-hover text-white px-4 py-2 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-tp-orange focus:ring-offset-2 focus:ring-offset-tp-bg-light dark:focus:ring-offset-tp-bg-primary;

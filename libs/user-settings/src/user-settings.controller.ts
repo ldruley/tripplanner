@@ -1,14 +1,8 @@
 import { Body, Controller, Get, Patch, Post, Put, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard, CurrentUser } from '@trip-planner/auth';
 import { UserSettingsService } from './user-settings.service';
-import {
-  CreateUserSettings,
-  SafeUser, UpdateUserSettings,
-} from '@trip-planner/types';
-import {
-  CreateUserSettingsDto,
-  UpdateUserSettingsDto,
-} from '@trip-planner/shared/dtos';
+import { CreateUserSettings, SafeUser, UpdateUserSettings } from '@trip-planner/types';
+import { CreateUserSettingsDto, UpdateUserSettingsDto } from '@trip-planner/shared/dtos';
 
 @UseGuards(JwtAuthGuard)
 @Controller('user-settings')

@@ -19,7 +19,7 @@ export class RegisterContainerComponent {
   public readonly authState$ = this.authService.authState$;
   public readonly isLoading$ = this.authState$.pipe(map(state => state.loading));
   public readonly error$ = this.authState$.pipe(map(state => state.error));
-  
+
   registrationSuccess = false;
   registeredEmail = '';
 
@@ -35,16 +35,16 @@ export class RegisterContainerComponent {
   resendVerification(): void {
     if (this.registeredEmail) {
       this.authService.resendVerificationEmail(this.registeredEmail).subscribe({
-        next: (result) => {
+        next: result => {
           if (result.success) {
             console.log('Verification email resent successfully');
           } else {
             console.error('Failed to resend verification email:', result.error);
           }
         },
-        error: (error) => {
+        error: error => {
           console.error('Error resending verification email:', error);
-        }
+        },
       });
     }
   }

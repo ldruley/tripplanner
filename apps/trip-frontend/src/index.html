@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -6,11 +6,14 @@
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
     <!-- Theme initialization script - runs before Angular to prevent flash -->
     <script>
-      (function() {
+      (function () {
         try {
           // Get theme from localStorage or system preference
           const getInitialTheme = () => {
@@ -18,16 +21,16 @@
             if (savedTheme === 'light' || savedTheme === 'dark') {
               return savedTheme;
             }
-            
+
             // Fall back to OS preference
             if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
               return 'dark';
             }
             return 'light';
           };
-          
+
           const theme = getInitialTheme();
-          
+
           // Apply theme immediately to prevent flash
           if (theme === 'dark') {
             document.documentElement.classList.add('dark');

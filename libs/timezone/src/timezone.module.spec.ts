@@ -26,8 +26,8 @@ describe('TimezoneModule', () => {
     // Set up config service defaults
     mockConfigService.get.mockImplementation((key: string) => {
       const configs: Record<string, string> = {
-        'TIMEZONEDB_API_KEY': 'test-api-key',
-        'TIMEZONEDB_BASE_URL': 'https://api.timezonedb.com/v2.1'
+        TIMEZONEDB_API_KEY: 'test-api-key',
+        TIMEZONEDB_BASE_URL: 'https://api.timezonedb.com/v2.1',
       };
       return configs[key];
     });
@@ -46,12 +46,12 @@ describe('TimezoneModule', () => {
         { provide: BullMQService, useValue: mockBullMQService },
         { provide: RedisService, useValue: mockRedisService },
         { provide: HttpService, useValue: mockHttpService },
-        { provide: ConfigService, useValue: mockConfigService }
+        { provide: ConfigService, useValue: mockConfigService },
       ],
-      controllers: [TimezoneController]
+      controllers: [TimezoneController],
     })
-    .setLogger(createMockLogger())
-    .compile();
+      .setLogger(createMockLogger())
+      .compile();
 
     timezoneService = module.get<TimezoneService>(TimezoneService);
     timezoneWorker = module.get<TimezoneWorker>(TimezoneWorker);
@@ -88,7 +88,7 @@ describe('TimezoneModule', () => {
   describe('dependency injection', () => {
     it('should inject dependencies into TimezoneService', () => {
       expect(timezoneService).toBeDefined();
-      
+
       // Verify that the service has the expected dependencies
       expect(timezoneService['bullmqService']).toBeDefined();
       expect(timezoneService['redisService']).toBeDefined();
@@ -96,7 +96,7 @@ describe('TimezoneModule', () => {
 
     it('should inject dependencies into TimezoneWorker', () => {
       expect(timezoneWorker).toBeDefined();
-      
+
       // Verify that the worker has the expected dependencies
       expect(timezoneWorker['bullmqService']).toBeDefined();
       expect(timezoneWorker['configService']).toBeDefined();
@@ -105,7 +105,7 @@ describe('TimezoneModule', () => {
 
     it('should inject TimezoneService into TimezoneController', () => {
       expect(timezoneController).toBeDefined();
-      
+
       // Verify that the controller has the timezone service
       expect(timezoneController['timezoneService']).toBeDefined();
       expect(timezoneController['timezoneService']).toBeInstanceOf(TimezoneService);
@@ -143,7 +143,7 @@ describe('TimezoneModule', () => {
     it('should validate required configuration', () => {
       // The TimezoneWorker constructor validates API key presence
       expect(timezoneWorker).toBeDefined();
-      
+
       // If we got this far, the API key validation passed
       expect(timezoneWorker['apiKey']).toBe('test-api-key');
       expect(timezoneWorker['baseUrl']).toBe('https://api.timezonedb.com/v2.1');

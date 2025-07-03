@@ -19,11 +19,11 @@ export class ProfileDisplayComponent {
   @Output() changePasswordRequested = new EventEmitter<void>();
 
   getDisplayName(): string {
-    if(this.userProfile.displayName) {
+    if (this.userProfile.displayName) {
       return this.userProfile.displayName;
     }
 
-    if(this.userProfile.firstName || this.userProfile.lastName) {
+    if (this.userProfile.firstName || this.userProfile.lastName) {
       return `${this.userProfile.firstName || ''} ${this.userProfile.lastName || ''}`.trim();
     }
 
@@ -83,7 +83,7 @@ export class ProfileDisplayComponent {
         month: 'long',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
       });
     } catch {
       return 'Invalid date';

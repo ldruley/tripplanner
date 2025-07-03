@@ -6,7 +6,6 @@ import { buildCacheKey } from '@trip-planner/utils';
 import { PoiSearchQuery, PoiSearchResult } from '@trip-planner/types';
 import { RedisService } from '@trip-planner/redis';
 
-
 @Injectable()
 export class PoiService {
   private readonly CACHE_TTL_MS = 3 * 24 * 60 * 60;
@@ -16,20 +15,22 @@ export class PoiService {
     private readonly mapboxAdapter: MapboxPoiAdapterService,
     private readonly hereAdapter: HerePoiAdapterService,
     private readonly redisService: RedisService,
-    private readonly apiUsageService: ApiUsageService
+    private readonly apiUsageService: ApiUsageService,
   ) {}
 
   async poiSearch(query: PoiSearchQuery): Promise<PoiSearchResult[]> {
     const cacheKey = buildCacheKey('poi:search', [query], true);
-    return this.redisService.getOrSet(cacheKey, this.CACHE_TTL_MS, () => this.implementStrategy(query));
+    return this.redisService.getOrSet(cacheKey, this.CACHE_TTL_MS, () =>
+      this.implementStrategy(query),
+    );
   }
 
   async implementStrategy(query: PoiSearchQuery): Promise<PoiSearchResult[]> {
     let results;
-    if(await this.apiUsageService.checkQuota('here', 'poi')) {
+    if (await this.apiUsageService.checkQuota('here', 'poi')) {
       results = await this.hereAdapter.searchPoi(query);
       await this.apiUsageService.increment('here', 'poi');
-    } else if(await this.apiUsageService.checkQuota('mapbox', 'poi')) {
+    } else if (await this.apiUsageService.checkQuota('mapbox', 'poi')) {
       results = await this.mapboxAdapter.searchPoi(query);
       await this.apiUsageService.increment('mapbox', 'poi');
     } else {

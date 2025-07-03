@@ -5,6 +5,6 @@ import {
   ReverseGeocodeQuerySchema,
 } from '@trip-planner/types';
 
-export class ForwardGeocodeQueryDto extends createZodDto(ForwardGeocodeQuerySchema) {};
-export class ReverseGeocodeQueryDto extends createZodDto(ReverseGeocodeQuerySchema) {};
+export class ForwardGeocodeQueryDto extends createZodDto(ForwardGeocodeQuerySchema) {}
+export class ReverseGeocodeQueryDto extends createZodDto(ReverseGeocodeQuerySchema) {}
 export class GeocodingResultDto extends createZodDto(GeocodingResultSchema) {}

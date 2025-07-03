@@ -1,6 +1,6 @@
 // Initial version of the trip schema, to be updated when we finalize backend specs
 
-import {z} from 'zod';
+import { z } from 'zod';
 import { StopSchema } from './stop.schema';
 
 export const TripSchema = z.object({

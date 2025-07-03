@@ -9,7 +9,7 @@ import { environment } from '../../../../environments/environment';
 import { CoordinateMatrix } from '../../../../../../../libs/shared/types/src/schemas/matrix.schema';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class MatrixCalculationService {
   private http = inject(HttpClient);
@@ -47,7 +47,10 @@ export class MatrixCalculationService {
     }
 
     // Create a stable cache key from the location IDs.
-    const cacheKey = allRelevantLocations.map(loc => loc.id).sort().join(',');
+    const cacheKey = allRelevantLocations
+      .map(loc => loc.id)
+      .sort()
+      .join(',');
 
     // Check if this exact matrix has already been calculated and is active.
     if (cacheKey === this.lastCalculatedKey) {
@@ -64,7 +67,10 @@ export class MatrixCalculationService {
     }
 
     // If not cached, fetch from the API.
-    console.log('MatrixService: Fetching new matrix from API for locations:', allRelevantLocations.map(l => l.name));
+    console.log(
+      'MatrixService: Fetching new matrix from API for locations:',
+      allRelevantLocations.map(l => l.name),
+    );
     this.isLoading.set(true);
     this.error.set(null);
     this.lastCalculatedKey = null; // Invalidate last key until new one succeeds
@@ -77,25 +83,28 @@ export class MatrixCalculationService {
     // The backend expects an array of JSON strings for the 'origins' query param
     const params = new HttpParams({
       fromObject: {
-        origins: coordinates.map(coord => JSON.stringify(coord))
-      }
+        origins: coordinates.map(coord => JSON.stringify(coord)),
+      },
     });
 
-    this.http.get<CoordinateMatrix>(`${this.apiUrl}/route`, { params }).pipe(
-      tap(result => {
-        this.isLoading.set(false);
-        this.cache.set(cacheKey, result);
-        this.matrix.set(result);
-        this.lastCalculatedKey = cacheKey;
-        console.log('MatrixService: API fetch successful, matrix updated and cached.');
-      }),
-      catchError(err => {
-        this.isLoading.set(false);
-        this.error.set('Failed to calculate travel times. Please try again.');
-        console.error('MatrixService: API Error:', err);
-        return EMPTY; // Gracefully end the stream on error
-      })
-    ).subscribe();
+    this.http
+      .get<CoordinateMatrix>(`${this.apiUrl}/route`, { params })
+      .pipe(
+        tap(result => {
+          this.isLoading.set(false);
+          this.cache.set(cacheKey, result);
+          this.matrix.set(result);
+          this.lastCalculatedKey = cacheKey;
+          console.log('MatrixService: API fetch successful, matrix updated and cached.');
+        }),
+        catchError(err => {
+          this.isLoading.set(false);
+          this.error.set('Failed to calculate travel times. Please try again.');
+          console.error('MatrixService: API Error:', err);
+          return EMPTY; // Gracefully end the stream on error
+        }),
+      )
+      .subscribe();
   }
 
   /**
@@ -111,7 +120,7 @@ export class MatrixCalculationService {
         const compositeKey = `${fromKey}_${toKey}`; // Create a key like "lat,lng_lat,lng"
         formattedMap.set(compositeKey, {
           time: this.formatTime(cell.time), // e.g., "15 min"
-          distance: this.formatDistance(cell.distance) // e.g., "3.2 km"
+          distance: this.formatDistance(cell.distance), // e.g., "3.2 km"
         });
       }
     }

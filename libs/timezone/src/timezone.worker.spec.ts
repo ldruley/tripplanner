@@ -9,7 +9,11 @@ import { mock } from 'jest-mock-extended';
 import { of, throwError } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import { createMockLogger } from '@trip-planner/test-utils';
-import { BadGatewayException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 
 describe('TimezoneWorker', () => {
   let worker: TimezoneWorker;
@@ -43,8 +47,8 @@ describe('TimezoneWorker', () => {
     // Setup config service defaults
     configService.get.mockImplementation((key: string) => {
       const configs: Record<string, string> = {
-        'TIMEZONEDB_API_KEY': 'test-api-key',
-        'TIMEZONEDB_BASE_URL': 'https://api.timezonedb.com/v2.1'
+        TIMEZONEDB_API_KEY: 'test-api-key',
+        TIMEZONEDB_BASE_URL: 'https://api.timezonedb.com/v2.1',
       };
       return configs[key];
     });
@@ -60,8 +64,8 @@ describe('TimezoneWorker', () => {
         { provide: HttpService, useValue: httpService },
       ],
     })
-    .setLogger(createMockLogger())
-    .compile();
+      .setLogger(createMockLogger())
+      .compile();
 
     worker = module.get<TimezoneWorker>(TimezoneWorker);
     jest.clearAllMocks();
@@ -90,7 +94,11 @@ describe('TimezoneWorker', () => {
       });
 
       // Act
-      const workerInstance = new TimezoneWorker(bullmqService, configServiceWithoutBaseUrl, httpService);
+      const workerInstance = new TimezoneWorker(
+        bullmqService,
+        configServiceWithoutBaseUrl,
+        httpService,
+      );
 
       // Assert - The worker should be created successfully with default URL
       expect(workerInstance).toBeDefined();
@@ -116,8 +124,8 @@ describe('TimezoneWorker', () => {
   describe('processTimezoneJob', () => {
     const mockTimezoneRequest: TimezoneRequest = {
       latitude: 40.7128,
-      longitude: -74.0060,
-      requestId: '123e4567-e89b-12d3-a456-426614174000'
+      longitude: -74.006,
+      requestId: '123e4567-e89b-12d3-a456-426614174000',
     };
 
     const mockTimezoneDbResponse = {
@@ -136,8 +144,8 @@ describe('TimezoneWorker', () => {
         zoneEnd: 1710050400,
         nextAbbreviation: 'EDT',
         timestamp: 1704067200,
-        formatted: '2024-01-01 00:00:00'
-      }
+        formatted: '2024-01-01 00:00:00',
+      },
     };
 
     beforeEach(async () => {
@@ -150,7 +158,7 @@ describe('TimezoneWorker', () => {
       // Arrange
       const expectedResponse: TimezoneResponse = {
         timezone: 'America/New_York',
-        requestId: '123e4567-e89b-12d3-a456-426614174000'
+        requestId: '123e4567-e89b-12d3-a456-426614174000',
       };
 
       httpService.get.mockReturnValue(of(mockTimezoneDbResponse as AxiosResponse));
@@ -164,40 +172,30 @@ describe('TimezoneWorker', () => {
       // Assert
       expect(result).toEqual(expectedResponse);
       expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('https://api.timezonedb.com/v2.1/get-time-zone')
+        expect.stringContaining('https://api.timezonedb.com/v2.1/get-time-zone'),
       );
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('lat=40.7128')
-      );
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('lng=-74.006')
-      );
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('key=test-api-key')
-      );
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('format=json')
-      );
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('by=position')
-      );
+      expect(httpService.get).toHaveBeenCalledWith(expect.stringContaining('lat=40.7128'));
+      expect(httpService.get).toHaveBeenCalledWith(expect.stringContaining('lng=-74.006'));
+      expect(httpService.get).toHaveBeenCalledWith(expect.stringContaining('key=test-api-key'));
+      expect(httpService.get).toHaveBeenCalledWith(expect.stringContaining('format=json'));
+      expect(httpService.get).toHaveBeenCalledWith(expect.stringContaining('by=position'));
     });
 
     it('should generate requestId when missing', async () => {
       // Arrange
       const requestWithoutId: Partial<TimezoneRequest> & { latitude: number; longitude: number } = {
         latitude: 40.7128,
-        longitude: -74.0060
+        longitude: -74.006,
       };
       (mockJob as any).data = requestWithoutId;
 
       const expectedResponse: TimezoneResponse = {
         timezone: 'America/New_York',
-        requestId: expect.any(String)
+        requestId: expect.any(String),
       };
 
       httpService.get.mockReturnValue(of(mockTimezoneDbResponse as AxiosResponse));
-      
+
       // Mock crypto.randomUUID
       const mockUuid = '987e6543-e21a-12d3-a456-426614174000';
       jest.spyOn(crypto, 'randomUUID').mockReturnValue(mockUuid);
@@ -206,7 +204,7 @@ describe('TimezoneWorker', () => {
       const processorFunction = bullmqService.createWorker.mock.calls[0][0].processor;
 
       // Act
-      const result = await processorFunction(mockJob) as TimezoneResponse;
+      const result = (await processorFunction(mockJob)) as TimezoneResponse;
 
       // Assert
       expect(result.requestId).toBe(mockUuid);
@@ -217,7 +215,7 @@ describe('TimezoneWorker', () => {
     it('should handle missing coordinates with BadRequestException', async () => {
       // Arrange
       const invalidRequest: TimezoneRequest = {
-        requestId: '123e4567-e89b-12d3-a456-426614174000'
+        requestId: '123e4567-e89b-12d3-a456-426614174000',
         // Missing latitude and longitude
       };
       (mockJob as any).data = invalidRequest;
@@ -227,7 +225,9 @@ describe('TimezoneWorker', () => {
 
       // Act & Assert
       await expect(processorFunction(mockJob)).rejects.toThrow(BadRequestException);
-      await expect(processorFunction(mockJob)).rejects.toThrow('Coordinates are required for timezone lookup');
+      await expect(processorFunction(mockJob)).rejects.toThrow(
+        'Coordinates are required for timezone lookup',
+      );
     });
 
     it('should handle TimezoneDB API errors', async () => {
@@ -240,7 +240,9 @@ describe('TimezoneWorker', () => {
 
       // Act & Assert
       await expect(processorFunction(mockJob)).rejects.toThrow(BadGatewayException);
-      await expect(processorFunction(mockJob)).rejects.toThrow('Failed to fetch timezone by coordinates');
+      await expect(processorFunction(mockJob)).rejects.toThrow(
+        'Failed to fetch timezone by coordinates',
+      );
     });
 
     it('should handle TimezoneDB error responses', async () => {
@@ -248,8 +250,8 @@ describe('TimezoneWorker', () => {
       const errorResponse = {
         data: {
           status: 'FAIL',
-          message: 'Invalid coordinates'
-        }
+          message: 'Invalid coordinates',
+        },
       };
       httpService.get.mockReturnValue(of(errorResponse as AxiosResponse));
 
@@ -265,8 +267,8 @@ describe('TimezoneWorker', () => {
       // Arrange
       const invalidResponse = {
         data: {
-          zoneName: '' // Invalid - should be min 1 character
-        }
+          zoneName: '', // Invalid - should be min 1 character
+        },
       };
       httpService.get.mockReturnValue(of(invalidResponse as AxiosResponse));
 
@@ -296,7 +298,7 @@ describe('TimezoneWorker', () => {
   describe('fetchTimezoneByCoordinates', () => {
     const mockResponse: TimezoneResponse = {
       timezone: 'Europe/London',
-      requestId: '123e4567-e89b-12d3-a456-426614174000'
+      requestId: '123e4567-e89b-12d3-a456-426614174000',
     };
 
     const mockTimezoneDbResponse = {
@@ -304,8 +306,8 @@ describe('TimezoneWorker', () => {
         status: 'OK',
         zoneName: 'Europe/London',
         countryCode: 'GB',
-        countryName: 'United Kingdom'
-      }
+        countryName: 'United Kingdom',
+      },
     };
 
     it('should build correct URL for coordinate lookup', async () => {
@@ -317,20 +319,12 @@ describe('TimezoneWorker', () => {
 
       // Assert
       expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('https://api.timezonedb.com/v2.1/get-time-zone')
+        expect.stringContaining('https://api.timezonedb.com/v2.1/get-time-zone'),
       );
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('lat=51.5074')
-      );
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('lng=-0.1278')
-      );
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('key=test-api-key')
-      );
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('by=position')
-      );
+      expect(httpService.get).toHaveBeenCalledWith(expect.stringContaining('lat=51.5074'));
+      expect(httpService.get).toHaveBeenCalledWith(expect.stringContaining('lng=-0.1278'));
+      expect(httpService.get).toHaveBeenCalledWith(expect.stringContaining('key=test-api-key'));
+      expect(httpService.get).toHaveBeenCalledWith(expect.stringContaining('by=position'));
     });
 
     it('should transform API response to TimezoneResponse format', async () => {
@@ -338,12 +332,16 @@ describe('TimezoneWorker', () => {
       httpService.get.mockReturnValue(of(mockTimezoneDbResponse as AxiosResponse));
 
       // Act
-      const result = await worker['fetchTimezoneByCoordinates'](51.5074, -0.1278, mockResponse.requestId);
+      const result = await worker['fetchTimezoneByCoordinates'](
+        51.5074,
+        -0.1278,
+        mockResponse.requestId,
+      );
 
       // Assert
       expect(result).toEqual({
         timezone: 'Europe/London',
-        requestId: '123e4567-e89b-12d3-a456-426614174000'
+        requestId: '123e4567-e89b-12d3-a456-426614174000',
       });
     });
 
@@ -353,16 +351,22 @@ describe('TimezoneWorker', () => {
         { zoneName: 'America/Los_Angeles', expected: 'America/Los_Angeles' },
         { zoneName: 'Asia/Tokyo', expected: 'Asia/Tokyo' },
         { zoneName: 'Australia/Sydney', expected: 'Australia/Sydney' },
-        { zoneName: 'UTC', expected: 'UTC' }
+        { zoneName: 'UTC', expected: 'UTC' },
       ];
 
       for (const testCase of testCases) {
-        httpService.get.mockReturnValue(of({
-          data: { zoneName: testCase.zoneName }
-        } as AxiosResponse));
+        httpService.get.mockReturnValue(
+          of({
+            data: { zoneName: testCase.zoneName },
+          } as AxiosResponse),
+        );
 
         // Act
-        const result = await worker['fetchTimezoneByCoordinates'](0, 0, '123e4567-e89b-12d3-a456-426614174000');
+        const result = await worker['fetchTimezoneByCoordinates'](
+          0,
+          0,
+          '123e4567-e89b-12d3-a456-426614174000',
+        );
 
         // Assert
         expect(result.timezone).toBe(testCase.expected);
@@ -376,10 +380,18 @@ describe('TimezoneWorker', () => {
 
       // Act & Assert
       await expect(
-        worker['fetchTimezoneByCoordinates'](51.5074, -0.1278, '123e4567-e89b-12d3-a456-426614174000')
+        worker['fetchTimezoneByCoordinates'](
+          51.5074,
+          -0.1278,
+          '123e4567-e89b-12d3-a456-426614174000',
+        ),
       ).rejects.toThrow(BadGatewayException);
       await expect(
-        worker['fetchTimezoneByCoordinates'](51.5074, -0.1278, '123e4567-e89b-12d3-a456-426614174000')
+        worker['fetchTimezoneByCoordinates'](
+          51.5074,
+          -0.1278,
+          '123e4567-e89b-12d3-a456-426614174000',
+        ),
       ).rejects.toThrow('Failed to fetch timezone by coordinates');
     });
   });
@@ -389,8 +401,8 @@ describe('TimezoneWorker', () => {
       data: {
         status: 'OK',
         zoneName: 'America/New_York',
-        countryCode: 'US'
-      }
+        countryCode: 'US',
+      },
     };
 
     it('should build correct URL for city lookup', async () => {
@@ -402,20 +414,12 @@ describe('TimezoneWorker', () => {
 
       // Assert
       expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('https://api.timezonedb.com/v2.1/get-time-zone')
+        expect.stringContaining('https://api.timezonedb.com/v2.1/get-time-zone'),
       );
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('city=New+York')
-      );
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('key=test-api-key')
-      );
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('format=json')
-      );
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('by=position')
-      );
+      expect(httpService.get).toHaveBeenCalledWith(expect.stringContaining('city=New+York'));
+      expect(httpService.get).toHaveBeenCalledWith(expect.stringContaining('key=test-api-key'));
+      expect(httpService.get).toHaveBeenCalledWith(expect.stringContaining('format=json'));
+      expect(httpService.get).toHaveBeenCalledWith(expect.stringContaining('by=position'));
     });
 
     it('should handle city names with special characters', async () => {
@@ -429,12 +433,8 @@ describe('TimezoneWorker', () => {
       await worker['fetchTimezoneByCity'](cityWithAccents, '123e4567-e89b-12d3-a456-426614174002');
 
       // Assert
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('city=Los+Angeles')
-      );
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('city=S%C3%A3o+Paulo')
-      );
+      expect(httpService.get).toHaveBeenCalledWith(expect.stringContaining('city=Los+Angeles'));
+      expect(httpService.get).toHaveBeenCalledWith(expect.stringContaining('city=S%C3%A3o+Paulo'));
     });
 
     it('should handle city lookup HTTP errors', async () => {
@@ -444,10 +444,10 @@ describe('TimezoneWorker', () => {
 
       // Act & Assert
       await expect(
-        worker['fetchTimezoneByCity']('InvalidCity', '123e4567-e89b-12d3-a456-426614174000')
+        worker['fetchTimezoneByCity']('InvalidCity', '123e4567-e89b-12d3-a456-426614174000'),
       ).rejects.toThrow(BadGatewayException);
       await expect(
-        worker['fetchTimezoneByCity']('InvalidCity', '123e4567-e89b-12d3-a456-426614174000')
+        worker['fetchTimezoneByCity']('InvalidCity', '123e4567-e89b-12d3-a456-426614174000'),
       ).rejects.toThrow('Failed to fetch timezone by city');
     });
   });
@@ -478,9 +478,9 @@ describe('TimezoneWorker', () => {
           concurrency: 1,
           limiter: {
             max: 1,
-            duration: 1000
-          }
-        })
+            duration: 1000,
+          },
+        }),
       );
     });
   });
@@ -494,13 +494,13 @@ describe('TimezoneWorker', () => {
     it('should handle malformed API responses', async () => {
       // Arrange
       const malformedResponse = {
-        data: null
+        data: null,
       };
       httpService.get.mockReturnValue(of(malformedResponse as AxiosResponse));
       mockJob.data = {
         latitude: 40.7128,
-        longitude: -74.0060,
-        requestId: '123e4567-e89b-12d3-a456-426614174000'
+        longitude: -74.006,
+        requestId: '123e4567-e89b-12d3-a456-426614174000',
       };
 
       // Get the processor function
@@ -527,7 +527,7 @@ describe('TimezoneWorker', () => {
       for (const coords of invalidCoordinates) {
         mockJob.data = {
           ...coords,
-          requestId: '123e4567-e89b-12d3-a456-426614174000'
+          requestId: '123e4567-e89b-12d3-a456-426614174000',
         };
 
         // Act & Assert
@@ -542,8 +542,8 @@ describe('TimezoneWorker', () => {
       httpService.get.mockReturnValue(throwError(() => timeoutError));
       mockJob.data = {
         latitude: 40.7128,
-        longitude: -74.0060,
-        requestId: '123e4567-e89b-12d3-a456-426614174000'
+        longitude: -74.006,
+        requestId: '123e4567-e89b-12d3-a456-426614174000',
       };
 
       // Get the processor function
@@ -559,8 +559,8 @@ describe('TimezoneWorker', () => {
       httpService.get.mockReturnValue(throwError(() => originalError));
       mockJob.data = {
         latitude: 40.7128,
-        longitude: -74.0060,
-        requestId: '123e4567-e89b-12d3-a456-426614174000'
+        longitude: -74.006,
+        requestId: '123e4567-e89b-12d3-a456-426614174000',
       };
 
       // Get the processor function
@@ -577,7 +577,7 @@ describe('TimezoneWorker', () => {
       // But the worker wraps it in BadGatewayException, so we check for both
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('Timezone job test-job failed:'),
-        expect.any(Error) // Accept any error since the worker wraps the original
+        expect.any(Error), // Accept any error since the worker wraps the original
       );
     });
   });
@@ -587,8 +587,8 @@ describe('TimezoneWorker', () => {
       await worker.onModuleInit();
       mockJob.data = {
         latitude: 40.7128,
-        longitude: -74.0060,
-        requestId: '123e4567-e89b-12d3-a456-426614174000'
+        longitude: -74.006,
+        requestId: '123e4567-e89b-12d3-a456-426614174000',
       };
       (mockJob as any).id = 'schema-test';
     });
@@ -597,8 +597,8 @@ describe('TimezoneWorker', () => {
       // Arrange
       const validResponse = {
         data: {
-          zoneName: 'America/New_York'
-        }
+          zoneName: 'America/New_York',
+        },
       };
       httpService.get.mockReturnValue(of(validResponse as AxiosResponse));
 
@@ -611,7 +611,7 @@ describe('TimezoneWorker', () => {
       // Assert
       expect(result).toEqual({
         timezone: 'America/New_York',
-        requestId: '123e4567-e89b-12d3-a456-426614174000'
+        requestId: '123e4567-e89b-12d3-a456-426614174000',
       });
     });
 
@@ -619,8 +619,8 @@ describe('TimezoneWorker', () => {
       // Arrange
       const invalidResponse = {
         data: {
-          zoneName: '' // Empty string should fail validation
-        }
+          zoneName: '', // Empty string should fail validation
+        },
       };
       httpService.get.mockReturnValue(of(invalidResponse as AxiosResponse));
 
@@ -636,8 +636,8 @@ describe('TimezoneWorker', () => {
       const invalidResponse = {
         data: {
           // Missing zoneName
-          status: 'OK'
-        }
+          status: 'OK',
+        },
       };
       httpService.get.mockReturnValue(of(invalidResponse as AxiosResponse));
 

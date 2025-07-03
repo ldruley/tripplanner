@@ -6,22 +6,22 @@ import { BullMQService, QueueConfig, WorkerConfig } from './bullmq.service';
 // Mock the entire service to avoid Redis connection issues in testing
 jest.mock('./bullmq.service', () => {
   const originalModule = jest.requireActual('./bullmq.service');
-  
+
   return {
     ...originalModule,
     BullMQService: jest.fn().mockImplementation(() => ({
       queues: new Map(),
       workers: new Map(),
       redisConnection: mock(),
-      
+
       async onModuleInit() {
         // Mock implementation
       },
-      
+
       async onModuleDestroy() {
         // Mock implementation
       },
-      
+
       createQueue(config: { name: string; [key: string]: unknown }) {
         if (this.queues.has(config.name)) {
           return this.queues.get(config.name);
@@ -30,7 +30,7 @@ jest.mock('./bullmq.service', () => {
         this.queues.set(config.name, mockQueue);
         return mockQueue;
       },
-      
+
       createWorker(config: { name: string; [key: string]: unknown }) {
         if (this.workers.has(config.name)) {
           return this.workers.get(config.name);
@@ -39,15 +39,15 @@ jest.mock('./bullmq.service', () => {
         this.workers.set(config.name, mockWorker);
         return mockWorker;
       },
-      
+
       getQueue(name: string) {
         return this.queues.get(name);
       },
-      
+
       getWorker(name: string) {
         return this.workers.get(name);
       },
-      
+
       async addJob(queueName: string, _jobName: string, data: unknown) {
         const queue = this.getQueue(queueName);
         if (!queue) {
@@ -202,9 +202,9 @@ describe('BullMQService', () => {
     it('should throw error for non-existent queue', async () => {
       const nonExistentQueue = 'non-existent-queue';
 
-      await expect(
-        service.addJob(nonExistentQueue, 'test-job', mockJobData)
-      ).rejects.toThrow(`Queue ${nonExistentQueue} not found. Create it first with createQueue()`);
+      await expect(service.addJob(nonExistentQueue, 'test-job', mockJobData)).rejects.toThrow(
+        `Queue ${nonExistentQueue} not found. Create it first with createQueue()`,
+      );
     });
   });
 

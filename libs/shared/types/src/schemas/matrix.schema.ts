@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { coordinatesArraySchema, coordinateSchema } from './base.schema';
 
 export const MatrixCellSchema = z.object({
-  time: z.number(),     // in seconds
+  time: z.number(), // in seconds
   distance: z.number(), // in meters
 });
 
@@ -13,7 +13,6 @@ export const CoordinateMatrixSchema: z.ZodType<Record<string, Record<string, Mat
 
 export type CoordinateMatrix = z.infer<typeof CoordinateMatrixSchema>;
 
-
 export function toCoordinateKey(coord: { lat: number; lng: number }): string {
   return `${coord.lat},${coord.lng}`;
 }
@@ -22,20 +21,18 @@ export function toReverseCoordinateKey(coord: { lat: number; lng: number }): str
   return `${coord.lng},${coord.lat}`;
 }
 
-const coordinateFromJsonString = z
-  .string()
-  .transform((val, ctx) => {
-    try {
-      const parsed = JSON.parse(val);
-      return coordinateSchema.parse(parsed);
-    } catch (err) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Invalid coordinate JSON string',
-      });
-      return z.NEVER;
-    }
-  });
+const coordinateFromJsonString = z.string().transform((val, ctx) => {
+  try {
+    const parsed = JSON.parse(val);
+    return coordinateSchema.parse(parsed);
+  } catch (err) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Invalid coordinate JSON string',
+    });
+    return z.NEVER;
+  }
+});
 
 export const MatrixQuerySchema = z.object({
   origins: z.array(coordinateFromJsonString),
@@ -44,4 +41,3 @@ export const MatrixQuerySchema = z.object({
 });
 
 export type MatrixQuery = z.infer<typeof MatrixQuerySchema>;
-

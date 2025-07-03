@@ -11,13 +11,9 @@ export interface RecoverPasswordCredentials {
 @Component({
   selector: 'app-recover-password-form',
   standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    RouterLink
-  ],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './recover-password-form.component.html',
-  styleUrls: ['./recover-password-form.component.css']
+  styleUrls: ['./recover-password-form.component.css'],
 })
 export class RecoverPasswordFormComponent {
   @Input() isLoading = false;
@@ -42,4 +38,3 @@ export class RecoverPasswordFormComponent {
     }
   }
 }
-

@@ -53,7 +53,6 @@ function formatOffset(minutes: number): string {
   return `GMT${sign}${hours}:${mins}`;
 }
 
-
 @Component({
   standalone: true,
   selector: 'app-settings-form',
@@ -62,8 +61,6 @@ function formatOffset(minutes: number): string {
   imports: [ButtonComponent, ReactiveFormsModule],
 })
 export class SettingsFormComponent {
-
-
   readonly timezones = getTimeZones()
     .filter(tz => MAJOR_CITY_TIMEZONES.includes(tz.name))
     .map(tz => {

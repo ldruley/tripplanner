@@ -1,4 +1,12 @@
-import { Injectable, Signal, WritableSignal, computed, effect, inject, signal } from '@angular/core';
+import {
+  Injectable,
+  Signal,
+  WritableSignal,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { AuthService, AuthState } from '../../auth/services/auth.service';
 import { Profile, UpdateProfile } from '@trip-planner/types';
@@ -7,16 +15,11 @@ import {
   ProfileApiResponse,
   ProfileCacheConfig,
   UpdateProfileRequest,
-  UserProfile
+  UserProfile,
 } from '../types/profile.types';
 
 import { Subject, of } from 'rxjs';
-import {
-  debounceTime,
-  switchMap,
-  catchError,
-  tap,
-} from 'rxjs/operators';
+import { debounceTime, switchMap, catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -33,7 +36,7 @@ export class ProfileService {
   private readonly isEditing = signal(false);
   private readonly cacheTimestamp = signal(0);
   private readonly authState = toSignal(this.authService.authState$, {
-    initialValue: { user: null, loading: true, error: null }
+    initialValue: { user: null, loading: true, error: null },
   });
 
   // Subjects for Async tasks
@@ -88,20 +91,20 @@ export class ProfileService {
           this.isLoading.set(true);
           this.error.set(null);
         }),
-        switchMap((payload) =>
+        switchMap(payload =>
           this.http.put<ProfileApiResponse>(`${this.backendApiUrl}/profiles/me`, payload).pipe(
-            tap((res) => {
+            tap(res => {
               this.profile.set(res.data);
               this.cacheTimestamp.set(Date.now());
               this.isEditing.set(false);
             }),
-            catchError((err) => {
+            catchError(err => {
               this.error.set(this.getErrorMessage(err));
               return of(null);
             }),
-            tap(() => this.isLoading.set(false))
-          )
-        )
+            tap(() => this.isLoading.set(false)),
+          ),
+        ),
       )
       .subscribe();
 
@@ -114,17 +117,17 @@ export class ProfileService {
         }),
         switchMap(() =>
           this.http.get<ProfileApiResponse>(`${this.backendApiUrl}/profiles/me`).pipe(
-            tap((res) => {
+            tap(res => {
               this.profile.set(res.data);
               this.cacheTimestamp.set(Date.now());
             }),
-            catchError((err) => {
+            catchError(err => {
               this.error.set(this.getErrorMessage(err));
               return of(null);
             }),
-            tap(() => this.isLoading.set(false))
-          )
-        )
+            tap(() => this.isLoading.set(false)),
+          ),
+        ),
       )
       .subscribe();
   }

@@ -6,7 +6,7 @@ import { latitudeSchema, longitudeSchema } from './base.schema';
 // Main schema
 export const LocationSchema = z.object({
   id: z.string().uuid(),
-  name: z.string().min(1, "Name is required").max(100),
+  name: z.string().min(1, 'Name is required').max(100),
   description: z.string().max(500).optional(),
 
   // Location coordinates

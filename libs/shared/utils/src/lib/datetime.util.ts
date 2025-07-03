@@ -1,4 +1,4 @@
-import { DateTime } from "luxon";
+import { DateTime } from 'luxon';
 
 /**
  * Converts a date string to a DateTime object using Luxon.
@@ -60,7 +60,7 @@ export function createDateTime(
   day: number,
   hour = 0,
   minute = 0,
-  zone = 'UTC'
+  zone = 'UTC',
 ): DateTime {
   return DateTime.fromObject({ year, month, day, hour, minute }, { zone });
 }
@@ -75,7 +75,7 @@ export function createDateTime(
 export function formatDateTime(
   dt: DateTime,
   format = 'yyyy-MM-dd HH:mm',
-  locale = 'en-US'
+  locale = 'en-US',
 ): string {
   return dt.setLocale(locale).toFormat(format);
 }

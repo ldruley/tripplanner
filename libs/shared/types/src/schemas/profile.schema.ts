@@ -2,7 +2,6 @@ import { z } from 'zod';
 import { nameSchema, uuidSchema } from './base.schema';
 import { UserStatus } from '@prisma/client';
 
-
 const displayNameSchema = z.string().max(200);
 
 const avatarUrlSchema = z.string().url();
@@ -67,7 +66,9 @@ export const ProfileQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(10),
   search: z.string().optional(),
   status: statusSchema.optional(),
-  sortBy: z.enum(['created_at', 'updated_at', 'last_sign_in_at', 'email', 'display_name']).default('created_at'),
+  sortBy: z
+    .enum(['created_at', 'updated_at', 'last_sign_in_at', 'email', 'display_name'])
+    .default('created_at'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 

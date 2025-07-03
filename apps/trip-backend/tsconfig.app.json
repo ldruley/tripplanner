@@ -15,9 +15,9 @@
           "introspectComments": true,
           "controllerFilenameSuffix": [".controller.ts"],
           "dtoFilenameSuffix": [".dto.ts", ".entity.ts"],
-          "controllerKeyOfComment": "summary",
+          "controllerKeyOfComment": "summary"
         }
-      },
+      }
     ]
   },
   "include": ["src/**/*.ts"],

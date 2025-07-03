@@ -1,22 +1,37 @@
-<header class="w-full h-16 flex items-center border-b border-gray-200 dark:border-tp-border bg-white dark:bg-tp-bg-secondary">
+<header
+  class="w-full h-16 flex items-center border-b border-gray-200 dark:border-tp-border bg-white dark:bg-tp-bg-secondary"
+>
   <div class="flex items-center justify-between w-full px-6">
     <!-- Logo and Title with left edge spacing -->
     <div class="flex items-center gap-8">
-      <button (click)="onHome()" class="flex items-center gap-2 bg-transparent border-none cursor-pointer p-0 transition-opacity duration-200 hover:opacity-80 text-text-main dark:text-tp-text-primary">
-        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.5-10.5h-7a2.25 2.25 0 00-2.25 2.25v10.5a2.25 2.25 0 002.25 2.25h7.5a2.25 2.25 0 002.25-2.25v-10.5a2.25 2.25 0 00-2.25-2.25z" />
+      <button
+        (click)="onHome()"
+        class="flex items-center gap-2 bg-transparent border-none cursor-pointer p-0 transition-opacity duration-200 hover:opacity-80 text-text-main dark:text-tp-text-primary"
+      >
+        <svg
+          class="w-6 h-6"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M9 6.75V15m6-6v8.25m.5-10.5h-7a2.25 2.25 0 00-2.25 2.25v10.5a2.25 2.25 0 002.25 2.25h7.5a2.25 2.25 0 002.25-2.25v-10.5a2.25 2.25 0 00-2.25-2.25z"
+          />
         </svg>
         <span class="text-xl font-semibold">TripPlanner</span>
       </button>
-      
+
       <!-- Welcome text with New Trip button -->
       @if (isAuthenticated()) {
         <div class="flex items-center gap-4">
-          <span class="text-sm whitespace-nowrap text-text-muted dark:text-tp-text-secondary">Welcome, {{ userDisplayName() }}</span>
-          <app-button
-            variant="primary"
-            size="sm"
-            (buttonClick)="onNewTrip()">
+          <span class="text-sm whitespace-nowrap text-text-muted dark:text-tp-text-secondary"
+            >Welcome, {{ userDisplayName() }}</span
+          >
+          <app-button variant="primary" size="sm" (buttonClick)="onNewTrip()">
             New Trip
           </app-button>
         </div>
@@ -32,10 +47,11 @@
       @if (isAuthenticated()) {
         <!-- Profile Avatar with Dropdown -->
         <div class="relative" #profileContainer>
-          <button 
-            (click)="toggleProfileDropdown()" 
+          <button
+            (click)="toggleProfileDropdown()"
             class="bg-transparent border-none p-0 cursor-pointer rounded-full transition-opacity duration-200 hover:opacity-80"
-            #profileTrigger>
+            #profileTrigger
+          >
             <app-avatar
               [src]="userAvatarUrl()"
               [alt]="userDisplayName() + ' avatar'"
@@ -43,7 +59,7 @@
               [showBorder]="true"
             ></app-avatar>
           </button>
-          
+
           <app-dropdown
             [items]="profileDropdownItems"
             [isOpen]="isProfileDropdownOpen"
@@ -54,16 +70,8 @@
       } @else {
         <!-- Unauthenticated User View -->
         <div class="flex items-center gap-2">
-          <app-button
-            variant="ghost"
-            size="sm"
-            (buttonClick)="onLogin()">
-            Sign In
-          </app-button>
-          <app-button
-            variant="primary"
-            size="sm"
-            (buttonClick)="onRegister()">
+          <app-button variant="ghost" size="sm" (buttonClick)="onLogin()"> Sign In </app-button>
+          <app-button variant="primary" size="sm" (buttonClick)="onRegister()">
             Register
           </app-button>
         </div>

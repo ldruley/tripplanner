@@ -2,11 +2,7 @@ import { Injectable, Signal, WritableSignal, computed, inject, signal } from '@a
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { UpdateUserSettings } from '@trip-planner/types';
 import { Subject, of } from 'rxjs';
-import {
-  switchMap,
-  catchError,
-  tap,
-} from 'rxjs/operators';
+import { switchMap, catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { LocalStorageService } from '../../../core/services/local-storage.service';
 import { ThemeService } from '../../../core/services/theme.service';
@@ -62,21 +58,21 @@ export class SettingsService {
             this.isLoading.set(false);
             return of(cached.settings);
           }
-          
+
           // Fall back to API
           return this.http.get<UpdateUserSettings>(`${this.backendApiUrl}/user-settings`).pipe(
-            tap((settings) => {
+            tap(settings => {
               this.settings.set(settings);
               this.setCachedSettings(settings);
               this.syncTheme(settings);
             }),
-            catchError((err) => {
+            catchError(err => {
               this.error.set(this.getErrorMessage(err));
               return of(null);
             }),
-            tap(() => this.isLoading.set(false))
+            tap(() => this.isLoading.set(false)),
           );
-        })
+        }),
       )
       .subscribe();
 
@@ -87,20 +83,20 @@ export class SettingsService {
           this.isLoading.set(true);
           this.error.set(null);
         }),
-        switchMap((payload) =>
+        switchMap(payload =>
           this.http.put<void>(`${this.backendApiUrl}/user-settings`, payload).pipe(
             tap(() => {
               this.settings.set(payload);
               this.setCachedSettings(payload);
               this.syncTheme(payload);
             }),
-            catchError((err) => {
+            catchError(err => {
               this.error.set(this.getErrorMessage(err));
               return of(null);
             }),
-            tap(() => this.isLoading.set(false))
-          )
-        )
+            tap(() => this.isLoading.set(false)),
+          ),
+        ),
       )
       .subscribe();
   }
@@ -140,7 +136,7 @@ export class SettingsService {
   private setCachedSettings(settings: UpdateUserSettings): void {
     const cached: CachedUserSettings = {
       settings,
-      lastSynced: new Date().toISOString()
+      lastSynced: new Date().toISOString(),
     };
     this.localStorage.set(this.SETTINGS_CACHE_KEY, cached);
   }

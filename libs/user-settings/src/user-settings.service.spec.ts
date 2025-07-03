@@ -51,10 +51,7 @@ describe('UserSettingsService', () => {
     };
 
     module = await Test.createTestingModule({
-      providers: [
-        UserSettingsService,
-        { provide: PrismaService, useValue: mockPrismaService },
-      ],
+      providers: [UserSettingsService, { provide: PrismaService, useValue: mockPrismaService }],
     })
       .setLogger(createMockLogger())
       .compile();
@@ -96,8 +93,7 @@ describe('UserSettingsService', () => {
       const prismaError = new Error('Database connection failed');
       mockPrismaService.userSettings.findUnique.mockRejectedValue(prismaError);
 
-      await expect(service.findByUserId(mockUserId))
-        .rejects.toThrow('Database connection failed');
+      await expect(service.findByUserId(mockUserId)).rejects.toThrow('Database connection failed');
     });
 
     it('should validate result against schema when found', async () => {
@@ -129,7 +125,7 @@ describe('UserSettingsService', () => {
     });
 
     it('should create with provided timezone and defaults for other fields', async () => {
-      const createData: CreateUserSettings = { 
+      const createData: CreateUserSettings = {
         userId: 'different-user-id', // Will be overridden
         timezone: 'America/New_York',
         distanceUnit: DistanceUnit.MILES,
@@ -140,7 +136,7 @@ describe('UserSettingsService', () => {
         userId: mockUserId,
         timezone: 'America/New_York',
       };
-      
+
       mockPrismaService.userSettings.create.mockResolvedValue(expectedResult);
 
       const result = await service.create(mockUserId, createData);
@@ -155,8 +151,7 @@ describe('UserSettingsService', () => {
       const prismaError = { code: 'P2002', message: 'Unique constraint violation' };
       mockPrismaService.userSettings.create.mockRejectedValue(prismaError);
 
-      await expect(service.create(mockUserId, mockCreateData))
-        .rejects.toEqual(prismaError);
+      await expect(service.create(mockUserId, mockCreateData)).rejects.toEqual(prismaError);
     });
 
     it('should validate created settings against schema', async () => {
@@ -202,8 +197,7 @@ describe('UserSettingsService', () => {
       const prismaError = { code: 'P2025', message: 'Record not found' };
       mockPrismaService.userSettings.update.mockRejectedValue(prismaError);
 
-      await expect(service.update(mockUserId, mockUpdateData))
-        .rejects.toEqual(prismaError);
+      await expect(service.update(mockUserId, mockUpdateData)).rejects.toEqual(prismaError);
     });
 
     it('should validate updated settings against schema', async () => {
@@ -234,7 +228,7 @@ describe('UserSettingsService', () => {
     it('should create new settings when none exist', async () => {
       const expectedData = { ...mockUpdateData, userId: mockUserId };
       const createdSettings = { ...mockUserSettings, ...expectedData };
-      
+
       mockPrismaService.userSettings.upsert.mockResolvedValue(createdSettings);
 
       const result = await service.upsert(mockUserId, mockUpdateData);
@@ -265,8 +259,7 @@ describe('UserSettingsService', () => {
       const prismaError = { code: 'P2003', message: 'Foreign key constraint violation' };
       mockPrismaService.userSettings.upsert.mockRejectedValue(prismaError);
 
-      await expect(service.upsert(mockUserId, mockUpdateData))
-        .rejects.toEqual(prismaError);
+      await expect(service.upsert(mockUserId, mockUpdateData)).rejects.toEqual(prismaError);
     });
 
     it('should validate upserted settings against schema', async () => {
@@ -319,18 +312,18 @@ describe('UserSettingsService', () => {
           ...mockUserSettings,
           distanceUnit: unit,
         };
-        
+
         mockPrismaService.userSettings.create.mockResolvedValue(settingsWithUnit);
-        
+
         const createData: CreateUserSettings = {
           userId: mockUserId,
           timezone: 'Europe/London',
           distanceUnit: unit,
           darkMode: false,
         };
-        
+
         const result = await service.create(mockUserId, createData);
-        
+
         expect(result.distanceUnit).toBe(unit);
         expect(() => UserSettingsSchema.parse(result)).not.toThrow();
       }
@@ -342,8 +335,7 @@ describe('UserSettingsService', () => {
       const unexpectedError = new Error('Unexpected database error');
       mockPrismaService.userSettings.findUnique.mockRejectedValue(unexpectedError);
 
-      await expect(service.findByUserId(mockUserId))
-        .rejects.toThrow('Unexpected database error');
+      await expect(service.findByUserId(mockUserId)).rejects.toThrow('Unexpected database error');
     });
   });
 });

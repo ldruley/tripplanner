@@ -1,28 +1,39 @@
-import { ConflictException, Injectable, BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '@trip-planner/prisma';
-import { CreateUser, SafeUser, RequestPasswordReset, ResetPassword, VerifyEmail, ResendVerification } from '@trip-planner/types';
+import {
+  CreateUser,
+  SafeUser,
+  RequestPasswordReset,
+  ResetPassword,
+  VerifyEmail,
+  ResendVerification,
+} from '@trip-planner/types';
 import { DistanceUnit } from '@prisma/client';
 import { EmailService } from '@trip-planner/email';
 
 @Injectable()
 export class AuthService {
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
-  ) {
-  }
+  ) {}
 
   async validateUser(email: string, pass: string): Promise<SafeUser | null> {
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
 
-    if (user && await bcrypt.compare(pass, user.password)) {
+    if (user && (await bcrypt.compare(pass, user.password))) {
       const { password, ...result } = user;
       return result;
     }
@@ -47,7 +58,7 @@ export class AuthService {
     const verificationToken = this.generateSecureToken();
     const verificationTokenExpiry = this.getTokenExpiry(24); // 24 hours expiry
 
-    const result = await this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async tx => {
       // Create user
       const user = await tx.user.create({
         data: {
@@ -75,9 +86,9 @@ export class AuthService {
           userId: user.id,
           timezone: 'UTC', // Default timezone
           distanceUnit: DistanceUnit.MILES,
-          darkMode: false
-        }
-      })
+          darkMode: false,
+        },
+      });
 
       const { password: _, ...safeUser } = user;
       return safeUser;
@@ -98,7 +109,9 @@ export class AuthService {
   }
 
   // Password reset methods
-  async requestPasswordReset(requestPasswordReset: RequestPasswordReset): Promise<{ message: string }> {
+  async requestPasswordReset(
+    requestPasswordReset: RequestPasswordReset,
+  ): Promise<{ message: string }> {
     const { email } = requestPasswordReset;
 
     const user = await this.prisma.user.findUnique({
@@ -108,7 +121,9 @@ export class AuthService {
 
     // Always return success to prevent email enumeration attacks
     if (!user) {
-      return { message: 'If an account with that email exists, you will receive a password reset email.' };
+      return {
+        message: 'If an account with that email exists, you will receive a password reset email.',
+      };
     }
 
     // Generate reset token
@@ -130,7 +145,9 @@ export class AuthService {
       firstName: user.profile?.firstName ?? undefined,
     });
 
-    return { message: 'If an account with that email exists, you will receive a password reset email.' };
+    return {
+      message: 'If an account with that email exists, you will receive a password reset email.',
+    };
   }
 
   async resetPassword(resetPasswordData: ResetPassword): Promise<{ message: string }> {
@@ -184,7 +201,7 @@ export class AuthService {
     }
 
     // Update user as verified and clear verification token
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async tx => {
       await tx.user.update({
         where: { id: user.id },
         data: {
@@ -218,7 +235,10 @@ export class AuthService {
 
     if (!user) {
       // Don't reveal if email exists
-      return { message: 'If an account with that email exists and is unverified, a verification email has been sent.' };
+      return {
+        message:
+          'If an account with that email exists and is unverified, a verification email has been sent.',
+      };
     }
 
     if (user.emailVerified) {
@@ -244,7 +264,10 @@ export class AuthService {
       firstName: user.profile?.firstName ?? undefined,
     });
 
-    return { message: 'If an account with that email exists and is unverified, a verification email has been sent.' };
+    return {
+      message:
+        'If an account with that email exists and is unverified, a verification email has been sent.',
+    };
   }
 
   // Token management helper methods
@@ -263,7 +286,10 @@ export class AuthService {
     return new Date() > expiry;
   }
 
-  private async clearUserTokens(userId: string, tokenType: 'reset' | 'verification' | 'both' = 'both'): Promise<void> {
+  private async clearUserTokens(
+    userId: string,
+    tokenType: 'reset' | 'verification' | 'both' = 'both',
+  ): Promise<void> {
     const updateData: any = {};
 
     if (tokenType === 'reset' || tokenType === 'both') {

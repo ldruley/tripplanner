@@ -31,20 +31,20 @@
   bottom: 0;
   background-color: #ccc; /* Color when OFF */
   border-radius: 26px; /* Makes it pill-shaped */
-  transition: .4s;
+  transition: 0.4s;
 }
 
 /* The moving circle (thumb) of the switch */
 .slider:before {
   position: absolute;
-  content: "";
+  content: '';
   height: 20px; /* Size of the circle */
-  width: 20px;  /* Size of the circle */
+  width: 20px; /* Size of the circle */
   left: 3px;
   bottom: 3px;
   background-color: white;
   border-radius: 50%; /* Makes it a circle */
-  transition: .4s;
+  transition: 0.4s;
 }
 
 /* The magic: styles for when the checkbox is CHECKED */

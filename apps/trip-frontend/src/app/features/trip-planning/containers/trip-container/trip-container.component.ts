@@ -26,7 +26,7 @@ export class TripContainerComponent implements OnInit {
     if (id && id !== 'new') {
       this.isLoading.set(true);
       // TODO: Fetch real trip data from the service
-      console.log("Fetching trip data for ID:", id);
+      console.log('Fetching trip data for ID:', id);
 
       setTimeout(() => {
         this.trip.set({

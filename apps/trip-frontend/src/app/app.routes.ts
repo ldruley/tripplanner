@@ -6,40 +6,42 @@ export const appRoutes: Route[] = [
   {
     path: '',
     redirectTo: '/dashboard',
-    pathMatch: 'full'
+    pathMatch: 'full',
   },
   {
     path: 'auth',
-    loadChildren: () =>
-      import('./features/auth/auth.routes').then(
-        (m) => m.AUTH_ROUTES)
+    loadChildren: () => import('./features/auth/auth.routes').then(m => m.AUTH_ROUTES),
   },
   {
     path: 'dashboard',
     loadComponent: () =>
-      import('./features/dashboard/components/dashboard/dashboard.component').then(m => m.DashboardComponent),
+      import('./features/dashboard/components/dashboard/dashboard.component').then(
+        m => m.DashboardComponent,
+      ),
     title: 'Dashboard - Trip Planner',
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: 'profile',
     loadComponent: () =>
-      import('./features/profile/containers/profile-container/profile-container.component').then(m => m.ProfileContainerComponent),
+      import('./features/profile/containers/profile-container/profile-container.component').then(
+        m => m.ProfileContainerComponent,
+      ),
     title: 'My Profile - Trip Planner',
-    canActivate: [authGuard]
+    canActivate: [authGuard],
   },
   {
     path: 'trip-planning',
     loadChildren: () =>
-      import('./features/trip-planning/trip-planning.routes').then(
-        (m) => m.TRIP_PLANNING_ROUTES
-      ),
+      import('./features/trip-planning/trip-planning.routes').then(m => m.TRIP_PLANNING_ROUTES),
     canActivate: [authGuard],
   },
   {
     path: 'settings',
     loadComponent: () =>
-      import('./features/settings/containers/settings-container.component').then(m => m.SettingsContainerComponent),
+      import('./features/settings/containers/settings-container.component').then(
+        m => m.SettingsContainerComponent,
+      ),
     title: 'My Settings - Trip Planner',
   },
 ];

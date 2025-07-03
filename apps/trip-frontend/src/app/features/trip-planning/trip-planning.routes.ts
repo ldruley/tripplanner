@@ -4,15 +4,15 @@ import { TripContainerComponent } from './containers/trip-container/trip-contain
 export const TRIP_PLANNING_ROUTES: Routes = [
   {
     path: 'new',
-    component: TripContainerComponent
+    component: TripContainerComponent,
   },
   {
     path: ':tripId',
-    component: TripContainerComponent
+    component: TripContainerComponent,
   },
   {
     path: '', // Default, maybe redirect to a list or dashboard later
     redirectTo: 'new',
-    pathMatch: 'full'
-  }
+    pathMatch: 'full',
+  },
 ];

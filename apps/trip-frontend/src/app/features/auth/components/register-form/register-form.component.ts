@@ -10,7 +10,7 @@ import { buildRegisterForm } from '../../../../core/forms/form-factory';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './register-form.component.html',
-  styleUrl: './register-form.component.css'
+  styleUrl: './register-form.component.css',
 })
 export class RegisterFormComponent {
   @Input() isLoading = false;
@@ -20,7 +20,6 @@ export class RegisterFormComponent {
 
   public readonly showPassword = signal(false);
   public readonly showConfirmPassword = signal(false);
-
 
   togglePasswordVisibility(): void {
     this.showPassword.update(v => !v);
@@ -40,8 +39,10 @@ export class RegisterFormComponent {
   }
 
   public hasPasswordMismatch(): boolean {
-    return !!(this.registerForm.errors?.['passwordMismatch'] &&
-      this.registerForm.get('confirmPassword')?.touched);
+    return !!(
+      this.registerForm.errors?.['passwordMismatch'] &&
+      this.registerForm.get('confirmPassword')?.touched
+    );
   }
 
   public onSubmit(): void {
@@ -56,7 +57,7 @@ export class RegisterFormComponent {
       firstName,
       lastName,
       email,
-      password
+      password,
     };
 
     this.registerSubmit.emit(credentials);

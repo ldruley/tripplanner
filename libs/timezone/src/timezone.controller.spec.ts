@@ -8,7 +8,7 @@ import { randomUUID } from 'crypto';
 
 // Mock the crypto module
 jest.mock('crypto', () => ({
-  randomUUID: jest.fn()
+  randomUUID: jest.fn(),
 }));
 
 describe('TimezoneController', () => {
@@ -20,12 +20,10 @@ describe('TimezoneController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TimezoneController],
-      providers: [
-        { provide: TimezoneService, useValue: timezoneService }
-      ],
+      providers: [{ provide: TimezoneService, useValue: timezoneService }],
     })
-    .setLogger(createMockLogger())
-    .compile();
+      .setLogger(createMockLogger())
+      .compile();
 
     controller = module.get<TimezoneController>(TimezoneController);
     jest.clearAllMocks();
@@ -37,11 +35,11 @@ describe('TimezoneController', () => {
       const mockUuid = '123e4567-e89b-12d3-a456-426614174000';
       const testRequestDto: TimezoneRequestDto = {
         latitude: 40.7128,
-        longitude: -74.0060
+        longitude: -74.006,
       };
       const testResponseDto: TimezoneResponseDto = {
         timezone: 'America/New_York',
-        requestId: mockUuid
+        requestId: mockUuid,
       };
       (randomUUID as jest.Mock).mockReturnValue(mockUuid);
       timezoneService.getTimezoneByCoordinates.mockResolvedValue(testResponseDto);
@@ -53,7 +51,7 @@ describe('TimezoneController', () => {
       expect(result).toEqual(testResponseDto);
       expect(timezoneService.getTimezoneByCoordinates).toHaveBeenCalledWith({
         ...testRequestDto,
-        requestId: mockUuid
+        requestId: mockUuid,
       });
     });
 
@@ -62,11 +60,11 @@ describe('TimezoneController', () => {
       const mockUuid = '987e6543-e21a-12d3-a456-426614174000';
       const testRequest: TimezoneRequestDto = {
         latitude: 40.7128,
-        longitude: -74.0060
+        longitude: -74.006,
       };
       const testResponse: TimezoneResponseDto = {
         timezone: 'America/New_York',
-        requestId: mockUuid
+        requestId: mockUuid,
       };
       (randomUUID as jest.Mock).mockReturnValue(mockUuid);
       timezoneService.getTimezoneByCoordinates.mockResolvedValue(testResponse);
@@ -78,8 +76,8 @@ describe('TimezoneController', () => {
       expect(randomUUID).toHaveBeenCalled();
       expect(timezoneService.getTimezoneByCoordinates).toHaveBeenCalledWith({
         latitude: 40.7128,
-        longitude: -74.0060,
-        requestId: mockUuid
+        longitude: -74.006,
+        requestId: mockUuid,
       });
     });
 
@@ -99,7 +97,7 @@ describe('TimezoneController', () => {
       for (const [index, coords] of testCases.entries()) {
         const expectedResponse: TimezoneResponseDto = {
           timezone: `Timezone_${index}`,
-          requestId: mockUuid
+          requestId: mockUuid,
         };
         timezoneService.getTimezoneByCoordinates.mockResolvedValue(expectedResponse);
 
@@ -110,7 +108,7 @@ describe('TimezoneController', () => {
         expect(result).toEqual(expectedResponse);
         expect(timezoneService.getTimezoneByCoordinates).toHaveBeenCalledWith({
           ...coords,
-          requestId: mockUuid
+          requestId: mockUuid,
         });
       }
     });
@@ -119,12 +117,12 @@ describe('TimezoneController', () => {
       // Arrange
       const preciseCoords: TimezoneRequestDto = {
         latitude: 40.712775826,
-        longitude: -74.006058167
+        longitude: -74.006058167,
       };
       const mockUuid = 'precise-uuid';
       const preciseResponse: TimezoneResponseDto = {
         timezone: 'America/New_York',
-        requestId: mockUuid
+        requestId: mockUuid,
       };
       (randomUUID as jest.Mock).mockReturnValue(mockUuid);
       timezoneService.getTimezoneByCoordinates.mockResolvedValue(preciseResponse);
@@ -137,7 +135,7 @@ describe('TimezoneController', () => {
       expect(timezoneService.getTimezoneByCoordinates).toHaveBeenCalledWith({
         latitude: 40.712775826,
         longitude: -74.006058167,
-        requestId: mockUuid
+        requestId: mockUuid,
       });
     });
 
@@ -145,11 +143,11 @@ describe('TimezoneController', () => {
       // Arrange
       const negativeCoords: TimezoneRequestDto = {
         latitude: -34.6037,
-        longitude: -58.3816 // Buenos Aires
+        longitude: -58.3816, // Buenos Aires
       };
       const expectedResponse: TimezoneResponseDto = {
         timezone: 'America/Argentina/Buenos_Aires',
-        requestId: 'negative-uuid'
+        requestId: 'negative-uuid',
       };
       const mockUuid = 'negative-uuid';
       (randomUUID as jest.Mock).mockReturnValue(mockUuid);
@@ -162,7 +160,7 @@ describe('TimezoneController', () => {
       expect(result).toEqual(expectedResponse);
       expect(timezoneService.getTimezoneByCoordinates).toHaveBeenCalledWith({
         ...negativeCoords,
-        requestId: mockUuid
+        requestId: mockUuid,
       });
     });
 
@@ -172,17 +170,18 @@ describe('TimezoneController', () => {
       const mockUuid = 'error-uuid';
       const testRequest: TimezoneRequestDto = {
         latitude: 40.7128,
-        longitude: -74.0060
+        longitude: -74.006,
       };
       (randomUUID as jest.Mock).mockReturnValue(mockUuid);
       timezoneService.getTimezoneByCoordinates.mockRejectedValue(serviceError);
 
       // Act & Assert
-      await expect(controller.getTimezoneFromCoords(testRequest))
-        .rejects.toThrow('Service unavailable');
+      await expect(controller.getTimezoneFromCoords(testRequest)).rejects.toThrow(
+        'Service unavailable',
+      );
       expect(timezoneService.getTimezoneByCoordinates).toHaveBeenCalledWith({
         ...testRequest,
-        requestId: mockUuid
+        requestId: mockUuid,
       });
     });
 
@@ -192,27 +191,28 @@ describe('TimezoneController', () => {
       const mockUuid = 'timeout-uuid';
       const testRequest: TimezoneRequestDto = {
         latitude: 40.7128,
-        longitude: -74.0060
+        longitude: -74.006,
       };
       (randomUUID as jest.Mock).mockReturnValue(mockUuid);
       timezoneService.getTimezoneByCoordinates.mockRejectedValue(timeoutError);
 
       // Act & Assert
-      await expect(controller.getTimezoneFromCoords(testRequest))
-        .rejects.toThrow('Request timeout');
+      await expect(controller.getTimezoneFromCoords(testRequest)).rejects.toThrow(
+        'Request timeout',
+      );
     });
 
     it('should preserve input coordinates without modification', async () => {
       // Arrange
       const originalCoords: TimezoneRequestDto = {
         latitude: 40.7128,
-        longitude: -74.0060
+        longitude: -74.006,
       };
       const coordsCopy = { ...originalCoords };
       const mockUuid = 'preserve-uuid';
       const testResponse: TimezoneResponseDto = {
         timezone: 'America/New_York',
-        requestId: mockUuid
+        requestId: mockUuid,
       };
       (randomUUID as jest.Mock).mockReturnValue(mockUuid);
       timezoneService.getTimezoneByCoordinates.mockResolvedValue(testResponse);
@@ -226,7 +226,7 @@ describe('TimezoneController', () => {
       expect(coordsCopy.longitude).toEqual(originalCoords.longitude);
       expect(timezoneService.getTimezoneByCoordinates).toHaveBeenCalledWith({
         ...originalCoords,
-        requestId: mockUuid
+        requestId: mockUuid,
       });
     });
   });
@@ -250,12 +250,18 @@ describe('TimezoneController', () => {
 
     it('should have proper Swagger documentation', () => {
       // Check for API operation metadata
-      const operationMetadata = Reflect.getMetadata('swagger/apiOperation', controller.getTimezoneFromCoords);
+      const operationMetadata = Reflect.getMetadata(
+        'swagger/apiOperation',
+        controller.getTimezoneFromCoords,
+      );
       expect(operationMetadata).toBeDefined();
       expect(operationMetadata.summary).toBe('Get timezone from coordinates');
 
       // Check for API response metadata
-      const responseMetadata = Reflect.getMetadata('swagger/apiResponse', controller.getTimezoneFromCoords);
+      const responseMetadata = Reflect.getMetadata(
+        'swagger/apiResponse',
+        controller.getTimezoneFromCoords,
+      );
       expect(responseMetadata).toBeDefined();
     });
   });
@@ -265,12 +271,12 @@ describe('TimezoneController', () => {
       // Arrange
       const validRequest: TimezoneRequestDto = {
         latitude: 40.7128,
-        longitude: -74.0060
+        longitude: -74.006,
       };
       const mockUuid = 'valid-uuid';
       const mockResponse: TimezoneResponseDto = {
         timezone: 'America/New_York',
-        requestId: mockUuid
+        requestId: mockUuid,
       };
       (randomUUID as jest.Mock).mockReturnValue(mockUuid);
       timezoneService.getTimezoneByCoordinates.mockResolvedValue(mockResponse);
@@ -282,7 +288,7 @@ describe('TimezoneController', () => {
       expect(result).toEqual(mockResponse);
       expect(timezoneService.getTimezoneByCoordinates).toHaveBeenCalledWith({
         ...validRequest,
-        requestId: mockUuid
+        requestId: mockUuid,
       });
     });
 
@@ -290,12 +296,12 @@ describe('TimezoneController', () => {
       // Arrange
       const testRequest: TimezoneRequestDto = {
         latitude: 40.7128,
-        longitude: -74.0060
+        longitude: -74.006,
       };
       const mockUuid = 'format-uuid';
       const expectedResponse: TimezoneResponseDto = {
         timezone: 'Europe/London',
-        requestId: mockUuid
+        requestId: mockUuid,
       };
       (randomUUID as jest.Mock).mockReturnValue(mockUuid);
       timezoneService.getTimezoneByCoordinates.mockResolvedValue(expectedResponse);
@@ -322,12 +328,12 @@ describe('TimezoneController', () => {
         'Pacific/Auckland',
         'Africa/Cairo',
         'UTC',
-        'GMT'
+        'GMT',
       ];
 
       const testRequest: TimezoneRequestDto = {
         latitude: 40.7128,
-        longitude: -74.0060
+        longitude: -74.006,
       };
       const mockUuid = 'format-test-uuid';
       (randomUUID as jest.Mock).mockReturnValue(mockUuid);
@@ -335,7 +341,7 @@ describe('TimezoneController', () => {
       for (const timezone of timezoneFormats) {
         const expectedResponse: TimezoneResponseDto = {
           timezone,
-          requestId: mockUuid
+          requestId: mockUuid,
         };
         timezoneService.getTimezoneByCoordinates.mockResolvedValue(expectedResponse);
 
@@ -356,14 +362,15 @@ describe('TimezoneController', () => {
       const mockUuid = 'error-handling-uuid';
       const testRequest: TimezoneRequestDto = {
         latitude: 40.7128,
-        longitude: -74.0060
+        longitude: -74.006,
       };
       (randomUUID as jest.Mock).mockReturnValue(mockUuid);
       timezoneService.getTimezoneByCoordinates.mockRejectedValue(serviceError);
 
       // Act & Assert
-      await expect(controller.getTimezoneFromCoords(testRequest))
-        .rejects.toThrow('External API failure');
+      await expect(controller.getTimezoneFromCoords(testRequest)).rejects.toThrow(
+        'External API failure',
+      );
     });
 
     it('should handle UUID generation failures', async () => {
@@ -371,15 +378,16 @@ describe('TimezoneController', () => {
       const uuidError = new Error('UUID generation failed');
       const testRequest: TimezoneRequestDto = {
         latitude: 40.7128,
-        longitude: -74.0060
+        longitude: -74.006,
       };
       (randomUUID as jest.Mock).mockImplementation(() => {
         throw uuidError;
       });
 
       // Act & Assert
-      await expect(controller.getTimezoneFromCoords(testRequest))
-        .rejects.toThrow('UUID generation failed');
+      await expect(controller.getTimezoneFromCoords(testRequest)).rejects.toThrow(
+        'UUID generation failed',
+      );
     });
 
     it('should handle malformed service responses', async () => {
@@ -387,12 +395,12 @@ describe('TimezoneController', () => {
       const malformedResponse = {
         // Missing required fields
         timezone: undefined,
-        requestId: undefined
+        requestId: undefined,
       } as any;
       const mockUuid = 'malformed-uuid';
       const testRequest: TimezoneRequestDto = {
         latitude: 40.7128,
-        longitude: -74.0060
+        longitude: -74.006,
       };
       (randomUUID as jest.Mock).mockReturnValue(mockUuid);
       timezoneService.getTimezoneByCoordinates.mockResolvedValue(malformedResponse);
@@ -411,15 +419,15 @@ describe('TimezoneController', () => {
     it('should handle rapid consecutive requests', async () => {
       // Arrange
       const requests: TimezoneRequestDto[] = [
-        { latitude: 40.7128, longitude: -74.0060 },
+        { latitude: 40.7128, longitude: -74.006 },
         { latitude: 51.5074, longitude: -0.1278 },
-        { latitude: 48.8566, longitude: 2.3522 }
+        { latitude: 48.8566, longitude: 2.3522 },
       ];
       const mockUuids = ['uuid-1', 'uuid-2', 'uuid-3'];
       const mockResponses: TimezoneResponseDto[] = [
         { timezone: 'America/New_York', requestId: 'uuid-1' },
         { timezone: 'Europe/London', requestId: 'uuid-2' },
-        { timezone: 'Europe/Paris', requestId: 'uuid-3' }
+        { timezone: 'Europe/Paris', requestId: 'uuid-3' },
       ];
 
       (randomUUID as jest.Mock)
@@ -433,9 +441,7 @@ describe('TimezoneController', () => {
         .mockResolvedValueOnce(mockResponses[2]);
 
       // Act
-      const results = await Promise.all(
-        requests.map(req => controller.getTimezoneFromCoords(req))
-      );
+      const results = await Promise.all(requests.map(req => controller.getTimezoneFromCoords(req)));
 
       // Assert
       expect(results).toEqual(mockResponses);
@@ -444,17 +450,18 @@ describe('TimezoneController', () => {
 
     it('should handle mixed success and failure scenarios', async () => {
       // Arrange
-      const successRequest: TimezoneRequestDto = { latitude: 40.7128, longitude: -74.0060 };
+      const successRequest: TimezoneRequestDto = { latitude: 40.7128, longitude: -74.006 };
       const failureRequest: TimezoneRequestDto = { latitude: 51.5074, longitude: -0.1278 };
-      
+
       const mockUuid1 = 'success-uuid';
       const mockUuid2 = 'failure-uuid';
-      const successResponse: TimezoneResponseDto = { timezone: 'America/New_York', requestId: mockUuid1 };
+      const successResponse: TimezoneResponseDto = {
+        timezone: 'America/New_York',
+        requestId: mockUuid1,
+      };
       const failureError = new Error('Service temporarily unavailable');
 
-      (randomUUID as jest.Mock)
-        .mockReturnValueOnce(mockUuid1)
-        .mockReturnValueOnce(mockUuid2);
+      (randomUUID as jest.Mock).mockReturnValueOnce(mockUuid1).mockReturnValueOnce(mockUuid2);
 
       timezoneService.getTimezoneByCoordinates
         .mockResolvedValueOnce(successResponse)
@@ -464,21 +471,20 @@ describe('TimezoneController', () => {
       const successResult = await controller.getTimezoneFromCoords(successRequest);
       expect(successResult).toEqual(successResponse);
 
-      await expect(controller.getTimezoneFromCoords(failureRequest))
-        .rejects.toThrow('Service temporarily unavailable');
+      await expect(controller.getTimezoneFromCoords(failureRequest)).rejects.toThrow(
+        'Service temporarily unavailable',
+      );
     });
 
     it('should maintain request isolation', async () => {
       // Arrange
-      const request1: TimezoneRequestDto = { latitude: 40.7128, longitude: -74.0060 };
+      const request1: TimezoneRequestDto = { latitude: 40.7128, longitude: -74.006 };
       const request2: TimezoneRequestDto = { latitude: 51.5074, longitude: -0.1278 };
-      
+
       const uuid1 = 'isolation-uuid-1';
       const uuid2 = 'isolation-uuid-2';
-      
-      (randomUUID as jest.Mock)
-        .mockReturnValueOnce(uuid1)
-        .mockReturnValueOnce(uuid2);
+
+      (randomUUID as jest.Mock).mockReturnValueOnce(uuid1).mockReturnValueOnce(uuid2);
 
       timezoneService.getTimezoneByCoordinates
         .mockResolvedValueOnce({ timezone: 'America/New_York', requestId: uuid1 })
@@ -492,8 +498,14 @@ describe('TimezoneController', () => {
       expect(result1.requestId).toBe(uuid1);
       expect(result2.requestId).toBe(uuid2);
       expect(result1.requestId).not.toBe(result2.requestId);
-      expect(timezoneService.getTimezoneByCoordinates).toHaveBeenCalledWith({ ...request1, requestId: uuid1 });
-      expect(timezoneService.getTimezoneByCoordinates).toHaveBeenCalledWith({ ...request2, requestId: uuid2 });
+      expect(timezoneService.getTimezoneByCoordinates).toHaveBeenCalledWith({
+        ...request1,
+        requestId: uuid1,
+      });
+      expect(timezoneService.getTimezoneByCoordinates).toHaveBeenCalledWith({
+        ...request2,
+        requestId: uuid2,
+      });
     });
   });
 });

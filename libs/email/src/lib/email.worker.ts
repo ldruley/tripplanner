@@ -1,4 +1,10 @@
-import { BadGatewayException, Injectable, InternalServerErrorException, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  BadGatewayException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
 import { BullMQService } from '@trip-planner/bullmq';
 import { Job, Worker } from 'bullmq';
 import { ConfigService } from '@nestjs/config';
@@ -26,10 +32,12 @@ export class EmailWorker implements OnModuleInit {
       throw new InternalServerErrorException('MAILGUN_API_KEY is required');
     }
 
-    this.domain = this.configService.get<string>('MAILGUN_DOMAIN') ?? (() => {
-      this.logger.error('MAILGUN_DOMAIN is not set');
-      throw new InternalServerErrorException('MAILGUN_DOMAIN is required');
-    })();
+    this.domain =
+      this.configService.get<string>('MAILGUN_DOMAIN') ??
+      (() => {
+        this.logger.error('MAILGUN_DOMAIN is not set');
+        throw new InternalServerErrorException('MAILGUN_DOMAIN is required');
+      })();
 
     this.from = this.configService.get<string>('MAILGUN_FROM') ?? `noreply@${this.domain}`;
     this.testEmail = this.configService.get<string>('MAILGUN_TEST_EMAIL');
@@ -57,7 +65,13 @@ export class EmailWorker implements OnModuleInit {
     this.logger.log('Email worker started');
   }
 
-  private async processEmailJob(job: Job<EmailJobData>): Promise<{ messageId: string; status: string; recipient: string; originalRecipient: string; sentAt: string }> {
+  private async processEmailJob(job: Job<EmailJobData>): Promise<{
+    messageId: string;
+    status: string;
+    recipient: string;
+    originalRecipient: string;
+    sentAt: string;
+  }> {
     const jobData = EmailJobDataSchema.parse(job.data);
 
     try {
@@ -95,7 +109,6 @@ export class EmailWorker implements OnModuleInit {
         originalRecipient: jobData.to,
         sentAt: new Date().toISOString(),
       };
-
     } catch (error) {
       this.logger.error(`Email job ${job.id} failed:`, error);
 
@@ -119,7 +132,10 @@ export class EmailWorker implements OnModuleInit {
   }
 
   private stripHtmlTags(html: string): string {
-    return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    return html
+      .replace(/<[^>]*>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   private delay(ms: number): Promise<void> {

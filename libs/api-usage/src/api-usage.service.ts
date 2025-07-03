@@ -11,9 +11,9 @@ export class ApiUsageService implements OnModuleInit {
   private redisClient!: Redis;
   private luaScriptSha!: string;
 
-  constructor (
+  constructor(
     private readonly redisService: RedisService,
-    private readonly quotaService: QuotaService
+    private readonly quotaService: QuotaService,
   ) {}
 
   async onModuleInit() {
@@ -24,14 +24,14 @@ export class ApiUsageService implements OnModuleInit {
       return c
     `;
 
-    this.luaScriptSha = await this.redisClient.script('LOAD', script) as string;
+    this.luaScriptSha = (await this.redisClient.script('LOAD', script)) as string;
   }
 
   private makeKey(
     provider: Provider,
     action: Action,
     endpoint?: string,
-    date: Date = new Date()
+    date: Date = new Date(),
   ): string {
     const month = date.toISOString().slice(0, 7); // ex. 2025-06
     const suffix = endpoint ? `${action}.${endpoint}` : action;
@@ -41,11 +41,7 @@ export class ApiUsageService implements OnModuleInit {
   /**
    * Atomically increment usage for a given provider/action/endpoint combo
    */
-  async increment(
-    provider: Provider,
-    action: Action,
-    endpoint?: string
-  ): Promise<number> {
+  async increment(provider: Provider, action: Action, endpoint?: string): Promise<number> {
     const key = this.makeKey(provider, action, endpoint);
     return (await this.redisClient.evalsha(this.luaScriptSha, 1, key)) as number; // this should always return a number
   }
@@ -53,24 +49,16 @@ export class ApiUsageService implements OnModuleInit {
   /**
    * Retrieve current usage count for this calendar month
    */
-  async getCurrent(
-    provider: Provider,
-    action: Action,
-    endpoint?: string
-  ): Promise<number> {
+  async getCurrent(provider: Provider, action: Action, endpoint?: string): Promise<number> {
     const key = this.makeKey(provider, action, endpoint);
     const val = await this.redisClient.get(key);
     return Number(val ?? 0);
   }
 
-  async checkQuota(
-    provider: Provider,
-    action: Action,
-    endpoint?: string,
-  ): Promise<boolean> {
+  async checkQuota(provider: Provider, action: Action, endpoint?: string): Promise<boolean> {
     const quota = this.quotaService.getQuota(provider, action, endpoint);
     const currentUsage = await this.getCurrent(provider, action, endpoint);
     //TODO: Better strategy for handling undefined quotas
-    return currentUsage < (quota !== null && quota !== undefined ? quota : Number.MAX_SAFE_INTEGER) ;
+    return currentUsage < (quota !== null && quota !== undefined ? quota : Number.MAX_SAFE_INTEGER);
   }
 }

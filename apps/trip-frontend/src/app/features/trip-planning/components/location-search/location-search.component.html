@@ -1,5 +1,9 @@
-<div class="p-4 border rounded-md shadow-sm border-tp-border-light dark:border-tp-border bg-white dark:bg-tp-bg-secondary">
-  <h3 class="text-lg font-semibold mb-2 text-tp-text-light-primary dark:text-tp-text-primary">Add Location</h3>
+<div
+  class="p-4 border rounded-md shadow-sm border-tp-border-light dark:border-tp-border bg-white dark:bg-tp-bg-secondary"
+>
+  <h3 class="text-lg font-semibold mb-2 text-tp-text-light-primary dark:text-tp-text-primary">
+    Add Location
+  </h3>
 
   <div class="flex items-center space-x-2 mb-3">
     <button
@@ -44,15 +48,19 @@
       class="px-4 py-2 bg-tp-orange text-white font-semibold rounded-md hover:bg-tp-orange/90 disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <span *ngIf="!isLoading()">Search</span>
-      <span *ngIf="isLoading()">Searching...</span> </button>
+      <span *ngIf="isLoading()">Searching...</span>
+    </button>
   </div>
 
   @if (isLoading()) {
-    <div class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">Loading results...</div>
+    <div class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">
+      Loading results...
+    </div>
   }
-
   @if (!isLoading() && searchResults().length > 0) {
-    <div class="border rounded-md max-h-60 overflow-y-auto border-tp-border-light dark:border-tp-border bg-white dark:bg-tp-bg-tertiary">
+    <div
+      class="border rounded-md max-h-60 overflow-y-auto border-tp-border-light dark:border-tp-border bg-white dark:bg-tp-bg-tertiary"
+    >
       <ul class="divide-y divide-tp-border-light dark:divide-tp-border">
         @for (location of searchResults(); track location.id) {
           <li
@@ -63,19 +71,29 @@
             (keydown.enter)="selectLocation(location)"
             (keydown.space)="selectLocation(location)"
           >
-            <div class="font-medium text-tp-text-light-primary dark:text-tp-text-primary">{{ location.name }}</div>
+            <div class="font-medium text-tp-text-light-primary dark:text-tp-text-primary">
+              {{ location.name }}
+            </div>
             @if (location.fullAddress) {
-              <div class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">{{ location.fullAddress }}</div>
+              <div class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">
+                {{ location.fullAddress }}
+              </div>
             } @else if (location.city || location.country) {
               <div class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">
-                {{ location.city }}{{ location.city && location.country ? ', ' : '' }}{{ location.country }}
+                {{ location.city }}{{ location.city && location.country ? ', ' : ''
+                }}{{ location.country }}
               </div>
             }
           </li>
         }
       </ul>
     </div>
-  } @else if (!isLoading() && hasAttemptedSearch() && searchQuery().trim().length > 0 && !searchResults().length) {
+  } @else if (
+    !isLoading() &&
+    hasAttemptedSearch() &&
+    searchQuery().trim().length > 0 &&
+    !searchResults().length
+  ) {
     <div class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">
       No results found for "{{ searchQuery() }}".
     </div>

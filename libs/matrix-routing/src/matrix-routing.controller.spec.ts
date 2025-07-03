@@ -4,11 +4,7 @@ import { MatrixRoutingService } from './matrix-routing.service';
 import { ServiceUnavailableException } from '@nestjs/common';
 import { mock } from 'jest-mock-extended';
 import { createMockLogger } from '@trip-planner/test-utils';
-import {
-  MatrixQuery,
-  CoordinateMatrix,
-  CoordinateMatrixSchema,
-} from '@trip-planner/types';
+import { MatrixQuery, CoordinateMatrix, CoordinateMatrixSchema } from '@trip-planner/types';
 
 describe('MatrixRoutingController', () => {
   let controller: MatrixRoutingController;
@@ -17,22 +13,22 @@ describe('MatrixRoutingController', () => {
   // Use the actual MatrixQuery type since the controller casts MatrixQueryDto to MatrixQuery
   const mockMatrixQuery: MatrixQuery = {
     origins: [
-      { lat: 40.7128, lng: -74.0060 }, // New York
-      { lat: 34.0522, lng: -118.2437 } // Los Angeles
+      { lat: 40.7128, lng: -74.006 }, // New York
+      { lat: 34.0522, lng: -118.2437 }, // Los Angeles
     ],
     profile: 'carFast',
-    routingMode: 'fast'
+    routingMode: 'fast',
   };
 
   const mockCoordinateMatrix: CoordinateMatrix = {
     '40.7128,-74.006': {
       '40.7128,-74.006': { time: 0, distance: 0 },
-      '34.0522,-118.2437': { time: 14400, distance: 4500000 }
+      '34.0522,-118.2437': { time: 14400, distance: 4500000 },
     },
     '34.0522,-118.2437': {
       '40.7128,-74.006': { time: 14400, distance: 4500000 },
-      '34.0522,-118.2437': { time: 0, distance: 0 }
-    }
+      '34.0522,-118.2437': { time: 0, distance: 0 },
+    },
   };
 
   beforeEach(async () => {
@@ -43,12 +39,12 @@ describe('MatrixRoutingController', () => {
       providers: [
         {
           provide: MatrixRoutingService,
-          useValue: matrixRoutingService
-        }
+          useValue: matrixRoutingService,
+        },
       ],
     })
-    .setLogger(createMockLogger())
-    .compile();
+      .setLogger(createMockLogger())
+      .compile();
 
     controller = module.get<MatrixRoutingController>(MatrixRoutingController);
 
@@ -71,7 +67,7 @@ describe('MatrixRoutingController', () => {
       // Assert
       expect(result).toEqual(mockCoordinateMatrix);
       expect(matrixRoutingService.getMatrixRouting).toHaveBeenCalledWith(mockMatrixQuery);
-      
+
       // Validate with Zod schema
       expect(() => CoordinateMatrixSchema.parse(result)).not.toThrow();
     });
@@ -81,20 +77,20 @@ describe('MatrixRoutingController', () => {
       const customQuery: MatrixQuery = {
         origins: [
           { lat: 51.5074, lng: -0.1278 }, // London
-          { lat: 48.8566, lng: 2.3522 }   // Paris
+          { lat: 48.8566, lng: 2.3522 }, // Paris
         ],
         profile: 'pedestrian',
-        routingMode: 'short'
+        routingMode: 'short',
       };
       const customMatrix: CoordinateMatrix = {
         '51.5074,-0.1278': {
           '51.5074,-0.1278': { time: 0, distance: 0 },
-          '48.8566,2.3522': { time: 3600, distance: 450000 }
+          '48.8566,2.3522': { time: 3600, distance: 450000 },
         },
         '48.8566,2.3522': {
           '51.5074,-0.1278': { time: 3600, distance: 450000 },
-          '48.8566,2.3522': { time: 0, distance: 0 }
-        }
+          '48.8566,2.3522': { time: 0, distance: 0 },
+        },
       };
       matrixRoutingService.getMatrixRouting.mockResolvedValue(customMatrix);
 
@@ -109,12 +105,12 @@ describe('MatrixRoutingController', () => {
     it('should handle single origin correctly', async () => {
       // Arrange
       const singleOriginQuery: MatrixQuery = {
-        origins: [{ lat: 40.7128, lng: -74.0060 }]
+        origins: [{ lat: 40.7128, lng: -74.006 }],
       };
       const singleOriginMatrix: CoordinateMatrix = {
         '40.7128,-74.006': {
-          '40.7128,-74.006': { time: 0, distance: 0 }
-        }
+          '40.7128,-74.006': { time: 0, distance: 0 },
+        },
       };
       matrixRoutingService.getMatrixRouting.mockResolvedValue(singleOriginMatrix);
 
@@ -130,9 +126,9 @@ describe('MatrixRoutingController', () => {
       // Arrange
       const minimalQuery: MatrixQuery = {
         origins: [
-          { lat: 40.7128, lng: -74.0060 },
-          { lat: 34.0522, lng: -118.2437 }
-        ]
+          { lat: 40.7128, lng: -74.006 },
+          { lat: 34.0522, lng: -118.2437 },
+        ],
         // profile and routingMode are optional
       };
       matrixRoutingService.getMatrixRouting.mockResolvedValue(mockCoordinateMatrix);
@@ -147,14 +143,18 @@ describe('MatrixRoutingController', () => {
 
     it('should propagate ServiceUnavailableException from service', async () => {
       // Arrange
-      const serviceError = new ServiceUnavailableException('No API quota available for matrix routing');
+      const serviceError = new ServiceUnavailableException(
+        'No API quota available for matrix routing',
+      );
       matrixRoutingService.getMatrixRouting.mockRejectedValue(serviceError);
 
       // Act & Assert
-      await expect(controller.getMatrixRoute(mockMatrixQuery as any))
-        .rejects.toThrow(ServiceUnavailableException);
-      await expect(controller.getMatrixRoute(mockMatrixQuery as any))
-        .rejects.toThrow('No API quota available for matrix routing');
+      await expect(controller.getMatrixRoute(mockMatrixQuery as any)).rejects.toThrow(
+        ServiceUnavailableException,
+      );
+      await expect(controller.getMatrixRoute(mockMatrixQuery as any)).rejects.toThrow(
+        'No API quota available for matrix routing',
+      );
     });
 
     it('should propagate other errors from service', async () => {
@@ -163,8 +163,9 @@ describe('MatrixRoutingController', () => {
       matrixRoutingService.getMatrixRouting.mockRejectedValue(genericError);
 
       // Act & Assert
-      await expect(controller.getMatrixRoute(mockMatrixQuery as any))
-        .rejects.toThrow('Unexpected error');
+      await expect(controller.getMatrixRoute(mockMatrixQuery as any)).rejects.toThrow(
+        'Unexpected error',
+      );
     });
 
     it('should handle empty matrix response', async () => {
@@ -184,15 +185,15 @@ describe('MatrixRoutingController', () => {
       // Arrange
       const largeQuery: MatrixQuery = {
         origins: [
-          { lat: 40.7128, lng: -74.0060 },  // New York
+          { lat: 40.7128, lng: -74.006 }, // New York
           { lat: 34.0522, lng: -118.2437 }, // Los Angeles
-          { lat: 41.8781, lng: -87.6298 },  // Chicago
-          { lat: 29.7604, lng: -95.3698 },  // Houston
-          { lat: 33.4484, lng: -112.0740 }  // Phoenix
+          { lat: 41.8781, lng: -87.6298 }, // Chicago
+          { lat: 29.7604, lng: -95.3698 }, // Houston
+          { lat: 33.4484, lng: -112.074 }, // Phoenix
         ],
-        profile: 'carFast'
+        profile: 'carFast',
       };
-      
+
       // Create a larger matrix response
       const largeMatrix: CoordinateMatrix = {
         '40.7128,-74.006': {
@@ -200,8 +201,8 @@ describe('MatrixRoutingController', () => {
           '34.0522,-118.2437': { time: 14400, distance: 4500000 },
           '41.8781,-87.6298': { time: 7200, distance: 1200000 },
           '29.7604,-95.3698': { time: 10800, distance: 2000000 },
-          '33.4484,-112.074': { time: 12600, distance: 3500000 }
-        }
+          '33.4484,-112.074': { time: 12600, distance: 3500000 },
+        },
         // ... other coordinates would be here in a real response
       };
       matrixRoutingService.getMatrixRouting.mockResolvedValue(largeMatrix);
@@ -249,7 +250,7 @@ describe('MatrixRoutingController', () => {
       // Assert - TypeScript compilation ensures type safety
       expect(result).toBeDefined();
       expect(typeof result).toBe('object');
-      
+
       // Verify the structure matches CoordinateMatrix interface
       Object.keys(result).forEach(originKey => {
         expect(typeof result[originKey]).toBe('object');
@@ -266,7 +267,9 @@ describe('MatrixRoutingController', () => {
   describe('error response structure', () => {
     it('should maintain NestJS error response format', async () => {
       // Arrange
-      const serviceError = new ServiceUnavailableException('No API quota available for matrix routing');
+      const serviceError = new ServiceUnavailableException(
+        'No API quota available for matrix routing',
+      );
       matrixRoutingService.getMatrixRouting.mockRejectedValue(serviceError);
 
       // Act & Assert

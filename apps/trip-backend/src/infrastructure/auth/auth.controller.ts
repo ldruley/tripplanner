@@ -1,8 +1,31 @@
-import { Controller, HttpCode, Post, UseGuards, HttpStatus, Request, Body, Logger } from '@nestjs/common';
+import {
+  Controller,
+  HttpCode,
+  Post,
+  UseGuards,
+  HttpStatus,
+  Request,
+  Body,
+  Logger,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
-import { CreateUser, SafeUser, AuthenticatedRequest, RequestPasswordReset, ResetPassword, VerifyEmail, ResendVerification } from '@trip-planner/types';
-import { CreateUserDto, RequestPasswordResetDto, ResetPasswordDto, VerifyEmailDto, ResendVerificationDto } from '@trip-planner/shared/dtos';
+import {
+  CreateUser,
+  SafeUser,
+  AuthenticatedRequest,
+  RequestPasswordReset,
+  ResetPassword,
+  VerifyEmail,
+  ResendVerification,
+} from '@trip-planner/types';
+import {
+  CreateUserDto,
+  RequestPasswordResetDto,
+  ResetPasswordDto,
+  VerifyEmailDto,
+  ResendVerificationDto,
+} from '@trip-planner/shared/dtos';
 
 @Controller('auth')
 export class AuthController {
@@ -24,7 +47,9 @@ export class AuthController {
 
   @Post('request-password-reset')
   @HttpCode(HttpStatus.OK)
-  async requestPasswordReset(@Body() requestPasswordResetDto: RequestPasswordResetDto): Promise<{ message: string }> {
+  async requestPasswordReset(
+    @Body() requestPasswordResetDto: RequestPasswordResetDto,
+  ): Promise<{ message: string }> {
     return this.authService.requestPasswordReset(requestPasswordResetDto as RequestPasswordReset);
   }
 
@@ -42,8 +67,9 @@ export class AuthController {
 
   @Post('resend-verification')
   @HttpCode(HttpStatus.OK)
-  async resendVerification(@Body() resendVerificationDto: ResendVerificationDto): Promise<{ message: string }> {
+  async resendVerification(
+    @Body() resendVerificationDto: ResendVerificationDto,
+  ): Promise<{ message: string }> {
     return this.authService.resendVerificationEmail(resendVerificationDto as ResendVerification);
   }
-
 }

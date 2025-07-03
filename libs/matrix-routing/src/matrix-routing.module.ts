@@ -10,7 +10,11 @@ import { ApiUsageModule } from '@trip-planner/api-usage';
 @Module({
   imports: [ConfigModule, HttpModule, ApiUsageModule],
   controllers: [MatrixRoutingController],
-  providers: [MatrixRoutingService, HereMatrixRoutingAdapterService, MapboxMatrixRoutingAdapterService],
+  providers: [
+    MatrixRoutingService,
+    HereMatrixRoutingAdapterService,
+    MapboxMatrixRoutingAdapterService,
+  ],
   exports: [MatrixRoutingService],
 })
 export class MatrixRoutingModule {}

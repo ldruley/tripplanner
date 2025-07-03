@@ -18,12 +18,12 @@ export const UserSchema = z.object({
   updatedAt: z.date(),
 });
 
-export const SafeUserSchema = UserSchema.omit({ 
-  password: true, 
-  verificationToken: true, 
-  verificationTokenExpiry: true, 
-  resetToken: true, 
-  resetTokenExpiry: true 
+export const SafeUserSchema = UserSchema.omit({
+  password: true,
+  verificationToken: true,
+  verificationTokenExpiry: true,
+  resetToken: true,
+  resetTokenExpiry: true,
 });
 
 export const CreateUserSchema = UserSchema.pick({
@@ -36,7 +36,7 @@ export const CreateUserSchema = UserSchema.pick({
 
 export const LoginUserSchema = UserSchema.pick({
   email: true,
-  password: true ,
+  password: true,
 });
 
 export const ChangePasswordSchema = z.object({
@@ -49,14 +49,16 @@ export const RequestPasswordResetSchema = z.object({
   email: emailSchema,
 });
 
-export const ResetPasswordSchema = z.object({
-  token: z.string().min(1, 'Reset token is required'),
-  newPassword: passwordSchema,
-  confirmPassword: passwordSchema,
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+export const ResetPasswordSchema = z
+  .object({
+    token: z.string().min(1, 'Reset token is required'),
+    newPassword: passwordSchema,
+    confirmPassword: passwordSchema,
+  })
+  .refine(data => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
 export const VerifyEmailSchema = z.object({
   token: z.string().min(1, 'Verification token is required'),

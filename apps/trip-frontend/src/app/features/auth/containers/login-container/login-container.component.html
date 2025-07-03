@@ -9,8 +9,9 @@
     <!-- Login Form -->
     <app-login-form
       [isLoading]="(isLoading$ | async) || false"
-      [error]="(error$ | async)"
-      (loginSubmit)="handleLogin($event)">
+      [error]="error$ | async"
+      (loginSubmit)="handleLogin($event)"
+    >
     </app-login-form>
   </div>
 </div>

@@ -3,7 +3,7 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
-  Logger
+  Logger,
 } from '@nestjs/common';
 
 import { PrismaService } from '@trip-planner/prisma';
@@ -43,7 +43,6 @@ export class ProfileService {
 
     return profile;
   }
-
 
   async findByUserId(userId: string): Promise<Profile | null> {
     const profile = await this.profileRepository.findByUserId(userId);
@@ -87,10 +86,11 @@ export class ProfileService {
 
       this.logger.log(`Profile updated successfully: ${id}`);
       return updatedProfile;
-
     } catch (error: any) {
       if (error instanceof ZodError) {
-        throw new BadRequestException(`Validation failed: ${error.errors.map(e => e.message).join(', ')}`);
+        throw new BadRequestException(
+          `Validation failed: ${error.errors.map(e => e.message).join(', ')}`,
+        );
       }
 
       if (error instanceof NotFoundException) {
@@ -110,7 +110,7 @@ export class ProfileService {
   async findMany(query: ProfileQuery): Promise<ProfilesListResponse> {
     this.logger.debug(`Finding profiles: ${JSON.stringify(query)}`);
 
-    try{
+    try {
       // Validate query parameters
       const validatedQuery = ProfileQuerySchema.parse(query);
 
@@ -120,11 +120,13 @@ export class ProfileService {
       return {
         success: true,
         data: result,
-        message: `Found ${result.total} profiles`
+        message: `Found ${result.total} profiles`,
       };
     } catch (error: any) {
-      if(error instanceof ZodError) {
-        throw new BadRequestException(`Invalid query parameters: ${error.errors.map(e => e.message).join(', ')}`);
+      if (error instanceof ZodError) {
+        throw new BadRequestException(
+          `Invalid query parameters: ${error.errors.map(e => e.message).join(', ')}`,
+        );
       }
       this.logger.error(`Failed to find profiles: ${error.message}`, error.stack);
       throw this.handlePrismaError(error);

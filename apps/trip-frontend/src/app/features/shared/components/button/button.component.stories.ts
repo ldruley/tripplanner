@@ -52,7 +52,7 @@ export const Default: Story = {
     loading: false,
     fullWidth: false,
   },
-  render: (args) => ({
+  render: args => ({
     props: args,
     template: `<tp-button
       [variant]="variant"
@@ -72,7 +72,7 @@ export const Primary: Story = {
   args: {
     variant: 'primary',
   },
-  render: (args) => ({
+  render: args => ({
     props: args,
     template: `<tp-button [variant]="variant" (buttonClick)="buttonClick($event)">Primary Button</tp-button>`,
   }),
@@ -82,7 +82,7 @@ export const Secondary: Story = {
   args: {
     variant: 'secondary',
   },
-  render: (args) => ({
+  render: args => ({
     props: args,
     template: `<tp-button [variant]="variant" (buttonClick)="buttonClick($event)">Secondary Button</tp-button>`,
   }),
@@ -92,7 +92,7 @@ export const Outline: Story = {
   args: {
     variant: 'outline',
   },
-  render: (args) => ({
+  render: args => ({
     props: args,
     template: `<tp-button [variant]="variant" (buttonClick)="buttonClick($event)">Outline Button</tp-button>`,
   }),
@@ -102,7 +102,7 @@ export const Ghost: Story = {
   args: {
     variant: 'ghost',
   },
-  render: (args) => ({
+  render: args => ({
     props: args,
     template: `<tp-button [variant]="variant" (buttonClick)="buttonClick($event)">Ghost Button</tp-button>`,
   }),
@@ -112,7 +112,7 @@ export const Danger: Story = {
   args: {
     variant: 'danger',
   },
-  render: (args) => ({
+  render: args => ({
     props: args,
     template: `<tp-button [variant]="variant" (buttonClick)="buttonClick($event)">Danger Button</tp-button>`,
   }),
@@ -123,7 +123,7 @@ export const Small: Story = {
   args: {
     size: 'sm',
   },
-  render: (args) => ({
+  render: args => ({
     props: args,
     template: `<tp-button [size]="size" (buttonClick)="buttonClick($event)">Small Button</tp-button>`,
   }),
@@ -133,7 +133,7 @@ export const Medium: Story = {
   args: {
     size: 'md',
   },
-  render: (args) => ({
+  render: args => ({
     props: args,
     template: `<tp-button [size]="size" (buttonClick)="buttonClick($event)">Medium Button</tp-button>`,
   }),
@@ -143,7 +143,7 @@ export const Large: Story = {
   args: {
     size: 'lg',
   },
-  render: (args) => ({
+  render: args => ({
     props: args,
     template: `<tp-button [size]="size" (buttonClick)="buttonClick($event)">Large Button</tp-button>`,
   }),
@@ -154,7 +154,7 @@ export const Loading: Story = {
   args: {
     loading: true,
   },
-  render: (args) => ({
+  render: args => ({
     props: args,
     template: `<tp-button [loading]="loading" (buttonClick)="buttonClick($event)">Loading Button</tp-button>`,
   }),
@@ -164,7 +164,7 @@ export const Disabled: Story = {
   args: {
     disabled: true,
   },
-  render: (args) => ({
+  render: args => ({
     props: args,
     template: `<tp-button [disabled]="disabled" (buttonClick)="buttonClick($event)">Disabled Button</tp-button>`,
   }),
@@ -174,7 +174,7 @@ export const FullWidth: Story = {
   args: {
     fullWidth: true,
   },
-  render: (args) => ({
+  render: args => ({
     props: args,
     template: `<div style="width: 300px;"><tp-button [fullWidth]="fullWidth" (buttonClick)="buttonClick($event)">Full Width Button</tp-button></div>`,
   }),

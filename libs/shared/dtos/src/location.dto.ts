@@ -1,4 +1,4 @@
-import { createZodDto} from '@anatine/zod-nestjs';
+import { createZodDto } from '@anatine/zod-nestjs';
 
 import { LocationSchema } from '../../types/src/schemas/location.schema';
 

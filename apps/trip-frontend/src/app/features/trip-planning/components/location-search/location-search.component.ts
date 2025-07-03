@@ -12,9 +12,9 @@ import { SearchMode } from '../../../../../../../../libs/shared/types/src/schema
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './location-search.component.html',
-  styleUrls: ['./location-search.component.css']
+  styleUrls: ['./location-search.component.css'],
 })
-export class LocationSearchComponent implements OnDestroy{
+export class LocationSearchComponent implements OnDestroy {
   readonly locationSelected = output<Location>();
   searchQuery: WritableSignal<string> = signal('');
   searchResults: WritableSignal<Location[]> = signal([]);
@@ -27,25 +27,27 @@ export class LocationSearchComponent implements OnDestroy{
   private destroy$ = new Subject<void>();
 
   constructor(private locationSearchService: LocationSearchService) {
-    this.searchTrigger.pipe(
-      tap(() => {
-        this.isLoading.set(true);
-        this.searchResults.set([]);
-        this.hasAttemptedSearch.set(true);
-      }),
-      switchMap(query => {
-        return this.locationSearchService.searchLocations(query, this.searchMode()).pipe(
-          catchError(error => {
-            console.error(`Search by ${this.searchMode} failed:`, error);
-            return EMPTY;
-          })
-        );
-      }),
-      takeUntil(this.destroy$)
-    ).subscribe(results => {
-      this.searchResults.set(results);
-      this.isLoading.set(false);
-    });
+    this.searchTrigger
+      .pipe(
+        tap(() => {
+          this.isLoading.set(true);
+          this.searchResults.set([]);
+          this.hasAttemptedSearch.set(true);
+        }),
+        switchMap(query => {
+          return this.locationSearchService.searchLocations(query, this.searchMode()).pipe(
+            catchError(error => {
+              console.error(`Search by ${this.searchMode} failed:`, error);
+              return EMPTY;
+            }),
+          );
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(results => {
+        this.searchResults.set(results);
+        this.isLoading.set(false);
+      });
   }
 
   performSearch(): void {

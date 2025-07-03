@@ -11,7 +11,13 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-header',
-  imports: [CommonModule, ButtonComponent, AvatarComponent, ThemeToggleComponent, DropdownComponent],
+  imports: [
+    CommonModule,
+    ButtonComponent,
+    AvatarComponent,
+    ThemeToggleComponent,
+    DropdownComponent,
+  ],
   standalone: true,
   templateUrl: './header.component.html',
   styleUrl: './header.component.css',
@@ -33,24 +39,24 @@ export class HeaderComponent {
     {
       id: 'profile',
       label: 'Profile',
-      action: () => this.onProfile()
+      action: () => this.onProfile(),
     },
     {
       id: 'settings',
       label: 'Settings',
-      action: () => this.onSettings()
+      action: () => this.onSettings(),
     },
     {
       id: 'divider',
       label: '',
       divider: true,
-      action: () => {}
+      action: () => {},
     },
     {
       id: 'logout',
       label: 'Logout',
-      action: () => this.onSignOut()
-    }
+      action: () => this.onSignOut(),
+    },
   ];
 
   public readonly userAvatarUrl = computed(() => {

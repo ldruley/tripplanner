@@ -1,39 +1,51 @@
-<div class="bg-white dark:bg-tp-bg-secondary shadow-xl rounded-lg w-full max-w-lg border border-tp-border-light dark:border-tp-border">
+<div
+  class="bg-white dark:bg-tp-bg-secondary shadow-xl rounded-lg w-full max-w-lg border border-tp-border-light dark:border-tp-border"
+>
   <div class="p-8">
-    <h2 class="text-2xl font-bold text-center mb-6 text-tp-text-light-primary dark:text-tp-text-primary">Sign In</h2>
+    <h2
+      class="text-2xl font-bold text-center mb-6 text-tp-text-light-primary dark:text-tp-text-primary"
+    >
+      Sign In
+    </h2>
 
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
       <!-- Email Field -->
       <div class="w-full">
-        <label class="block text-sm font-medium text-tp-text-light-primary dark:text-tp-text-primary mb-1" for="email">
+        <label
+          class="block text-sm font-medium text-tp-text-light-primary dark:text-tp-text-primary mb-1"
+          for="email"
+        >
           Email
         </label>
-          <input
-            id="email"
-            type="email"
-            formControlName="email"
-            placeholder="Enter your email"
-            class="w-full px-3 py-2 bg-white dark:bg-tp-bg-tertiary border border-tp-border-light dark:border-tp-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-tp-orange focus:border-tp-orange text-tp-text-light-primary dark:text-tp-text-primary"
-            style="color-scheme: light dark;"
-            [class.border-red-500]="isFieldInvalid('email')"
-            [class.focus:ring-red-500]="isFieldInvalid('email')"
-            [class.focus:border-red-500]="isFieldInvalid('email')"
-            autocomplete="email"
-          />
-          @if (isFieldInvalid('email')) {
-            <p class="mt-1 text-sm text-red-600 dark:text-red-400">
-              @if (loginForm.get('email')?.errors?.['required']) {
-                Email is required
-              } @else if (loginForm.get('email')?.errors?.['email']) {
-                Please enter a valid email address
-              }
-            </p>
-          }
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="Enter your email"
+          class="w-full px-3 py-2 bg-white dark:bg-tp-bg-tertiary border border-tp-border-light dark:border-tp-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-tp-orange focus:border-tp-orange text-tp-text-light-primary dark:text-tp-text-primary"
+          style="color-scheme: light dark"
+          [class.border-red-500]="isFieldInvalid('email')"
+          [class.focus:ring-red-500]="isFieldInvalid('email')"
+          [class.focus:border-red-500]="isFieldInvalid('email')"
+          autocomplete="email"
+        />
+        @if (isFieldInvalid('email')) {
+          <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+            @if (loginForm.get('email')?.errors?.['required']) {
+              Email is required
+            } @else if (loginForm.get('email')?.errors?.['email']) {
+              Please enter a valid email address
+            }
+          </p>
+        }
       </div>
 
       <!-- Password Field -->
       <div class="w-full">
-        <label class="block text-sm font-medium text-tp-text-light-primary dark:text-tp-text-primary mb-1" for="password">
+        <label
+          class="block text-sm font-medium text-tp-text-light-primary dark:text-tp-text-primary mb-1"
+          for="password"
+        >
           Password
         </label>
         <div class="relative">
@@ -43,7 +55,7 @@
             formControlName="password"
             placeholder="Enter your password"
             class="w-full px-3 py-2 pr-12 border border-tp-border-light dark:border-tp-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-tp-orange focus:border-tp-orange bg-white dark:bg-tp-bg-tertiary text-tp-text-light-primary dark:text-tp-text-primary"
-            style="color-scheme: light dark;"
+            style="color-scheme: light dark"
             [class.border-red-500]="isFieldInvalid('password')"
             [class.focus:ring-red-500]="isFieldInvalid('password')"
             [class.focus:border-red-500]="isFieldInvalid('password')"
@@ -55,13 +67,38 @@
             (click)="togglePasswordVisibility()"
           >
             @if (showPasswordSignal()) {
-              <svg class="h-5 w-5 text-tp-text-light-tertiary dark:text-tp-text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+              <svg
+                class="h-5 w-5 text-tp-text-light-tertiary dark:text-tp-text-tertiary"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
+                />
               </svg>
             } @else {
-              <svg class="h-5 w-5 text-tp-text-light-tertiary dark:text-tp-text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              <svg
+                class="h-5 w-5 text-tp-text-light-tertiary dark:text-tp-text-tertiary"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
               </svg>
             }
           </button>
@@ -79,9 +116,22 @@
 
       <!-- Error Alert -->
       @if (error) {
-        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4 flex items-start">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400 dark:text-red-300 mt-0.5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <div
+          class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4 flex items-start"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-red-400 dark:text-red-300 mt-0.5 mr-3 flex-shrink-0"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <span class="text-sm text-red-700 dark:text-red-400">{{ error }}</span>
         </div>
@@ -98,9 +148,25 @@
         >
           @if (isLoading) {
             <div class="flex items-center justify-center">
-              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
               Signing in...
             </div>
@@ -112,7 +178,10 @@
 
       <!-- Forgot Password Link -->
       <div class="text-center">
-        <a routerLink="/auth/forgot" class="text-sm text-tp-orange hover:text-tp-orange/80 hover:underline">
+        <a
+          routerLink="/auth/forgot"
+          class="text-sm text-tp-orange hover:text-tp-orange/80 hover:underline"
+        >
           Forgot your password?
         </a>
       </div>
@@ -123,14 +192,22 @@
           <div class="w-full border-t border-tp-border-light dark:border-tp-border"></div>
         </div>
         <div class="relative flex justify-center text-sm">
-          <span class="px-2 bg-white dark:bg-tp-bg-secondary text-tp-text-light-secondary dark:text-tp-text-secondary">OR</span>
+          <span
+            class="px-2 bg-white dark:bg-tp-bg-secondary text-tp-text-light-secondary dark:text-tp-text-secondary"
+            >OR</span
+          >
         </div>
       </div>
 
       <!-- Sign Up Link -->
       <div class="text-center">
-        <span class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">Don't have an account? </span>
-        <a routerLink="/auth/register" class="text-sm text-tp-orange font-medium hover:text-tp-orange/80 hover:underline">
+        <span class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary"
+          >Don't have an account?
+        </span>
+        <a
+          routerLink="/auth/register"
+          class="text-sm text-tp-orange font-medium hover:text-tp-orange/80 hover:underline"
+        >
           Sign up
         </a>
       </div>
