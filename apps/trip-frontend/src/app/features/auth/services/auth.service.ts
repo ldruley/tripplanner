@@ -5,7 +5,7 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { jwtDecode } from 'jwt-decode';
 
-import { CreateUser, LoginUser, SafeUser, ChangePassword } from '@trip-planner/types';
+import { CreateUser, LoginUser, SafeUser, ChangePassword, VerifyEmail, ResendVerification } from '@trip-planner/types';
 
 import { environment } from '../../../../environments/environment';
 import { SettingsService } from '../../settings/services/settings.service';
@@ -155,9 +155,34 @@ export class AuthService {
       id: payload.sub,
       email: payload.email,
       role: payload.roles as SafeUser['role'],
+      emailVerified: true, // If user has a valid JWT, they must be verified
       createdAt: new Date(0), // Placeholder
       updatedAt: new Date(0), // Placeholder
     };
+  }
+
+  verifyEmail(token: string): Observable<{ success: boolean; error?: string }> {
+    const verifyData: VerifyEmail = { token };
+    return this.http.post<{ message: string }>(`${this.apiUrl}/verify-email`, verifyData)
+      .pipe(
+        map(() => ({ success: true })),
+        catchError((err: HttpErrorResponse) => {
+          const message = err.error?.message || 'Email verification failed';
+          return of({ success: false, error: message });
+        })
+      );
+  }
+
+  resendVerificationEmail(email: string): Observable<{ success: boolean; error?: string }> {
+    const resendData: ResendVerification = { email };
+    return this.http.post<{ message: string }>(`${this.apiUrl}/resend-verification`, resendData)
+      .pipe(
+        map(() => ({ success: true })),
+        catchError((err: HttpErrorResponse) => {
+          const message = err.error?.message || 'Failed to resend verification email';
+          return of({ success: false, error: message });
+        })
+      );
   }
 
   async resetPassword(email: string): Promise<{ success: boolean; error?: string }> {

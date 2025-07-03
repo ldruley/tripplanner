@@ -9,11 +9,22 @@ export const UserSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
   role: roleSchema,
+  emailVerified: z.boolean().default(false),
+  verificationToken: z.string().nullable().optional(),
+  verificationTokenExpiry: z.date().nullable().optional(),
+  resetToken: z.string().nullable().optional(),
+  resetTokenExpiry: z.date().nullable().optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
 
-export const SafeUserSchema = UserSchema.omit({ password: true });
+export const SafeUserSchema = UserSchema.omit({ 
+  password: true, 
+  verificationToken: true, 
+  verificationTokenExpiry: true, 
+  resetToken: true, 
+  resetTokenExpiry: true 
+});
 
 export const CreateUserSchema = UserSchema.pick({
   email: true,

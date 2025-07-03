@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -8,7 +8,7 @@ import { map } from 'rxjs/operators';
 @Component({
   selector: 'app-email-verified',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './email-verified.component.html',
   styleUrls: ['./email-verified.component.css']
 })
@@ -27,10 +27,10 @@ export class EmailVerifiedComponent implements OnInit, OnDestroy {
         if (state.loading) {
           return 'verifying';
         }
-        if (state.user && state.user.email_confirmed_at) {
+        if (state.user && state.user.emailVerified) {
           return 'success';
         }
-        if (state.user && !state.user.email_confirmed_at) {
+        if (state.user && !state.user.emailVerified) {
           // This case might happen if the user is logged in but email is not yet confirmed
           // Or if Supabase redirected but the event hasn't fully processed.
           // We might need a slight delay or rely on the user already being confirmed by the time they hit this page.
@@ -65,7 +65,7 @@ export class EmailVerifiedComponent implements OnInit, OnDestroy {
     // Check initial state immediately too, in case it's already resolved
 
     const initialAuthState = this.authService.getCurrentUser();
-    if (initialAuthState && initialAuthState.email_confirmed_at) {
+    if (initialAuthState && initialAuthState.emailVerified) {
       this.verificationStatus = 'success';
       this.isLoading = false;
     } else if (!initialAuthState && !this.authService.isCurrentlyLoading()) { // Changed this line

@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { AuthContainerComponent } from './containers/auth-container/auth-container.component';
+import { EmailVerificationContainerComponent } from './containers/email-verification-container/email-verification-container.component';
 import { authGuard } from '../../core/guards/auth.guard';
 
 export const AUTH_ROUTES: Routes = [
@@ -19,6 +20,10 @@ export const AUTH_ROUTES: Routes = [
   {
     path: 'forgot',
     component: AuthContainerComponent
+  },
+  {
+    path: 'verify-email',
+    component: EmailVerificationContainerComponent
   },
   {
     path: '',

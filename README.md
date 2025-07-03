@@ -35,7 +35,7 @@ Built with Nx monorepo for scalable development.
 ### External Services
 - **HERE Maps API** for geocoding and routing
 - **Mapbox API** for geocoding and routing
-- **Email Service** for user notifications
+- **Email Service (Mailgun)** for user notifications
 
 ## Getting Started
 
