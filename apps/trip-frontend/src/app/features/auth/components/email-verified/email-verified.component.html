@@ -1,6 +1,6 @@
 <div class="flex items-center justify-center min-h-screen bg-tp-bg-light dark:bg-tp-bg-primary">
   <div
-    class="bg-white dark:bg-tp-bg-secondary shadow-xl rounded-lg w-full max-w-lg p-8 border border-tp-border-light dark:border-tp-border"
+    class="bg-tp-bg-light-primary dark:bg-tp-bg-secondary shadow-xl rounded-lg w-full max-w-lg p-8 border border-tp-border-light dark:border-tp-border"
   >
     @if (isLoading || verificationStatus === 'verifying') {
       <div class="text-center">
@@ -55,12 +55,14 @@
         <p class="text-tp-text-light-secondary dark:text-tp-text-secondary mb-6">
           Your email address has been successfully verified.
         </p>
-        <button
-          (click)="navigateToDashboard()"
-          class="w-full bg-tp-orange text-white py-2 px-4 rounded-md font-medium hover:bg-tp-orange/90 focus:outline-none focus:ring-2 focus:ring-tp-orange focus:ring-offset-2 transition-colors"
+        <app-button
+          variant="primary"
+          size="md"
+          [fullWidth]="true"
+          (buttonClick)="navigateToDashboard()"
         >
           Continue to Dashboard
-        </button>
+        </app-button>
       </div>
     } @else if (verificationStatus === 'error') {
       <div class="text-center">
@@ -87,12 +89,14 @@
               'An error occurred during email verification. Please try again or contact support.'
           }}
         </p>
-        <button
-          (click)="navigateToLogin()"
-          class="w-full bg-tp-text-light-secondary dark:bg-tp-text-secondary text-white py-2 px-4 rounded-md font-medium hover:bg-tp-text-light-primary dark:hover:bg-tp-text-primary focus:outline-none focus:ring-2 focus:ring-tp-text-light-secondary dark:focus:ring-tp-text-secondary focus:ring-offset-2 transition-colors"
+        <app-button
+          variant="secondary"
+          size="md"
+          [fullWidth]="true"
+          (buttonClick)="navigateToLogin()"
         >
           Back to Login
-        </button>
+        </app-button>
       </div>
     }
   </div>

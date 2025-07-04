@@ -211,9 +211,14 @@
       </app-button>
 
       @if (hasChanges()) {
-        <button type="button" class="reset-btn" (click)="resetForm()" [disabled]="loading">
+        <app-button 
+          type="button" 
+          variant="ghost" 
+          (buttonClick)="resetForm()" 
+          [disabled]="loading"
+        >
           Reset Changes
-        </button>
+        </app-button>
       }
     </div>
   </form>

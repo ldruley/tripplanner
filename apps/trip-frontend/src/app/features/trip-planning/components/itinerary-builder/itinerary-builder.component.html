@@ -4,7 +4,7 @@
   [cdkDropListData]="itineraryStops()"
   [cdkDropListConnectedTo]="connectedDropLists()"
   (cdkDropListDropped)="onDrop($event)"
-  class="itinerary-list space-y-2 p-2 bg-tp-bg-light-secondary dark:bg-tp-bg-tertiary rounded-md min-h-[200px] border border-dashed border-tp-border-light dark:border-tp-border hover:border-tp-orange transition-colors"
+  class="itinerary-list space-y-2 p-2 bg-tp-bg-light-secondary dark:bg-tp-bg-tertiary rounded-md border border-dashed border-tp-border-light dark:border-tp-border hover:border-tp-orange transition-colors"
 >
   @for (stop of itineraryStops(); track stop.id; let i = $index; let isLast = $last) {
     <div cdkDrag [cdkDragData]="stop" class="draggable-stop-item-wrapper">
@@ -26,7 +26,7 @@
     </div>
   } @empty {
     <div
-      class="empty-list-message flex flex-col items-center justify-center text-tp-text-light-secondary dark:text-tp-text-secondary p-6 min-h-[150px]"
+      class="empty-list-message flex flex-col items-center justify-center text-tp-text-light-secondary dark:text-tp-text-secondary p-6 min-h-[280px]"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"

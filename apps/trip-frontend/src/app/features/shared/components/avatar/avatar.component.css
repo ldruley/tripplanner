@@ -1,7 +1,7 @@
 /* Base avatar styles */
 .avatar,
 .avatar-placeholder {
-  @apply relative rounded-full overflow-hidden flex items-center justify-center bg-gray-100;
+  @apply relative rounded-full overflow-hidden flex items-center justify-center bg-tp-bg-light-secondary;
   @apply dark:bg-tp-bg-tertiary;
   transition: all 0.2s ease;
 }
@@ -34,7 +34,7 @@
 
 /* Border styling */
 .avatar-border {
-  @apply border-4 border-white shadow-lg;
+  @apply border-4 border-tp-bg-light-primary shadow-lg;
   @apply dark:border-tp-bg-quaternary;
 }
 
@@ -61,7 +61,7 @@
 
 .avatar-clickable:focus,
 .avatar-placeholder.avatar-clickable:focus {
-  @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+  @apply outline-none ring-2 ring-tp-orange ring-offset-2;
 }
 
 .avatar-clickable:active,
@@ -87,7 +87,7 @@
 
 /* Loading spinner */
 .avatar-spinner {
-  @apply absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 rounded-full;
+  @apply absolute inset-0 flex items-center justify-center bg-tp-bg-light-primary bg-opacity-75 rounded-full;
 }
 
 /* Accessibility improvements */
@@ -115,6 +115,6 @@
   }
 
   .avatar-placeholder {
-    @apply bg-gray-200 border border-gray-800;
+    @apply bg-tp-bg-light-secondary border border-tp-border-light-strong;
   }
 }

@@ -4,12 +4,13 @@ import { RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { RegisterFormComponent } from '../../components/register-form/register-form.component';
+import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { AuthService, SignUpCredentials, AuthState } from '../../services/auth.service';
 
 @Component({
   selector: 'app-register-container',
   standalone: true,
-  imports: [CommonModule, RouterLink, RegisterFormComponent],
+  imports: [CommonModule, RouterLink, RegisterFormComponent, ButtonComponent],
   templateUrl: './register-container.component.html',
   styleUrl: './register-container.component.css',
 })

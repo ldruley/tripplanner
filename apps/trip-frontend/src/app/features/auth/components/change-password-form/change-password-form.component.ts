@@ -3,11 +3,12 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 
 import { buildChangePasswordForm } from '../../../../core/forms/form-factory';
 import { ChangePasswordCredentials } from '../../services/auth.service';
+import { ButtonComponent } from '../../../shared/components/button/button.component';
 
 @Component({
   selector: 'app-change-password-form',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, ButtonComponent],
   templateUrl: './change-password-form.component.html',
   styleUrl: './change-password-form.component.css',
 })

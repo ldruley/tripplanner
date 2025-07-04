@@ -3,13 +3,14 @@ import { Component, inject, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../auth/services/auth.service';
 import { ToastService } from '../../../shared/services';
+import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [],
+  imports: [ButtonComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
 })

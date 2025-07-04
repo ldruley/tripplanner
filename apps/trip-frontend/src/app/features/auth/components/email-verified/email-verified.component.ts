@@ -2,13 +2,14 @@ import { Component, OnInit, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-email-verified',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ButtonComponent],
   templateUrl: './email-verified.component.html',
   styleUrls: ['./email-verified.component.css'],
 })

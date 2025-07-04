@@ -44,32 +44,40 @@ module.exports = {
         'dark-text-muted': '#706f6e', // Claude's muted text
 
         tp: {
-          // Dark backgrounds
-          'bg-primary': '#191716', // Main dark background
+          // Dark backgrounds (elevation hierarchy)
+          'bg-primary': '#191716', // Main dark background (deepest)
           'bg-secondary': '#211f1e', // Slightly lighter panels
           'bg-tertiary': '#2c2a28', // Cards and elevated surfaces
-          'bg-quaternary': '#38352f', // Hover states
+          'bg-quaternary': '#38352f', // Hover states (lightest)
 
-          // Light backgrounds
-          'bg-light': '#faf9f8', // Main light background
-          'bg-light-secondary': '#f5f4f3', // Light panels
+          // Light backgrounds (inverse elevation hierarchy)
+          'bg-light-primary': '#faf9f8', // Main light background (lightest)
+          'bg-light-secondary': '#f5f4f3', // Slight depth
+          'bg-light-tertiary': '#ebe9e7', // Cards and panels
+          'bg-light-quaternary': '#e0ddd9', // Elevated/hover states (darkest)
 
-          // Text colors
-          'text-primary': '#ededec', // Primary text in dark
-          'text-secondary': '#9b9a99', // Secondary text in dark
-          'text-muted': '#706f6e', // Muted text in dark
-          'text-light-primary': '#2d3748', // Primary text in light
-          'text-light-secondary': '#4a5568', // Secondary text in light
+          // Text colors - Dark theme
+          'text-primary': '#ededec', // Primary text in dark (high contrast)
+          'text-secondary': '#9b9a99', // Secondary text in dark (medium emphasis)
+          'text-muted': '#706f6e', // Muted text in dark (low emphasis)
+
+          // Text colors - Light theme (systematic hierarchy)
+          'text-light-primary': '#1a1918', // Primary text in light (high contrast)
+          'text-light-secondary': '#403e3c', // Secondary text in light (medium emphasis)
+          'text-light-muted': '#6b6866', // Muted text in light (low emphasis)
 
           // Orange accent
           orange: '#cc785c', // Trip planner's signature orange
           'orange-hover': '#b8654a', // Darker orange for hover
           'orange-light': '#f7931e', // Lighter orange variant
 
-          // Borders
+          // Borders - Dark theme
           border: '#38352f', // Default border in dark
-          'border-light': '#e2e1df', // Default border in light
           'border-subtle': '#2c2a28', // Subtle borders in dark
+
+          // Borders - Light theme
+          'border-light': '#e0ddd9', // Default border in light (matches bg-light-quaternary)
+          'border-light-strong': '#d1ccc6', // More defined borders in light
         },
       },
       animation: {

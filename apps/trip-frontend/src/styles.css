@@ -4,9 +4,9 @@
 @import './components.css';
 /* Global dark mode styles */
 @layer base {
-  /* Light mode (default) */
+  /* Light mode (default) - using systematic light theme colors */
   html {
-    @apply bg-white text-text-main;
+    @apply bg-tp-bg-light-primary text-tp-text-light-primary;
   }
 
   body {
@@ -18,7 +18,7 @@
     @apply bg-tp-bg-primary text-tp-text-primary;
   }
 
-  /* Ensure smooth transitions */
+  /* Ensure smooth transitions for theme switching */
   * {
     transition-property: background-color, border-color, color, fill, stroke;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);

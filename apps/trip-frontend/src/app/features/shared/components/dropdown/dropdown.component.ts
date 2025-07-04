@@ -7,6 +7,7 @@ import {
   HostListener,
   OnDestroy,
 } from '@angular/core';
+import { ButtonComponent } from '../button/button.component';
 
 
 export interface DropdownItem {
@@ -20,7 +21,7 @@ export interface DropdownItem {
 
 @Component({
   selector: 'app-dropdown',
-  imports: [],
+  imports: [ButtonComponent],
   standalone: true,
   templateUrl: './dropdown.component.html',
   styleUrl: './dropdown.component.css',

@@ -6,6 +6,7 @@ import { CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { LocationSearchComponent } from '../location-search/location-search.component';
 import { LocationBankComponent } from '../location-bank/location-bank.component';
 import { ItineraryBuilderComponent } from '../itinerary-builder/itinerary-builder.component';
+import { ButtonComponent } from '../../../shared/components/button/button.component';
 
 import { Location } from '../../models/location.model';
 import { Trip } from '../../models/trip.model';
@@ -24,7 +25,8 @@ import { MatrixCalculationService } from '../../services/matrix-calculation.serv
     LocationSearchComponent,
     LocationBankComponent,
     ItineraryBuilderComponent,
-    CdkDropListGroup
+    CdkDropListGroup,
+    ButtonComponent
 ],
   templateUrl: './trip-editor.component.html',
   styleUrls: ['./trip-editor.component.css'],

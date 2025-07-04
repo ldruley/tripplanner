@@ -34,12 +34,14 @@
         >. Please check your inbox and click the verification link to activate your account.
       </p>
       <div class="space-y-3">
-        <button
-          (click)="resendVerification()"
-          class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
+        <app-button
+          variant="primary"
+          size="md"
+          [fullWidth]="true"
+          (buttonClick)="resendVerification()"
         >
           Resend Verification Email
-        </button>
+        </app-button>
         <a
           routerLink="/auth/login"
           class="block w-full text-center bg-white text-green-600 py-2 px-4 rounded-md border border-green-600 hover:bg-green-50 transition-colors"

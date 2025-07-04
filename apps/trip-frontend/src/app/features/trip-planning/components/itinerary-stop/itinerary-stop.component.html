@@ -1,6 +1,6 @@
 <div
   [class.stop-item]="true"
-  class="flex flex-col bg-white dark:bg-tp-bg-secondary border border-tp-border-light dark:border-tp-border rounded-lg shadow-sm hover:shadow-md transition-shadow"
+  class="flex flex-col bg-tp-bg-light-primary dark:bg-tp-bg-secondary border border-tp-border-light dark:border-tp-border rounded-lg shadow-sm hover:shadow-md transition-shadow"
 >
   <div class="stop-content p-3 flex items-center justify-between">
     <div class="flex items-center min-w-0">
@@ -35,20 +35,22 @@
       </div>
     </div>
     <div class="actions flex-shrink-0 ml-2">
-      <button
-        (click)="onEditClicked()"
+      <app-button
+        variant="ghost"
+        size="xs"
+        (buttonClick)="onEditClicked()"
         title="Edit details"
-        class="p-1 text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-tp-orange"
       >
         ✏️
-      </button>
-      <button
-        (click)="onRemoveClicked()"
+      </app-button>
+      <app-button
+        variant="ghost"
+        size="xs"
+        (buttonClick)="onRemoveClicked()"
         title="Remove stop"
-        class="p-1 text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-red-500 dark:hover:text-red-400"
       >
         🗑️
-      </button>
+      </app-button>
     </div>
   </div>
 

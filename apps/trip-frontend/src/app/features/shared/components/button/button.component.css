@@ -6,23 +6,23 @@
 
 /* Variants */
 .btn-primary {
-  @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+  @apply bg-tp-orange text-white border border-transparent hover:bg-tp-orange/90 focus:ring-tp-orange;
   @apply dark:bg-tp-orange dark:hover:bg-tp-orange-hover dark:focus:ring-tp-border;
 }
 
 .btn-secondary {
-  @apply bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500;
-  @apply dark:bg-gray-500 dark:hover:bg-gray-600 dark:focus:ring-gray-400;
+  @apply bg-tp-bg-light-secondary text-tp-text-light-primary border border-tp-border-light hover:bg-tp-bg-light-tertiary focus:ring-tp-orange;
+  @apply dark:bg-tp-bg-tertiary dark:text-tp-text-primary dark:border-tp-border dark:hover:bg-tp-bg-quaternary dark:focus:ring-tp-border;
 }
 
 .btn-outline {
-  @apply border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500;
-  @apply dark:border-tp-bg-quaternary dark:bg-tp-bg-tertiary dark:text-tp-text-secondary dark:hover:bg-tp-bg-quaternary dark:focus:shadow-tp-orange-hover;
+  @apply border border-tp-text-light-secondary/30 bg-tp-bg-light-primary text-tp-text-light-primary hover:bg-tp-bg-light-secondary focus:ring-tp-orange;
+  @apply dark:border-tp-text-secondary/30 dark:bg-tp-bg-tertiary dark:text-tp-text-secondary dark:hover:bg-tp-bg-quaternary dark:focus:ring-tp-border;
 }
 
 .btn-ghost {
-  @apply text-gray-700 hover:bg-gray-100 focus:ring-gray-500;
-  @apply dark:text-gray-200 dark:hover:bg-gray-800 dark:focus:ring-gray-400;
+  @apply text-tp-text-light-secondary hover:bg-tp-bg-light-secondary focus:ring-tp-orange;
+  @apply dark:text-tp-text-secondary dark:hover:bg-tp-bg-tertiary dark:focus:ring-tp-border;
 }
 
 .btn-danger {
@@ -31,6 +31,10 @@
 }
 
 /* Sizes */
+.btn-xs {
+  @apply px-1 py-1 text-xs;
+}
+
 .btn-sm {
   @apply px-3 py-1.5 text-sm;
 }

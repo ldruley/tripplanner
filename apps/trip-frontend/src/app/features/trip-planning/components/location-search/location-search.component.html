@@ -1,59 +1,45 @@
 <div
-  class="p-4 border rounded-md shadow-sm border-tp-border-light dark:border-tp-border bg-white dark:bg-tp-bg-secondary"
+  class="p-4 border rounded-md shadow-sm border-tp-border-light dark:border-tp-border bg-tp-bg-light-primary dark:bg-tp-bg-secondary"
   >
   <h3 class="text-lg font-semibold mb-2 text-tp-text-light-primary dark:text-tp-text-primary">
     Add Location
   </h3>
 
   <div class="flex items-center space-x-2 mb-3">
-    <button
-      (click)="setSearchMode('place')"
-      [class.bg-tp-orange]="searchMode() === 'place'"
-      [class.text-white]="searchMode() === 'place'"
-      [class.bg-tp-bg-light-secondary]="searchMode() !== 'place'"
-      [class.dark:bg-tp-bg-tertiary]="searchMode() !== 'place'"
-      [class.hover:bg-tp-bg-light-tertiary]="searchMode() !== 'place'"
-      [class.dark:hover:bg-tp-bg-secondary]="searchMode() !== 'place'"
-      class="px-4 py-1.5 text-sm font-medium rounded-md transition-colors text-tp-text-light-primary dark:text-tp-text-primary"
+    <app-button
+      [variant]="searchMode() === 'place' ? 'primary' : 'secondary'"
+      size="sm"
+      (buttonClick)="setSearchMode('place')"
       >
       By Place Name
-    </button>
-    <button
-      (click)="setSearchMode('address')"
-      [class.bg-tp-orange]="searchMode() === 'address'"
-      [class.text-white]="searchMode() === 'address'"
-      [class.bg-tp-bg-light-secondary]="searchMode() !== 'address'"
-      [class.dark:bg-tp-bg-tertiary]="searchMode() !== 'address'"
-      [class.hover:bg-tp-bg-light-tertiary]="searchMode() !== 'address'"
-      [class.dark:hover:bg-tp-bg-secondary]="searchMode() !== 'address'"
-      class="px-4 py-1.5 text-sm font-medium rounded-md transition-colors text-tp-text-light-primary dark:text-tp-text-primary"
+    </app-button>
+    <app-button
+      [variant]="searchMode() === 'address' ? 'primary' : 'secondary'"
+      size="sm"
+      (buttonClick)="setSearchMode('address')"
       >
       By Address
-    </button>
+    </app-button>
   </div>
 
   <div class="flex items-center space-x-2 mb-2">
     <input
       type="text"
       placeholder="Enter place or address..."
-      class="flex-grow px-3 py-2 border border-tp-border-light dark:border-tp-border rounded-md focus:outline-none focus:ring-2 focus:ring-tp-orange focus:border-transparent bg-white dark:bg-tp-bg-tertiary text-tp-text-light-primary dark:text-tp-text-primary"
+      class="flex-grow px-3 py-2 border border-tp-border-light dark:border-tp-border rounded-md focus:outline-none focus:ring-2 focus:ring-tp-orange focus:border-transparent bg-tp-bg-light-primary dark:bg-tp-bg-tertiary text-tp-text-light-primary dark:text-tp-text-primary"
       [ngModel]="searchQuery()"
       (ngModelChange)="searchQuery.set($event)"
       (keyup.enter)="performSearch()"
       [attr.aria-label]="searchMode() === 'place' ? 'Search by place name' : 'Search by address'"
       />
-    <button
-      (click)="performSearch()"
-      [disabled]="isLoading()"
-      class="px-4 py-2 bg-tp-orange text-white font-semibold rounded-md hover:bg-tp-orange/90 disabled:opacity-50 disabled:cursor-not-allowed"
+    <app-button
+      variant="primary"
+      size="md"
+      [loading]="isLoading()"
+      (buttonClick)="performSearch()"
       >
-      @if (!isLoading()) {
-        <span>Search</span>
-      }
-      @if (isLoading()) {
-        <span>Searching...</span>
-      }
-    </button>
+      {{ isLoading() ? 'Searching...' : 'Search' }}
+    </app-button>
   </div>
 
   @if (isLoading()) {
@@ -63,7 +49,7 @@
   }
   @if (!isLoading() && searchResults().length > 0) {
     <div
-      class="border rounded-md max-h-60 overflow-y-auto border-tp-border-light dark:border-tp-border bg-white dark:bg-tp-bg-tertiary"
+      class="border rounded-md max-h-60 overflow-y-auto border-tp-border-light dark:border-tp-border bg-tp-bg-light-primary dark:bg-tp-bg-tertiary"
       >
       <ul class="divide-y divide-tp-border-light dark:divide-tp-border">
         @for (location of searchResults(); track location.id) {

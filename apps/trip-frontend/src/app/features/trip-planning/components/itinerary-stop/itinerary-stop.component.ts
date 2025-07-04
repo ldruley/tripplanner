@@ -2,13 +2,14 @@ import { Component, input, output } from '@angular/core';
 
 import { Stop } from '../../models/stop.model';
 import { CdkDragHandle } from '@angular/cdk/drag-drop';
+import { ButtonComponent } from '../../../shared/components/button/button.component';
 
 // import { TravelSegmentData } from '../../models/matrix.model';
 
 @Component({
   selector: 'app-itinerary-stop',
   standalone: true,
-  imports: [CdkDragHandle],
+  imports: [CdkDragHandle, ButtonComponent],
   templateUrl: './itinerary-stop.component.html',
   styleUrls: ['./itinerary-stop.component.css'],
 })

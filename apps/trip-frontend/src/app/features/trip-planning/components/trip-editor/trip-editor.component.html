@@ -11,7 +11,7 @@
     <textarea
       aria-label="Trip Description"
       placeholder="Trip description (optional)"
-      class="mt-2 text-sm text-tp-text-light-secondary dark:text-tp-text-secondary border border-tp-border-light dark:border-tp-border rounded-md p-2 focus:border-tp-orange outline-none w-full bg-white dark:bg-tp-bg-secondary"
+      class="mt-2 text-sm text-tp-text-light-secondary dark:text-tp-text-secondary border border-tp-border-light dark:border-tp-border rounded-md p-2 focus:border-tp-orange outline-none w-full bg-tp-bg-light-primary dark:bg-tp-bg-secondary"
       [ngModel]="currentTripDescription()"
       (ngModelChange)="currentTripDescription.set($event)"
       rows="2"
@@ -20,10 +20,9 @@
   </header>
 
   <section
-    class="p-4 bg-white dark:bg-tp-bg-secondary shadow-lg rounded-lg mb-6 border border-tp-border-light dark:border-tp-border"
+    class="p-4 bg-tp-bg-light-primary dark:bg-tp-bg-secondary shadow-lg rounded-lg mb-6 border border-tp-border-light dark:border-tp-border"
   >
     <h2 class="text-xl font-semibold mb-4 text-tp-text-light-primary dark:text-tp-text-primary">
-      Add Locations
     </h2>
     <app-location-search (locationSelected)="onLocationSelectedFromSearch($event)">
     </app-location-search>
@@ -58,12 +57,13 @@
 
   @if (tripId()) {
     <footer class="mt-8 pt-4 border-t border-tp-border-light dark:border-tp-border">
-      <button
-        (click)="saveTrip()"
-        class="px-6 py-2 bg-green-500 dark:bg-tp-orange text-white font-semibold rounded-md hover:bg-green-600 dark:hover:bg-tp-orange/90 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+      <app-button
+        variant="primary"
+        size="md"
+        (buttonClick)="saveTrip()"
       >
         Save Trip
-      </button>
+      </app-button>
     </footer>
   }
 </div>

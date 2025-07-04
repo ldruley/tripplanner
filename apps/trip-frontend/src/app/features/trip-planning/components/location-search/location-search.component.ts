@@ -3,6 +3,7 @@ import { Component, output, signal, WritableSignal, OnDestroy } from '@angular/c
 import { FormsModule } from '@angular/forms';
 import { LocationSearchService } from '../../services/location-search.service';
 import { Location } from '../../models/location.model';
+import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { EMPTY, of, Subject } from 'rxjs';
 import { catchError, switchMap, tap, takeUntil } from 'rxjs/operators';
 import { SearchMode } from '../../../../../../../../libs/shared/types/src/schemas/search.schema';
@@ -10,7 +11,7 @@ import { SearchMode } from '../../../../../../../../libs/shared/types/src/schema
 @Component({
   selector: 'app-location-search',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, ButtonComponent],
   templateUrl: './location-search.component.html',
   styleUrls: ['./location-search.component.css'],
 })

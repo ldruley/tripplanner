@@ -11,11 +11,11 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-tp-text-light-secondary dark:bg-tp-bg-quaternary rounded-full;
+    @apply bg-tp-border-light dark:bg-tp-bg-quaternary rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-tp-text-light-primary dark:bg-tp-text-muted;
+    @apply bg-tp-border-light-strong dark:bg-tp-text-muted;
   }
 
   /* Override browser autofill styling to maintain design system colors */
@@ -23,16 +23,16 @@
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,
   input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 30px white inset !important;
-    -webkit-text-fill-color: theme('colors.tp-text-light-primary') !important;
+    -webkit-box-shadow: 0 0 0 30px theme('colors.tp.bg-light-tertiary') inset !important;
+    -webkit-text-fill-color: theme('colors.tp.text-light-primary') !important;
   }
 
   .dark input:-webkit-autofill,
   .dark input:-webkit-autofill:hover,
   .dark input:-webkit-autofill:focus,
   .dark input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 30px theme('colors.tp-bg-tertiary') inset !important;
-    -webkit-text-fill-color: theme('colors.tp-text-primary') !important;
+    -webkit-box-shadow: 0 0 0 30px theme('colors.tp.bg-tertiary') inset !important;
+    -webkit-text-fill-color: theme('colors.tp.text-primary') !important;
   }
 }
 
@@ -209,15 +209,15 @@
 
   .border-gradient {
     background:
-      linear-gradient(white, white) padding-box,
-      linear-gradient(135deg, #cc785c, #f7931e) border-box;
+      linear-gradient(theme('colors.tp.bg-light-primary'), theme('colors.tp.bg-light-primary')) padding-box,
+      linear-gradient(135deg, theme('colors.tp.orange'), theme('colors.tp.orange-light')) border-box;
     border: 2px solid transparent;
   }
 
   .dark .border-gradient {
     background:
-      linear-gradient(#211f1e, #211f1e) padding-box,
-      linear-gradient(135deg, #cc785c, #f7931e) border-box;
+      linear-gradient(theme('colors.tp.bg-secondary'), theme('colors.tp.bg-secondary')) padding-box,
+      linear-gradient(135deg, theme('colors.tp.orange'), theme('colors.tp.orange-light')) border-box;
     border: 2px solid transparent;
   }
 
@@ -226,6 +226,6 @@
   }
 
   .backdrop-glass {
-    @apply backdrop-blur-md bg-white/80 dark:bg-tp-bg-primary/80 border border-tp-border-light/50 dark:border-tp-border/50;
+    @apply backdrop-blur-md bg-tp-bg-light-primary/80 dark:bg-tp-bg-primary/80 border border-tp-border-light/50 dark:border-tp-border/50;
   }
 }

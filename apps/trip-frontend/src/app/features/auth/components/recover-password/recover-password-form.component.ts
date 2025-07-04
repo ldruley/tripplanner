@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 
 import { RouterLink } from '@angular/router';
 import { buildForgotPasswordForm } from '../../../../core/forms/form-factory';
+import { ButtonComponent } from '../../../shared/components/button/button.component';
 
 export interface RecoverPasswordCredentials {
   email: string;
@@ -11,7 +12,7 @@ export interface RecoverPasswordCredentials {
 @Component({
   selector: 'app-recover-password-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, ButtonComponent],
   templateUrl: './recover-password-form.component.html',
   styleUrls: ['./recover-password-form.component.css'],
 })

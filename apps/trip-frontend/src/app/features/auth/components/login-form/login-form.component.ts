@@ -4,11 +4,12 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { LoginUser } from '@trip-planner/types';
 import { buildLoginForm } from '../../../../core/forms/form-factory';
+import { ButtonComponent } from '../../../shared/components/button/button.component';
 
 @Component({
   selector: 'app-login-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, ButtonComponent],
   templateUrl: './login-form.component.html',
   styleUrl: './login-form.component.css',
 })

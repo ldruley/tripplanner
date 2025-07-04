@@ -1,5 +1,5 @@
 <div
-  class="p-4 border rounded-lg shadow-sm bg-tp-bg-light-secondary dark:bg-tp-bg-tertiary border-tp-border-light dark:border-tp-border"
+  class="p-4 min-h-[300px] border rounded-lg shadow-sm bg-tp-bg-light-secondary dark:bg-tp-bg-tertiary border-tp-border-light dark:border-tp-border"
 >
   <h3 class="text-lg font-semibold mb-3 text-tp-text-light-primary dark:text-tp-text-primary">
     Location Bank
@@ -8,7 +8,7 @@
     <div
       cdkDropList
       id="bank-list"
-      class="space-y-2 min-h-[100px] p-2 border border-dashed border-tp-border-light dark:border-tp-border rounded-md bg-white dark:bg-tp-bg-secondary"
+      class="space-y-2 min-h-[100px] p-2 border border-dashed border-tp-border-light dark:border-tp-border rounded-md bg-tp-bg-light-primary dark:bg-tp-bg-secondary"
       [cdkDropListData]="bankedLocations()"
     >
       @for (location of bankedLocations(); track location.id) {
@@ -16,7 +16,7 @@
           cdkDrag
           [cdkDragData]="location"
           (cdkDragStarted)="onDragStarted($event)"
-          class="p-3 bg-white dark:bg-tp-bg-secondary border border-tp-border-light dark:border-tp-border rounded-md shadow-sm cursor-grab hover:shadow-md transition-shadow cdk-drag"
+          class="p-3 bg-tp-bg-light-primary dark:bg-tp-bg-secondary border border-tp-border-light dark:border-tp-border rounded-md shadow-sm cursor-grab hover:shadow-md transition-shadow cdk-drag"
           [style.opacity]="'0.8'"
           [style.transform]="'scale(1.02)'"
         >
@@ -37,7 +37,7 @@
       }
     </div>
   } @else {
-    <div class="text-center text-tp-text-light-secondary dark:text-tp-text-secondary py-4">
+    <div class="text-center text-tp-text-light-secondary dark:text-tp-text-secondary py-4 min-h-[224px] flex flex-col items-center justify-center border border-dashed border-tp-border-light dark:border-tp-border rounded-md bg-tp-bg-light-primary dark:bg-tp-bg-secondary">
       <p>Your location bank is empty.</p>
       <p class="text-sm">Add locations using the search above.</p>
     </div>

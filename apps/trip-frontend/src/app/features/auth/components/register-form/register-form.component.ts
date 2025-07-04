@@ -4,11 +4,12 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CreateUser } from '@trip-planner/types';
 import { buildRegisterForm } from '../../../../core/forms/form-factory';
+import { ButtonComponent } from '../../../shared/components/button/button.component';
 
 @Component({
   selector: 'app-register-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, ButtonComponent],
   templateUrl: './register-form.component.html',
   styleUrl: './register-form.component.css',
 })
