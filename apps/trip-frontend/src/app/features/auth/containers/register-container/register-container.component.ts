@@ -23,13 +23,18 @@ export class RegisterContainerComponent {
   registrationSuccess = false;
   registeredEmail = '';
 
-  public async handleRegister(credentials: SignUpCredentials): Promise<void> {
-    const result = await this.authService.signUp(credentials);
-
-    if (result.success) {
-      this.registrationSuccess = true;
-      this.registeredEmail = credentials.email;
-    }
+  public handleRegister(credentials: SignUpCredentials): void {
+    this.authService.signUp(credentials).subscribe({
+      next: result => {
+        if (result.success) {
+          this.registrationSuccess = true;
+          this.registeredEmail = credentials.email;
+        }
+      },
+      error: error => {
+        console.error('Registration error:', error);
+      }
+    });
   }
 
   resendVerification(): void {
