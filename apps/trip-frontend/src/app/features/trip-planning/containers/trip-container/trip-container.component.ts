@@ -56,23 +56,22 @@ export class TripContainerComponent implements OnInit {
   handleTripSave(updatedTrip: Trip): void {
     console.log('TripContainer: Trip saved/updated by editor:', updatedTrip);
     this.isLoading.set(true);
-    const loadingToastId = this.toastService.showLoading(
+    const loadingKey = 'trip-save-loading';
+    this.toastService.showLoading(
       'Saving trip',
       'Please wait while we save your trip...',
+      loadingKey
     );
 
     // TODO: Later, call TripService to save the trip to the backend
     // this.tripService.saveTrip(updatedTrip).subscribe(savedTrip => {
     //   this.trip.set(savedTrip);
     //   this.isLoading.set(false);
-    //   this.toastService.updateToast(loadingToastId, {
-    //     severity: 'success',
-    //     summary: 'Trip saved!',
-    //     detail: 'Your trip has been successfully saved.',
-    //     sticky: false,
-    //     closable: true,
-    //     life: 3000
-    //   });
+    //   this.toastService.clear(loadingKey);
+    //   this.toastService.showSuccess(
+    //     'Trip saved!',
+    //     'Your trip has been successfully saved.'
+    //   );
     // });
 
     // Placeholder simulation
@@ -80,14 +79,11 @@ export class TripContainerComponent implements OnInit {
       this.trip.set(updatedTrip); // Optimistically update
       this.isLoading.set(false);
       console.log('TripContainer: Mock save complete.');
-      this.toastService.updateToast(loadingToastId, {
-        severity: 'success',
-        summary: 'Trip saved!',
-        detail: `"${updatedTrip.name}" has been successfully saved.`,
-        sticky: false,
-        closable: true,
-        life: 3000,
-      });
+      this.toastService.clear(loadingKey);
+      this.toastService.showSuccess(
+        'Trip saved!',
+        `"${updatedTrip.name}" has been successfully saved.`
+      );
     }, 500);
   }
 }

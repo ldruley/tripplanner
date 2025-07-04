@@ -81,21 +81,20 @@ export class DashboardComponent implements OnInit {
   }
 
   public testLoadingToast(): void {
-    const toastId = this.toastService.showLoading(
+    const loadingKey = 'loading-test';
+    this.toastService.showLoading(
       'Loading...',
       'Please wait while we process your request.',
+      loadingKey
     );
 
     // Simulate async operation
     setTimeout(() => {
-      this.toastService.updateToast(toastId, {
-        severity: 'success',
-        summary: 'Complete!',
-        detail: 'Your request has been processed successfully.',
-        sticky: false,
-        closable: true,
-        life: 3000,
-      });
+      this.toastService.clear(loadingKey);
+      this.toastService.showSuccess(
+        'Complete!',
+        'Your request has been processed successfully.'
+      );
     }, 2000);
   }
 
