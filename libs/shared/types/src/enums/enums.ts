@@ -49,3 +49,8 @@ export enum DistanceUnit {
   'MILES',
   'KILOMETERS',
 }
+
+export enum StopType {
+  'PITSTOP',
+  'OVERNIGHT',
+}

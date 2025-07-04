@@ -63,22 +63,24 @@ model Profile {
 }
 
 model Location {
-  id          String             @id @default(cuid()) @map("location_id")
-  name        String             @db.Text
-  description String?            @db.Text
-  address     String?            @db.Text
-  city        String?
-  state       String?
-  country     String?
-  postalCode  String?            @map("postal_code")
-  latitude    Float
-  longitude   Float
-  apiSource   ApiSourceProvider? @map("api_source")
-  category    LocationCategory?
-  // Prisma doesn't support geography types directly, so
+  id            String             @id @default(cuid()) @map("location_id")
+  name          String             @db.Text
+  description   String?            @db.Text
+  address       String?            @db.Text
+  city          String?
+  state         String?
+  country       String?
+  postalCode    String?            @map("postal_code")
+  latitude      Float
+  longitude     Float
+  apiSource     ApiSourceProvider? @map("api_source") // Provider source
+  apiSourceId   String?            @map("api_source_id") // Provider-specific ID
+  category      LocationCategory?
+  public        Boolean            @default(false) // Flag for marking locations as public/shared
+  // Prisma doesn't support geography types directly
   //geom        Unsupported("geography(Point, 4326)")? @map("geom")
-  createdAt   DateTime           @default(now()) @map("created_at")
-  updatedAt   DateTime           @updatedAt @map("updated_at")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
 
   // Relations
   stops             Stop[]
@@ -86,6 +88,8 @@ model Location {
   favoriteLocations UserFavoriteLocation[]
 
   //@@index([geom], type: Gist, map: "location_geom_idx") // Spatial index
+  @@index([apiSource, apiSourceId], name: "idx_location_api_source")
+  @@index([latitude, longitude], name: "idx_location_coordinates")
   @@map("locations")
 }
 
@@ -166,8 +170,6 @@ model Stop {
 
   segmentAsOrigin      TravelSegment? @relation("SegmentOriginStop")
   segmentAsDestination TravelSegment? @relation("SegmentDestinationStop")
-  travelSegmentId      String?
-  TravelSegment        TravelSegment? @relation(fields: [travelSegmentId], references: [id])
 
   @@index([tripId, order], name: "idx_stop_trip_order") // For fetching ordered itinerary
   @@index([locationId], name: "idx_stop_location")
@@ -196,10 +198,9 @@ model TravelSegment {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  trip            Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  originStop      Stop   @relation("SegmentOriginStop", fields: [originStopId], references: [id], onDelete: Cascade)
-  destinationStop Stop   @relation("SegmentDestinationStop", fields: [destinationStopId], references: [id], onDelete: Cascade)
-  Stop            Stop[]
+  trip            Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  originStop      Stop @relation("SegmentOriginStop", fields: [originStopId], references: [id], onDelete: Cascade)
+  destinationStop Stop @relation("SegmentDestinationStop", fields: [destinationStopId], references: [id], onDelete: Cascade)
 
   @@index([tripId], name: "idx_travelsegment_trip")
   @@map("travel_segments")
