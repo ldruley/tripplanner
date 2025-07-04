@@ -1,9 +1,10 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { z } from 'zod';
 import { buildSettingsForm } from '../../../core/forms/form-factory';
 import { SettingsFormComponent } from '../components/settings-form.component';
 import { SettingsService } from '../services/settings.service';
+import { ToastService } from '../../shared/services';
 import { UpdateUserSettingsSchema } from '@trip-planner/types';
 
 @Component({
@@ -16,19 +17,18 @@ import { UpdateUserSettingsSchema } from '@trip-planner/types';
 export class SettingsContainerComponent {
   private readonly fb = inject(FormBuilder);
   private readonly settingsService = inject(SettingsService);
+  private readonly toastService = inject(ToastService);
 
   public readonly form = buildSettingsForm(this.fb);
-  public readonly toastMessage = signal<string | null>(null);
 
   // Get service state
   private readonly serviceState = this.settingsService.state$;
 
-  // Enhanced view model that includes form and toast
+  // Enhanced view model that includes form
   readonly vm = computed(() => ({
     loading: this.serviceState().loading,
     error: this.serviceState().error,
     settings: this.serviceState().settings,
-    toastMessage: this.toastMessage(),
     form: this.form,
   }));
 
@@ -66,15 +66,14 @@ export class SettingsContainerComponent {
     }
 
     this.settingsService.updateSettings(result.data);
-    this.showToast('Settings saved!');
+    this.toastService.showSuccess(
+      'Settings saved!',
+      'Your preferences have been successfully updated.',
+    );
   }
 
   onCancel(): void {
     this.load();
-  }
-
-  clearToast(): void {
-    this.toastMessage.set(null);
   }
 
   private mapZodErrorsToForm(error: z.ZodError): void {
@@ -85,14 +84,5 @@ export class SettingsContainerComponent {
         control.setErrors({ zod: fieldErrors[key][0] });
       }
     }
-  }
-
-  private showToast(message: string): void {
-    this.toastMessage.set(message);
-
-    // Auto-hide toast after 3 seconds
-    setTimeout(() => {
-      this.toastMessage.set(null);
-    }, 3000);
   }
 }

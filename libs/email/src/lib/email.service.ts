@@ -11,14 +11,12 @@ import {
   PasswordResetEmailVariables,
   EmailVerificationVariables,
 } from '@trip-planner/types';
-import { buildCacheKey } from '@trip-planner/utils';
 
 @Injectable()
 export class EmailService implements OnModuleInit, OnModuleDestroy {
   private emailQueue!: Queue;
   private queueEvents?: QueueEvents;
 
-  private readonly CACHE_TTL = 24 * 60 * 60; // 24 hours for email delivery status
   private readonly logger = new Logger(EmailService.name);
   private readonly QUEUE_NAME = 'email-queue';
 
@@ -63,13 +61,6 @@ export class EmailService implements OnModuleInit, OnModuleDestroy {
       maxAttempts: 3,
     };
 
-    // Create a unique cache key for this email
-    const cacheKey = buildCacheKey(
-      'email:sent',
-      [emailData.to, emailData.subject, Date.now().toString()],
-      true,
-    );
-
     const jobOptions: { priority: number; delay?: number } = {
       priority,
     };
@@ -82,16 +73,11 @@ export class EmailService implements OnModuleInit, OnModuleDestroy {
 
     // For now, return immediately with queued status
     // In production, you might want to wait for completion for critical emails
-    const response: EmailResponse = {
+    return {
       id: job.id?.toString() || 'unknown',
       status: 'queued',
       message: 'Email queued for delivery',
     };
-
-    // Cache the initial response
-    await this.redisService.set(cacheKey, response, this.CACHE_TTL);
-
-    return response;
   }
 
   async sendWelcomeEmail(

@@ -7,6 +7,7 @@ export * from './profile.schema';
 export * from './search.schema';
 export * from './settings.schema';
 export * from './stop.schema';
+export * from './toast.schema';
 export * from './trip.schema';
 export * from './user.schema';
 export * from './timezone.schema';

@@ -16,9 +16,9 @@ import FormData from 'form-data';
 export class EmailWorker implements OnModuleInit {
   private worker!: Worker;
   private mailgun!: ReturnType<typeof Mailgun.prototype.client>;
-  private domain!: string;
-  private from!: string;
-  private testEmail?: string;
+  private readonly domain!: string;
+  private readonly from!: string;
+  private readonly testEmail?: string;
   private readonly QUEUE_NAME = 'email-queue';
   private readonly logger = new Logger(EmailWorker.name);
 

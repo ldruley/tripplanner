@@ -1,12 +1,13 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
 import { ProfileService } from '../../services/profile.service';
 import { ProfileDisplayComponent } from '../../components/profile-display/profile-display.component';
 import { ProfileEditComponent } from '../../components/profile-edit/profile-edit.component';
-import { ButtonComponent } from '../../../shared/components/button/button.component';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { ButtonComponent } from '../../../shared/components';
+import { LoadingSpinnerComponent } from '../../../shared/components';
+import { ToastService } from '../../../shared/services';
 
 import { UpdateProfile } from '@trip-planner/types';
 
@@ -26,10 +27,9 @@ import { UpdateProfile } from '@trip-planner/types';
 export class ProfileContainerComponent {
   private readonly profileService = inject(ProfileService);
   private readonly router = inject(Router);
+  private readonly toastService = inject(ToastService);
 
   public readonly state = this.profileService.state$;
-
-  public readonly toastMessage = signal<string | null>(null);
 
   handleEditRequested(): void {
     this.profileService.setEditMode(true);
@@ -41,7 +41,10 @@ export class ProfileContainerComponent {
 
   handleSaveRequested(updateData: UpdateProfile): void {
     this.profileService.updateProfile(updateData);
-    this.showToast('Profile updated successfully!');
+    this.toastService.showSuccess(
+      'Profile updated!',
+      'Your profile has been successfully updated.',
+    );
   }
 
   handleRefresh(): void {
@@ -58,14 +61,5 @@ export class ProfileContainerComponent {
     this.router.navigate(['/dashboard']).catch(err => {
       console.error('Navigation failed:', err);
     });
-  }
-
-  private showToast(message: string): void {
-    this.toastMessage.set(message);
-
-    // Auto-hide toast after 3 seconds
-    setTimeout(() => {
-      this.toastMessage.set(null);
-    }, 3000);
   }
 }

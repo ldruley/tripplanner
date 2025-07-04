@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../../shared/services';
 
 @Component({
   selector: 'app-email-verification-container',
@@ -122,6 +123,7 @@ export class EmailVerificationContainerComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly toastService = inject(ToastService);
 
   isVerifying = true;
   verificationStatus: 'success' | 'error' | 'verifying' = 'verifying';
@@ -145,15 +147,21 @@ export class EmailVerificationContainerComponent implements OnInit {
         this.isVerifying = false;
         if (result.success) {
           this.verificationStatus = 'success';
+          this.toastService.showSuccess(
+            'Email verified!',
+            'Your email has been successfully verified.',
+          );
         } else {
           this.verificationStatus = 'error';
           this.errorMessage = result.error || 'Email verification failed';
+          this.toastService.showError('Verification failed', this.errorMessage);
         }
       },
       error: error => {
         this.isVerifying = false;
         this.verificationStatus = 'error';
         this.errorMessage = 'An unexpected error occurred during verification';
+        this.toastService.showError('Verification error', this.errorMessage);
       },
     });
   }
@@ -177,17 +185,19 @@ export class EmailVerificationContainerComponent implements OnInit {
         this.isResending = false;
         if (result.success) {
           this.showResendForm = false;
-          this.verificationStatus = 'success';
-          this.errorMessage = null;
-          // Show success message for resend
-          this.errorMessage = 'Verification email sent successfully. Please check your inbox.';
+          this.toastService.showSuccess(
+            'Email sent!',
+            'Verification email sent successfully. Please check your inbox.',
+          );
         } else {
           this.errorMessage = result.error || 'Failed to send verification email';
+          this.toastService.showError('Send failed', this.errorMessage);
         }
       },
       error: error => {
         this.isResending = false;
         this.errorMessage = 'An error occurred while sending the verification email';
+        this.toastService.showError('Send error', this.errorMessage);
       },
     });
   }

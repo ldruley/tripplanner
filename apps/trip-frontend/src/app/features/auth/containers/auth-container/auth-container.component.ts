@@ -11,11 +11,7 @@ import { LoginFormComponent } from '../../components/login-form/login-form.compo
 import { RegisterFormComponent } from '../../components/register-form/register-form.component';
 import { RecoverPasswordFormComponent } from '../../components/recover-password/recover-password-form.component';
 import { ChangePasswordFormComponent } from '../../components/change-password-form/change-password-form.component';
-
-interface ToastMessage {
-  type: 'success' | 'error';
-  message: string;
-}
+import { ToastService } from '../../../shared/services';
 
 type AuthFormType = 'login' | 'register' | 'recover' | 'change-password';
 
@@ -36,10 +32,10 @@ export class AuthContainerComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly toastService = inject(ToastService);
 
   // --- State Signals ---
   private readonly authState = toSignal(this.authService.authState$);
-  public readonly toastMessage = signal<ToastMessage | null>(null);
 
   // --- Computed Signals for the View ---
   public readonly isLoading = computed(() => this.authState()?.loading ?? false);
@@ -68,36 +64,42 @@ export class AuthContainerComponent {
     const result = await firstValueFrom(this.authService.signUp(credentials));
 
     if (result.success) {
-      this.showToast('success', 'Registration successful! Please sign in to continue.');
+      this.toastService.showSuccess('Registration successful!', 'Please sign in to continue.');
       this.router.navigate(['/auth/login']);
     } else if (result.error) {
-      this.showToast('error', result.error);
+      this.toastService.showError('Registration failed', result.error);
     }
   }
 
   public async handleLogin(credentials: LoginUser): Promise<void> {
     const result = await firstValueFrom(this.authService.signIn(credentials));
     if (!result.success && result.error) {
-      this.showToast('error', result.error);
+      this.toastService.showError('Login failed', result.error);
     }
   }
 
   public async handleRecoverPassword(email: string): Promise<void> {
     const result = await this.authService.resetPassword(email);
     if (result.success) {
-      this.showToast('success', 'Password recovery email sent! Please check your inbox.');
+      this.toastService.showSuccess(
+        'Recovery email sent!',
+        'Please check your inbox for password reset instructions.',
+      );
     } else if (result.error) {
-      this.showToast('error', result.error);
+      this.toastService.showError('Password recovery failed', result.error);
     }
   }
 
   public async handleChangePassword(credentials: ChangePassword): Promise<void> {
     const result = await this.authService.updatePassword(credentials);
     if (result.success) {
-      this.showToast('success', 'Password updated successfully!');
+      this.toastService.showSuccess(
+        'Password updated!',
+        'Your password has been successfully updated.',
+      );
       setTimeout(() => this.router.navigate(['/profile']), 2000);
     } else if (result.error) {
-      this.showToast('error', result.error);
+      this.toastService.showError('Password update failed', result.error);
     }
   }
 
@@ -105,23 +107,5 @@ export class AuthContainerComponent {
     this.router.navigate(['/profile']).catch(err => {
       console.error('Navigation to profile failed:', err);
     });
-  }
-
-  private showToast(type: 'success' | 'error', message: string): void {
-    this.toastMessage.set({ type, message });
-    setTimeout(() => this.toastMessage.set(null), 5000);
-  }
-
-  public dismissToast(): void {
-    this.toastMessage.set(null);
-  }
-
-  public getToastClasses(type: 'success' | 'error'): string {
-    const baseClasses = 'flex items-center justify-between p-4 rounded-lg shadow-lg border';
-    if (type === 'success') {
-      return `${baseClasses} bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-400`;
-    } else {
-      return `${baseClasses} bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-400`;
-    }
   }
 }
