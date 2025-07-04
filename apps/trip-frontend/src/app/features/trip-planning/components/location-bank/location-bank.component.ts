@@ -1,12 +1,12 @@
 import { Component, effect, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { CdkDrag, CdkDragStart, CdkDropList } from '@angular/cdk/drag-drop';
 import { Location } from '../../models/location.model';
 
 @Component({
   selector: 'app-location-bank',
   standalone: true,
-  imports: [CommonModule, CdkDrag, CdkDropList],
+  imports: [CdkDrag, CdkDropList],
   templateUrl: './location-bank.component.html',
   styleUrl: './location-bank.component.css',
 })

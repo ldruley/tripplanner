@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { UpdateProfile } from '@trip-planner/types';
@@ -8,7 +8,7 @@ import { UserProfile } from '../../types/profile.types';
 @Component({
   selector: 'app-profile-edit',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ButtonComponent],
+  imports: [ReactiveFormsModule, ButtonComponent],
   templateUrl: './profile-edit.component.html',
   styleUrl: './profile-edit.component.css',
 })

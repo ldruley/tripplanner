@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 
 import { ProfileService } from '../../services/profile.service';
@@ -15,12 +15,11 @@ import { UpdateProfile } from '@trip-planner/types';
   selector: 'app-profile-container',
   standalone: true,
   imports: [
-    CommonModule,
     ProfileDisplayComponent,
     ProfileEditComponent,
     ButtonComponent,
-    LoadingSpinnerComponent,
-  ],
+    LoadingSpinnerComponent
+],
   templateUrl: './profile-container.component.html',
   styleUrl: './profile-container.component.css',
 })

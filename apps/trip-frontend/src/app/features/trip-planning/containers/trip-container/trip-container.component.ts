@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal, WritableSignal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { TripEditorComponent } from '../../components/trip-editor/trip-editor.component';
 import { ActivatedRoute } from '@angular/router';
 import { ToastService } from '../../../shared/services';
@@ -8,7 +8,7 @@ import { Trip } from '../../models/trip.model';
 @Component({
   selector: 'app-trip-container',
   standalone: true,
-  imports: [CommonModule, TripEditorComponent],
+  imports: [TripEditorComponent],
   templateUrl: './trip-container.component.html',
   styleUrl: './trip-container.component.css',
 })

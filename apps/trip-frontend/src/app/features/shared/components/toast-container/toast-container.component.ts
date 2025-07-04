@@ -9,18 +9,19 @@ import { ToastComponent } from '../toast/toast.component';
   standalone: true,
   imports: [CommonModule, ToastComponent],
   template: `
-    <div 
+    <div
       class="toast-container"
       [ngClass]="getContainerClasses()"
       [style.z-index]="getZIndex()"
-    >
-      <app-toast
-        *ngFor="let toast of toasts(); trackBy: trackByToastId"
-        [toast]="toast"
-        (closeToast)="onCloseToast($event)"
-      ></app-toast>
+      >
+      @for (toast of toasts(); track trackByToastId($index, toast)) {
+        <app-toast
+          [toast]="toast"
+          (closeToast)="onCloseToast($event)"
+        ></app-toast>
+      }
     </div>
-  `,
+    `,
   styles: [`
     .toast-container {
       @apply fixed pointer-events-none;

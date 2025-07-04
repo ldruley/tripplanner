@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Location } from '../../models/location.model';
 import { Stop } from '../../models/stop.model';
@@ -14,7 +14,7 @@ export type MatrixData = Map<string, TravelSegmentData>;
 @Component({
   selector: 'app-itinerary-builder',
   standalone: true,
-  imports: [CommonModule, CdkDrag, CdkDropList, ItineraryStopComponent],
+  imports: [CdkDrag, CdkDropList, ItineraryStopComponent],
   templateUrl: './itinerary-builder.component.html',
   styleUrl: './itinerary-builder.component.css',
 })

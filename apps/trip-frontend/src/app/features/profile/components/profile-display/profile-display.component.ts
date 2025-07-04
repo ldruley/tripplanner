@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { UserProfile } from '../../types/profile.types';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
@@ -7,7 +7,7 @@ import { AvatarComponent } from '../../../shared/components/avatar/avatar.compon
 @Component({
   selector: 'app-profile-display',
   standalone: true,
-  imports: [CommonModule, ButtonComponent, AvatarComponent],
+  imports: [ButtonComponent, AvatarComponent],
   templateUrl: './profile-display.component.html',
   styleUrl: './profile-display.component.css',
 })

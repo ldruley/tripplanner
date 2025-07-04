@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { toSignal } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -19,12 +19,11 @@ type AuthFormType = 'login' | 'register' | 'recover' | 'change-password';
   selector: 'app-auth-container',
   standalone: true,
   imports: [
-    CommonModule,
     LoginFormComponent,
     RegisterFormComponent,
     ChangePasswordFormComponent,
-    RecoverPasswordFormComponent,
-  ],
+    RecoverPasswordFormComponent
+],
   templateUrl: './auth-container.component.html',
   styleUrls: ['./auth-container.component.css'],
 })

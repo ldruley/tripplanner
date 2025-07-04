@@ -1,12 +1,12 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 @Component({
   selector: 'app-avatar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './avatar.component.html',
   styleUrl: './avatar.component.css',
 })

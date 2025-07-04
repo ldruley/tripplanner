@@ -7,7 +7,7 @@ import {
   HostListener,
   OnDestroy,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 export interface DropdownItem {
   id: string;
@@ -20,7 +20,7 @@ export interface DropdownItem {
 
 @Component({
   selector: 'app-dropdown',
-  imports: [CommonModule],
+  imports: [],
   standalone: true,
   templateUrl: './dropdown.component.html',
   styleUrl: './dropdown.component.css',

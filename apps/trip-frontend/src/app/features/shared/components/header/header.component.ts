@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { ButtonComponent } from '../button/button.component';
 import { AuthService } from '../../../auth/services/auth.service';
@@ -12,12 +12,11 @@ import { toSignal } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'app-header',
   imports: [
-    CommonModule,
     ButtonComponent,
     AvatarComponent,
     ThemeToggleComponent,
-    DropdownComponent,
-  ],
+    DropdownComponent
+],
   standalone: true,
   templateUrl: './header.component.html',
   styleUrl: './header.component.css',

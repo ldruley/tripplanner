@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -9,7 +9,7 @@ export type ButtonSize = 'sm' | 'md' | 'lg';
   templateUrl: './button.component.html',
   styleUrls: ['./button.component.css'],
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
 })
 export class ButtonComponent {
   @Input() variant: ButtonVariant = 'primary';

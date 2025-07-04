@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+
 import { buildChangePasswordForm } from '../../../../core/forms/form-factory';
 import { ChangePasswordCredentials } from '../../services/auth.service';
 
 @Component({
   selector: 'app-change-password-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './change-password-form.component.html',
   styleUrl: './change-password-form.component.css',
 })

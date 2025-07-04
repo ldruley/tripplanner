@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 import { CreateUser } from '@trip-planner/types';
 import { buildRegisterForm } from '../../../../core/forms/form-factory';
@@ -8,7 +8,7 @@ import { buildRegisterForm } from '../../../../core/forms/form-factory';
 @Component({
   selector: 'app-register-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './register-form.component.html',
   styleUrl: './register-form.component.css',
 })

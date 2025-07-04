@@ -1,5 +1,5 @@
 import { Component, input, output, signal, WritableSignal, effect, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { CdkDropListGroup } from '@angular/cdk/drag-drop';
 
@@ -20,13 +20,12 @@ import { MatrixCalculationService } from '../../services/matrix-calculation.serv
   selector: 'app-trip-editor',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     LocationSearchComponent,
     LocationBankComponent,
     ItineraryBuilderComponent,
-    CdkDropListGroup,
-  ],
+    CdkDropListGroup
+],
   templateUrl: './trip-editor.component.html',
   styleUrls: ['./trip-editor.component.css'],
 })

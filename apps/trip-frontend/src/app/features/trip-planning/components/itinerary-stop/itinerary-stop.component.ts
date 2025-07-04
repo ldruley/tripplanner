@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Stop } from '../../models/stop.model';
 import { CdkDragHandle } from '@angular/cdk/drag-drop';
 
@@ -8,7 +8,7 @@ import { CdkDragHandle } from '@angular/cdk/drag-drop';
 @Component({
   selector: 'app-itinerary-stop',
   standalone: true,
-  imports: [CommonModule, CdkDragHandle],
+  imports: [CdkDragHandle],
   templateUrl: './itinerary-stop.component.html',
   styleUrls: ['./itinerary-stop.component.css'],
 })

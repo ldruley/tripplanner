@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 import { LoginUser } from '@trip-planner/types';
 import { buildLoginForm } from '../../../../core/forms/form-factory';
@@ -8,7 +8,7 @@ import { buildLoginForm } from '../../../../core/forms/form-factory';
 @Component({
   selector: 'app-login-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login-form.component.html',
   styleUrl: './login-form.component.css',
 })

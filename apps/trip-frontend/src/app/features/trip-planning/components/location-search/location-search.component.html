@@ -1,6 +1,6 @@
 <div
   class="p-4 border rounded-md shadow-sm border-tp-border-light dark:border-tp-border bg-white dark:bg-tp-bg-secondary"
->
+  >
   <h3 class="text-lg font-semibold mb-2 text-tp-text-light-primary dark:text-tp-text-primary">
     Add Location
   </h3>
@@ -15,7 +15,7 @@
       [class.hover:bg-tp-bg-light-tertiary]="searchMode() !== 'place'"
       [class.dark:hover:bg-tp-bg-secondary]="searchMode() !== 'place'"
       class="px-4 py-1.5 text-sm font-medium rounded-md transition-colors text-tp-text-light-primary dark:text-tp-text-primary"
-    >
+      >
       By Place Name
     </button>
     <button
@@ -27,7 +27,7 @@
       [class.hover:bg-tp-bg-light-tertiary]="searchMode() !== 'address'"
       [class.dark:hover:bg-tp-bg-secondary]="searchMode() !== 'address'"
       class="px-4 py-1.5 text-sm font-medium rounded-md transition-colors text-tp-text-light-primary dark:text-tp-text-primary"
-    >
+      >
       By Address
     </button>
   </div>
@@ -41,14 +41,18 @@
       (ngModelChange)="searchQuery.set($event)"
       (keyup.enter)="performSearch()"
       [attr.aria-label]="searchMode() === 'place' ? 'Search by place name' : 'Search by address'"
-    />
+      />
     <button
       (click)="performSearch()"
       [disabled]="isLoading()"
       class="px-4 py-2 bg-tp-orange text-white font-semibold rounded-md hover:bg-tp-orange/90 disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      <span *ngIf="!isLoading()">Search</span>
-      <span *ngIf="isLoading()">Searching...</span>
+      >
+      @if (!isLoading()) {
+        <span>Search</span>
+      }
+      @if (isLoading()) {
+        <span>Searching...</span>
+      }
     </button>
   </div>
 
@@ -60,7 +64,7 @@
   @if (!isLoading() && searchResults().length > 0) {
     <div
       class="border rounded-md max-h-60 overflow-y-auto border-tp-border-light dark:border-tp-border bg-white dark:bg-tp-bg-tertiary"
-    >
+      >
       <ul class="divide-y divide-tp-border-light dark:divide-tp-border">
         @for (location of searchResults(); track location.id) {
           <li
@@ -70,7 +74,7 @@
             tabindex="0"
             (keydown.enter)="selectLocation(location)"
             (keydown.space)="selectLocation(location)"
-          >
+            >
             <div class="font-medium text-tp-text-light-primary dark:text-tp-text-primary">
               {{ location.name }}
             </div>
@@ -93,7 +97,7 @@
     hasAttemptedSearch() &&
     searchQuery().trim().length > 0 &&
     !searchResults().length
-  ) {
+    ) {
     <div class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">
       No results found for "{{ searchQuery() }}".
     </div>

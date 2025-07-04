@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { AuthService } from '../../../auth/services/auth.service';
 import { ToastService } from '../../../shared/services';
@@ -9,7 +9,7 @@ import { map } from 'rxjs/operators';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
 })
