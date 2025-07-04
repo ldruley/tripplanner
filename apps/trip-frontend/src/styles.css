@@ -1,6 +1,10 @@
+/* PrimeIcons CSS */
+@import 'primeicons/primeicons.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 @import './components.css';
 /* Global dark mode styles */
 @layer base {

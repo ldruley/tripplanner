@@ -9,21 +9,22 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid()) @map("user_id")
-  email     String   @unique
-  password  String   @db.Text
-  role      UserRole
-  emailVerified Boolean @default(false) @map("email_verified")
-  verificationToken String? @map("verification_token")
+  id                      String    @id @default(uuid()) @map("user_id")
+  email                   String    @unique
+  password                String    @db.Text
+  role                    UserRole
+  emailVerified           Boolean   @default(false) @map("email_verified")
+  verificationToken       String?   @map("verification_token")
   verificationTokenExpiry DateTime? @map("verification_token_expiry")
-  resetToken String? @map("reset_token")
-  resetTokenExpiry DateTime? @map("reset_token_expiry")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  resetToken              String?   @map("reset_token")
+  resetTokenExpiry        DateTime? @map("reset_token_expiry")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  profile  Profile?
-  settings UserSettings?
+  profile           Profile?
+  settings          UserSettings?
+  favoriteLocations UserFavoriteLocation[]
 
   @@map("users")
 }
@@ -80,11 +81,29 @@ model Location {
   updatedAt   DateTime           @updatedAt @map("updated_at")
 
   // Relations
-  stops          Stop[]
-  bankedForTrips TripBankedLocation[]
+  stops             Stop[]
+  bankedForTrips    TripBankedLocation[]
+  favoriteLocations UserFavoriteLocation[]
 
   //@@index([geom], type: Gist, map: "location_geom_idx") // Spatial index
   @@map("locations")
+}
+
+model UserFavoriteLocation {
+  id         String   @id @default(cuid()) @map("user_favorite_location_id")
+  userId     String   @map("user_id")
+  locationId String   @map("location_id")
+  alias      String?  @db.Text // User's custom name for the location
+  tags       String[] // Array of user-defined tags
+  notes      String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, locationId], name: "idx_user_favorite_unique")
+  @@index([userId], name: "idx_user_favorite_user")
+  @@map("user_favorite_locations")
 }
 
 model Trip {
@@ -132,9 +151,10 @@ model Stop {
 
   // Stop-specific details
   plannedArrivalTime      DateTime? @map("planned_arrival_time")
-  plannedDepartureTime    DateTime? @map("planned_departure_time")
+  plannedDuration         Int?      @map("planned_duration") // Duration in minutes
   calculatedArrivalTime   DateTime? @map("calculated_arrival_time")
   calculatedDepartureTime DateTime? @map("calculated_departure_time")
+  stopType                StopType? @map("stop_type") // Type of stop (e.g., PITSTOP, OVERNIGHT)
   notes                   String?   @db.Text
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -169,6 +189,7 @@ model TravelSegment {
   apiCalculatedDistance Float?  @map("api_calculated_distance")
   apiCalculatedDuration Int?    @map("api_calculated_duration")
   polyline              String? @db.Text
+  routeOptions          Json?   @map("route_options") // JSON for API route options
   notes                 String? @db.Text
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -234,4 +255,9 @@ enum LocationCategory {
 enum DistanceUnit {
   MILES
   KILOMETERS
+}
+
+enum StopType {
+  PITSTOP
+  OVERNIGHT
 }
