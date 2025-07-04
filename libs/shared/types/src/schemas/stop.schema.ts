@@ -1,19 +1,27 @@
-// Draft version of the stop schema, to be updated when we finalize backend specs
-
 import { z } from 'zod';
 import { LocationSchema } from './location.schema';
 import { uuidSchema } from './base.schema';
-// Main schema
+
 export const StopSchema = z.object({
   id: uuidSchema,
   tripId: uuidSchema,
+  locationId: uuidSchema,
   order: z.number().int().min(0),
-  arrivalTime: z.coerce.date().nullable().optional(),
-  departureTime: z.coerce.date().nullable().optional(),
-  createdAt: z.coerce.date().nullable().optional(),
-  updatedAt: z.coerce.date().nullable().optional(),
-  locationDetails: LocationSchema,
-  locationId: z.string().uuid(),
+  
+  // Timing fields to match Prisma
+  plannedArrivalTime: z.coerce.date().nullable().optional(),
+  plannedDuration: z.number().int().nullable().optional(), // minutes - user controlled
+  calculatedArrivalTime: z.coerce.date().nullable().optional(),
+  calculatedDepartureTime: z.coerce.date().nullable().optional(),
+  
+  stopType: z.enum(['PITSTOP', 'OVERNIGHT']).nullable().optional(),
+  notes: z.string().nullable().optional(),
+  
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+  
+  // Relations
+  location: LocationSchema.optional(),
 });
 
 export type Stop = z.infer<typeof StopSchema>;
