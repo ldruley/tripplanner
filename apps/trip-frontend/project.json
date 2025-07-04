@@ -103,55 +103,6 @@
         "staticFilePath": "dist/apps/trip-frontend/browser",
         "spa": true
       }
-    },
-    "storybook": {
-      "executor": "@storybook/angular:start-storybook",
-      "options": {
-        "port": 4400,
-        "configDir": "apps/trip-frontend/.storybook",
-        "browserTarget": "trip-frontend:build",
-        "compodoc": false
-      },
-      "configurations": {
-        "ci": {
-          "quiet": true
-        }
-      }
-    },
-    "build-storybook": {
-      "executor": "@storybook/angular:build-storybook",
-      "outputs": ["{options.outputDir}"],
-      "options": {
-        "outputDir": "dist/storybook/trip-frontend",
-        "configDir": "apps/trip-frontend/.storybook",
-        "browserTarget": "trip-frontend:build",
-        "compodoc": false
-      },
-      "configurations": {
-        "ci": {
-          "quiet": true
-        }
-      }
-    },
-    "test-storybook": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "test-storybook -c apps/trip-frontend/.storybook --url=http://localhost:4400"
-      }
-    },
-    "static-storybook": {
-      "executor": "@nx/web:file-server",
-      "dependsOn": ["build-storybook"],
-      "options": {
-        "buildTarget": "trip-frontend:build-storybook",
-        "staticFilePath": "dist/storybook/trip-frontend",
-        "spa": true
-      },
-      "configurations": {
-        "ci": {
-          "buildTarget": "trip-frontend:build-storybook:ci"
-        }
-      }
     }
   }
 }
