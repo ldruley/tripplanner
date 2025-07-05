@@ -8,3 +8,4 @@ export * from './search.dto';
 export * from './matrix.dto';
 export * from './geocoding.dto';
 export * from './timezone.dto';
+export * from './routing.dto';

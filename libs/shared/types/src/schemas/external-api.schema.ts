@@ -69,3 +69,84 @@ export type MapboxGeocodeApiResponse = {
 export type GenericApiResponse = {
   [key: string]: unknown;
 };
+
+// HERE Routing API v8 Response Types
+export type HereRoutingV8Summary = {
+  length: number; // meters
+  duration: number; // seconds
+  baseDuration?: number; // seconds
+  [key: string]: unknown;
+};
+
+export type HereRoutingV8Place = {
+  type: string;
+  location: {
+    lat: number;
+    lng: number;
+  };
+  originalLocation: {
+    lat: number;
+    lng: number;
+  };
+  [key: string]: unknown;
+};
+
+export type HereRoutingV8Section = {
+  id: string;
+  type: string;
+  departure: {
+    time: string;
+    place: HereRoutingV8Place;
+  };
+  arrival: {
+    time: string;
+    place: HereRoutingV8Place;
+  };
+  summary: HereRoutingV8Summary;
+  polyline: string;
+  transport: {
+    mode: string;
+  };
+  [key: string]: unknown;
+};
+
+export type HereRoutingV8Route = {
+  id: string;
+  sections: HereRoutingV8Section[];
+  [key: string]: unknown;
+};
+
+export type HereRoutingApiResponse = {
+  routes: HereRoutingV8Route[];
+  [key: string]: unknown;
+};
+
+// Mapbox Routing API Response Types
+export type MapboxRoutingWaypoint = {
+  location: [number, number]; // [longitude, latitude]
+  name?: string;
+  [key: string]: unknown;
+};
+
+export type MapboxRoutingLeg = {
+  distance: number; // meters
+  duration: number; // seconds
+  summary?: string;
+  [key: string]: unknown;
+};
+
+export type MapboxRoutingRoute = {
+  distance: number; // meters
+  duration: number; // seconds
+  geometry: string; // polyline
+  legs: MapboxRoutingLeg[];
+  waypoint_order?: number[];
+  [key: string]: unknown;
+};
+
+export type MapboxRoutingApiResponse = {
+  routes: MapboxRoutingRoute[];
+  waypoints: MapboxRoutingWaypoint[];
+  code: string;
+  [key: string]: unknown;
+};

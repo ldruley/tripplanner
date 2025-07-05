@@ -29,6 +29,7 @@
       "@trip-planner/prisma": ["libs/shared/prisma/src/index.ts"],
       "@trip-planner/quota": ["libs/quota/src/index.ts"],
       "@trip-planner/redis": ["libs/redis/src/index.ts"],
+      "@trip-planner/routing": ["libs/routing/src/index.ts"],
       "@trip-planner/shared/dtos": ["libs/shared/dtos/src/index.ts"],
       "@trip-planner/stop": ["libs/stop/src/index.ts"],
       "@trip-planner/test-utils": ["libs/shared/test-utils/src/index.ts"],

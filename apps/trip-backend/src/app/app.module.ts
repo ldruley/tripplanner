@@ -13,6 +13,7 @@ import { BullMQModule } from '@trip-planner/bullmq';
 import { TimezoneModule } from '@trip-planner/timezone';
 import { GeocodingModule } from '@trip-planner/geocoding';
 import { EmailModule } from '@trip-planner/email';
+import { RoutingModule } from '@trip-planner/routing';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { EmailModule } from '@trip-planner/email';
     TimezoneModule,
     UserSettingsModule,
     EmailModule,
+    RoutingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
