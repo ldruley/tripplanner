@@ -13,3 +13,4 @@ export * from './user.schema';
 export * from './timezone.schema';
 export * from './external-api.schema';
 export * from './travel-segment.schema';
+export * from './timeline.schema';

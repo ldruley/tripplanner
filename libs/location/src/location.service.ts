@@ -1,10 +1,15 @@
 import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
-import { Location } from '@trip-planner/types';
-import { LocationRepository } from './location.repository';
 import {
   CreateLocationRequest,
-  UpdateLocationRequest,
+  CreateLocationRequestSchema,
+  Location,
   LocationSearchCriteria,
+  LocationSearchCriteriaSchema,
+  UpdateLocationRequest,
+  UpdateLocationRequestSchema,
+} from '@trip-planner/types';
+import { LocationRepository } from './location.repository';
+import {
   LocationDeduplicationOptions,
   LocationDuplicateCheck,
   DEFAULT_DEDUPLICATION_OPTIONS,
@@ -18,8 +23,16 @@ export class LocationService {
 
   /**
    * Create a new location with deduplication
+   * @param data - Location data to create
+   * @param options - LocationDeduplicationOptions
+   * @return Promise<Location>
    */
-  async create(data: CreateLocationRequest, options: LocationDeduplicationOptions = {}): Promise<Location> {
+  async create(
+    data: CreateLocationRequest,
+    options: LocationDeduplicationOptions = {},
+  ): Promise<Location> {
+    CreateLocationRequestSchema.parse(data);
+
     const deduplicationOptions = { ...DEFAULT_DEDUPLICATION_OPTIONS, ...options };
 
     // Check for duplicates
@@ -35,8 +48,15 @@ export class LocationService {
 
   /**
    * Create or update location (upsert with deduplication)
+   * @param data - Location data to create or update
+   * @param options - LocationDeduplicationOptions
+   * @return Promise<Location>
    */
-  async upsert(data: CreateLocationRequest, options: LocationDeduplicationOptions = {}): Promise<Location> {
+  async upsert(
+    data: CreateLocationRequest,
+    options: LocationDeduplicationOptions = {},
+  ): Promise<Location> {
+    CreateLocationRequestSchema.parse(data);
     const deduplicationOptions = { ...DEFAULT_DEDUPLICATION_OPTIONS, ...options };
 
     // Check for duplicates
@@ -91,6 +111,8 @@ export class LocationService {
 
   /**
    * Find location by ID
+   * @param id - Location ID
+   * @return Promise<Location>
    */
   async findById(id: string): Promise<Location> {
     const location = await this.locationRepository.findById(id);
@@ -104,22 +126,33 @@ export class LocationService {
 
   /**
    * Search locations by criteria
+   * @param criteria - LocationSearchCriteria
+   * @return Promise<Location[]>
    */
   async search(criteria: LocationSearchCriteria): Promise<Location[]> {
+    LocationSearchCriteriaSchema.parse(criteria);
     return await this.locationRepository.search(criteria);
   }
 
   /**
    * Find locations near coordinates
+   * @param latitude - Latitude of the center point
+   * @param longitude - Longitude of the center point
+   * @param radiusMeters - Search radius in meters (default: 1000)
+   * @return Promise<Location[]>
    */
   async findNearby(latitude: number, longitude: number, radiusMeters = 1000): Promise<Location[]> {
     return await this.locationRepository.findByCoordinates(latitude, longitude, radiusMeters);
   }
 
   /**
-   * Update location
+   * Update location by ID
+   * @param id - Location ID
+   * @param data - Update data
+   * @return Updated Location
    */
   async update(id: string, data: UpdateLocationRequest): Promise<Location> {
+    UpdateLocationRequestSchema.parse(data);
     // Verify location exists
     await this.findById(id);
 
@@ -127,7 +160,9 @@ export class LocationService {
   }
 
   /**
-   * Delete location
+   * Delete location by ID
+   * @param id - Location ID
+   * @return Promise<void>
    */
   async delete(id: string): Promise<void> {
     // Verify location exists
@@ -138,6 +173,7 @@ export class LocationService {
 
   /**
    * Get all locations
+   * @return Promise<Location[]>
    */
   async findAll(): Promise<Location[]> {
     return await this.locationRepository.findAll();
@@ -147,16 +183,19 @@ export class LocationService {
    * Check for duplicate locations using simplified strategy - in the future this can be extended
    * 1. Exact coordinates match
    * 2. API source + API source ID match
+   * @param data - Location data to check
+   * @param options - LocationDuplicationOptions
+   * @return Promise<LocationDuplicateCheck>
    */
   private async checkForDuplicates(
     data: CreateLocationRequest,
-    options: LocationDeduplicationOptions
+    options: LocationDeduplicationOptions,
   ): Promise<LocationDuplicateCheck> {
     // 1. Check by exact coordinates (highest priority)
     if (options.enableExactCoordinateMatching) {
       const exactCoordinateLocations = await this.locationRepository.findByExactCoordinates(
         data.latitude,
-        data.longitude
+        data.longitude,
       );
 
       if (exactCoordinateLocations.length > 0) {
@@ -172,7 +211,7 @@ export class LocationService {
     if (options.enableApiSourceMatching && data.apiSource && data.apiSourceId) {
       const apiSourceLocations = await this.locationRepository.findByApiSourceId(
         data.apiSource,
-        data.apiSourceId
+        data.apiSourceId,
       );
 
       if (apiSourceLocations.length > 0) {
@@ -191,10 +230,13 @@ export class LocationService {
 
   /**
    * Get duplicate analysis for a location without creating it
+   * @param data - Location data to analyze
+   * @param options - LocationDeduplicationOptions
+   * @return Promise<LocationDuplicateCheck>
    */
   async analyzeDuplicates(
     data: CreateLocationRequest,
-    options: LocationDeduplicationOptions = {}
+    options: LocationDeduplicationOptions = {},
   ): Promise<LocationDuplicateCheck> {
     const deduplicationOptions = { ...DEFAULT_DEDUPLICATION_OPTIONS, ...options };
     return await this.checkForDuplicates(data, deduplicationOptions);

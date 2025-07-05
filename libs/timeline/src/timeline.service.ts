@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { Stop, TravelSegment } from '@trip-planner/types';
 import {
+  Stop,
+  TravelSegment,
   TimelineCalculationRequest,
   TimelineCalculationResult,
-  DEFAULT_DURATIONS,
-} from './timeline.types';
+  TimelineCalculationRequestSchema,
+} from '@trip-planner/types';
+import { DEFAULT_DURATIONS } from './timeline.types';
 
 @Injectable()
 export class TimelineService {
@@ -13,6 +15,7 @@ export class TimelineService {
    * Respects user-defined durations absolutely
    */
   calculateSequentialTimeline(request: TimelineCalculationRequest): TimelineCalculationResult {
+    TimelineCalculationRequestSchema.parse(request);
     const { stops, segments, startTime } = request;
 
     if (!stops || stops.length === 0) {

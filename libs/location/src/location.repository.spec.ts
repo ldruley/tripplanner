@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LocationRepository } from './location.repository';
 import { PrismaService } from '@trip-planner/prisma';
-import { CreateLocationRequest, LocationSearchCriteria } from './location.types';
+import { CreateLocationRequest, LocationSearchCriteria } from '@trip-planner/types';
 
 describe('LocationRepository', () => {
   let repository: LocationRepository;
@@ -17,7 +17,7 @@ describe('LocationRepository', () => {
     country: 'Test Country',
     postalCode: '12345',
     latitude: 40.7128,
-    longitude: -74.0060,
+    longitude: -74.006,
     apiSource: 'USER_INPUT',
     category: 'RESTAURANT',
     public: false,
@@ -62,7 +62,7 @@ describe('LocationRepository', () => {
       const createRequest: CreateLocationRequest = {
         name: 'New Location',
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
         address: '123 New St',
         city: 'New York',
       };
@@ -116,7 +116,7 @@ describe('LocationRepository', () => {
   describe('findByCoordinates', () => {
     it('should find locations within coordinate bounds', async () => {
       const latitude = 40.7128;
-      const longitude = -74.0060;
+      const longitude = -74.006;
       const radius = 1000;
 
       // Mock location within radius
@@ -136,14 +136,14 @@ describe('LocationRepository', () => {
 
     it('should filter out locations outside radius using Haversine formula', async () => {
       const latitude = 40.7128;
-      const longitude = -74.0060;
+      const longitude = -74.006;
       const radius = 100; // 100 meters
 
       // Mock location far away (should be filtered out)
       const farLocation = {
         ...mockPrismaLocation,
         latitude: 40.8128, // ~11km away
-        longitude: -74.0060,
+        longitude: -74.006,
       };
 
       mockPrismaService.location.findMany.mockResolvedValue([farLocation]);
@@ -236,7 +236,7 @@ describe('LocationRepository', () => {
       const criteria: LocationSearchCriteria = {
         coordinates: {
           latitude: 40.7128,
-          longitude: -74.0060,
+          longitude: -74.006,
           radius: 1000,
         },
       };
@@ -308,14 +308,12 @@ describe('LocationRepository', () => {
     it('should calculate distance between coordinates using Haversine formula', () => {
       // Test the private method through public method that uses it
       const lat1 = 40.7128; // NYC
-      const lng1 = -74.0060;
+      const lng1 = -74.006;
       const lat2 = 40.7589; // Times Square
       const lng2 = -73.9851;
 
       // Create mock locations to test filtering
-      const locations = [
-        { ...mockPrismaLocation, latitude: lat2, longitude: lng2 },
-      ];
+      const locations = [{ ...mockPrismaLocation, latitude: lat2, longitude: lng2 }];
 
       mockPrismaService.location.findMany.mockResolvedValue(locations);
 

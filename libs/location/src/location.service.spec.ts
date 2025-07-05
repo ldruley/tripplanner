@@ -3,8 +3,8 @@ import { NotFoundException } from '@nestjs/common';
 import { LocationService } from './location.service';
 import { LocationRepository } from './location.repository';
 import { Location } from '@trip-planner/types';
-import { CreateLocationRequest, LocationDeduplicationOptions } from './location.types';
-import { ApiSourceProvider, LocationCategory } from '@trip-planner/types';
+import { LocationDeduplicationOptions } from './location.types';
+import { CreateLocationRequest } from '@trip-planner/types';
 
 describe('LocationService', () => {
   let service: LocationService;
@@ -96,7 +96,7 @@ describe('LocationService', () => {
     it('should return existing location when API source duplicate found', async () => {
       const createRequestWithApi: CreateLocationRequest = {
         ...createRequest,
-        apiSource: 'GOOGLE_PLACES',
+        apiSource: 'HERE',
         apiSourceId: 'google-123',
       };
 

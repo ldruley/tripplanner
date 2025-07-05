@@ -1,12 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@trip-planner/prisma';
-import { Location } from '@trip-planner/types';
-import { CreateLocationRequest, UpdateLocationRequest, LocationSearchCriteria } from './location.types';
+import {
+  Location,
+  CreateLocationRequest,
+  UpdateLocationRequest,
+  LocationSearchCriteria,
+} from '@trip-planner/types';
+import {} from './location.types';
 
 @Injectable()
 export class LocationRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Create a new location
+   * @param data - Location creation data
+   * @returns Created Location
+   */
   async create(data: CreateLocationRequest): Promise<Location> {
     const location = await this.prisma.location.create({
       data: {
@@ -19,9 +29,9 @@ export class LocationRepository {
         postalCode: data.postalCode || null,
         latitude: data.latitude,
         longitude: data.longitude,
-        apiSource: data.apiSource as any || null,
+        apiSource: (data.apiSource as any) || null,
         apiSourceId: data.apiSourceId || null,
-        category: data.category as any || null,
+        category: (data.category as any) || null,
         public: data.public || false,
       },
     });
@@ -29,6 +39,11 @@ export class LocationRepository {
     return location as Location;
   }
 
+  /**
+   * Find a location by its ID
+   * @param id - Location ID
+   * @returns Found Location or null if not found
+   */
   async findById(id: string): Promise<Location | null> {
     const location = await this.prisma.location.findUnique({
       where: { id },
@@ -37,7 +52,18 @@ export class LocationRepository {
     return location as Location | null;
   }
 
-  async findByCoordinates(latitude: number, longitude: number, radiusMeters: number): Promise<Location[]> {
+  /**
+   * Find locations by coordinates within a specified radius
+   * @param latitude - Latitude of the center point
+   * @param longitude - Longitude of the center point
+   * @param radiusMeters - Radius in meters
+   * @returns Array of Locations within the radius
+   */
+  async findByCoordinates(
+    latitude: number,
+    longitude: number,
+    radiusMeters: number,
+  ): Promise<Location[]> {
     // Calculate approximate coordinate bounds for the radius
     // 1 degree latitude ≈ 111,000 meters
     // 1 degree longitude ≈ 111,000 * cos(latitude) meters
@@ -59,7 +85,12 @@ export class LocationRepository {
 
     // Filter by actual distance using Haversine formula
     return locations.filter(location => {
-      const distance = this.calculateDistance(latitude, longitude, location.latitude, location.longitude);
+      const distance = this.calculateDistance(
+        latitude,
+        longitude,
+        location.latitude,
+        location.longitude,
+      );
       return distance <= radiusMeters;
     }) as Location[];
   }
@@ -96,6 +127,11 @@ export class LocationRepository {
     return locations as Location[];
   }
 
+  /**
+   * Find locations by exact coordinates
+   * @param latitude
+   * @param longitude
+   */
   async findByExactCoordinates(latitude: number, longitude: number): Promise<Location[]> {
     const locations = await this.prisma.location.findMany({
       where: {
@@ -107,6 +143,11 @@ export class LocationRepository {
     return locations as Location[];
   }
 
+  /**
+   * Find locations by API source and ID
+   * @param apiSource - API source identifier
+   * @param apiSourceId - API source specific ID
+   */
   async findByApiSourceId(apiSource: string, apiSourceId: string): Promise<Location[]> {
     const locations = await this.prisma.location.findMany({
       where: {
@@ -118,6 +159,11 @@ export class LocationRepository {
     return locations as Location[];
   }
 
+  /**
+   * Search locations based on various criteria
+   * @param criteria - LocationSearchCriteria
+   * @returns Array of Locations matching the criteria
+   */
   async search(criteria: LocationSearchCriteria): Promise<Location[]> {
     const whereClause: any = {};
 
@@ -172,7 +218,7 @@ export class LocationRepository {
           criteria.coordinates!.latitude,
           criteria.coordinates!.longitude,
           location.latitude,
-          location.longitude
+          location.longitude,
         );
         return distance <= criteria.coordinates!.radius;
       });
@@ -181,6 +227,12 @@ export class LocationRepository {
     return locations as Location[];
   }
 
+  /**
+   * Update an existing location
+   * @param id - Location ID
+   * @param data - UpdateLocationRequest
+   * @returns Updated Location
+   */
   async update(id: string, data: UpdateLocationRequest): Promise<Location> {
     const updateData: any = {};
 
@@ -206,12 +258,21 @@ export class LocationRepository {
     return location as Location;
   }
 
+  /**
+   * Delete a location by ID
+   * @param id - Location ID
+   * @returns Promise<void>
+   */
   async delete(id: string): Promise<void> {
     await this.prisma.location.delete({
       where: { id },
     });
   }
 
+  /**
+   * Find all locations, ordered by creation date
+   * @returns Array of Locations
+   */
   async findAll(): Promise<Location[]> {
     const locations = await this.prisma.location.findMany({
       orderBy: { createdAt: 'desc' },
@@ -223,6 +284,11 @@ export class LocationRepository {
   /**
    * Calculate distance between two coordinates using Haversine formula
    * Returns distance in meters
+   * @param lat1 - Latitude of first point
+   * @param lng1 - Longitude of first point
+   * @param lat2 - Latitude of second point
+   * @param lng2 - Longitude of second point
+   * @return Distance in metersg
    */
   private calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
     const R = 6371000; // Earth's radius in meters
@@ -230,7 +296,10 @@ export class LocationRepository {
     const dLng = (lng2 - lng1) * (Math.PI / 180);
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      Math.cos(lat1 * (Math.PI / 180)) *
+        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }
