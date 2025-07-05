@@ -63,24 +63,24 @@ model Profile {
 }
 
 model Location {
-  id            String             @id @default(cuid()) @map("location_id")
-  name          String             @db.Text
-  description   String?            @db.Text
-  address       String?            @db.Text
-  city          String?
-  state         String?
-  country       String?
-  postalCode    String?            @map("postal_code")
-  latitude      Float
-  longitude     Float
-  apiSource     ApiSourceProvider? @map("api_source") // Provider source
-  apiSourceId   String?            @map("api_source_id") // Provider-specific ID
-  category      LocationCategory?
-  public        Boolean            @default(false) // Flag for marking locations as public/shared
+  id          String             @id @default(cuid()) @map("location_id")
+  name        String             @db.Text
+  description String?            @db.Text
+  address     String?            @db.Text
+  city        String?
+  state       String?
+  country     String?
+  postalCode  String?            @map("postal_code")
+  latitude    Float
+  longitude   Float
+  apiSource   ApiSourceProvider? @map("api_source") // Provider source
+  apiSourceId String?            @map("api_source_id") // Provider-specific ID
+  category    LocationCategory?
+  public      Boolean            @default(false) // Flag for marking locations as public/shared
   // Prisma doesn't support geography types directly
   //geom        Unsupported("geography(Point, 4326)")? @map("geom")
-  createdAt     DateTime           @default(now()) @map("created_at")
-  updatedAt     DateTime           @updatedAt @map("updated_at")
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
 
   // Relations
   stops             Stop[]

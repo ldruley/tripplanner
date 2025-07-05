@@ -18,4 +18,34 @@ export const TripSchema = z.object({
   bankedLocations: z.array(z.any()).optional().default([]),
 });
 
+export const CreateTripRequestSchema = TripSchema.pick({
+  name: true,
+  description: true,
+  startDate: true,
+  endDate: true,
+});
+
+export const UpdateTripRequestSchema = TripSchema.pick({
+  name: true,
+  description: true,
+}).partial();
+
+export const TripServiceUpdateRequestSchema = TripSchema.pick({
+  name: true,
+  description: true,
+  startDate: true,
+  endDate: true,
+}).partial();
+
+export const TripSearchCriteriaSchema = z.object({
+  userId: uuidSchema.optional(),
+  name: z.string().optional(),
+  includeStops: z.boolean().optional().default(false),
+  includeBankedLocations: z.boolean().optional().default(false),
+});
+
 export type Trip = z.infer<typeof TripSchema>;
+export type CreateTripRequest = z.infer<typeof CreateTripRequestSchema>;
+export type UpdateTripRequest = z.infer<typeof UpdateTripRequestSchema>;
+export type TripServiceUpdateRequest = z.infer<typeof TripServiceUpdateRequestSchema>;
+export type TripSearchCriteria = z.infer<typeof TripSearchCriteriaSchema>;
