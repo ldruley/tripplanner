@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from '@trip-planner/prisma';
 import { ProfileService } from './services/profile.service';
 import { ProfileRepository } from './repositories/profile.repository';
-import { PrismaProfileRepository } from './repositories/prisma-profile.repository';
 import { ProfileController } from './controllers/profile.controller';
 
 @Module({
@@ -10,10 +9,7 @@ import { ProfileController } from './controllers/profile.controller';
   controllers: [ProfileController],
   providers: [
     ProfileService,
-    {
-      provide: ProfileRepository,
-      useClass: PrismaProfileRepository,
-    },
+    ProfileRepository,
   ],
   exports: [ProfileService, ProfileRepository],
 })
