@@ -134,7 +134,7 @@ model Trip {
 
 // TripBankedLocation: Join table to associate Locations with a Trip's "bank"
 model TripBankedLocation {
-  id         String   @id @default(cuid()) @map("trip_banked_location_id")
+  id         String   @id @default(uuid()) @map("trip_banked_location_id")
   tripId     String   @map("trip_id")
   locationId String   @map("location_id")
   addedAt    DateTime @default(now()) @map("added_at")

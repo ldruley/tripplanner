@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { StopSchema } from './stop.schema';
 import { TravelSegmentSchema } from './travel-segment.schema';
+import { TripBankedLocationSchema } from './trip-banked-location.schema';
 import { uuidSchema } from './base.schema';
 
 export const TripSchema = z.object({
@@ -16,7 +17,7 @@ export const TripSchema = z.object({
   
   // Relations (optional for some use cases)
   stops: z.array(StopSchema).optional().default([]),
-  bankedLocations: z.array(z.any()).optional().default([]),
+  bankedLocations: z.array(TripBankedLocationSchema).optional().default([]),
   travelSegments: z.array(TravelSegmentSchema).optional().default([]),
 });
 

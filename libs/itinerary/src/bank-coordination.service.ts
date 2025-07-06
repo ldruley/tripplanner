@@ -121,7 +121,6 @@ export class BankCoordinationService {
       const bankedLocation = await this.tripBankedLocationRepository.findByTripAndLocation(
         tripId,
         locationId,
-        false,
         true,
         prismaClient,
       );
@@ -169,7 +168,6 @@ export class BankCoordinationService {
     // Step 2: Get banked locations with location details
     const bankedLocations = await this.tripBankedLocationRepository.findByTripId(
       tripId,
-      false,
       true,
       client,
     );
@@ -216,7 +214,6 @@ export class BankCoordinationService {
         const bankedLocation = await this.tripBankedLocationRepository.findByTripAndLocation(
           tripId,
           locationId,
-          false,
           true,
           transactionClient,
         );

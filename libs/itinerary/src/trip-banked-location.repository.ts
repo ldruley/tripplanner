@@ -36,7 +36,6 @@ export class TripBankedLocationRepository {
    * Find a trip banked location by trip ID and location ID.
    * @param tripId - Trip ID.
    * @param locationId - Location ID.
-   * @param includeTrip - Whether to include trip in the result.
    * @param includeLocation - Whether to include location in the result.
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return The trip banked location or null if not found.
@@ -44,7 +43,6 @@ export class TripBankedLocationRepository {
   async findByTripAndLocation(
     tripId: string,
     locationId: string,
-    includeTrip = false,
     includeLocation = false,
     prismaClient?: PrismaClientOrTransaction,
   ): Promise<TripBankedLocation | null> {
@@ -52,13 +50,12 @@ export class TripBankedLocationRepository {
 
     return client.tripBankedLocation.findUnique({
       where: {
-        tripId_locationId: {
+        idx_trip_banked_location_unique: {
           tripId,
           locationId,
         },
       },
       include: {
-        trip: includeTrip,
         location: includeLocation,
       },
     });
@@ -67,14 +64,12 @@ export class TripBankedLocationRepository {
   /**
    * Find all banked locations for a trip.
    * @param tripId - Trip ID to search for banked locations.
-   * @param includeTrip - Whether to include trip in the result.
    * @param includeLocation - Whether to include location in the result.
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return List of banked locations for the trip.
    */
   async findByTripId(
     tripId: string,
-    includeTrip = false,
     includeLocation = false,
     prismaClient?: PrismaClientOrTransaction,
   ): Promise<TripBankedLocation[]> {
@@ -83,7 +78,6 @@ export class TripBankedLocationRepository {
     return client.tripBankedLocation.findMany({
       where: { tripId },
       include: {
-        trip: includeTrip,
         location: includeLocation,
       },
       orderBy: {
@@ -95,14 +89,12 @@ export class TripBankedLocationRepository {
   /**
    * Find all trips that have banked a specific location.
    * @param locationId - Location ID to search for.
-   * @param includeTrip - Whether to include trip in the result.
    * @param includeLocation - Whether to include location in the result.
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return List of trip banked locations for the location.
    */
   async findByLocationId(
     locationId: string,
-    includeTrip = false,
     includeLocation = false,
     prismaClient?: PrismaClientOrTransaction,
   ): Promise<TripBankedLocation[]> {
@@ -111,7 +103,6 @@ export class TripBankedLocationRepository {
     return client.tripBankedLocation.findMany({
       where: { locationId },
       include: {
-        trip: includeTrip,
         location: includeLocation,
       },
       orderBy: {
@@ -145,7 +136,6 @@ export class TripBankedLocationRepository {
     return client.tripBankedLocation.findMany({
       where: whereClause,
       include: {
-        trip: criteria.includeTrip,
         location: criteria.includeLocation,
       },
       orderBy: {
@@ -169,7 +159,7 @@ export class TripBankedLocationRepository {
 
     await client.tripBankedLocation.delete({
       where: {
-        tripId_locationId: {
+        idx_trip_banked_location_unique: {
           tripId,
           locationId,
         },

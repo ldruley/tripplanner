@@ -1,16 +1,14 @@
 import { z } from 'zod';
 import { uuidSchema } from './base.schema';
 import { LocationSchema } from './location.schema';
-import { TripSchema } from './trip.schema';
 
 export const TripBankedLocationSchema = z.object({
   id: uuidSchema,
   tripId: uuidSchema,
   locationId: uuidSchema,
   addedAt: z.coerce.date(),
-  
-  // Relations (optional for some use cases)
-  trip: TripSchema.optional(),
+
+  // Relations
   location: LocationSchema.optional(),
 });
 
