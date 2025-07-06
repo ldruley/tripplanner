@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService, PrismaClient } from '@trip-planner/prisma';
+import { PrismaService, PrismaClientOrTransaction, Prisma } from '@trip-planner/prisma';
 import {
   CreateTravelSegmentRequest,
   TravelSegment,
+  TravelSegmentWithStops,
   TravelSegmentSearchCriteria,
   UpdateTravelSegmentRequest,
+  UpdateTravelApiCalculatedData,
 } from '@trip-planner/types';
 
 @Injectable()
@@ -17,7 +19,10 @@ export class TravelSegmentRepository {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @returns Created TravelSegment
    */
-  async create(data: CreateTravelSegmentRequest, prismaClient?: PrismaClient): Promise<TravelSegment> {
+  async create(
+    data: CreateTravelSegmentRequest,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<TravelSegment> {
     const client = prismaClient || this.prisma;
 
     const segment = await client.travelSegment.create({
@@ -25,7 +30,7 @@ export class TravelSegmentRepository {
         tripId: data.tripId,
         originStopId: data.originStopId,
         destinationStopId: data.destinationStopId,
-        travelMode: (data.travelMode as any) || null,
+        travelMode: data.travelMode || null,
         distance: data.distance || null,
         duration: data.duration || null,
         apiCalculatedDistance: data.apiCalculatedDistance || null,
@@ -45,7 +50,10 @@ export class TravelSegmentRepository {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @returns Found TravelSegment or null if not found
    */
-  async findById(id: string, prismaClient?: PrismaClient): Promise<TravelSegment | null> {
+  async findById(
+    id: string,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<TravelSegment | null> {
     const client = prismaClient || this.prisma;
 
     const segment = await client.travelSegment.findUnique({
@@ -61,14 +69,15 @@ export class TravelSegmentRepository {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @returns List of TravelSegments for the specified trip
    */
-  async findByTripId(tripId: string, prismaClient?: PrismaClient): Promise<TravelSegment[]> {
+  async findByTripId(
+    tripId: string,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<TravelSegment[]> {
     const client = prismaClient || this.prisma;
 
     const segments = await client.travelSegment.findMany({
       where: { tripId },
-      orderBy: [
-        { originStop: { order: 'asc' } },
-      ],
+      orderBy: [{ originStop: { order: 'asc' } }],
     });
 
     return segments as TravelSegment[];
@@ -84,8 +93,8 @@ export class TravelSegmentRepository {
   async findByStops(
     originStopId: string,
     destinationStopId: string,
-    prismaClient?: PrismaClient,
-  ): Promise<TravelSegment | null> {
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<TravelSegmentWithStops | null> {
     const client = prismaClient || this.prisma;
 
     const segment = await client.travelSegment.findFirst({
@@ -93,9 +102,21 @@ export class TravelSegmentRepository {
         originStopId,
         destinationStopId,
       },
+      include: {
+        originStop: {
+          include: {
+            location: true,
+          },
+        },
+        destinationStop: {
+          include: {
+            location: true,
+          },
+        },
+      },
     });
 
-    return segment as TravelSegment | null;
+    return segment as TravelSegmentWithStops | null;
   }
 
   /**
@@ -106,33 +127,31 @@ export class TravelSegmentRepository {
    */
   async search(
     criteria: TravelSegmentSearchCriteria,
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<TravelSegment[]> {
     const client = prismaClient || this.prisma;
 
-    const where: any = {};
-    
+    const where: Prisma.TravelSegmentWhereInput = {};
+
     if (criteria.tripId) {
       where.tripId = criteria.tripId;
     }
-    
+
     if (criteria.originStopId) {
       where.originStopId = criteria.originStopId;
     }
-    
+
     if (criteria.destinationStopId) {
       where.destinationStopId = criteria.destinationStopId;
     }
-    
+
     if (criteria.travelMode) {
       where.travelMode = criteria.travelMode;
     }
 
     const segments = await client.travelSegment.findMany({
       where,
-      orderBy: [
-        { originStop: { order: 'asc' } },
-      ],
+      orderBy: [{ originStop: { order: 'asc' } }],
     });
 
     return segments as TravelSegment[];
@@ -148,35 +167,26 @@ export class TravelSegmentRepository {
   async update(
     id: string,
     data: UpdateTravelSegmentRequest,
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<TravelSegment> {
     const client = prismaClient || this.prisma;
 
-    const updateData: any = {};
-    
-    if (data.travelMode !== undefined) {
-      updateData.travelMode = data.travelMode;
-    }
-    if (data.distance !== undefined) {
-      updateData.distance = data.distance;
-    }
-    if (data.duration !== undefined) {
-      updateData.duration = data.duration;
-    }
-    if (data.apiCalculatedDistance !== undefined) {
-      updateData.apiCalculatedDistance = data.apiCalculatedDistance;
-    }
-    if (data.apiCalculatedDuration !== undefined) {
-      updateData.apiCalculatedDuration = data.apiCalculatedDuration;
-    }
-    if (data.polyline !== undefined) {
-      updateData.polyline = data.polyline;
-    }
-    if (data.routeOptions !== undefined) {
-      updateData.routeOptions = data.routeOptions;
-    }
-    if (data.notes !== undefined) {
-      updateData.notes = data.notes;
+    const allowedFields: (keyof UpdateTravelSegmentRequest)[] = [
+      'travelMode',
+      'distance',
+      'duration',
+      'apiCalculatedDistance',
+      'apiCalculatedDuration',
+      'polyline',
+      'routeOptions',
+      'notes',
+    ];
+
+    const updateData: Partial<UpdateTravelSegmentRequest> = {};
+    for (const key of allowedFields) {
+      if (data[key] !== undefined) {
+        updateData[key] = data[key];
+      }
     }
 
     const segment = await client.travelSegment.update({
@@ -194,7 +204,11 @@ export class TravelSegmentRepository {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @returns Updated TravelSegment
    */
-  async updateNotes(id: string, notes: string, prismaClient?: PrismaClient): Promise<TravelSegment> {
+  async updateNotes(
+    id: string,
+    notes: string,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<TravelSegment> {
     const client = prismaClient || this.prisma;
 
     const segment = await client.travelSegment.update({
@@ -207,37 +221,20 @@ export class TravelSegmentRepository {
 
   /**
    * Update API calculated data for a travel segment
-   * @param id - Travel segment ID to update
-   * @param apiCalculatedDistance - New API calculated distance
-   * @param apiCalculatedDuration - New API calculated duration
-   * @param polyline - New polyline data
+   * @param data - Data to update the API calculated fields
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @returns Updated TravelSegment
    */
   async updateApiCalculatedData(
-    id: string,
-    apiCalculatedDistance?: number,
-    apiCalculatedDuration?: number,
-    polyline?: string,
-    prismaClient?: PrismaClient,
+    data: UpdateTravelApiCalculatedData,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<TravelSegment> {
     const client = prismaClient || this.prisma;
 
-    const updateData: any = {};
-    
-    if (apiCalculatedDistance !== undefined) {
-      updateData.apiCalculatedDistance = apiCalculatedDistance;
-    }
-    if (apiCalculatedDuration !== undefined) {
-      updateData.apiCalculatedDuration = apiCalculatedDuration;
-    }
-    if (polyline !== undefined) {
-      updateData.polyline = polyline;
-    }
-
+    const { id, ...rest } = data;
     const segment = await client.travelSegment.update({
       where: { id },
-      data: updateData,
+      data: rest,
     });
 
     return segment as TravelSegment;
@@ -248,7 +245,7 @@ export class TravelSegmentRepository {
    * @param id - Travel segment ID to delete
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    */
-  async delete(id: string, prismaClient?: PrismaClient): Promise<void> {
+  async delete(id: string, prismaClient?: PrismaClientOrTransaction): Promise<void> {
     const client = prismaClient || this.prisma;
 
     await client.travelSegment.delete({
@@ -261,7 +258,7 @@ export class TravelSegmentRepository {
    * @param tripId - Trip ID to delete segments for
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    */
-  async deleteByTripId(tripId: string, prismaClient?: PrismaClient): Promise<void> {
+  async deleteByTripId(tripId: string, prismaClient?: PrismaClientOrTransaction): Promise<void> {
     const client = prismaClient || this.prisma;
 
     await client.travelSegment.deleteMany({
@@ -274,7 +271,10 @@ export class TravelSegmentRepository {
    * @param originStopId - Origin stop ID to delete segments for
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    */
-  async deleteByOriginStopId(originStopId: string, prismaClient?: PrismaClient): Promise<void> {
+  async deleteByOriginStopId(
+    originStopId: string,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<void> {
     const client = prismaClient || this.prisma;
 
     await client.travelSegment.deleteMany({
@@ -287,7 +287,10 @@ export class TravelSegmentRepository {
    * @param destinationStopId - Destination stop ID to delete segments for
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    */
-  async deleteByDestinationStopId(destinationStopId: string, prismaClient?: PrismaClient): Promise<void> {
+  async deleteByDestinationStopId(
+    destinationStopId: string,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<void> {
     const client = prismaClient || this.prisma;
 
     await client.travelSegment.deleteMany({
@@ -301,10 +304,10 @@ export class TravelSegmentRepository {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @returns The total number of segments in the trip
    */
-  async getSegmentCount(tripId: string, prismaClient?: PrismaClient): Promise<number> {
+  async getSegmentCount(tripId: string, prismaClient?: PrismaClientOrTransaction): Promise<number> {
     const client = prismaClient || this.prisma;
 
-    return await client.travelSegment.count({
+    return client.travelSegment.count({
       where: { tripId },
     });
   }
@@ -315,7 +318,7 @@ export class TravelSegmentRepository {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @returns True if segment exists, false otherwise
    */
-  async exists(id: string, prismaClient?: PrismaClient): Promise<boolean> {
+  async exists(id: string, prismaClient?: PrismaClientOrTransaction): Promise<boolean> {
     const client = prismaClient || this.prisma;
 
     const count = await client.travelSegment.count({

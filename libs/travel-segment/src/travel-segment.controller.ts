@@ -148,60 +148,6 @@ export class TravelSegmentController {
     return await this.travelSegmentService.update(id, updateDto);
   }
 
-  @Patch(':id/notes')
-  @ApiOperation({
-    summary: 'Update travel segment notes',
-    description: 'Update only the notes field of a travel segment (primary user-facing update)',
-  })
-  @ApiParam({ name: 'id', description: 'Travel segment ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Travel segment notes updated successfully',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Travel segment not found',
-  })
-  async updateTravelSegmentNotes(
-    @CurrentUser() user: SafeUser,
-    @Param('id') id: string,
-    @Body() notesDto: UpdateTravelSegmentNotesDto,
-  ) {
-    return await this.travelSegmentService.updateNotes(id, notesDto);
-  }
-
-  @Patch(':id/api-data')
-  @ApiOperation({
-    summary: 'Update API calculated data',
-    description: 'Update API-calculated distance, duration, and polyline data (internal use)',
-  })
-  @ApiParam({ name: 'id', description: 'Travel segment ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'API data updated successfully',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Travel segment not found',
-  })
-  async updateApiCalculatedData(
-    @CurrentUser() user: SafeUser,
-    @Param('id') id: string,
-    @Body()
-    body: {
-      apiCalculatedDistance?: number;
-      apiCalculatedDuration?: number;
-      polyline?: string;
-    },
-  ) {
-    return await this.travelSegmentService.updateApiCalculatedData(
-      id,
-      body.apiCalculatedDistance,
-      body.apiCalculatedDuration,
-      body.polyline,
-    );
-  }
-
   @Post('bulk-update')
   @ApiOperation({
     summary: 'Bulk update travel segments',
@@ -259,7 +205,8 @@ export class TravelSegmentController {
   @Delete('stop/:stopId')
   @ApiOperation({
     summary: 'Delete travel segments by stop ID',
-    description: 'Delete all travel segments associated with a specific stop (when stop is deleted)',
+    description:
+      'Delete all travel segments associated with a specific stop (when stop is deleted)',
   })
   @ApiParam({ name: 'stopId', description: 'Stop ID' })
   @ApiResponse({

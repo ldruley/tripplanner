@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
-import { PrismaClient } from '@trip-planner/prisma';
+import { PrismaClientOrTransaction } from '@trip-planner/prisma';
 import {
   BulkStopUpdateRequest,
   CreateStopRequest,
@@ -24,7 +24,7 @@ export class StopService {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return The created stop.
    */
-  async create(data: CreateStopRequest, prismaClient?: PrismaClient): Promise<Stop> {
+  async create(data: CreateStopRequest, prismaClient?: PrismaClientOrTransaction): Promise<Stop> {
     // Validate order is not negative
     if (data.order < 0) {
       throw new BadRequestException('Stop order must be non-negative');
@@ -50,7 +50,7 @@ export class StopService {
   async findById(
     id: string,
     includeLocation = false,
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<Stop | StopWithLocation> {
     const stop = includeLocation
       ? await this.stopRepository.findByIdWithLocation(id, prismaClient)
@@ -73,7 +73,7 @@ export class StopService {
   async findByTripId(
     tripId: string,
     includeLocations = false,
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<Stop[] | StopWithLocation[]> {
     return includeLocations
       ? await this.stopRepository.findByTripIdWithLocations(tripId, prismaClient)
@@ -88,7 +88,7 @@ export class StopService {
    */
   async search(
     criteria: StopSearchCriteria,
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<Stop[] | StopWithLocation[]> {
     return await this.stopRepository.search(criteria, prismaClient);
   }
@@ -100,7 +100,11 @@ export class StopService {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return Updated stop.
    */
-  async update(id: string, data: UpdateStopRequest, prismaClient?: PrismaClient): Promise<Stop> {
+  async update(
+    id: string,
+    data: UpdateStopRequest,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Stop> {
     // Validate planned duration if provided
     if (!!data.plannedDuration && data.plannedDuration < 0) {
       throw new BadRequestException('Planned duration must be non-negative');
@@ -121,7 +125,11 @@ export class StopService {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return Updated stop with new order.
    */
-  async updateOrder(id: string, newOrder: number, prismaClient?: PrismaClient): Promise<Stop> {
+  async updateOrder(
+    id: string,
+    newOrder: number,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Stop> {
     if (newOrder < 0) {
       throw new BadRequestException('Stop order must be non-negative');
     }
@@ -141,7 +149,10 @@ export class StopService {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return Updated list of stops in the new order.
    */
-  async reorderStops(request: ReorderStopsRequest, prismaClient?: PrismaClient): Promise<Stop[]> {
+  async reorderStops(
+    request: ReorderStopsRequest,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Stop[]> {
     const { tripId, stopIds } = request;
 
     if (stopIds.length === 0) {
@@ -180,7 +191,10 @@ export class StopService {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return List of updated stops.
    */
-  async bulkUpdate(request: BulkStopUpdateRequest, prismaClient?: PrismaClient): Promise<Stop[]> {
+  async bulkUpdate(
+    request: BulkStopUpdateRequest,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Stop[]> {
     const { tripId, updates } = request;
 
     if (updates.length === 0) {
@@ -231,7 +245,7 @@ export class StopService {
     id: string,
     calculatedArrivalTime?: Date,
     calculatedDepartureTime?: Date,
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<Stop> {
     // Verify stop exists
     await this.findById(id, false, prismaClient);
@@ -251,7 +265,7 @@ export class StopService {
    * @param id - Stop ID to delete.
    * @param prismaClient - Optional Prisma client for transaction management.
    */
-  async delete(id: string, prismaClient?: PrismaClient): Promise<void> {
+  async delete(id: string, prismaClient?: PrismaClientOrTransaction): Promise<void> {
     // Verify stop exists
     await this.findById(id, false, prismaClient);
 
@@ -265,7 +279,7 @@ export class StopService {
    * @param tripId - Trip ID to delete stops for.
    * @param prismaClient - Optional Prisma client for transaction management.
    */
-  async deleteByTripId(tripId: string, prismaClient?: PrismaClient): Promise<void> {
+  async deleteByTripId(tripId: string, prismaClient?: PrismaClientOrTransaction): Promise<void> {
     this.logger.debug(`Deleting all stops for trip ${tripId}`);
 
     await this.stopRepository.deleteByTripId(tripId, prismaClient);
@@ -277,7 +291,10 @@ export class StopService {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return The next order index for the trip.
    */
-  async getNextOrderForTrip(tripId: string, prismaClient?: PrismaClient): Promise<number> {
+  async getNextOrderForTrip(
+    tripId: string,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<number> {
     return await this.stopRepository.getNextOrderForTrip(tripId, prismaClient);
   }
 
@@ -287,7 +304,7 @@ export class StopService {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return The total number of stops in the trip.
    */
-  async getStopCount(tripId: string, prismaClient?: PrismaClient): Promise<number> {
+  async getStopCount(tripId: string, prismaClient?: PrismaClientOrTransaction): Promise<number> {
     return await this.stopRepository.getStopCount(tripId, prismaClient);
   }
 
@@ -297,7 +314,7 @@ export class StopService {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return True if the stop exists, false if not found.
    */
-  async validateStopExists(id: string, prismaClient?: PrismaClient): Promise<boolean> {
+  async validateStopExists(id: string, prismaClient?: PrismaClientOrTransaction): Promise<boolean> {
     try {
       await this.findById(id, false, prismaClient);
       return true;
@@ -319,7 +336,7 @@ export class StopService {
   async validateStopBelongsToTrip(
     stopId: string,
     tripId: string,
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<boolean> {
     const stop = await this.stopRepository.findById(stopId, prismaClient);
     return stop?.tripId === tripId;

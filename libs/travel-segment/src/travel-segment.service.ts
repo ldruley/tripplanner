@@ -1,12 +1,22 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
-import { PrismaClient } from '@trip-planner/prisma';
+import { PrismaClientOrTransaction } from '@trip-planner/prisma';
 import {
   BulkTravelSegmentUpdateRequest,
+  BulkTravelSegmentUpdateSchema,
   CreateTravelSegmentRequest,
+  CreateTravelSegmentSchema,
   TravelSegment,
+  TravelSegmentWithStops,
   TravelSegmentSearchCriteria,
+  TravelSegmentSearchSchema,
   UpdateTravelSegmentRequest,
+  UpdateTravelSegmentSchema,
   UpdateTravelSegmentNotesRequest,
+  UpdateTravelSegmentNotesSchema,
+  UpdateTravelSegmentRoutingData,
+  UpdateTravelSegmentRoutingDataSchema,
+  UpdateTravelApiCalculatedDataSchema,
+  UpdateTravelApiCalculatedData,
 } from '@trip-planner/types';
 import { TravelSegmentRepository } from './travel-segment.repository';
 
@@ -22,42 +32,30 @@ export class TravelSegmentService {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return The created travel segment.
    */
-  async create(data: CreateTravelSegmentRequest, prismaClient?: PrismaClient): Promise<TravelSegment> {
-    // Validate numeric fields if provided
-    if (data.distance !== undefined && data.distance !== null && data.distance < 0) {
-      throw new BadRequestException('Distance must be non-negative');
-    }
-
-    if (data.duration !== undefined && data.duration !== null && data.duration < 0) {
-      throw new BadRequestException('Duration must be non-negative');
-    }
-
-    if (data.apiCalculatedDistance !== undefined && data.apiCalculatedDistance !== null && data.apiCalculatedDistance < 0) {
-      throw new BadRequestException('API calculated distance must be non-negative');
-    }
-
-    if (data.apiCalculatedDuration !== undefined && data.apiCalculatedDuration !== null && data.apiCalculatedDuration < 0) {
-      throw new BadRequestException('API calculated duration must be non-negative');
-    }
+  async create(
+    data: CreateTravelSegmentRequest,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<TravelSegment> {
+    const validatedData = CreateTravelSegmentSchema.parse(data);
 
     // Check if segment already exists for these stops
     const existingSegment = await this.travelSegmentRepository.findByStops(
-      data.originStopId,
-      data.destinationStopId,
+      validatedData.originStopId,
+      validatedData.destinationStopId,
       prismaClient,
     );
 
     if (existingSegment) {
       throw new BadRequestException(
-        `Travel segment already exists between stops ${data.originStopId} and ${data.destinationStopId}`,
+        `Travel segment already exists between stops ${validatedData.originStopId} and ${validatedData.destinationStopId}`,
       );
     }
 
     this.logger.debug(
-      `Creating travel segment for trip ${data.tripId} from stop ${data.originStopId} to ${data.destinationStopId}`,
+      `Creating travel segment for trip ${validatedData.tripId} from stop ${validatedData.originStopId} to ${validatedData.destinationStopId}`,
     );
 
-    return await this.travelSegmentRepository.create(data, prismaClient);
+    return await this.travelSegmentRepository.create(validatedData, prismaClient);
   }
 
   /**
@@ -66,7 +64,7 @@ export class TravelSegmentService {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return The travel segment.
    */
-  async findById(id: string, prismaClient?: PrismaClient): Promise<TravelSegment> {
+  async findById(id: string, prismaClient?: PrismaClientOrTransaction): Promise<TravelSegment> {
     const segment = await this.travelSegmentRepository.findById(id, prismaClient);
 
     if (!segment) {
@@ -82,7 +80,10 @@ export class TravelSegmentService {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return List of travel segments for the specified trip.
    */
-  async findByTripId(tripId: string, prismaClient?: PrismaClient): Promise<TravelSegment[]> {
+  async findByTripId(
+    tripId: string,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<TravelSegment[]> {
     return await this.travelSegmentRepository.findByTripId(tripId, prismaClient);
   }
 
@@ -91,14 +92,18 @@ export class TravelSegmentService {
    * @param originStopId - Origin stop ID.
    * @param destinationStopId - Destination stop ID.
    * @param prismaClient - Optional Prisma client for transaction management.
-   * @return The travel segment or null if not found.
+   * @return The travel segment with stop locations or null if not found.
    */
   async findByStops(
     originStopId: string,
     destinationStopId: string,
-    prismaClient?: PrismaClient,
-  ): Promise<TravelSegment | null> {
-    return await this.travelSegmentRepository.findByStops(originStopId, destinationStopId, prismaClient);
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<TravelSegmentWithStops | null> {
+    return await this.travelSegmentRepository.findByStops(
+      originStopId,
+      destinationStopId,
+      prismaClient,
+    );
   }
 
   /**
@@ -109,9 +114,10 @@ export class TravelSegmentService {
    */
   async search(
     criteria: TravelSegmentSearchCriteria,
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<TravelSegment[]> {
-    return await this.travelSegmentRepository.search(criteria, prismaClient);
+    const validatedCriteria = TravelSegmentSearchSchema.parse(criteria);
+    return await this.travelSegmentRepository.search(validatedCriteria, prismaClient);
   }
 
   /**
@@ -121,30 +127,19 @@ export class TravelSegmentService {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return Updated travel segment.
    */
-  async update(id: string, data: UpdateTravelSegmentRequest, prismaClient?: PrismaClient): Promise<TravelSegment> {
-    // Validate numeric fields if provided
-    if (data.distance !== undefined && data.distance !== null && data.distance < 0) {
-      throw new BadRequestException('Distance must be non-negative');
-    }
-
-    if (data.duration !== undefined && data.duration !== null && data.duration < 0) {
-      throw new BadRequestException('Duration must be non-negative');
-    }
-
-    if (data.apiCalculatedDistance !== undefined && data.apiCalculatedDistance !== null && data.apiCalculatedDistance < 0) {
-      throw new BadRequestException('API calculated distance must be non-negative');
-    }
-
-    if (data.apiCalculatedDuration !== undefined && data.apiCalculatedDuration !== null && data.apiCalculatedDuration < 0) {
-      throw new BadRequestException('API calculated duration must be non-negative');
-    }
+  async update(
+    id: string,
+    data: UpdateTravelSegmentRequest,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<TravelSegment> {
+    const validatedData = UpdateTravelSegmentSchema.parse(data);
 
     // Verify segment exists
     await this.findById(id, prismaClient);
 
     this.logger.debug(`Updating travel segment ${id}`);
 
-    return await this.travelSegmentRepository.update(id, data, prismaClient);
+    return await this.travelSegmentRepository.update(id, validatedData, prismaClient);
   }
 
   /**
@@ -157,53 +152,72 @@ export class TravelSegmentService {
   async updateNotes(
     id: string,
     data: UpdateTravelSegmentNotesRequest,
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<TravelSegment> {
+    const validatedData = UpdateTravelSegmentNotesSchema.parse(data);
+
     // Verify segment exists
     await this.findById(id, prismaClient);
 
     this.logger.debug(`Updating notes for travel segment ${id}`);
 
-    return await this.travelSegmentRepository.updateNotes(id, data.notes || '', prismaClient);
+    return await this.travelSegmentRepository.updateNotes(
+      id,
+      validatedData.notes || '',
+      prismaClient,
+    );
   }
 
   /**
    * Update API calculated data for a travel segment.
-   * @param id - Travel segment ID to update.
-   * @param apiCalculatedDistance - New API calculated distance.
-   * @param apiCalculatedDuration - New API calculated duration.
-   * @param polyline - New polyline data.
+   * @param data - Data containing API calculated id, distance, duration, and polyline.
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return Updated travel segment.
    */
   async updateApiCalculatedData(
-    id: string,
-    apiCalculatedDistance?: number,
-    apiCalculatedDuration?: number,
-    polyline?: string,
-    prismaClient?: PrismaClient,
+    data: UpdateTravelApiCalculatedData,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<TravelSegment> {
-    // Validate numeric fields if provided
-    if (apiCalculatedDistance !== undefined && apiCalculatedDistance !== null && apiCalculatedDistance < 0) {
-      throw new BadRequestException('API calculated distance must be non-negative');
-    }
-
-    if (apiCalculatedDuration !== undefined && apiCalculatedDuration !== null && apiCalculatedDuration < 0) {
-      throw new BadRequestException('API calculated duration must be non-negative');
-    }
+    // Validate the update data using schema
+    const updateData = UpdateTravelApiCalculatedDataSchema.parse(data);
 
     // Verify segment exists
-    await this.findById(id, prismaClient);
+    await this.findById(data.id, prismaClient);
 
-    this.logger.debug(`Updating API calculated data for travel segment ${id}`);
+    this.logger.debug(`Updating API calculated data for travel segment ${data.id}`);
 
-    return await this.travelSegmentRepository.updateApiCalculatedData(
-      id,
-      apiCalculatedDistance,
-      apiCalculatedDuration,
-      polyline,
-      prismaClient,
+    return await this.travelSegmentRepository.updateApiCalculatedData(updateData, prismaClient);
+  }
+
+  /**
+   * Update travel segment with routing data from routing service.
+   * @param id - Travel segment ID to update.
+   * @param routingData - Routing data with proper typing.
+   * @param prismaClient - Optional Prisma client for transaction management.
+   * @return Updated travel segment.
+   */
+  async updateWithRoutingData(
+    id: string,
+    routingData: UpdateTravelSegmentRoutingData,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<TravelSegment> {
+    const validatedRoutingData = UpdateTravelSegmentRoutingDataSchema.parse(routingData);
+
+    this.logger.debug(
+      `Updating travel segment ${id} with routing data from ${validatedRoutingData.provider}`,
     );
+
+    // Update the segment with routing data - note we need to map the field names
+    const updateData: UpdateTravelSegmentRequest = {
+      travelMode: validatedRoutingData.travelMode,
+      apiCalculatedDistance: validatedRoutingData.distanceMeters,
+      apiCalculatedDuration: validatedRoutingData.durationSeconds,
+      polyline: validatedRoutingData.polyline,
+      // Note: provider is not stored directly on the segment, could be stored in routeOptions
+      routeOptions: { provider: validatedRoutingData.provider },
+    };
+
+    return await this.update(id, updateData, prismaClient);
   }
 
   /**
@@ -212,34 +226,20 @@ export class TravelSegmentService {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return List of updated travel segments.
    */
-  async bulkUpdate(request: BulkTravelSegmentUpdateRequest, prismaClient?: PrismaClient): Promise<TravelSegment[]> {
-    const { tripId, updates } = request;
-
-    if (updates.length === 0) {
-      throw new BadRequestException('Updates array cannot be empty');
-    }
-
-    // Validate all updates
-    for (const update of updates) {
-      if (update.distance !== undefined && update.distance !== null && update.distance < 0) {
-        throw new BadRequestException(`Distance must be non-negative for segment ${update.id}`);
-      }
-      if (update.duration !== undefined && update.duration !== null && update.duration < 0) {
-        throw new BadRequestException(`Duration must be non-negative for segment ${update.id}`);
-      }
-      if (update.apiCalculatedDistance !== undefined && update.apiCalculatedDistance !== null && update.apiCalculatedDistance < 0) {
-        throw new BadRequestException(`API calculated distance must be non-negative for segment ${update.id}`);
-      }
-      if (update.apiCalculatedDuration !== undefined && update.apiCalculatedDuration !== null && update.apiCalculatedDuration < 0) {
-        throw new BadRequestException(`API calculated duration must be non-negative for segment ${update.id}`);
-      }
-    }
+  async bulkUpdate(
+    request: BulkTravelSegmentUpdateRequest,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<TravelSegment[]> {
+    const validatedRequest = BulkTravelSegmentUpdateSchema.parse(request);
+    const { tripId, updates } = validatedRequest;
 
     // Verify all segments exist and belong to the trip
     const existingSegments = await this.travelSegmentRepository.findByTripId(tripId, prismaClient);
     const existingSegmentIds = existingSegments.map(segment => segment.id);
 
-    const invalidIds = updates.map(update => update.id).filter(id => !existingSegmentIds.includes(id));
+    const invalidIds = updates
+      .map(update => update.id!)
+      .filter(id => !existingSegmentIds.includes(id));
 
     if (invalidIds.length > 0) {
       throw new BadRequestException(`Invalid travel segment IDs: ${invalidIds.join(', ')}`);
@@ -251,7 +251,11 @@ export class TravelSegmentService {
 
     for (const update of updates) {
       const { id, ...updateData } = update;
-      const updatedSegment = await this.travelSegmentRepository.update(id, updateData, prismaClient);
+      const updatedSegment = await this.travelSegmentRepository.update(
+        id!,
+        updateData,
+        prismaClient,
+      );
       updatedSegments.push(updatedSegment);
     }
 
@@ -263,7 +267,7 @@ export class TravelSegmentService {
    * @param id - Travel segment ID to delete.
    * @param prismaClient - Optional Prisma client for transaction management.
    */
-  async delete(id: string, prismaClient?: PrismaClient): Promise<void> {
+  async delete(id: string, prismaClient?: PrismaClientOrTransaction): Promise<void> {
     // Verify segment exists
     await this.findById(id, prismaClient);
 
@@ -277,7 +281,7 @@ export class TravelSegmentService {
    * @param tripId - Trip ID to delete segments for.
    * @param prismaClient - Optional Prisma client for transaction management.
    */
-  async deleteByTripId(tripId: string, prismaClient?: PrismaClient): Promise<void> {
+  async deleteByTripId(tripId: string, prismaClient?: PrismaClientOrTransaction): Promise<void> {
     this.logger.debug(`Deleting all travel segments for trip ${tripId}`);
 
     await this.travelSegmentRepository.deleteByTripId(tripId, prismaClient);
@@ -288,7 +292,7 @@ export class TravelSegmentService {
    * @param stopId - Stop ID to delete segments for.
    * @param prismaClient - Optional Prisma client for transaction management.
    */
-  async deleteByStopId(stopId: string, prismaClient?: PrismaClient): Promise<void> {
+  async deleteByStopId(stopId: string, prismaClient?: PrismaClientOrTransaction): Promise<void> {
     this.logger.debug(`Deleting travel segments associated with stop ${stopId}`);
 
     // Delete segments where this stop is the origin
@@ -304,7 +308,7 @@ export class TravelSegmentService {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return The total number of segments in the trip.
    */
-  async getSegmentCount(tripId: string, prismaClient?: PrismaClient): Promise<number> {
+  async getSegmentCount(tripId: string, prismaClient?: PrismaClientOrTransaction): Promise<number> {
     return await this.travelSegmentRepository.getSegmentCount(tripId, prismaClient);
   }
 
@@ -314,7 +318,10 @@ export class TravelSegmentService {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return True if the segment exists, false if not found.
    */
-  async validateSegmentExists(id: string, prismaClient?: PrismaClient): Promise<boolean> {
+  async validateSegmentExists(
+    id: string,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<boolean> {
     try {
       await this.findById(id, prismaClient);
       return true;
@@ -336,7 +343,7 @@ export class TravelSegmentService {
   async validateSegmentBelongsToTrip(
     segmentId: string,
     tripId: string,
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<boolean> {
     const segment = await this.travelSegmentRepository.findById(segmentId, prismaClient);
     return segment?.tripId === tripId;
@@ -353,7 +360,7 @@ export class TravelSegmentService {
   async createSegmentsBetweenStops(
     tripId: string,
     stopIds: string[],
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<TravelSegment[]> {
     if (stopIds.length < 2) {
       return [];

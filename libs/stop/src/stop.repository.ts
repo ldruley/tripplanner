@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService, PrismaClient } from '@trip-planner/prisma';
+import {
+  PrismaService,
+  PrismaClient,
+  PrismaClientOrTransaction,
+  Prisma,
+} from '@trip-planner/prisma';
 import {
   CreateStopRequest,
   Stop,
@@ -19,7 +24,7 @@ export class StopRepository {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @returns Created Stop
    */
-  async create(data: CreateStopRequest, prismaClient?: PrismaClient): Promise<Stop> {
+  async create(data: CreateStopRequest, prismaClient?: PrismaClientOrTransaction): Promise<Stop> {
     const client = prismaClient || this.prisma;
 
     const stop = await client.stop.create({
@@ -29,7 +34,7 @@ export class StopRepository {
         order: data.order,
         plannedArrivalTime: data.plannedArrivalTime || null,
         plannedDuration: data.plannedDuration || null,
-        stopType: (data.stopType as any) || null,
+        stopType: data.stopType || null,
         notes: data.notes || null,
       },
     });
@@ -43,7 +48,7 @@ export class StopRepository {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @returns Found Stop or null if not found
    */
-  async findById(id: string, prismaClient?: PrismaClient): Promise<Stop | null> {
+  async findById(id: string, prismaClient?: PrismaClientOrTransaction): Promise<Stop | null> {
     const client = prismaClient || this.prisma;
 
     const stop = await client.stop.findUnique({
@@ -61,7 +66,7 @@ export class StopRepository {
    */
   async findByIdWithLocation(
     id: string,
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<StopWithLocation | null> {
     const client = prismaClient || this.prisma;
 
@@ -92,7 +97,7 @@ export class StopRepository {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @returns Array of Stops for the trip
    */
-  async findByTripId(tripId: string, prismaClient?: PrismaClient): Promise<Stop[]> {
+  async findByTripId(tripId: string, prismaClient?: PrismaClientOrTransaction): Promise<Stop[]> {
     const client = prismaClient || this.prisma;
 
     const stops = await client.stop.findMany({
@@ -111,7 +116,7 @@ export class StopRepository {
    */
   async findByTripIdWithLocations(
     tripId: string,
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<StopWithLocation[]> {
     const client = prismaClient || this.prisma;
 
@@ -145,7 +150,7 @@ export class StopRepository {
    */
   async search(
     criteria: StopSearchCriteria,
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<Stop[] | StopWithLocation[]> {
     const client = prismaClient || this.prisma;
 
@@ -196,7 +201,11 @@ export class StopRepository {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @returns Updated Stop
    */
-  async update(id: string, data: UpdateStopRequest, prismaClient?: PrismaClient): Promise<Stop> {
+  async update(
+    id: string,
+    data: UpdateStopRequest,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Stop> {
     const client = prismaClient || this.prisma;
 
     const updateData: any = {};
@@ -222,7 +231,11 @@ export class StopRepository {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @returns Updated Stop with new order
    */
-  async updateOrder(id: string, newOrder: number, prismaClient?: PrismaClient): Promise<Stop> {
+  async updateOrder(
+    id: string,
+    newOrder: number,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Stop> {
     const client = prismaClient || this.prisma;
 
     const stop = await client.stop.update({
@@ -239,7 +252,10 @@ export class StopRepository {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @returns Array of updated Stops
    */
-  async bulkUpdateOrders(updates: StopOrderUpdate[], prismaClient?: PrismaClient): Promise<Stop[]> {
+  async bulkUpdateOrders(
+    updates: StopOrderUpdate[],
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Stop[]> {
     const client = prismaClient || this.prisma;
 
     const updatedStops: Stop[] = [];
@@ -267,7 +283,7 @@ export class StopRepository {
     id: string,
     calculatedArrivalTime?: Date,
     calculatedDepartureTime?: Date,
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<Stop> {
     const client = prismaClient || this.prisma;
 
@@ -290,7 +306,7 @@ export class StopRepository {
    * @param id - Stop ID to delete
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    */
-  async delete(id: string, prismaClient?: PrismaClient): Promise<void> {
+  async delete(id: string, prismaClient?: PrismaClientOrTransaction): Promise<void> {
     const client = prismaClient || this.prisma;
 
     await client.stop.delete({
@@ -303,7 +319,7 @@ export class StopRepository {
    * @param tripId - Trip ID to delete stops for
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    */
-  async deleteByTripId(tripId: string, prismaClient?: PrismaClient): Promise<void> {
+  async deleteByTripId(tripId: string, prismaClient?: PrismaClientOrTransaction): Promise<void> {
     const client = prismaClient || this.prisma;
 
     await client.stop.deleteMany({
@@ -317,7 +333,10 @@ export class StopRepository {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @returns Next order number
    */
-  async getNextOrderForTrip(tripId: string, prismaClient?: PrismaClient): Promise<number> {
+  async getNextOrderForTrip(
+    tripId: string,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<number> {
     const client = prismaClient || this.prisma;
 
     const maxOrderStop = await client.stop.findFirst({
@@ -335,7 +354,7 @@ export class StopRepository {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @returns Count of stops for the trip
    */
-  async getStopCount(tripId: string, prismaClient?: PrismaClient): Promise<number> {
+  async getStopCount(tripId: string, prismaClient?: PrismaClientOrTransaction): Promise<number> {
     const client = prismaClient || this.prisma;
 
     return client.stop.count({

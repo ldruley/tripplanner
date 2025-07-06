@@ -132,6 +132,7 @@ export type MapboxRoutingLeg = {
   distance: number; // meters
   duration: number; // seconds
   summary?: string;
+  geometry?: string; // polyline for this specific leg
   [key: string]: unknown;
 };
 

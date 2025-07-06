@@ -10,3 +10,4 @@ export * from './geocoding.dto';
 export * from './timezone.dto';
 export * from './routing.dto';
 export * from './travel-segment.dto';
+export * from './itinerary.dto';

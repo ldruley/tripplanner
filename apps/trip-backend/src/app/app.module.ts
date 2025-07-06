@@ -14,6 +14,12 @@ import { TimezoneModule } from '@trip-planner/timezone';
 import { GeocodingModule } from '@trip-planner/geocoding';
 import { EmailModule } from '@trip-planner/email';
 import { RoutingModule } from '@trip-planner/routing';
+import { TripModule } from '@trip-planner/trip';
+import { StopModule } from '@trip-planner/stop';
+import { LocationModule } from '@trip-planner/location';
+import { TravelSegmentModule } from '@trip-planner/travel-segment';
+import { TimelineModule } from '@trip-planner/timeline';
+import { ItineraryModule } from '@trip-planner/itinerary';
 
 @Module({
   imports: [
@@ -34,6 +40,12 @@ import { RoutingModule } from '@trip-planner/routing';
     UserSettingsModule,
     EmailModule,
     RoutingModule,
+    TripModule,
+    StopModule,
+    LocationModule,
+    TravelSegmentModule,
+    TimelineModule,
+    ItineraryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

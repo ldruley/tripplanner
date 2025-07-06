@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { StopSchema } from './stop.schema';
+import { TravelSegmentSchema } from './travel-segment.schema';
 import { uuidSchema } from './base.schema';
 
 export const TripSchema = z.object({
@@ -16,6 +17,7 @@ export const TripSchema = z.object({
   // Relations (optional for some use cases)
   stops: z.array(StopSchema).optional().default([]),
   bankedLocations: z.array(z.any()).optional().default([]),
+  travelSegments: z.array(TravelSegmentSchema).optional().default([]),
 });
 
 export const CreateTripRequestSchema = TripSchema.pick({
@@ -42,6 +44,7 @@ export const TripSearchCriteriaSchema = z.object({
   name: z.string().optional(),
   includeStops: z.boolean().optional().default(false),
   includeBankedLocations: z.boolean().optional().default(false),
+  includeTravelSegments: z.boolean().optional().default(false),
 });
 
 export type Trip = z.infer<typeof TripSchema>;

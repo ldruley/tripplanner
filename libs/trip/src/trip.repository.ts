@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService, PrismaClient } from '@trip-planner/prisma';
+import { PrismaService, PrismaClientOrTransaction, Prisma } from '@trip-planner/prisma';
 import {
   CreateTripRequest,
   Trip,
@@ -23,7 +23,7 @@ export class TripRepository {
   async create(
     userId: string,
     data: CreateTripRequest,
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<Partial<Trip>> {
     const client = prismaClient || this.prisma;
 
@@ -43,6 +43,7 @@ export class TripRepository {
    * @param id - Trip ID to search for.
    * @param includeStops - Whether to include stops in the result.
    * @param includeBankedLocations - Whether to include banked locations in the result.
+   * @param includeTravelSegments - Whether to include travel segments in the result.
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return The trip or null if not found.
    */
@@ -50,11 +51,12 @@ export class TripRepository {
     id: string,
     includeStops = false,
     includeBankedLocations = false,
-    prismaClient?: PrismaClient,
+    includeTravelSegments = false,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<Trip | null> {
     const client = prismaClient || this.prisma;
 
-    return await client.trip.findUnique({
+    return client.trip.findUnique({
       where: { id },
       include: {
         stops: includeStops
@@ -77,6 +79,11 @@ export class TripRepository {
               },
             }
           : false,
+        travelSegments: includeTravelSegments
+          ? {
+              orderBy: [{ originStop: { order: 'asc' } }, { destinationStop: { order: 'asc' } }],
+            }
+          : false,
       },
     });
   }
@@ -86,6 +93,7 @@ export class TripRepository {
    * @param userId - User ID to search for trips.
    * @param includeStops - Whether to include stops in the result.
    * @param includeBankedLocations - Whether to include banked locations in the result.
+   * @param includeTravelSegments - Whether to include travel segments in the result.
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return List of trips for the specified user.
    */
@@ -93,7 +101,8 @@ export class TripRepository {
     userId: string,
     includeStops = false,
     includeBankedLocations = false,
-    prismaClient?: PrismaClient,
+    includeTravelSegments = false,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<Trip[]> {
     const client = prismaClient || this.prisma;
 
@@ -120,6 +129,11 @@ export class TripRepository {
               },
             }
           : false,
+        travelSegments: includeTravelSegments
+          ? {
+              orderBy: [{ originStop: { order: 'asc' } }, { destinationStop: { order: 'asc' } }],
+            }
+          : false,
       },
       orderBy: {
         updatedAt: 'desc',
@@ -133,10 +147,13 @@ export class TripRepository {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return List of trips matching the criteria.
    */
-  async search(criteria: TripSearchCriteria, prismaClient?: PrismaClient): Promise<Trip[]> {
+  async search(
+    criteria: TripSearchCriteria,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Trip[]> {
     const client = prismaClient || this.prisma;
 
-    const whereClause: any = {};
+    const whereClause: Prisma.TripWhereInput = {};
 
     if (criteria.userId) {
       whereClause.userId = criteria.userId;
@@ -172,6 +189,11 @@ export class TripRepository {
               },
             }
           : false,
+        travelSegments: criteria.includeTravelSegments
+          ? {
+              orderBy: [{ originStop: { order: 'asc' } }, { destinationStop: { order: 'asc' } }],
+            }
+          : false,
       },
       orderBy: {
         updatedAt: 'desc',
@@ -189,11 +211,11 @@ export class TripRepository {
   async update(
     id: string,
     data: TripServiceUpdateRequest,
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<Partial<Trip>> {
     const client = prismaClient || this.prisma;
 
-    const updateData: any = {};
+    const updateData: Prisma.TripUpdateInput = {};
 
     if (data.name !== undefined) {
       updateData.name = data.name;
@@ -222,7 +244,7 @@ export class TripRepository {
    * @param id - Trip ID to delete.
    * @param prismaClient - Optional Prisma client for transaction management.
    */
-  async delete(id: string, prismaClient?: PrismaClient): Promise<void> {
+  async delete(id: string, prismaClient?: PrismaClientOrTransaction): Promise<void> {
     const client = prismaClient || this.prisma;
 
     await client.trip.delete({
@@ -236,11 +258,113 @@ export class TripRepository {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return The total number of trips for the user.
    */
-  async getTripCount(userId: string, prismaClient?: PrismaClient): Promise<number> {
+  async getTripCount(userId: string, prismaClient?: PrismaClientOrTransaction): Promise<number> {
     const client = prismaClient || this.prisma;
 
-    return await client.trip.count({
+    return client.trip.count({
       where: { userId },
+    });
+  }
+
+  /**
+   * Find a trip with all related details for itinerary operations.
+   * Includes stops with locations and all travel segments.
+   * @param id - Trip ID to search for.
+   * @param prismaClient - Optional Prisma client for transaction management.
+   * @return The trip with full details or null if not found.
+   */
+  async findTripWithFullDetails(
+    id: string,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Trip | null> {
+    const client = prismaClient || this.prisma;
+
+    return client.trip.findUnique({
+      where: { id },
+      include: {
+        stops: {
+          include: {
+            location: true,
+            segmentAsOrigin: {
+              include: {
+                originStop: true,
+                destinationStop: true,
+              },
+            },
+            segmentAsDestination: {
+              include: {
+                originStop: true,
+                destinationStop: true,
+              },
+            },
+          },
+          orderBy: {
+            order: 'asc',
+          },
+        },
+        bankedLocations: {
+          include: {
+            location: true,
+          },
+          orderBy: {
+            addedAt: 'desc',
+          },
+        },
+        travelSegments: {
+          include: {
+            originStop: {
+              include: {
+                location: true,
+              },
+            },
+            destinationStop: {
+              include: {
+                location: true,
+              },
+            },
+          },
+          orderBy: [{ originStop: { order: 'asc' } }, { destinationStop: { order: 'asc' } }],
+        },
+      },
+    });
+  }
+
+  /**
+   * Find a trip with essential relations for itinerary updates.
+   * Optimized query for orchestration operations.
+   * @param id - Trip ID to search for.
+   * @param prismaClient - Optional Prisma client for transaction management.
+   * @return The trip with essential details or null if not found.
+   */
+  async findTripForItineraryUpdate(
+    id: string,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Trip | null> {
+    const client = prismaClient || this.prisma;
+
+    return client.trip.findUnique({
+      where: { id },
+      include: {
+        stops: {
+          include: {
+            location: true,
+          },
+          orderBy: {
+            order: 'asc',
+          },
+        },
+        travelSegments: {
+          orderBy: [{ originStop: { order: 'asc' } }, { destinationStop: { order: 'asc' } }],
+        },
+        bankedLocations: {
+          include: {
+            location: true,
+          },
+          orderBy: {
+            addedAt: 'desc',
+          },
+        },
+      },
     });
   }
 }

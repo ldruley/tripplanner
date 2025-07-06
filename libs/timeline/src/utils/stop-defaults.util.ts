@@ -1,10 +1,11 @@
 import { DEFAULT_DURATIONS } from '../timeline.types';
+import { StopType } from '@prisma/client';
 
 /**
  * Get default duration for a stop type
  * These are suggestions only - never override user input
  */
-export function getDefaultStopDuration(stopType: string | null): number {
+export function getDefaultStopDuration(stopType: StopType): number {
   switch (stopType) {
     case 'PITSTOP':
       return DEFAULT_DURATIONS.PITSTOP;

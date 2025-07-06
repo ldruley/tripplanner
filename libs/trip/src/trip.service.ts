@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
-import { PrismaClient } from '@trip-planner/prisma';
+import { PrismaClientOrTransaction } from '@trip-planner/prisma';
 import {
   CreateTripRequest,
   Trip,
@@ -24,7 +24,7 @@ export class TripService {
   async create(
     userId: string,
     data: CreateTripRequest,
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<Partial<Trip>> {
     // Validate dates if both are provided
     if (data.startDate && data.endDate && data.startDate > data.endDate) {
@@ -41,6 +41,7 @@ export class TripService {
    * @param id - Trip ID to search for.
    * @param includeStops - Whether to include stops in the result.
    * @param includeBankedLocations - Whether to include banked locations in the result.
+   * @param includeTravelSegments - Whether to include travel segments in the result.
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return The trip with optional relations.
    */
@@ -48,12 +49,14 @@ export class TripService {
     id: string,
     includeStops = false,
     includeBankedLocations = false,
-    prismaClient?: PrismaClient,
+    includeTravelSegments = false,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<Trip> {
     const trip = await this.tripRepository.findById(
       id,
       includeStops,
       includeBankedLocations,
+      includeTravelSegments,
       prismaClient,
     );
 
@@ -69,6 +72,7 @@ export class TripService {
    * @param userId - User ID to search for trips.
    * @param includeStops - Whether to include stops in the result.
    * @param includeBankedLocations - Whether to include banked locations in the result.
+   * @param includeTravelSegments - Whether to include travel segments in the result.
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return List of trips for the specified user.
    */
@@ -76,12 +80,14 @@ export class TripService {
     userId: string,
     includeStops = false,
     includeBankedLocations = false,
-    prismaClient?: PrismaClient,
+    includeTravelSegments = false,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<Trip[]> {
     return await this.tripRepository.findByUserId(
       userId,
       includeStops,
       includeBankedLocations,
+      includeTravelSegments,
       prismaClient,
     );
   }
@@ -92,7 +98,10 @@ export class TripService {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return List of trips matching the criteria.
    */
-  async search(criteria: TripSearchCriteria, prismaClient?: PrismaClient): Promise<Trip[]> {
+  async search(
+    criteria: TripSearchCriteria,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Trip[]> {
     return await this.tripRepository.search(criteria, prismaClient);
   }
 
@@ -106,7 +115,7 @@ export class TripService {
   async update(
     id: string,
     data: TripServiceUpdateRequest,
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<Partial<Trip>> {
     // Validate dates if both are provided
     if (data.startDate && data.endDate && data.startDate > data.endDate) {
@@ -114,7 +123,7 @@ export class TripService {
     }
 
     // Verify trip exists
-    await this.findById(id, false, false, prismaClient);
+    await this.findById(id, false, false, false, prismaClient);
 
     this.logger.debug(`Updating trip ${id}`);
 
@@ -126,9 +135,9 @@ export class TripService {
    * @param id - Trip ID to delete.
    * @param prismaClient - Optional Prisma client for transaction management.
    */
-  async delete(id: string, prismaClient?: PrismaClient): Promise<void> {
+  async delete(id: string, prismaClient?: PrismaClientOrTransaction): Promise<void> {
     // Verify trip exists
-    await this.findById(id, false, false, prismaClient);
+    await this.findById(id, false, false, false, prismaClient);
 
     this.logger.debug(`Deleting trip ${id}`);
 
@@ -141,7 +150,7 @@ export class TripService {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return The total number of trips for the user.
    */
-  async getTripCount(userId: string, prismaClient?: PrismaClient): Promise<number> {
+  async getTripCount(userId: string, prismaClient?: PrismaClientOrTransaction): Promise<number> {
     return await this.tripRepository.getTripCount(userId, prismaClient);
   }
 
@@ -151,9 +160,9 @@ export class TripService {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return True if the trip exists, false if not found.
    */
-  async validateTripExists(id: string, prismaClient?: PrismaClient): Promise<boolean> {
+  async validateTripExists(id: string, prismaClient?: PrismaClientOrTransaction): Promise<boolean> {
     try {
-      await this.findById(id, false, false, prismaClient);
+      await this.findById(id, false, false, false, prismaClient);
       return true;
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -173,9 +182,9 @@ export class TripService {
   async validateTripBelongsToUser(
     tripId: string,
     userId: string,
-    prismaClient?: PrismaClient,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<boolean> {
-    const trip = await this.tripRepository.findById(tripId, false, false, prismaClient);
+    const trip = await this.tripRepository.findById(tripId, false, false, false, prismaClient);
     return trip?.userId === userId;
   }
 }

@@ -40,6 +40,7 @@ export class MapboxRoutingAdapterService {
    * Fetch routing data from Mapbox API based on the provided request.
    * @param request - The routing request containing waypoints and options.
    * @return A promise that resolves to an object containing the route and raw response data.
+   * TODO: type the raw response properly
    */
   async getRouting(request: RoutingRequest): Promise<{ route: Route; rawResponse: any }> {
     const url = this.buildMapboxRoutingUrl(request);
@@ -81,6 +82,7 @@ export class MapboxRoutingAdapterService {
     // Request route geometry and leg information
     params.append('geometries', 'polyline');
     params.append('overview', 'full');
+    params.append('steps', 'true'); // Enable steps to get detailed leg geometry
 
     // Add API key
     params.append('access_token', this.apiKey);
@@ -141,12 +143,13 @@ export class MapboxRoutingAdapterService {
 
     const route = response.routes[0];
 
-    // Map legs
+    // Map legs with geometry if available
     const legs: RouteLeg[] = route.legs.map((leg, index) => ({
       distance: leg.distance,
       duration: leg.duration,
       startWaypoint: waypoints[index],
       endWaypoint: waypoints[index + 1],
+      geometry: leg.geometry || route.geometry, // Use leg geometry if available, fallback to route geometry
     }));
 
     const mappedRoute: Route = {

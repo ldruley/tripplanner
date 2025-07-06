@@ -167,39 +167,53 @@ export class HereRoutingAdapterService {
       throw new BadGatewayException('No sections found in HERE route response');
     }
 
-    // Get the main section (usually the first one contains the route data)
-    const mainSection = route.sections[0];
-
-    // Check if summary exists and has the expected properties
-    if (!mainSection.summary) {
-      throw new BadGatewayException('No travelSummary found in HERE route section');
-    }
-
-    // Calculate total distance and duration from section travelSummary
-    const totalDistance = mainSection.summary.length || 0;
-    const totalDuration = mainSection.summary.duration || 0;
-
-    // Create legs based on waypoints
-    // For v8 API, we need to create legs from the waypoints since the structure is different
+    // Each section in HERE represents a leg between waypoints
     const legs: RouteLeg[] = [];
-    for (let i = 0; i < waypoints.length - 1; i++) {
-      // For simplicity, distribute the total distance/duration evenly across legs
-      // In a more sophisticated implementation, you'd parse the detailed route data
-      const legDistance = totalDistance / (waypoints.length - 1);
-      const legDuration = totalDuration / (waypoints.length - 1);
+    let totalDistance = 0;
+    let totalDuration = 0;
+    const geometries: string[] = [];
 
+    // Process each section as a leg
+    for (let i = 0; i < route.sections.length; i++) {
+      const section = route.sections[i];
+      
+      if (!section.summary) {
+        throw new BadGatewayException(`No summary found in HERE route section ${i}`);
+      }
+
+      const legDistance = section.summary.length || 0;
+      const legDuration = section.summary.duration || 0;
+      
+      totalDistance += legDistance;
+      totalDuration += legDuration;
+      geometries.push(section.polyline);
+
+      // Map section to leg with proper waypoints
       legs.push({
         distance: legDistance,
         duration: legDuration,
         startWaypoint: waypoints[i],
         endWaypoint: waypoints[i + 1],
+        geometry: section.polyline, // Each section has its own polyline
       });
     }
+
+    // Validate that we have the expected number of legs
+    if (legs.length !== waypoints.length - 1) {
+      this.logger.warn(
+        `HERE sections count (${legs.length}) does not match expected legs count (${waypoints.length - 1})`
+      );
+    }
+
+    // Combine all section polylines for the overall route geometry
+    // For now, use the first section's polyline as the main geometry
+    // TODO: Consider combining polylines properly
+    const mainGeometry = route.sections[0].polyline;
 
     const mappedRoute: Route = {
       distance: totalDistance,
       duration: totalDuration,
-      geometry: mainSection.polyline,
+      geometry: mainGeometry,
       legs,
     };
 

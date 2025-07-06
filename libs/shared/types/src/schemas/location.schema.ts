@@ -1,9 +1,13 @@
 import { z } from 'zod';
 import { latitudeSchema, longitudeSchema, uuidSchema } from './base.schema';
+import { ApiSourceProvider, LocationCategory, Prisma } from '@prisma/client';
+
+export const LocationCategorySchema = z.nativeEnum(LocationCategory);
+export const ApiSourceSchema = z.nativeEnum(ApiSourceProvider);
 
 export const LocationSchema = z.object({
   id: uuidSchema,
-  name: z.string().min(1, 'Name is required'),
+  name: z.string().min(1, { message: 'Name is required and must be at least 1 character' }),
   description: z.string().nullable().optional(),
 
   // Address fields to match Prisma
@@ -18,38 +22,9 @@ export const LocationSchema = z.object({
   longitude: longitudeSchema,
 
   // API source and category
-  apiSource: z
-    .enum([
-      'GOOGLE_PLACES',
-      'FOURSQUARE',
-      'OPENSTREETMAP',
-      'HERE',
-      'MAPBOX',
-      'USER_INPUT',
-      'INTERNAL_SEED',
-    ])
-    .nullable()
-    .optional(),
+  apiSource: ApiSourceSchema.nullable().optional(),
   apiSourceId: z.string().nullable().optional(),
-  category: z
-    .enum([
-      'RESTAURANT',
-      'CAFE',
-      'HOTEL',
-      'ACCOMMODATION',
-      'LANDMARK',
-      'POINT_OF_INTEREST',
-      'TRANSPORT_HUB',
-      'SHOPPING',
-      'NATURE',
-      'MUSEUM',
-      'PARK',
-      'HISTORICAL_SITE',
-      'ENTERTAINMENT',
-      'OTHER',
-    ])
-    .nullable()
-    .optional(),
+  category: LocationCategorySchema.nullable().optional(),
 
   // Public flag for sharing
   public: z.boolean().default(false),
@@ -59,118 +34,33 @@ export const LocationSchema = z.object({
   updatedAt: z.coerce.date(),
 });
 
-export const CreateLocationRequestSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  description: z.string().optional(),
-
-  address: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  country: z.string().optional(),
-  postalCode: z.string().optional(),
-
-  latitude: latitudeSchema,
-  longitude: longitudeSchema,
-
-  apiSource: z.enum(['OPENSTREETMAP', 'HERE', 'MAPBOX', 'USER_INPUT', 'INTERNAL_SEED']).optional(),
-  apiSourceId: z.string().optional(),
-
-  category: z
-    .enum([
-      'RESTAURANT',
-      'CAFE',
-      'HOTEL',
-      'ACCOMMODATION',
-      'LANDMARK',
-      'POINT_OF_INTEREST',
-      'TRANSPORT_HUB',
-      'SHOPPING',
-      'NATURE',
-      'MUSEUM',
-      'PARK',
-      'HISTORICAL_SITE',
-      'ENTERTAINMENT',
-      'OTHER',
-    ])
-    .optional(),
-
-  public: z.boolean().optional(),
+export const CreateLocationRequestSchema = LocationSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
-export const UpdateLocationRequestSchema = z.object({
-  name: z.string().optional(),
-  description: z.string().optional(),
+export const UpdateLocationRequestSchema = LocationSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).partial();
 
-  address: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  country: z.string().optional(),
-  postalCode: z.string().optional(),
-
-  latitude: latitudeSchema.optional(),
-  longitude: longitudeSchema.optional(),
-
-  apiSource: z.enum(['OPENSTREETMAP', 'HERE', 'MAPBOX', 'USER_INPUT', 'INTERNAL_SEED']).optional(),
-  apiSourceId: z.string().optional(),
-
-  category: z
-    .enum([
-      'RESTAURANT',
-      'CAFE',
-      'HOTEL',
-      'ACCOMMODATION',
-      'LANDMARK',
-      'POINT_OF_INTEREST',
-      'TRANSPORT_HUB',
-      'SHOPPING',
-      'NATURE',
-      'MUSEUM',
-      'PARK',
-      'HISTORICAL_SITE',
-      'ENTERTAINMENT',
-      'OTHER',
-    ])
-    .optional(),
-
-  public: z.boolean().optional(),
-});
-
-export const LocationSearchCriteriaSchema = z.object({
-  name: z.string().optional(),
-
+export const LocationSearchCriteriaSchema = LocationSchema.pick({
+  name: true,
+  city: true,
+  state: true,
+  country: true,
+  public: true,
+  apiSource: true,
+  category: true,
+}).partial().extend({
   coordinates: z
     .object({
       latitude: latitudeSchema,
       longitude: longitudeSchema,
-      radius: z.number().min(0),
+      radius: z.number().min(0, { message: 'Radius must be at least 0 meters' }),
     })
-    .optional(),
-
-  city: z.string().optional(),
-  state: z.string().optional(),
-  country: z.string().optional(),
-
-  public: z.boolean().optional(),
-
-  apiSource: z.enum(['OPENSTREETMAP', 'HERE', 'MAPBOX', 'USER_INPUT', 'INTERNAL_SEED']).optional(),
-
-  category: z
-    .enum([
-      'RESTAURANT',
-      'CAFE',
-      'HOTEL',
-      'ACCOMMODATION',
-      'LANDMARK',
-      'POINT_OF_INTEREST',
-      'TRANSPORT_HUB',
-      'SHOPPING',
-      'NATURE',
-      'MUSEUM',
-      'PARK',
-      'HISTORICAL_SITE',
-      'ENTERTAINMENT',
-      'OTHER',
-    ])
     .optional(),
 });
 
