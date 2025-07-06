@@ -8,9 +8,7 @@ import { LocationBankComponent } from '../location-bank/location-bank.component'
 import { ItineraryBuilderComponent } from '../itinerary-builder/itinerary-builder.component';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 
-import { Location } from '../../models/location.model';
-import { Trip } from '../../models/trip.model';
-import { Stop } from '../../models/stop.model';
+import { Location, Trip, Stop } from '@trip-planner/types';
 import { MatrixCalculationService } from '../../services/matrix-calculation.service';
 
 // Services (placeholders for now)
@@ -42,7 +40,7 @@ export class TripEditorComponent {
   // These will be initialized by the effect watching initialTripData
   tripId: WritableSignal<string | null> = signal(null);
   currentTripName: WritableSignal<string> = signal('Untitled Trip');
-  currentTripDescription: WritableSignal<string | undefined> = signal(undefined);
+  currentTripDescription: WritableSignal<string | null | undefined> = signal(undefined);
 
   bankedLocations: WritableSignal<Location[]> = signal([]);
   itineraryStops: WritableSignal<Stop[]> = signal([]);
@@ -156,9 +154,10 @@ export class TripEditorComponent {
       id: crypto.randomUUID(),
       tripId: this.tripId() || '',
       locationId: locationToMove.id,
-      locationDetails: locationToMove,
+      location: locationToMove,
       order: newIndex,
-      tempClientId: crypto.randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     // Remove from bankedLocations signal
@@ -195,8 +194,7 @@ export class TripEditorComponent {
     this.itineraryStops.update(stops =>
       stops
         .filter(stop => {
-          // If using tempClientId for newly added stops not yet saved, check that too
-          return stop.id !== stopIdToRemove && stop.tempClientId !== stopIdToRemove;
+          return stop.id !== stopIdToRemove;
         })
         .map((stop, index) => ({ ...stop, order: index })),
     ); // Re-order remaining
@@ -218,7 +216,7 @@ export class TripEditorComponent {
 
     // 1. Get current locations from itinerary stops.
     const itineraryLocations = this.itineraryStops()
-      .map(stop => stop.locationDetails)
+      .map(stop => stop.location)
       .filter((loc): loc is Location => loc != null); // Type guard to filter out nulls
 
     // 2. Get all locations currently in the bank.
@@ -296,9 +294,16 @@ export class TripEditorComponent {
 
     const finalTrip: Trip = {
       id: tripId,
+      userId: '', // This would come from auth context
       name: this.currentTripName(),
       description: this.currentTripDescription(),
+      startDate: null,
+      endDate: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       stops: this.itineraryStops().map((stop, index) => ({ ...stop, order: index })), // Ensure order is up-to-date
+      bankedLocations: this.bankedLocations(),
+      travelSegments: [],
     };
 
     console.log('TripEditor: Emitting tripSaved event with:', finalTrip);

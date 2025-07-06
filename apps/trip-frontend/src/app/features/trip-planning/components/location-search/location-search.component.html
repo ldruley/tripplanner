@@ -64,9 +64,9 @@
             <div class="font-medium text-tp-text-light-primary dark:text-tp-text-primary">
               {{ location.name }}
             </div>
-            @if (location.fullAddress) {
+            @if (location.address) {
               <div class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">
-                {{ location.fullAddress }}
+                {{ location.address }}
               </div>
             } @else if (location.city || location.country) {
               <div class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">

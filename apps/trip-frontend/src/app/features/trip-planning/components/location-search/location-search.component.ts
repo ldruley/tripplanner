@@ -2,7 +2,7 @@ import { Component, output, signal, WritableSignal, OnDestroy } from '@angular/c
 
 import { FormsModule } from '@angular/forms';
 import { LocationSearchService } from '../../services/location-search.service';
-import { Location } from '../../models/location.model';
+import { Location } from '@trip-planner/types';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { EMPTY, of, Subject } from 'rxjs';
 import { catchError, switchMap, tap, takeUntil } from 'rxjs/operators';

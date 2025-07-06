@@ -22,14 +22,14 @@
       </div>
       <div class="flex-grow min-w-0">
         <span class="font-semibold text-tp-text-light-primary dark:text-tp-text-primary truncate"
-          >{{ index() + 1 }}. {{ stop().locationDetails.name || 'Unnamed Stop' }}</span
+          >{{ index() + 1 }}. {{ stop().location?.name || 'Unnamed Stop' }}</span
         >
-        @if (stop().locationDetails.fullAddress) {
+        @if (stop().location?.address) {
           <p
             class="text-xs text-tp-text-light-secondary dark:text-tp-text-secondary truncate"
-            title="{{ stop().locationDetails.fullAddress }}"
+            title="{{ stop().location?.address }}"
           >
-            {{ stop().locationDetails.fullAddress }}
+            {{ stop().location?.address }}
           </p>
         }
       </div>

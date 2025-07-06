@@ -1,7 +1,7 @@
 import { Component, effect, input, output, signal } from '@angular/core';
 
 import { CdkDrag, CdkDragStart, CdkDropList, CdkDragHandle } from '@angular/cdk/drag-drop';
-import { Location } from '../../models/location.model';
+import { Location } from '@trip-planner/types';
 import { LocationDetailsModalComponent } from '../../../shared/components/location-details-modal/location-details-modal.component';
 
 @Component({

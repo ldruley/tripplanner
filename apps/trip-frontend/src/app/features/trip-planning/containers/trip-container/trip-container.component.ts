@@ -3,7 +3,7 @@ import { Component, inject, OnInit, signal, WritableSignal } from '@angular/core
 import { TripEditorComponent } from '../../components/trip-editor/trip-editor.component';
 import { ActivatedRoute } from '@angular/router';
 import { ToastService } from '../../../shared/services';
-import { Trip } from '../../models/trip.model';
+import { Trip } from '@trip-planner/types';
 
 @Component({
   selector: 'app-trip-container',
@@ -33,8 +33,16 @@ export class TripContainerComponent implements OnInit {
       setTimeout(() => {
         this.trip.set({
           id: id,
+          userId: '',
           name: `Trip ${id}`,
+          description: null,
+          startDate: null,
+          endDate: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
           stops: [],
+          bankedLocations: [],
+          travelSegments: [],
         });
         this.isLoading.set(false);
         this.toastService.showInfo('Trip loaded', `Loaded trip: ${id}`);
@@ -44,8 +52,16 @@ export class TripContainerComponent implements OnInit {
       console.log('TripContainer: Creating a new trip');
       this.trip.set({
         id: crypto.randomUUID(),
+        userId: '',
         name: 'New Untitled Trip',
+        description: null,
+        startDate: null,
+        endDate: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
         stops: [],
+        bankedLocations: [],
+        travelSegments: [],
       });
       this.isLoading.set(false);
       this.toastService.showInfo('New trip', 'Started creating a new trip');

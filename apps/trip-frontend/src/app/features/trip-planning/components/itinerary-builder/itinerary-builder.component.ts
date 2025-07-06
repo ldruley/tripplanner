@@ -1,8 +1,7 @@
 import { Component, input, output } from '@angular/core';
 
-import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
-import { Location } from '../../models/location.model';
-import { Stop } from '../../models/stop.model';
+import { CdkDrag, CdkDragDrop, CdkDropList, CdkDragPlaceholder, moveItemInArray } from '@angular/cdk/drag-drop';
+import { Location, Stop } from '@trip-planner/types';
 import { ItineraryStopComponent } from '../itinerary-stop/itinerary-stop.component';
 
 export interface TravelSegmentData {
@@ -14,7 +13,7 @@ export type MatrixData = Map<string, TravelSegmentData>;
 @Component({
   selector: 'app-itinerary-builder',
   standalone: true,
-  imports: [CdkDrag, CdkDropList, ItineraryStopComponent],
+  imports: [CdkDrag, CdkDropList, CdkDragPlaceholder, ItineraryStopComponent],
   templateUrl: './itinerary-builder.component.html',
   styleUrl: './itinerary-builder.component.css',
 })
@@ -76,15 +75,15 @@ export class ItineraryBuilderComponent {
     const currentStop = stops[currentStopIndex];
     const nextStop = stops[currentStopIndex + 1];
 
-    if (!currentStop.locationDetails?.id || !nextStop.locationDetails?.id) {
+    if (!currentStop.location?.id || !nextStop.location?.id) {
       return null; // Missing location details to form a key
     }
 
-    //const key = `${currentStop.locationDetails.id}_${nextStop.locationDetails.id}`;
+    //const key = `${currentStop.location.id}_${nextStop.location.id}`;
     //return matrix.get(key) || null;
 
-    const fromLoc = currentStop.locationDetails;
-    const toLoc = nextStop.locationDetails;
+    const fromLoc = currentStop.location;
+    const toLoc = nextStop.location;
 
     if (!fromLoc || !toLoc) {
       return null;

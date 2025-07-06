@@ -1,6 +1,6 @@
 import { Component, input, output } from '@angular/core';
 
-import { Stop } from '../../models/stop.model';
+import { Stop } from '@trip-planner/types';
 import { CdkDragHandle } from '@angular/cdk/drag-drop';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 
