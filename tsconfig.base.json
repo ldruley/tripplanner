@@ -20,6 +20,7 @@
       "@trip-planner/api-usage": ["libs/api-usage/src/index.ts"],
       "@trip-planner/auth": ["libs/auth/src/index.ts"],
       "@trip-planner/bullmq": ["libs/bullmq/src/index.ts"],
+      "@trip-planner/config": ["libs/shared/config/src/index.ts"],
       "@trip-planner/email": ["libs/email/src/index.ts"],
       "@trip-planner/geocoding": ["libs/geocoding/src/index.ts"],
       "@trip-planner/itinerary": ["libs/itinerary/src/index.ts"],

@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
   BadGatewayException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { ValidationConfigService } from '@trip-planner/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { AxiosResponse } from 'axios';
@@ -24,15 +24,11 @@ export class HerePoiAdapterService {
   private readonly baseUrl = 'https://discover.search.hereapi.com/v1/discover';
 
   constructor(
-    private readonly configService: ConfigService,
+    private readonly configService: ValidationConfigService,
     private readonly httpService: HttpService,
   ) {
-    this.apiKey =
-      this.configService.get<string>('HERE_API_KEY') ??
-      (() => {
-        this.logger.error('Here access token is not configured.');
-        throw new InternalServerErrorException('Here access token is required');
-      })();
+    const apiKeys = this.configService.getApiKeys();
+    this.apiKey = apiKeys.HERE_API_KEY;
   }
 
   async searchPoi(query: PoiSearchQuery): Promise<PoiSearchResult[]> {
@@ -64,7 +60,7 @@ export class HerePoiAdapterService {
             city: feature.address?.city || 'Unknown city',
             region: feature.address?.state || 'Unknown region',
             postalCode: feature.address?.postalCode || 'Unknown postal code',
-            rawResponse: process.env['NODE_ENV'] === 'development' ? feature : undefined,
+            rawResponse: this.configService.isDevelopment() ? feature : undefined,
           };
 
           const parsed = PoiSearchResultSchema.safeParse(location);

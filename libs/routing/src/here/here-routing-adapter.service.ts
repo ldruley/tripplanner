@@ -1,4 +1,4 @@
-import { ConfigService } from '@nestjs/config';
+import { ValidationConfigService } from '@trip-planner/config';
 import { HttpService } from '@nestjs/axios';
 import {
   Injectable,
@@ -18,18 +18,14 @@ export class HereRoutingAdapterService {
   private readonly baseUrl: string;
 
   constructor(
-    private readonly configService: ConfigService,
+    private readonly configService: ValidationConfigService,
     private readonly httpService: HttpService,
   ) {
-    this.apiKey =
-      this.configService.get<string>('HERE_API_KEY') ??
-      (() => {
-        this.logger.error('HERE_API_KEY is not set');
-        throw new InternalServerErrorException('HERE_API_KEY is not set');
-      })();
-
-    this.baseUrl =
-      this.configService.get<string>('HERE_ROUTING_URL') ?? 'https://router.hereapi.com';
+    const apiKeys = this.configService.getApiKeys();
+    const apiUrls = this.configService.getApiUrls();
+    
+    this.apiKey = apiKeys.HERE_API_KEY;
+    this.baseUrl = apiUrls.HERE_ROUTING_URL;
   }
 
   /**

@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { BullMQService } from '@trip-planner/bullmq';
 import { Job, Worker } from 'bullmq';
-import { ConfigService } from '@nestjs/config';
+import { ValidationConfigService } from '@trip-planner/config';
 import { TimezoneRequest, TimezoneResponse, TimezoneResponseSchema } from '@trip-planner/types';
 import { buildUrl } from '@trip-planner/utils';
 import { AxiosResponse } from 'axios';
@@ -25,18 +25,14 @@ export class TimezoneWorker implements OnModuleInit {
 
   constructor(
     private readonly bullmqService: BullMQService,
-    private readonly configService: ConfigService,
+    private readonly configService: ValidationConfigService,
     private readonly httpService: HttpService,
   ) {
-    this.apiKey =
-      this.configService.get<string>('TIMEZONEDB_API_KEY') ??
-      (() => {
-        this.logger.error('TIMEZONEDB_API_KEY is not set');
-        throw new InternalServerErrorException('TIMEZONEDB_API_KEY is required');
-      })();
-
-    this.baseUrl =
-      this.configService.get<string>('TIMEZONEDB_BASE_URL') ?? 'https://api.timezonedb.com/v2.1';
+    const apiKeys = this.configService.getApiKeys();
+    const apiUrls = this.configService.getApiUrls();
+    
+    this.apiKey = apiKeys.TIMEZONEDB_API_KEY;
+    this.baseUrl = apiUrls.TIMEZONEDB_BASE_URL;
   }
 
   async onModuleInit() {

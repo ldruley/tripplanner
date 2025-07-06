@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
   BadGatewayException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { ValidationConfigService } from '@trip-planner/config';
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
@@ -23,20 +23,19 @@ import {
 export class HereGeocodeAdapterService {
   private readonly logger = new Logger(HereGeocodeAdapterService.name);
   private readonly apiKey: string;
-  private readonly geocodeUrl = 'https://geocode.search.hereapi.com/v1/geocode';
+  private readonly geocodeUrl: string;
   private readonly reverseGeocodeUrl =
     'https://reverse.geocode.search.hereapi.com/v1/reversegeocode';
 
   constructor(
-    private readonly configService: ConfigService,
+    private readonly configService: ValidationConfigService,
     private readonly httpService: HttpService,
   ) {
-    this.apiKey =
-      this.configService.get<string>('HERE_API_KEY') ??
-      (() => {
-        this.logger.error('Here access token is not configured');
-        throw new InternalServerErrorException('Here access token is required');
-      })();
+    const apiConfig = configService.getApiKeys();
+    const urlConfig = configService.getApiUrls();
+    
+    this.apiKey = apiConfig.HERE_API_KEY;
+    this.geocodeUrl = urlConfig.HERE_GEOCODE_URL;
   }
 
   async forwardGeocode(query: ForwardGeocodeQuery): Promise<GeocodingResult[]> {

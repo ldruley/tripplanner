@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
   BadGatewayException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { ValidationConfigService } from '@trip-planner/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { AxiosResponse } from 'axios';
@@ -25,22 +25,14 @@ export class MapboxPoiAdapterService {
   private readonly baseUrl: string;
 
   constructor(
-    private configService: ConfigService,
+    private configService: ValidationConfigService,
     private readonly httpService: HttpService,
   ) {
-    this.apiKey =
-      this.configService.get<string>('MAPBOX_API_KEY') ??
-      (() => {
-        this.logger.error('Mapbox access token is not configured.');
-        throw new InternalServerErrorException('Mapbox access token is required');
-      })();
-
-    this.baseUrl =
-      this.configService.get<string>('MAPBOX_BASE_URL') ??
-      (() => {
-        this.logger.error('Mapbox base URL is not configured.');
-        throw new InternalServerErrorException('Mapbox base URL is required');
-      })();
+    const apiKeys = this.configService.getApiKeys();
+    const apiUrls = this.configService.getApiUrls();
+    
+    this.apiKey = apiKeys.MAPBOX_API_KEY;
+    this.baseUrl = apiUrls.MAPBOX_BASE_URL;
   }
 
   async searchPoi(query: PoiSearchQuery): Promise<PoiSearchResult[]> {
@@ -67,7 +59,7 @@ export class MapboxPoiAdapterService {
           city: feature.properties?.context?.place?.name || 'Unknown city',
           region: feature.properties?.context?.region?.name || 'Unknown region',
           postalCode: feature.properties?.context?.postcode?.name || 'Unknown postal code',
-          rawResponse: process.env['NODE_ENV'] === 'development' ? feature : undefined,
+          rawResponse: this.configService.isDevelopment() ? feature : undefined,
         };
 
         const parsed = PoiSearchResultSchema.safeParse(location);

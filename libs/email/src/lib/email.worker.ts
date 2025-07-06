@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { BullMQService } from '@trip-planner/bullmq';
 import { Job, Worker } from 'bullmq';
-import { ConfigService } from '@nestjs/config';
+import { ValidationConfigService } from '@trip-planner/config';
 import { EmailJobData, EmailJobDataSchema } from '@trip-planner/types';
 import Mailgun from 'mailgun.js';
 import FormData from 'form-data';
@@ -24,30 +24,23 @@ export class EmailWorker implements OnModuleInit {
 
   constructor(
     private readonly bullmqService: BullMQService,
-    private readonly configService: ConfigService,
+    private readonly configService: ValidationConfigService,
   ) {
-    const apiKey = this.configService.get<string>('MAILGUN_API_KEY');
-    if (!apiKey) {
-      this.logger.error('MAILGUN_API_KEY is not set');
-      throw new InternalServerErrorException('MAILGUN_API_KEY is required');
-    }
-
-    this.domain =
-      this.configService.get<string>('MAILGUN_DOMAIN') ??
-      (() => {
-        this.logger.error('MAILGUN_DOMAIN is not set');
-        throw new InternalServerErrorException('MAILGUN_DOMAIN is required');
-      })();
-
-    this.from = this.configService.get<string>('MAILGUN_FROM') ?? `noreply@${this.domain}`;
-    this.testEmail = this.configService.get<string>('MAILGUN_TEST_EMAIL');
+    const apiKeys = this.configService.getApiKeys();
+    const emailConfig = this.configService.getEmail();
+    const apiUrls = this.configService.getApiUrls();
+    
+    const apiKey = apiKeys.MAILGUN_API_KEY;
+    this.domain = emailConfig.MAILGUN_DOMAIN;
+    this.from = emailConfig.MAILGUN_FROM;
+    this.testEmail = emailConfig.MAILGUN_TEST_EMAIL;
 
     // Initialize Mailgun client
     const mailgunClient = new Mailgun(FormData);
     this.mailgun = mailgunClient.client({
       username: 'api',
       key: apiKey,
-      url: this.configService.get<string>('MAILGUN_BASE_URL') ?? 'https://api.mailgun.net',
+      url: apiUrls.MAILGUN_BASE_URL,
     });
   }
 
@@ -127,8 +120,7 @@ export class EmailWorker implements OnModuleInit {
   }
 
   private shouldUseTestEmail(): boolean {
-    const env = this.configService.get<string>('NODE_ENV') || 'development';
-    return env !== 'production' && !!this.testEmail;
+    return !this.configService.isProduction() && !!this.testEmail;
   }
 
   private stripHtmlTags(html: string): string {

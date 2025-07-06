@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigValidationModule } from '@trip-planner/config';
 import { PrismaModule } from '@trip-planner/prisma';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -23,11 +23,7 @@ import { ItineraryModule } from '@trip-planner/itinerary';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: [`.env.${process.env.NODE_ENV || 'development'}`, `.env`],
-      cache: true,
-    }),
+    ConfigValidationModule.forRoot(),
     AuthModule,
     PrismaModule,
     ProfilesModule,

@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
   BadGatewayException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { ValidationConfigService } from '@trip-planner/config';
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
@@ -25,15 +25,11 @@ export class MapboxGeocodeAdapterService {
   private readonly apiKey: string;
 
   constructor(
-    private configService: ConfigService,
+    private configService: ValidationConfigService,
     private httpService: HttpService,
   ) {
-    this.apiKey =
-      this.configService.get<string>('MAPBOX_API_KEY') ??
-      (() => {
-        this.logger.error('Mapbox access token is not configured');
-        throw new InternalServerErrorException('Mapbox access token is required');
-      })();
+    const apiKeys = this.configService.getApiKeys();
+    this.apiKey = apiKeys.MAPBOX_API_KEY;
   }
 
   async forwardGeocode(query: ForwardGeocodeQuery): Promise<GeocodingResult[]> {
@@ -94,7 +90,7 @@ export class MapboxGeocodeAdapterService {
             region: feature.properties?.context?.region?.name || 'No region found',
             city: feature.properties?.context?.place?.name || 'No city found',
             postalCode: feature.properties?.context?.postcode?.name || 'No postal code found',
-            rawResponse: process.env['NODE_ENV'] === 'development' ? feature : undefined,
+            rawResponse: this.configService.isDevelopment() ? feature : undefined,
           };
 
           // Use Zod to parse. This will throw an error if the data doesn't match our schema.

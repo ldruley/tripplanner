@@ -1,4 +1,4 @@
-import { ConfigService } from '@nestjs/config';
+import { ValidationConfigService } from '@trip-planner/config';
 import { HttpService } from '@nestjs/axios';
 import {
   Injectable,
@@ -18,22 +18,14 @@ export class MapboxRoutingAdapterService {
   private readonly baseUrl: string;
 
   constructor(
-    private readonly configService: ConfigService,
+    private readonly configService: ValidationConfigService,
     private readonly httpService: HttpService,
   ) {
-    this.apiKey =
-      this.configService.get<string>('MAPBOX_API_KEY') ??
-      (() => {
-        this.logger.error('MAPBOX_API_KEY is not set');
-        throw new InternalServerErrorException('MAPBOX_API_KEY is not set');
-      })();
-
-    this.baseUrl =
-      this.configService.get<string>('MAPBOX_BASE_URL') ??
-      (() => {
-        this.logger.error('MAPBOX_BASE_URL is not set');
-        throw new InternalServerErrorException('MAPBOX_BASE_URL is not set');
-      })();
+    const apiKeys = this.configService.getApiKeys();
+    const apiUrls = this.configService.getApiUrls();
+    
+    this.apiKey = apiKeys.MAPBOX_API_KEY;
+    this.baseUrl = apiUrls.MAPBOX_BASE_URL;
   }
 
   /**
