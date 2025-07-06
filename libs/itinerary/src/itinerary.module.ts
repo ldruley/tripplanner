@@ -11,6 +11,8 @@ import { ItineraryService } from './itinerary.service';
 import { TripCreationService } from './trip-creation.service';
 import { StopCoordinationService } from './stop-coordination.service';
 import { RoutingCoordinationService } from './routing-coordination.service';
+import { BankCoordinationService } from './bank-coordination.service';
+import { TripBankedLocationRepository } from './trip-banked-location.repository';
 
 @Module({
   imports: [
@@ -28,12 +30,16 @@ import { RoutingCoordinationService } from './routing-coordination.service';
     TripCreationService,
     StopCoordinationService,
     RoutingCoordinationService,
+    BankCoordinationService,
+    TripBankedLocationRepository,
   ],
   exports: [
     ItineraryService,
     TripCreationService,
     StopCoordinationService,
     RoutingCoordinationService,
+    BankCoordinationService,
+    TripBankedLocationRepository,
   ],
 })
 export class ItineraryModule {}

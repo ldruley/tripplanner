@@ -9,6 +9,7 @@ export * from './settings.schema';
 export * from './stop.schema';
 export * from './toast.schema';
 export * from './trip.schema';
+export * from './trip-banked-location.schema';
 export * from './user.schema';
 export * from './timezone.schema';
 export * from './external-api.schema';

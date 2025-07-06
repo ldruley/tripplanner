@@ -81,6 +81,21 @@ export class StopService {
   }
 
   /**
+   * Find a stop by trip ID and location ID.
+   * @param tripId - Trip ID to search in.
+   * @param locationId - Location ID to search for.
+   * @param prismaClient - Optional Prisma client for transaction management.
+   * @return The stop or null if not found.
+   */
+  async findByTripAndLocation(
+    tripId: string,
+    locationId: string,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Stop | null> {
+    return await this.stopRepository.findByTripAndLocation(tripId, locationId, prismaClient);
+  }
+
+  /**
    * Search for stops based on criteria.
    * @param criteria - Search criteria including tripId, locationId, etc.
    * @param prismaClient - Optional Prisma client for transaction management.

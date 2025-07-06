@@ -243,7 +243,7 @@ export class StopCoordinationService {
    * @param insertOrder - Order position to insert at.
    * @param prismaClient - Prisma client for transaction.
    */
-  private async makeRoomForStop(
+  async makeRoomForStop(
     tripId: string,
     insertOrder: number,
     prismaClient: PrismaClientOrTransaction,

@@ -32,7 +32,7 @@ model User {
 model UserSettings {
   id           String       @id @default(cuid()) @map("user_settings_id")
   userId       String       @unique @map("user_id")
-  timezone     String       @default("Europe/London")
+  timezone     String       @default("America/Los_Angeles")
   distanceUnit DistanceUnit @default(MILES) @map("distance_unit")
   darkMode     Boolean      @default(false) @map("dark_mode")
   createdAt    DateTime     @default(now()) @map("created_at")
@@ -73,8 +73,10 @@ model Location {
   postalCode  String?            @map("postal_code")
   latitude    Float
   longitude   Float
+  timezone    String? // Likely make this required in the future
   apiSource   ApiSourceProvider? @map("api_source") // Provider source
   apiSourceId String?            @map("api_source_id") // Provider-specific ID
+  fullData    Json? // Full data from the API (normalized JSON)
   category    LocationCategory?
   public      Boolean            @default(false) // Flag for marking locations as public/shared
   // Prisma doesn't support geography types directly
@@ -98,7 +100,7 @@ model UserFavoriteLocation {
   userId     String   @map("user_id")
   locationId String   @map("location_id")
   alias      String?  @db.Text // User's custom name for the location
-  tags       String[] // Array of user-defined tags
+  tags       String[]
   notes      String?  @db.Text
   createdAt  DateTime @default(now()) @map("created_at")
 
@@ -117,6 +119,7 @@ model Trip {
   description String?   @db.Text
   startDate   DateTime? @map("start_date")
   endDate     DateTime? @map("end_date")
+  matrix      Json?
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
@@ -151,7 +154,7 @@ model Stop {
 
   tripId     String @map("trip_id")
   locationId String @map("location_id")
-  order      Int // Defines the sequence within the itinerary; not nullable
+  order      Int
 
   // Stop-specific details
   plannedArrivalTime      DateTime? @map("planned_arrival_time")
