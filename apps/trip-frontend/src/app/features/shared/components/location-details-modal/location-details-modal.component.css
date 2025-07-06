@@ -1,0 +1,72 @@
+/* Custom scrollbar for the modal content */
+:host {
+  .modal-content {
+    scrollbar-width: thin;
+    scrollbar-color: theme(colors.tp.border-light) transparent;
+  }
+
+  .modal-content::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .modal-content::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .modal-content::-webkit-scrollbar-thumb {
+    background: theme(colors.tp.border-light);
+    border-radius: 3px;
+  }
+
+  .modal-content::-webkit-scrollbar-thumb:hover {
+    background: theme(colors.tp.text-light-secondary);
+  }
+}
+
+/* Dark mode scrollbar */
+:host-context(.dark) {
+  .modal-content {
+    scrollbar-color: theme(colors.tp.border) transparent;
+  }
+
+  .modal-content::-webkit-scrollbar-thumb {
+    background: theme(colors.tp.border);
+  }
+
+  .modal-content::-webkit-scrollbar-thumb:hover {
+    background: theme(colors.tp.text-secondary);
+  }
+}
+
+/* Animation for modal appearance */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+:host {
+  .fixed {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .bg-tp-bg-light-primary {
+    animation: slideIn 0.2s ease-out;
+  }
+}
+
+:host-context(.dark) {
+  .bg-tp-bg-primary {
+    animation: slideIn 0.2s ease-out;
+  }
+}

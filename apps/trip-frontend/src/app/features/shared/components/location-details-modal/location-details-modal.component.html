@@ -1,0 +1,194 @@
+@if (isOpen()) {
+  <div 
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+    (click)="onBackdropClick($event)"
+    (keyup.escape)="onClose()"
+    tabindex="0"
+    role="button"
+    aria-label="Close modal by clicking backdrop"
+  >
+    <div 
+      class="bg-tp-bg-light-primary dark:bg-tp-bg-primary rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto"
+      role="dialog"
+      aria-labelledby="modal-title"
+      aria-modal="true"
+    >
+      <!-- Header -->
+      <div class="flex items-center justify-between p-6 border-b border-tp-border-light dark:border-tp-border">
+        <h2 
+          id="modal-title"
+          class="text-xl font-semibold text-tp-text-light-primary dark:text-tp-text-primary"
+        >
+          Location Details
+        </h2>
+        <button 
+          (click)="onClose()"
+          class="text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-tp-text-light-primary dark:hover:text-tp-text-primary transition-colors"
+          aria-label="Close modal"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div class="p-6 space-y-4">
+        <!-- Name -->
+        <div>
+          <label for="location-name" class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary mb-1">
+            Name
+          </label>
+          <div id="location-name" class="text-tp-text-light-primary dark:text-tp-text-primary font-medium" role="textbox" aria-readonly="true">
+            {{ location().name }}
+          </div>
+        </div>
+
+        <!-- Description -->
+        @if (location().description) {
+          <div>
+            <label for="location-description" class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary mb-1">
+              Description
+            </label>
+            <div id="location-description" class="text-tp-text-light-primary dark:text-tp-text-primary" role="textbox" aria-readonly="true">
+              {{ location().description }}
+            </div>
+          </div>
+        }
+
+        <!-- Address -->
+        @if (fullAddress()) {
+          <div>
+            <label for="location-address" class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary mb-1">
+              Address
+            </label>
+            <div id="location-address" class="text-tp-text-light-primary dark:text-tp-text-primary" role="textbox" aria-readonly="true">
+              {{ fullAddress() }}
+            </div>
+          </div>
+        }
+
+        <!-- Address Components -->
+        <div class="grid grid-cols-2 gap-4">
+          @if (location().city) {
+            <div>
+              <label for="location-city" class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary mb-1">
+                City
+              </label>
+              <div id="location-city" class="text-tp-text-light-primary dark:text-tp-text-primary" role="textbox" aria-readonly="true">
+                {{ location().city }}
+              </div>
+            </div>
+          }
+
+          @if (location().state) {
+            <div>
+              <label for="location-state" class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary mb-1">
+                State
+              </label>
+              <div id="location-state" class="text-tp-text-light-primary dark:text-tp-text-primary" role="textbox" aria-readonly="true">
+                {{ location().state }}
+              </div>
+            </div>
+          }
+
+          @if (location().country) {
+            <div>
+              <label for="location-country" class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary mb-1">
+                Country
+              </label>
+              <div id="location-country" class="text-tp-text-light-primary dark:text-tp-text-primary" role="textbox" aria-readonly="true">
+                {{ location().country }}
+              </div>
+            </div>
+          }
+
+          @if (location().postalCode) {
+            <div>
+              <label for="location-postal-code" class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary mb-1">
+                Postal Code
+              </label>
+              <div id="location-postal-code" class="text-tp-text-light-primary dark:text-tp-text-primary" role="textbox" aria-readonly="true">
+                {{ location().postalCode }}
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Coordinates -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="location-latitude" class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary mb-1">
+              Latitude
+            </label>
+            <div id="location-latitude" class="text-tp-text-light-primary dark:text-tp-text-primary font-mono text-sm" role="textbox" aria-readonly="true">
+              {{ location().latitude.toFixed(6) }}
+            </div>
+          </div>
+          <div>
+            <label for="location-longitude" class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary mb-1">
+              Longitude
+            </label>
+            <div id="location-longitude" class="text-tp-text-light-primary dark:text-tp-text-primary font-mono text-sm" role="textbox" aria-readonly="true">
+              {{ location().longitude.toFixed(6) }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Category -->
+        @if (categoryDisplay()) {
+          <div>
+            <label for="location-category" class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary mb-1">
+              Category
+            </label>
+            <div id="location-category" class="text-tp-text-light-primary dark:text-tp-text-primary" role="textbox" aria-readonly="true">
+              {{ categoryDisplay() }}
+            </div>
+          </div>
+        }
+
+        <!-- Geocoding Provider -->
+        @if (geocodingProviderDisplay()) {
+          <div>
+            <label for="location-data-source" class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary mb-1">
+              Data Source
+            </label>
+            <div id="location-data-source" class="text-tp-text-light-primary dark:text-tp-text-primary" role="textbox" aria-readonly="true">
+              {{ geocodingProviderDisplay() }}
+            </div>
+          </div>
+        }
+
+        <!-- Created/Updated -->
+        <div class="grid grid-cols-2 gap-4 pt-4 border-t border-tp-border-light dark:border-tp-border">
+          <div>
+            <label for="location-created" class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary mb-1">
+              Created
+            </label>
+            <div id="location-created" class="text-tp-text-light-primary dark:text-tp-text-primary text-sm" role="textbox" aria-readonly="true">
+              {{ location().createdAt | date:'medium' }}
+            </div>
+          </div>
+          <div>
+            <label for="location-updated" class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary mb-1">
+              Updated
+            </label>
+            <div id="location-updated" class="text-tp-text-light-primary dark:text-tp-text-primary text-sm" role="textbox" aria-readonly="true">
+              {{ location().updatedAt | date:'medium' }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="flex justify-end p-6 border-t border-tp-border-light dark:border-tp-border">
+        <button 
+          (click)="onClose()"
+          class="px-4 py-2 bg-tp-orange hover:bg-tp-orange-hover text-white rounded-md transition-colors focus:ring-2 focus:ring-tp-orange focus:ring-opacity-50"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+}
