@@ -1,10 +1,12 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UsePipes } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery } from '@nestjs/swagger';
+import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import { RoutingRequestDto } from '@trip-planner/shared/dtos';
 import { RoutingService } from './routing.service';
 
 @ApiTags('routing')
 @Controller('routing')
+@UsePipes(ZodValidationPipe)
 export class RoutingController {
   constructor(private readonly routingService: RoutingService) {}
 

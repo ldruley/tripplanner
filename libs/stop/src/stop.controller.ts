@@ -9,7 +9,9 @@ import {
   Put,
   Query,
   UseGuards,
+  UsePipes,
 } from '@nestjs/common';
+import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import { JwtAuthGuard, CurrentUser } from '@trip-planner/auth';
 import { SafeUser } from '@trip-planner/types';
 import {
@@ -23,6 +25,7 @@ import { StopService } from './stop.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('stops')
+@UsePipes(ZodValidationPipe)
 export class StopController {
   constructor(private readonly stopService: StopService) {}
 

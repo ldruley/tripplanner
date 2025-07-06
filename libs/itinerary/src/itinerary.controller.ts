@@ -10,7 +10,9 @@ import {
   UseGuards,
   Logger,
   HttpStatus,
+  UsePipes,
 } from '@nestjs/common';
+import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@trip-planner/auth';
 import { CurrentUser } from '@trip-planner/auth';
@@ -29,6 +31,7 @@ import { TravelMode } from '@prisma/client';
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('itinerary')
+@UsePipes(ZodValidationPipe)
 export class ItineraryController {
   private readonly logger = new Logger(ItineraryController.name);
 

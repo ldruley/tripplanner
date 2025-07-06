@@ -7,7 +7,9 @@ import {
   Request,
   Body,
   Logger,
+  UsePipes,
 } from '@nestjs/common';
+import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import {
@@ -28,6 +30,7 @@ import {
 } from '@trip-planner/shared/dtos';
 
 @Controller('auth')
+@UsePipes(ZodValidationPipe)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

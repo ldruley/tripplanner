@@ -8,7 +8,9 @@ import {
   Post,
   Query,
   UseGuards,
+  UsePipes,
 } from '@nestjs/common';
+import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard, CurrentUser } from '@trip-planner/auth';
 import { SafeUser } from '@trip-planner/types';
@@ -24,6 +26,7 @@ import { TravelSegmentService } from './travel-segment.service';
 @ApiTags('travel-segments')
 @UseGuards(JwtAuthGuard)
 @Controller('travel-segments')
+@UsePipes(ZodValidationPipe)
 export class TravelSegmentController {
   constructor(private readonly travelSegmentService: TravelSegmentService) {}
 

@@ -9,7 +9,9 @@ import {
   Query,
   UnauthorizedException,
   UseGuards,
+  UsePipes,
 } from '@nestjs/common';
+import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import { JwtAuthGuard, CurrentUser } from '@trip-planner/auth';
 import { SafeUser } from '@trip-planner/types';
 import { CreateTripDto, UpdateTripDto, TripSearchDto } from '@trip-planner/shared/dtos';
@@ -17,6 +19,7 @@ import { TripService } from './trip.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('trips')
+@UsePipes(ZodValidationPipe)
 export class TripController {
   constructor(private readonly tripService: TripService) {}
 
