@@ -43,7 +43,7 @@ export class StopCoordinationService {
   async addStopToTrip(userId: string, data: AddStopToTripDto): Promise<Trip> {
     this.logger.debug(`Adding stop to trip ${data.tripId} for user ${userId}`);
 
-    return await this.prismaService.$transaction(
+    return this.prismaService.$transaction(
       async (prismaClient: PrismaClientOrTransaction) => {
         // Step 1: Validate trip ownership
         const tripBelongsToUser = await this.tripService.validateTripBelongsToUser(
@@ -58,12 +58,19 @@ export class StopCoordinationService {
 
         // Step 2: Create or find location (with deduplication)
         const locationData: CreateLocationRequest = {
+          name: data.locationData.name,
+          description: data.locationData.description,
+          address: data.locationData.address,
+          city: data.locationData.city,
+          state: data.locationData.state,
+          country: data.locationData.country,
+          postalCode: data.locationData.postalCode,
           latitude: data.locationData.latitude,
           longitude: data.locationData.longitude,
-          name: data.locationData.name,
-          public: false, // Default to false, can be updated later
-          address: data.locationData.address,
+          apiSource: data.locationData.apiSource,
+          apiSourceId: data.locationData.apiSourceId,
           category: data.locationData.category,
+          public: false, // Default to false, can be updated later
         };
 
         const location = await this.locationService.create(

@@ -1,30 +1,7 @@
 import { z } from 'zod';
 import { extendApi } from '@anatine/zod-openapi';
-import { LocationCategorySchema } from './location.schema';
+import { LocationForItinerarySchema } from './location.schema';
 import { TravelModeSchema } from './travel-segment.schema';
-
-export const OrganizedLocationSchema = extendApi(
-  z.object({
-    latitude: z.number().describe('Latitude of the location'),
-    longitude: z.number().describe('Longitude of the location'),
-    name: z.string().describe('Name of the location'),
-    address: z.string().optional().describe('Optional formatted address'),
-    category: LocationCategorySchema.nullable().optional().describe('Location category (e.g., restaurant, hotel)'),
-    order: z.number().int().min(0).describe('Order position in the organized list (0-indexed)'),
-  }),
-  {
-    title: 'Organized Location',
-    description: 'A location with ordering information for itinerary planning',
-    example: {
-      latitude: 48.8566,
-      longitude: 2.3522,
-      name: 'Eiffel Tower',
-      address: 'Champ de Mars, 75007 Paris, France',
-      category: 'ATTRACTION',
-      order: 0,
-    },
-  },
-);
 
 // Schema for creating a trip from organized locations
 export const CreateTripFromOrganizedListSchema = extendApi(
@@ -33,7 +10,7 @@ export const CreateTripFromOrganizedListSchema = extendApi(
     description: z.string().optional().describe('Optional trip description'),
     startDate: z.string().datetime().optional().describe('Planned start date (ISO 8601 format)'),
     endDate: z.string().datetime().optional().describe('Planned end date (ISO 8601 format)'),
-    organizedLocations: z.array(OrganizedLocationSchema).min(1).describe('Ordered list of locations to visit (minimum 1)'),
+    organizedLocations: z.array(LocationForItinerarySchema).min(1).describe('Ordered list of locations to visit (minimum 1)'),
     calculateRouting: z.boolean().default(true).describe('Whether to calculate routing between locations'),
     travelMode: TravelModeSchema.default('DRIVING').describe('Travel mode for routing calculations'),
   }),
@@ -47,9 +24,18 @@ export const CreateTripFromOrganizedListSchema = extendApi(
       endDate: '2024-06-01T18:00:00Z',
       organizedLocations: [
         {
-          latitude: 48.8566,
-          longitude: 2.3522,
           name: 'Eiffel Tower',
+          description: 'Iconic iron lattice tower in Paris',
+          address: 'Champ de Mars, 5 Avenue Anatole France',
+          city: 'Paris',
+          state: 'Île-de-France',
+          country: 'France',
+          postalCode: '75007',
+          latitude: 48.8584,
+          longitude: 2.2945,
+          apiSource: 'HERE',
+          apiSourceId: 'here:pds:place:250jx7ps-b9d7fc1d8dbc4dd9adb39e4b7cf0b2f7',
+          category: 'ATTRACTION',
           order: 0,
         },
       ],
@@ -63,7 +49,7 @@ export const CreateTripFromOrganizedListSchema = extendApi(
 export const AddStopToTripSchema = extendApi(
   z.object({
     tripId: z.string().uuid().describe('ID of the trip to add the stop to'),
-    locationData: OrganizedLocationSchema.describe('Location information for the new stop'),
+    locationData: LocationForItinerarySchema.describe('Location information for the new stop'),
     insertAtOrder: z.number().int().min(0).optional().describe('Position to insert the stop (optional, appends to end if not specified)'),
     calculateRouting: z.boolean().default(true).describe('Whether to recalculate routing after adding the stop'),
     travelMode: TravelModeSchema.default('DRIVING').describe('Travel mode for routing calculations'),
@@ -74,9 +60,18 @@ export const AddStopToTripSchema = extendApi(
     example: {
       tripId: '550e8400-e29b-41d4-a716-446655440000',
       locationData: {
-        latitude: 48.8606,
-        longitude: 2.3376,
         name: 'Arc de Triomphe',
+        description: 'Iconic triumphal arch in Paris',
+        address: 'Place Charles de Gaulle',
+        city: 'Paris',
+        state: 'Île-de-France',
+        country: 'France',
+        postalCode: '75008',
+        latitude: 48.8738,
+        longitude: 2.2950,
+        apiSource: 'HERE',
+        apiSourceId: 'here:pds:place:250jx7ps-b9d7fc1d8dbc4dd9adb39e4b7cf0b2f8',
+        category: 'ATTRACTION',
         order: 1,
       },
       insertAtOrder: 1,

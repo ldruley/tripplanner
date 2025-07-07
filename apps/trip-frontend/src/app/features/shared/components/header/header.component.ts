@@ -124,6 +124,12 @@ export class HeaderComponent {
     });
   }
 
+  onMyTrips(): void {
+    this.router.navigate(['/trips']).catch(err => {
+      console.error('Navigation failed:', err);
+    });
+  }
+
   toggleProfileDropdown(): void {
     this.isProfileDropdownOpen = !this.isProfileDropdownOpen;
   }

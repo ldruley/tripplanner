@@ -44,4 +44,13 @@ export const appRoutes: Route[] = [
       ),
     title: 'My Settings - Trip Planner',
   },
+  {
+    path: 'trips',
+    loadComponent: () =>
+      import('./features/trips/components/my-trips/my-trips.component').then(
+        m => m.MyTripsComponent,
+      ),
+    title: 'My Trips - Trip Planner',
+    canActivate: [authGuard],
+  },
 ];

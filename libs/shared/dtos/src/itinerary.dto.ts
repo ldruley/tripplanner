@@ -1,19 +1,18 @@
 import { createZodDto } from '@anatine/zod-nestjs';
 import { z } from 'zod';
-import { TravelModeSchema, LocationCategorySchema } from '@trip-planner/types';
+import { TravelModeSchema, LocationCategorySchema, LocationForItinerarySchema } from '@trip-planner/types';
 import {
   AddStopToTripSchema,
   CreateTripFromOrganizedListSchema,
   ItineraryReorderStopsSchema,
-  OrganizedLocationSchema,
   RemoveStopFromTripSchema,
   UpdateTripRoutingSchema,
 } from '../../types/src/schemas/itinerary.schema';
 
-// Schema for organized location data from frontend
+// Schema for location data from frontend with itinerary ordering
 
 // DTOs
-export class OrganizedLocationDto extends createZodDto(OrganizedLocationSchema) {}
+export class LocationForItineraryDto extends createZodDto(LocationForItinerarySchema) {}
 
 export class CreateTripFromOrganizedListDto extends createZodDto(
   CreateTripFromOrganizedListSchema,

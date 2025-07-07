@@ -7,10 +7,22 @@ import {
   Stop, 
   TripBankedLocation, 
   CreateTripRequest, 
-  UpdateTripRequest
+  UpdateTripRequest,
+  LocationForItinerary
 } from '@trip-planner/types';
+import { 
+  CreateTripFromOrganizedListDto,
+  AddStopToTripDto,
+  RemoveStopFromTripDto,
+  ItineraryReorderStopsDto
+} from '@trip-planner/shared/dtos';
 import { LocalStorageService } from '../../../core/services/local-storage.service';
 import { environment } from '../../../../environments/environment';
+import { 
+  locationToLocationForItinerary, 
+  stopsToLocationForItinerary,
+  searchLocationToLocationForItinerary
+} from './location-transformation.utils';
 
 export type DataSource = 'new' | 'draft' | 'persisted';
 
@@ -20,6 +32,7 @@ export interface TripState {
   isDirty: boolean;
   dataSource: DataSource;
   error: string | null;
+  isOperationInProgress: boolean;
 }
 
 @Injectable({
@@ -40,7 +53,8 @@ export class TripDataService {
     isLoading: false,
     isDirty: false,
     dataSource: 'new',
-    error: null
+    error: null,
+    isOperationInProgress: false
   });
 
   // Public reactive state
@@ -49,6 +63,7 @@ export class TripDataService {
   readonly isDirty = computed(() => this._state().isDirty);
   readonly dataSource = computed(() => this._state().dataSource);
   readonly error = computed(() => this._state().error);
+  readonly isOperationInProgress = computed(() => this._state().isOperationInProgress);
   
   // Convenience computed properties
   readonly hasTrip = computed(() => !!this.currentTrip());
@@ -217,6 +232,68 @@ export class TripDataService {
     const currentTrip = this.currentTrip();
     if (!currentTrip) return;
 
+    // Check if this is a persisted trip that needs backend API calls
+    if (this.dataSource() === 'persisted') {
+      // Optimistic update - apply change locally first
+      const targetOrder = insertAtIndex !== undefined ? insertAtIndex : currentTrip.stops.length;
+      
+      const optimisticStop: Stop = {
+        id: crypto.randomUUID(), // Generate proper UUID for optimistic update
+        tripId: currentTrip.id,
+        locationId: location.id,
+        order: targetOrder,
+        plannedArrivalTime: null,
+        plannedDuration: null,
+        calculatedArrivalTime: null,
+        calculatedDepartureTime: null,
+        stopType: null,
+        notes: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        location
+      };
+
+      // Update local state optimistically
+      let optimisticStops = [...currentTrip.stops];
+      if (insertAtIndex !== undefined) {
+        optimisticStops = optimisticStops.map(stop => 
+          stop.order >= insertAtIndex 
+            ? { ...stop, order: stop.order + 1 }
+            : stop
+        );
+      }
+      optimisticStops.push(optimisticStop);
+      optimisticStops.sort((a, b) => a.order - b.order);
+
+      this.updateState({
+        trip: { ...currentTrip, stops: optimisticStops },
+        isOperationInProgress: true,
+        error: null
+      });
+
+      // Make backend call
+      this.addStopToBackendTrip(location, insertAtIndex).subscribe({
+        next: (updatedTrip) => {
+          this.updateState({
+            trip: updatedTrip,
+            isDirty: false,
+            isOperationInProgress: false
+          });
+        },
+        error: (error) => {
+          console.error('TripDataService: Failed to add stop to backend trip:', error);
+          // Rollback optimistic update
+          this.updateState({
+            trip: currentTrip,
+            isOperationInProgress: false,
+            error: `Failed to add stop: ${error.message}`
+          });
+        }
+      });
+      return;
+    }
+
+    // Handle local trip (new/draft)
     // Determine the order for the new stop
     const targetOrder = insertAtIndex !== undefined 
       ? insertAtIndex 
@@ -267,6 +344,26 @@ export class TripDataService {
     const currentTrip = this.currentTrip();
     if (!currentTrip) return;
 
+    // Check if this is a persisted trip that needs backend API calls
+    if (this.dataSource() === 'persisted') {
+      this.removeStopFromBackendTrip(stopId).subscribe({
+        next: (updatedTrip) => {
+          this.updateState({
+            trip: updatedTrip,
+            isDirty: false
+          });
+        },
+        error: (error) => {
+          console.error('TripDataService: Failed to remove stop from backend trip:', error);
+          this.updateState({
+            error: `Failed to remove stop: ${error.message}`
+          });
+        }
+      });
+      return;
+    }
+
+    // Handle local trip (new/draft)
     const stopToRemove = currentTrip.stops.find(s => s.id === stopId);
     if (!stopToRemove) return;
 
@@ -292,6 +389,31 @@ export class TripDataService {
     const currentTrip = this.currentTrip();
     if (!currentTrip) return;
 
+    // Check if this is a persisted trip that needs backend API calls
+    if (this.dataSource() === 'persisted') {
+      const stopOrders = newOrder.map((stopId, index) => ({
+        stopId,
+        newOrder: index
+      }));
+
+      this.reorderStopsInBackendTrip(stopOrders).subscribe({
+        next: (updatedTrip) => {
+          this.updateState({
+            trip: updatedTrip,
+            isDirty: false
+          });
+        },
+        error: (error) => {
+          console.error('TripDataService: Failed to reorder stops in backend trip:', error);
+          this.updateState({
+            error: `Failed to reorder stops: ${error.message}`
+          });
+        }
+      });
+      return;
+    }
+
+    // Handle local trip (new/draft)
     const updatedStops = newOrder.map((stopId, index) => {
       const stop = currentTrip.stops.find(s => s.id === stopId);
       if (!stop) throw new Error(`Stop with ID ${stopId} not found`);
@@ -333,6 +455,46 @@ export class TripDataService {
     this.updateState({ isLoading: true, error: null });
 
     const isNewTrip = this.dataSource() === 'new';
+    
+    // For new trips with stops, use the itinerary endpoint for rich data persistence
+    if (isNewTrip && currentTrip.stops.length > 0) {
+      const organizedLocations = stopsToLocationForItinerary(currentTrip.stops);
+      
+      const apiCall = this.createTripWithItinerary(
+        {
+          name: currentTrip.name,
+          description: currentTrip.description || undefined,
+          startDate: currentTrip.startDate || undefined,
+          endDate: currentTrip.endDate || undefined
+        },
+        organizedLocations
+      );
+
+      return apiCall.pipe(
+        tap(savedTrip => {
+          // Clear draft from localStorage
+          this.clearDraftTrip(currentTrip.id);
+          
+          // Update state to reflect persisted trip
+          this.updateState({
+            trip: savedTrip,
+            isLoading: false,
+            isDirty: false,
+            dataSource: 'persisted'
+          });
+        }),
+        catchError((error: unknown) => {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          this.updateState({
+            isLoading: false,
+            error: `Failed to save trip: ${errorMessage}`
+          });
+          throw error;
+        })
+      );
+    }
+
+    // For trips without stops or existing trips, use basic trip endpoints
     const apiCall = isNewTrip 
       ? this.createTripInBackend(currentTrip)
       : this.updateTripInBackend(currentTrip);
@@ -433,6 +595,99 @@ export class TripDataService {
     const stops = this.sortedStops();
     const currentIndex = stops.findIndex(s => s.id === currentStopId);
     return currentIndex > 0 ? stops[currentIndex - 1] : null;
+  }
+
+  /**
+   * Backend API Integration Methods
+   * These methods handle operations on persisted trips using the itinerary endpoints
+   */
+
+  /**
+   * Create a trip with full itinerary data in the backend
+   * @param tripData - Basic trip information
+   * @param organizedLocations - Array of locations with order information
+   * @returns Observable of created trip
+   */
+  createTripWithItinerary(
+    tripData: { name: string; description?: string; startDate?: Date; endDate?: Date },
+    organizedLocations: LocationForItinerary[]
+  ): Observable<Trip> {
+    const createRequest: CreateTripFromOrganizedListDto = {
+      name: tripData.name,
+      description: tripData.description || undefined,
+      startDate: tripData.startDate?.toISOString(),
+      endDate: tripData.endDate?.toISOString(),
+      organizedLocations: organizedLocations,
+      calculateRouting: true,
+      travelMode: 'DRIVING'
+    };
+
+    return this.http.post<Trip>(`${this.apiUrl}/itinerary/trips`, createRequest);
+  }
+
+  /**
+   * Add a stop to a persisted trip via backend API
+   * @param location - Location to add as a stop
+   * @param insertAtOrder - Optional order position to insert at
+   * @returns Observable of updated trip
+   */
+  addStopToBackendTrip(location: Location, insertAtOrder?: number): Observable<Trip> {
+    const currentTrip = this.currentTrip();
+    if (!currentTrip) {
+      throw new Error('No current trip to add stop to');
+    }
+
+    const locationForItinerary = locationToLocationForItinerary(
+      location,
+      insertAtOrder ?? currentTrip.stops.length
+    );
+
+    const addStopRequest: Omit<AddStopToTripDto, 'tripId'> = {
+      locationData: locationForItinerary,
+      insertAtOrder: insertAtOrder,
+      calculateRouting: true,
+      travelMode: 'DRIVING'
+    };
+
+    return this.http.post<Trip>(`${this.apiUrl}/itinerary/trips/${currentTrip.id}/stops`, addStopRequest);
+  }
+
+  /**
+   * Remove a stop from a persisted trip via backend API
+   * @param stopId - ID of the stop to remove
+   * @returns Observable of updated trip
+   */
+  removeStopFromBackendTrip(stopId: string): Observable<Trip> {
+    const currentTrip = this.currentTrip();
+    if (!currentTrip) {
+      throw new Error('No current trip to remove stop from');
+    }
+
+    const params = new HttpParams()
+      .set('calculateRouting', 'true')
+      .set('travelMode', 'DRIVING');
+
+    return this.http.delete<Trip>(`${this.apiUrl}/itinerary/trips/${currentTrip.id}/stops/${stopId}`, { params });
+  }
+
+  /**
+   * Reorder stops in a persisted trip via backend API
+   * @param stopOrders - Array of stop reordering instructions
+   * @returns Observable of updated trip
+   */
+  reorderStopsInBackendTrip(stopOrders: Array<{ stopId: string; newOrder: number }>): Observable<Trip> {
+    const currentTrip = this.currentTrip();
+    if (!currentTrip) {
+      throw new Error('No current trip to reorder stops in');
+    }
+
+    const reorderRequest: Omit<ItineraryReorderStopsDto, 'tripId'> = {
+      stopOrders: stopOrders,
+      calculateRouting: true,
+      travelMode: 'DRIVING'
+    };
+
+    return this.http.put<Trip>(`${this.apiUrl}/itinerary/trips/${currentTrip.id}/stops/reorder`, reorderRequest);
   }
 
   /**

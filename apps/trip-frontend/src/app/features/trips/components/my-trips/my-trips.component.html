@@ -1,0 +1,165 @@
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-3xl font-bold text-tp-text-light-primary dark:text-tp-text-primary mb-2">
+        My Trips
+      </h1>
+      <p class="text-tp-text-light-secondary dark:text-tp-text-secondary">
+        View and manage your travel plans
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <app-button
+        variant="ghost"
+        size="sm"
+        (buttonClick)="onRefresh()"
+        [disabled]="loading()"
+      >
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+        Refresh
+      </app-button>
+      <app-button
+        variant="primary"
+        size="sm"
+        (buttonClick)="onCreateNewTrip()"
+      >
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        New Trip
+      </app-button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="flex justify-center items-center py-16">
+      <app-loading-spinner size="lg"></app-loading-spinner>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error() && !loading()) {
+    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
+      <div class="text-red-600 dark:text-red-400 mb-4">
+        <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <h3 class="text-lg font-semibold mb-2">Unable to load trips</h3>
+        <p class="text-sm">{{ error() }}</p>
+      </div>
+      <app-button variant="primary" size="sm" (buttonClick)="onRefresh()">
+        Try Again
+      </app-button>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @if (isEmpty()) {
+    <div class="text-center py-16">
+      <div class="text-tp-text-light-secondary dark:text-tp-text-secondary mb-6">
+        <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+        </svg>
+        <h3 class="text-xl font-semibold mb-2 text-tp-text-light-primary dark:text-tp-text-primary">
+          No trips yet
+        </h3>
+        <p class="text-sm max-w-md mx-auto">
+          Start planning your next adventure by creating your first trip.
+        </p>
+      </div>
+      <app-button variant="primary" (buttonClick)="onCreateNewTrip()">
+        Create Your First Trip
+      </app-button>
+    </div>
+  }
+
+  <!-- Trips List -->
+  @if (hasTrips() && !loading()) {
+    <div class="grid gap-6">
+      @for (trip of trips(); track trip.id) {
+        <div class="bg-tp-bg-light-secondary dark:bg-tp-bg-secondary border border-tp-border-light dark:border-tp-border rounded-lg p-6 hover:shadow-lg transition-shadow duration-200">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <!-- Trip Name and Description -->
+              <div class="mb-4">
+                <h3 class="text-xl font-semibold text-tp-text-light-primary dark:text-tp-text-primary mb-2">
+                  {{ trip.name }}
+                </h3>
+                @if (trip.description) {
+                  <p class="text-tp-text-light-secondary dark:text-tp-text-secondary text-sm">
+                    {{ trip.description }}
+                  </p>
+                }
+              </div>
+
+              <!-- Trip Details -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <!-- Dates -->
+                <div class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-tp-text-light-secondary dark:text-tp-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                  </svg>
+                  <span class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">
+                    {{ formatDateRange(trip.startDate, trip.endDate) }}
+                  </span>
+                </div>
+
+                <!-- Stops -->
+                <div class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-tp-text-light-secondary dark:text-tp-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  </svg>
+                  <span class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">
+                    {{ getStopCount(trip) }} stops
+                  </span>
+                </div>
+
+                <!-- Last Updated -->
+                <div class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-tp-text-light-secondary dark:text-tp-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <span class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">
+                    Updated {{ formatDate(trip.updatedAt) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-2 ml-4">
+              <app-button
+                variant="ghost"
+                size="sm"
+                (buttonClick)="onViewTrip(trip.id)"
+                class="text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-tp-text-light-primary dark:hover:text-tp-text-primary"
+              >
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+                View
+              </app-button>
+              <app-button
+                variant="ghost"
+                size="sm"
+                (buttonClick)="onDeleteTrip(trip.id, trip.name)"
+                class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+              >
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                Delete
+              </app-button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

@@ -56,12 +56,19 @@ export class TripCreationService {
       for (const organizedLocation of data.organizedLocations) {
         // Create or find existing location (with deduplication)
         const locationData: CreateLocationRequest = {
+          name: organizedLocation.name,
+          description: organizedLocation.description,
+          address: organizedLocation.address,
+          city: organizedLocation.city,
+          state: organizedLocation.state,
+          country: organizedLocation.country,
+          postalCode: organizedLocation.postalCode,
           latitude: organizedLocation.latitude,
           longitude: organizedLocation.longitude,
-          name: organizedLocation.name,
-          address: organizedLocation.address,
+          apiSource: organizedLocation.apiSource,
+          apiSourceId: organizedLocation.apiSourceId,
+          category: organizedLocation.category,
           public: false, // Default to false, can be updated later
-          category: organizedLocation.category as LocationCategory,
         };
 
         const location = await this.locationService.create(

@@ -211,7 +211,7 @@ export class TravelSegmentService {
     const updateData: UpdateTravelSegmentRequest = {
       travelMode: validatedRoutingData.travelMode,
       apiCalculatedDistance: validatedRoutingData.distanceMeters,
-      apiCalculatedDuration: validatedRoutingData.durationSeconds,
+      apiCalculatedDuration: Math.round(validatedRoutingData.durationSeconds / 60), // Convert seconds to minutes and round to integer - change later
       polyline: validatedRoutingData.polyline,
       // Note: provider is not stored directly on the segment, could be stored in routeOptions
       routeOptions: { provider: validatedRoutingData.provider },

@@ -1,0 +1,54 @@
+/* Component-specific styles for my-trips component */
+
+/* Ensure proper spacing and layout */
+.container {
+  min-height: calc(100vh - 4rem); /* Account for header height */
+}
+
+/* Custom hover effects for trip cards */
+.trip-card:hover {
+  transform: translateY(-2px);
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 768px) {
+  .grid-cols-1.md\:grid-cols-3 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+}
+
+/* Button icon spacing */
+.btn-icon {
+  margin-right: 0.25rem;
+}
+
+/* Loading state styling */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+/* Empty state styling */
+.empty-state {
+  text-align: center;
+  padding: 4rem 0;
+}
+
+/* Error state styling */
+.error-state {
+  text-align: center;
+  padding: 2rem;
+  background: var(--tp-bg-light-secondary);
+  border: 1px solid var(--tp-border-light);
+  border-radius: 0.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .error-state {
+    background: var(--tp-bg-secondary);
+    border-color: var(--tp-border);
+  }
+}

@@ -283,7 +283,7 @@ export class RoutingCoordinationService {
     for (const segment of trip.travelSegments) {
       if (segment.apiCalculatedDistance && segment.apiCalculatedDuration) {
         totalDistance += segment.apiCalculatedDistance;
-        totalDuration += segment.apiCalculatedDuration;
+        totalDuration += segment.apiCalculatedDuration * 60; // Convert minutes to seconds
       } else {
         hasCompleteRouting = false;
       }

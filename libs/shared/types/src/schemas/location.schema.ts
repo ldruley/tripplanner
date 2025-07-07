@@ -73,7 +73,38 @@ export const LocationSearchCriteriaSchema = LocationSchema.pick({
       .optional(),
   });
 
+export const LocationForItinerarySchema = extendApi(
+  LocationSchema.omit({
+    id: true,
+    public: true,
+    createdAt: true,
+    updatedAt: true,
+  }).extend({
+    order: z.number().int().min(0).describe('Order position in the itinerary (0-indexed)'),
+  }),
+  {
+    title: 'Location for Itinerary',
+    description: 'Location data with ordering information for itinerary planning',
+    example: {
+      name: 'Eiffel Tower',
+      description: 'Iconic iron lattice tower in Paris',
+      address: 'Champ de Mars, 5 Avenue Anatole France',
+      city: 'Paris',
+      state: 'Île-de-France',
+      country: 'France',
+      postalCode: '75007',
+      latitude: 48.8584,
+      longitude: 2.2945,
+      apiSource: 'HERE',
+      apiSourceId: 'here:pds:place:250jx7ps-b9d7fc1d8dbc4dd9adb39e4b7cf0b2f7',
+      category: 'ATTRACTION',
+      order: 0,
+    },
+  },
+);
+
 export type LocationSearchCriteria = z.infer<typeof LocationSearchCriteriaSchema>;
 export type UpdateLocationRequest = z.infer<typeof UpdateLocationRequestSchema>;
 export type CreateLocationRequest = z.infer<typeof CreateLocationRequestSchema>;
 export type Location = z.infer<typeof LocationSchema>;
+export type LocationForItinerary = z.infer<typeof LocationForItinerarySchema>;
