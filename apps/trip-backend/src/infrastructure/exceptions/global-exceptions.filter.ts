@@ -38,7 +38,9 @@ export class GlobalExceptionsFilter extends BaseExceptionFilter {
         exception instanceof Error ? exception.stack : exception,
       );
     } else if (errorResponse.statusCode >= 400 && errorResponse.statusCode < 500) {
-      this.logger.warn(`${request.method} ${request.url} - ${errorResponse.error}`);
+      this.logger.warn(
+        `${request.method} ${request.url} - ${errorResponse.error} - ${JSON.stringify(errorResponse.details)}`,
+      );
     }
   }
 
@@ -91,13 +93,13 @@ export class GlobalExceptionsFilter extends BaseExceptionFilter {
 
         return {
           success: false,
-          error: typeof exceptionResponse === 'string' ? exceptionResponse : exception.message,
+          error: exception.message,
           message:
-            typeof exceptionResponse === 'object' && 'message' in exceptionResponse
+            'message' in exceptionResponse
               ? (exceptionResponse as { message: string }).message
               : exception.message,
           details:
-            typeof exceptionResponse === 'object' && 'details' in exceptionResponse
+            'details' in exceptionResponse
               ? (exceptionResponse as { details: Record<string, unknown> }).details
               : undefined,
           timestamp,
@@ -105,6 +107,20 @@ export class GlobalExceptionsFilter extends BaseExceptionFilter {
           statusCode: status,
         };
       }
+
+      // Handle all other HTTP exceptions (including BadRequestException with string responses)
+      return {
+        success: false,
+        error: exception.message,
+        message: typeof exceptionResponse === 'string' ? exceptionResponse : exception.message,
+        details:
+          typeof exceptionResponse === 'object' && exceptionResponse !== null
+            ? (exceptionResponse as Record<string, unknown>)
+            : undefined,
+        timestamp,
+        path,
+        statusCode: status,
+      };
     }
 
     // Handle Prisma errors

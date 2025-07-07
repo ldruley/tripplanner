@@ -1,5 +1,4 @@
-import { Body, Controller, Get, Patch, Post, Put, UseGuards, UsePipes } from '@nestjs/common';
-import { ZodValidationPipe } from '@anatine/zod-nestjs';
+import { Body, Controller, Get, Patch, Post, Put, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard, CurrentUser } from '@trip-planner/auth';
 import { UserSettingsService } from './user-settings.service';
 import { CreateUserSettings, SafeUser, UpdateUserSettings } from '@trip-planner/types';
@@ -7,7 +6,6 @@ import { CreateUserSettingsDto, UpdateUserSettingsDto } from '@trip-planner/shar
 
 @UseGuards(JwtAuthGuard)
 @Controller('user-settings')
-@UsePipes(ZodValidationPipe)
 export class UserSettingsController {
   constructor(private service: UserSettingsService) {}
 

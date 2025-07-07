@@ -7,10 +7,8 @@ import {
   Request,
   Body,
   Logger,
-  UsePipes,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
-import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import {
@@ -33,7 +31,6 @@ import {
 
 @ApiTags('auth')
 @Controller('auth')
-@UsePipes(ZodValidationPipe)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

@@ -1,7 +1,6 @@
-import { Controller, Get, Query, UsePipes } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { PoiService } from './poi.service';
 import { PoiSearchQuery, PoiSearchResult } from '@trip-planner/types';
-import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { PoiSearchQueryDto, PoiSearchResultDto } from '@trip-planner/shared/dtos';
 
@@ -9,7 +8,6 @@ import { PoiSearchQueryDto, PoiSearchResultDto } from '@trip-planner/shared/dtos
 export class PoiController {
   constructor(private readonly poiService: PoiService) {}
 
-  @UsePipes(ZodValidationPipe)
   @ApiOperation({ summary: 'Search for Points of Interest (POI)' })
   @ApiQuery({ name: 'query', type: PoiSearchQueryDto })
   @ApiResponse({

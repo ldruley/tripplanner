@@ -20,18 +20,8 @@ export class RequestContextInterceptor implements NestInterceptor {
     response.setHeader('x-correlation-id', requestContext.correlationId);
 
     // Run the request handler within the context
-    return new Observable(subscriber => {
-      RequestContextService.run(requestContext, () => {
-        const result = next.handle();
-        
-        result.pipe(
-          tap({
-            next: (value) => subscriber.next(value),
-            error: (error) => subscriber.error(error),
-            complete: () => subscriber.complete(),
-          })
-        ).subscribe();
-      });
+    return RequestContextService.run(requestContext, () => {
+      return next.handle();
     });
   }
 }

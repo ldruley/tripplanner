@@ -8,7 +8,6 @@ import {
   HttpStatus,
   UseGuards,
   Logger,
-  UsePipes,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,7 +20,6 @@ import {
 import { ProfileService } from '../services/profile.service';
 import { UpdateProfile, SafeUser } from '@trip-planner/types';
 import { JwtAuthGuard, CurrentUser } from '@trip-planner/auth';
-import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import {
   ErrorResponseDto,
   ProfileQueryDto,
@@ -32,7 +30,6 @@ import {
 
 @ApiTags('Profiles')
 @Controller('profiles')
-@UsePipes(ZodValidationPipe)
 @ApiBearerAuth('jwt')
 @UseGuards(JwtAuthGuard)
 export class ProfileController {

@@ -3,7 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { Request, Response, NextFunction } from 'express';
-import { patchNestjsSwagger } from '@anatine/zod-nestjs';
+import { patchNestjsSwagger, ZodValidationPipe } from '@anatine/zod-nestjs';
 import { GlobalExceptionsFilter } from './infrastructure/exceptions/global-exceptions.filter';
 import { RequestContextInterceptor } from '@trip-planner/auth';
 
@@ -69,6 +69,9 @@ async function bootstrap() {
       },
     },
   });
+
+  // Activate global validation pipe
+  app.useGlobalPipes(new ZodValidationPipe());
 
   // Activate global exception filter
   app.useGlobalFilters(new GlobalExceptionsFilter());

@@ -1,6 +1,5 @@
-import { Controller, Get, Query, UsePipes } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { GeocodingService } from './geocoding.service';
-import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import {
   ForwardGeocodeQueryDto,
@@ -13,7 +12,6 @@ import { ForwardGeocodeQuery, ReverseGeocodeQuery } from '@trip-planner/types';
 export class GeocodingController {
   constructor(private readonly geocodingService: GeocodingService) {}
 
-  @UsePipes(ZodValidationPipe)
   @ApiOperation({ summary: 'Find locations based on a search query (Forward Geocoding)' })
   @ApiQuery({
     name: 'search',
@@ -36,7 +34,6 @@ export class GeocodingController {
     return this.geocodingService.forwardGeocode(query as ForwardGeocodeQuery);
   }
 
-  @UsePipes(ZodValidationPipe)
   @ApiOperation({
     summary: 'Get location details based on latitude and longitude (Reverse Geocoding)',
   })
