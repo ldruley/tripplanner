@@ -238,8 +238,8 @@ export class TravelSegmentService {
     const existingSegmentIds = existingSegments.map(segment => segment.id);
 
     const invalidIds = updates
-      .map(update => update.id!)
-      .filter(id => !existingSegmentIds.includes(id));
+      .map(update => update.id)
+      .filter((id): id is string => id !== undefined && !existingSegmentIds.includes(id));
 
     if (invalidIds.length > 0) {
       throw new BadRequestException(`Invalid travel segment IDs: ${invalidIds.join(', ')}`);
@@ -251,8 +251,11 @@ export class TravelSegmentService {
 
     for (const update of updates) {
       const { id, ...updateData } = update;
+      if (!id) {
+        throw new BadRequestException('Travel segment ID is required for updates');
+      }
       const updatedSegment = await this.travelSegmentRepository.update(
-        id!,
+        id,
         updateData,
         prismaClient,
       );

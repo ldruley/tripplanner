@@ -131,23 +131,12 @@ export class TravelSegmentRepository {
   ): Promise<TravelSegment[]> {
     const client = prismaClient || this.prisma;
 
-    const where: Prisma.TravelSegmentWhereInput = {};
-
-    if (criteria.tripId) {
-      where.tripId = criteria.tripId;
-    }
-
-    if (criteria.originStopId) {
-      where.originStopId = criteria.originStopId;
-    }
-
-    if (criteria.destinationStopId) {
-      where.destinationStopId = criteria.destinationStopId;
-    }
-
-    if (criteria.travelMode) {
-      where.travelMode = criteria.travelMode;
-    }
+    const where: Prisma.TravelSegmentWhereInput = {
+      ...(criteria.tripId && { tripId: criteria.tripId }),
+      ...(criteria.originStopId && { originStopId: criteria.originStopId }),
+      ...(criteria.destinationStopId && { destinationStopId: criteria.destinationStopId }),
+      ...(criteria.travelMode && { travelMode: criteria.travelMode }),
+    };
 
     const segments = await client.travelSegment.findMany({
       where,
@@ -171,27 +160,9 @@ export class TravelSegmentRepository {
   ): Promise<TravelSegment> {
     const client = prismaClient || this.prisma;
 
-    const allowedFields: (keyof UpdateTravelSegmentRequest)[] = [
-      'travelMode',
-      'distance',
-      'duration',
-      'apiCalculatedDistance',
-      'apiCalculatedDuration',
-      'polyline',
-      'routeOptions',
-      'notes',
-    ];
-
-    const updateData: Partial<UpdateTravelSegmentRequest> = {};
-    for (const key of allowedFields) {
-      if (data[key] !== undefined) {
-        updateData[key] = data[key];
-      }
-    }
-
     const segment = await client.travelSegment.update({
       where: { id },
-      data: updateData,
+      data: data,
     });
 
     return segment as TravelSegment;

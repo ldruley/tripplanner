@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { BullMQService } from '@trip-planner/bullmq';
 import { RedisService } from '@trip-planner/redis';
+import { RequestContextService } from '@trip-planner/auth';
 import { Job, Queue, QueueEvents } from 'bullmq';
 import { TimezoneRequest, TimezoneResponse } from '@trip-planner/types';
 import { buildCacheKey } from '@trip-planner/utils';
@@ -24,6 +25,7 @@ export class TimezoneService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly bullmqService: BullMQService,
     private readonly redisService: RedisService,
+    private readonly requestContextService: RequestContextService,
   ) {}
 
   async onModuleInit() {
@@ -56,7 +58,14 @@ export class TimezoneService implements OnModuleInit, OnModuleDestroy {
       return cachedResponse;
     }
 
-    const job = await this.bullmqService.addJob(this.QUEUE_NAME, 'fetch-timezone-coords', query, {
+    // Add request context to job data
+    const jobData = {
+      ...query,
+      requestId: this.requestContextService.getRequestId(),
+      correlationId: this.requestContextService.getCorrelationId(),
+    };
+
+    const job = await this.bullmqService.addJob(this.QUEUE_NAME, 'fetch-timezone-coords', jobData, {
       priority: 1, // TODO: This will change later likely
     });
     const response = await this.waitForJobCompletion(job, cacheKey);
@@ -72,7 +81,14 @@ export class TimezoneService implements OnModuleInit, OnModuleDestroy {
       return cachedResponse;
     }
 
-    const job = await this.bullmqService.addJob(this.QUEUE_NAME, 'fetch-timezone-city', query, {
+    // Add request context to job data
+    const jobData = {
+      ...query,
+      requestId: this.requestContextService.getRequestId(),
+      correlationId: this.requestContextService.getCorrelationId(),
+    };
+
+    const job = await this.bullmqService.addJob(this.QUEUE_NAME, 'fetch-timezone-city', jobData, {
       priority: 2, // TODO: This will change later likely
     });
     return this.waitForJobCompletion(job, cacheKey);

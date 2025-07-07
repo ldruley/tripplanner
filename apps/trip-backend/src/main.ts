@@ -5,6 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { Request, Response, NextFunction } from 'express';
 import { patchNestjsSwagger } from '@anatine/zod-nestjs';
 import { GlobalExceptionsFilter } from './infrastructure/exceptions/global-exceptions.filter';
+import { RequestContextInterceptor } from '@trip-planner/auth';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -60,6 +61,9 @@ async function bootstrap() {
 
   // Activate global exception filter
   app.useGlobalFilters(new GlobalExceptionsFilter());
+
+  // Activate global request context interceptor
+  app.useGlobalInterceptors(new RequestContextInterceptor());
 
   // Enhanced request timing middleware
   app.use((req: Request, res: Response, next: NextFunction) => {

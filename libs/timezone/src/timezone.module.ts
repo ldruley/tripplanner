@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BullMQModule } from '@trip-planner/bullmq';
 import { RedisModule } from '@trip-planner/redis';
+import { AuthModule } from '@trip-planner/auth';
 import { TimezoneService } from './timezone.service';
 import { TimezoneWorker } from './timezone.worker';
 import { HttpModule } from '@nestjs/axios';
@@ -9,7 +10,7 @@ import { TimezoneController } from './timezone.controller';
 
 @Module({
   controllers: [TimezoneController],
-  imports: [BullMQModule, RedisModule, HttpModule, ConfigModule],
+  imports: [BullMQModule, RedisModule, HttpModule, ConfigModule, AuthModule],
   providers: [TimezoneService, TimezoneWorker],
   exports: [TimezoneService],
 })

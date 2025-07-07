@@ -98,7 +98,9 @@ export const BulkTravelSegmentUpdateSchema = z.object({
         polyline: true,
         routeOptions: true,
         notes: true,
-      }).partial(),
+      })
+        .partial()
+        .refine(data => !!data.id, { message: 'id is required for each update' }),
     )
     .min(1, { message: 'At least one update is required' }),
 });
