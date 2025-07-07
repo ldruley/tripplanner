@@ -8,22 +8,33 @@ import { GlobalExceptionsFilter } from './infrastructure/exceptions/global-excep
 import { RequestContextInterceptor } from '@trip-planner/auth';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    cors: {
-      origin: [
-        'http://localhost:4200',
-        'http://127.0.0.1:4200',
-        'http://138.68.5.168:4200',
-        'http://138.68.5.168',
-        'http://localhost',
-      ],
-      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-      credentials: true,
-      preflightContinue: false, // Important: don't continue to next middleware for OPTIONS
-      optionsSuccessStatus: 204, // Success status for OPTIONS
-    },
+  const app = await NestFactory.create(AppModule);
+
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+
+  app.enableCors({
+    origin: '*', // Allow any origin
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
   });
+
+  /*app.enableCors({
+    origin: isDevelopment
+      ? '*' // Allow all origins in development
+      : [
+          // Restrict origins in production
+          'http://localhost:4200',
+          'http://127.0.0.1:4200',
+          'http://138.68.5.168:4200',
+          'http://138.68.5.168',
+          'http://localhost',
+        ],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  });*/
 
   const config = new DocumentBuilder()
     .setTitle('Trip Planner API')

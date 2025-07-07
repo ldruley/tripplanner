@@ -3,6 +3,7 @@ import { ConfigValidationModule } from '@trip-planner/config';
 import { PrismaModule } from '@trip-planner/prisma';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { OpenApiController } from './openapi.controller';
 import { ProfilesModule } from '../domain/profile/profiles.module';
 import { AuthModule } from '../infrastructure/auth/auth.module';
 import { PoiModule } from '@trip-planner/poi';
@@ -43,7 +44,7 @@ import { ItineraryModule } from '@trip-planner/itinerary';
     TimelineModule,
     ItineraryModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, OpenApiController],
   providers: [AppService],
 })
 export class AppModule {}

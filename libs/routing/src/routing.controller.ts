@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Post, Query, UsePipes } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, Query, Param, UsePipes } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { ZodValidationPipe } from '@anatine/zod-nestjs';
-import { RoutingRequestDto } from '@trip-planner/shared/dtos';
+import { RoutingRequestDto, RoutingResponseDto } from '@trip-planner/shared/dtos';
 import { RoutingService } from './routing.service';
 
 @ApiTags('routing')
@@ -16,81 +16,8 @@ export class RoutingController {
     description:
       'Calculate route using Mapbox (≤25 waypoints) or HERE (>25 waypoints) based on availability',
   })
-  @ApiBody({
-    description: 'Routing request with waypoints and options',
-    examples: {
-      'simple-route': {
-        summary: 'Simple 2-point route',
-        value: {
-          waypoints: [
-            { latitude: 40.7128, longitude: -74.006, name: 'New York City' },
-            { latitude: 40.7589, longitude: -73.9851, name: 'Times Square' },
-          ],
-        },
-      },
-      'multi-waypoint-route': {
-        summary: 'Route with multiple waypoints',
-        value: {
-          waypoints: [
-            { latitude: 40.7128, longitude: -74.006, name: 'NYC' },
-            { latitude: 40.7589, longitude: -73.9851, name: 'Times Square' },
-            { latitude: 40.7614, longitude: -73.9776, name: 'Central Park' },
-            { latitude: 40.7505, longitude: -73.9934, name: 'Empire State' },
-          ],
-          options: {
-            travelMode: 'DRIVING',
-            avoidTolls: false,
-            avoidHighways: false,
-          },
-        },
-      },
-      'walking-route': {
-        summary: 'Walking route with options',
-        value: {
-          waypoints: [
-            { latitude: 51.5074, longitude: -0.1278, name: 'London' },
-            { latitude: 51.5014, longitude: -0.1419, name: 'Buckingham Palace' },
-          ],
-          options: {
-            travelMode: 'WALKING',
-            avoidHighways: true,
-          },
-        },
-      },
-    },
-  })
   @ApiResponse({
-    status: 200,
-    description: 'Route calculated successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        route: {
-          type: 'object',
-          properties: {
-            distance: { type: 'number', example: 5420.3 },
-            duration: { type: 'number', example: 1200 },
-            geometry: { type: 'string', example: 'encoded_polyline_string' },
-            legs: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  distance: { type: 'number' },
-                  duration: { type: 'number' },
-                  startWaypoint: { type: 'object' },
-                  endWaypoint: { type: 'object' },
-                },
-              },
-            },
-          },
-        },
-        provider: { type: 'string', enum: ['HERE', 'MAPBOX'], example: 'MAPBOX' },
-        waypointCount: { type: 'number', example: 2 },
-        requestedAt: { type: 'string', format: 'date-time' },
-        rawResponse: { type: 'object', description: 'Raw API response from the provider for development purposes' },
-      },
-    },
+    type: RoutingResponseDto,
   })
   async getRoute(@Body() routingRequest: RoutingRequestDto) {
     return await this.routingService.getRouting(routingRequest);
@@ -101,38 +28,16 @@ export class RoutingController {
     summary: 'Get route using specific provider',
     description: 'Force route calculation using a specific provider (HERE or MAPBOX)',
   })
-  @ApiBody({
-    description: 'Routing request for specific provider',
-    examples: {
-      'mapbox-route': {
-        summary: 'Force Mapbox routing',
-        value: {
-          waypoints: [
-            { latitude: 37.7749, longitude: -122.4194, name: 'San Francisco' },
-            { latitude: 37.7849, longitude: -122.4094, name: 'SF Destination' },
-          ],
-          options: {
-            travelMode: 'DRIVING',
-          },
-        },
-      },
-      'here-route': {
-        summary: 'Force HERE routing',
-        value: {
-          waypoints: [
-            { latitude: 48.8566, longitude: 2.3522, name: 'Paris' },
-            { latitude: 48.8606, longitude: 2.3376, name: 'Louvre' },
-            { latitude: 48.8584, longitude: 2.2945, name: 'Eiffel Tower' },
-          ],
-          options: {
-            travelMode: 'WALKING',
-          },
-        },
-      },
-    },
+  @ApiParam({
+    name: 'provider',
+    description: 'Routing provider to use',
+    enum: ['HERE', 'MAPBOX'],
+  })
+  @ApiResponse({
+    type: RoutingResponseDto,
   })
   async getRouteWithProvider(
-    @Query('provider') provider: 'HERE' | 'MAPBOX',
+    @Param('provider') provider: 'HERE' | 'MAPBOX',
     @Body() routingRequest: RoutingRequestDto,
   ) {
     return await this.routingService.getRoutingWithProvider(routingRequest, provider);
@@ -152,19 +57,8 @@ export class RoutingController {
   @ApiResponse({
     status: 200,
     description: 'Recommended provider information',
-    schema: {
-      type: 'object',
-      properties: {
-        waypointCount: { type: 'number', example: 15 },
-        recommendedProvider: { type: 'string', enum: ['HERE', 'MAPBOX'], example: 'MAPBOX' },
-        canUseMapbox: { type: 'boolean', example: true },
-        mapboxLimit: { type: 'number', example: 25 },
-      },
-    },
   })
-  async getRecommendedProvider(
-    @Query('waypointCount') waypointCount: number,
-  ) {
+  async getRecommendedProvider(@Query('waypointCount') waypointCount: number) {
     const recommendedProvider = this.routingService.getRecommendedProvider(waypointCount);
     const canUseMapbox = this.routingService.canUseMapbox(waypointCount);
 
@@ -184,22 +78,6 @@ export class RoutingController {
   @ApiResponse({
     status: 200,
     description: 'Test coordinates for various locations',
-    schema: {
-      type: 'object',
-      properties: {
-        locations: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              name: { type: 'string' },
-              latitude: { type: 'number' },
-              longitude: { type: 'number' },
-            },
-          },
-        },
-      },
-    },
   })
   async getTestCoordinates() {
     return {

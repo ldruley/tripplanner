@@ -9,6 +9,7 @@ import {
   Logger,
   UsePipes,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -23,22 +24,31 @@ import {
 } from '@trip-planner/types';
 import {
   CreateUserDto,
+  LoginUserDto,
   RequestPasswordResetDto,
   ResetPasswordDto,
   VerifyEmailDto,
   ResendVerificationDto,
 } from '@trip-planner/shared/dtos';
 
+@ApiTags('auth')
 @Controller('auth')
 @UsePipes(ZodValidationPipe)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @ApiOperation({ summary: 'Login user', description: 'Authenticate user with email and password' })
+  @ApiBody({ type: LoginUserDto, description: 'User login credentials' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Login successful' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Invalid credentials' })
   @UseGuards(AuthGuard('local'))
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Request() req: AuthenticatedRequest): Promise<{ access_token: string }> {
-    Logger.log('Login request received', 'AuthController');
+  async login(
+    @Body() loginUserDto: LoginUserDto,
+    @Request() req: AuthenticatedRequest,
+  ): Promise<{ access_token: string }> {
+    Logger.log('Login request received ' + loginUserDto.email, 'AuthController');
     return this.authService.login(req.user);
   }
 

@@ -16,6 +16,7 @@ import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@trip-planner/auth';
 import { CurrentUser } from '@trip-planner/auth';
+import { SafeUser } from '@trip-planner/types';
 import { ItineraryService } from './itinerary.service';
 import {
   CreateTripFromOrganizedListDto,
@@ -28,7 +29,7 @@ import { Trip } from '@trip-planner/types';
 import { TravelMode } from '@prisma/client';
 
 @ApiTags('itinerary')
-@ApiBearerAuth()
+@ApiBearerAuth('jwt')
 @UseGuards(JwtAuthGuard)
 @Controller('itinerary')
 @UsePipes(ZodValidationPipe)
@@ -53,11 +54,11 @@ export class ItineraryController {
     description: 'Unauthorized',
   })
   async createTripFromOrganizedList(
-    @CurrentUser('sub') userId: string,
+    @CurrentUser() user: SafeUser,
     @Body() data: CreateTripFromOrganizedListDto,
   ): Promise<Trip> {
-    this.logger.log(`Creating trip from organized list for user ${userId}`);
-    return await this.itineraryService.createTripFromOrganizedList(userId, data);
+    this.logger.log(`Creating trip from organized list for user ${user.id}`);
+    return await this.itineraryService.createTripFromOrganizedList(user.id, data);
   }
 
   @Post('trips/:tripId/stops')
@@ -80,13 +81,13 @@ export class ItineraryController {
     description: 'Unauthorized',
   })
   async addStopToTrip(
-    @CurrentUser('sub') userId: string,
+    @CurrentUser() user: SafeUser,
     @Param('tripId') tripId: string,
     @Body() data: Omit<AddStopToTripDto, 'tripId'>,
   ): Promise<Trip> {
-    this.logger.log(`Adding stop to trip ${tripId} for user ${userId}`);
+    this.logger.log(`Adding stop to trip ${tripId} for user ${user.id}`);
     const fullData: AddStopToTripDto = { ...data, tripId };
-    return await this.itineraryService.addStopToTrip(userId, fullData);
+    return await this.itineraryService.addStopToTrip(user.id, fullData);
   }
 
   @Delete('trips/:tripId/stops/:stopId')
@@ -105,22 +106,22 @@ export class ItineraryController {
     description: 'Unauthorized',
   })
   async removeStopFromTrip(
-    @CurrentUser('sub') userId: string,
+    @CurrentUser() user: SafeUser,
     @Param('tripId') tripId: string,
     @Param('stopId') stopId: string,
     @Query('calculateRouting') calculateRouting = true,
     @Query('travelMode') travelMode: TravelMode = TravelMode.DRIVING,
   ): Promise<Trip> {
-    this.logger.log(`Removing stop ${stopId} from trip ${tripId} for user ${userId}`);
-    
+    this.logger.log(`Removing stop ${stopId} from trip ${tripId} for user ${user.id}`);
+
     const data: RemoveStopFromTripDto = {
       tripId,
       stopId,
       calculateRouting,
       travelMode,
     };
-    
-    return await this.itineraryService.removeStopFromTrip(userId, data);
+
+    return await this.itineraryService.removeStopFromTrip(user.id, data);
   }
 
   @Put('trips/:tripId/stops/reorder')
@@ -143,13 +144,13 @@ export class ItineraryController {
     description: 'Unauthorized',
   })
   async reorderStops(
-    @CurrentUser('sub') userId: string,
+    @CurrentUser() user: SafeUser,
     @Param('tripId') tripId: string,
     @Body() data: Omit<ItineraryReorderStopsDto, 'tripId'>,
   ): Promise<Trip> {
-    this.logger.log(`Reordering stops in trip ${tripId} for user ${userId}`);
+    this.logger.log(`Reordering stops in trip ${tripId} for user ${user.id}`);
     const fullData: ItineraryReorderStopsDto = { ...data, tripId };
-    return await this.itineraryService.reorderStops(userId, fullData);
+    return await this.itineraryService.reorderStops(user.id, fullData);
   }
 
   @Put('trips/:tripId/routing')
@@ -168,13 +169,13 @@ export class ItineraryController {
     description: 'Unauthorized',
   })
   async updateTripRouting(
-    @CurrentUser('sub') userId: string,
+    @CurrentUser() user: SafeUser,
     @Param('tripId') tripId: string,
     @Body() data: Omit<UpdateTripRoutingDto, 'tripId'>,
   ): Promise<Trip> {
-    this.logger.log(`Updating routing for trip ${tripId} for user ${userId}`);
+    this.logger.log(`Updating routing for trip ${tripId} for user ${user.id}`);
     const fullData: UpdateTripRoutingDto = { ...data, tripId };
-    return await this.itineraryService.updateTripRouting(userId, fullData);
+    return await this.itineraryService.updateTripRouting(user.id, fullData);
   }
 
   @Get('trips/:tripId/routing/summary')
@@ -182,15 +183,6 @@ export class ItineraryController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Routing summary retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        totalDistanceMeters: { type: 'number' },
-        totalDurationSeconds: { type: 'number' },
-        hasCompleteRouting: { type: 'boolean' },
-        segmentCount: { type: 'number' },
-      },
-    },
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -200,9 +192,7 @@ export class ItineraryController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'Unauthorized',
   })
-  async getTripRoutingSummary(
-    @Param('tripId') tripId: string,
-  ): Promise<{
+  async getTripRoutingSummary(@Param('tripId') tripId: string): Promise<{
     totalDistanceMeters: number;
     totalDurationSeconds: number;
     hasCompleteRouting: boolean;
@@ -217,12 +207,6 @@ export class ItineraryController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Routing status retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        routingNeeded: { type: 'boolean' },
-      },
-    },
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -246,13 +230,6 @@ export class ItineraryController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Routing calculated successfully or not needed',
-    schema: {
-      type: 'object',
-      properties: {
-        updated: { type: 'boolean' },
-        trip: { type: 'object' }, // Trip type would be defined in OpenAPI
-      },
-    },
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
