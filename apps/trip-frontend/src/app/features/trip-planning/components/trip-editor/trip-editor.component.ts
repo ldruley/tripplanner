@@ -1,4 +1,4 @@
-import { Component, input, output, signal, WritableSignal, effect, inject } from '@angular/core';
+import { Component, input, output, signal, computed, WritableSignal, effect, inject } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { CdkDropListGroup } from '@angular/cdk/drag-drop';
@@ -8,7 +8,7 @@ import { LocationBankComponent } from '../location-bank/location-bank.component'
 import { ItineraryBuilderComponent } from '../itinerary-builder/itinerary-builder.component';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 
-import { Location, Trip, Stop } from '@trip-planner/types';
+import { Location, Trip, Stop, TripBankedLocation } from '@trip-planner/types';
 import { MatrixCalculationService } from '../../services/matrix-calculation.service';
 
 // Services (placeholders for now)
@@ -42,8 +42,15 @@ export class TripEditorComponent {
   currentTripName: WritableSignal<string> = signal('Untitled Trip');
   currentTripDescription: WritableSignal<string | null | undefined> = signal(undefined);
 
-  bankedLocations: WritableSignal<Location[]> = signal([]);
+  bankedLocations: WritableSignal<TripBankedLocation[]> = signal([]);
   itineraryStops: WritableSignal<Stop[]> = signal([]);
+
+  // Computed signal to extract Location objects for the LocationBankComponent
+  bankedLocationsList = computed(() => 
+    this.bankedLocations()
+      .map(banked => banked.location)
+      .filter((loc): loc is Location => loc != null)
+  );
 
   private matrixService = inject(MatrixCalculationService);
   // For Matrix API results
@@ -124,14 +131,23 @@ export class TripEditorComponent {
   onLocationSelectedFromSearch(selectedLocation: Location): void {
     // TODO: Backend Call - Persist this location as "banked" for the current tripId()
     // For now, just update local state.
-    this.bankedLocations.update(currentLocations => {
-      const newBank = [...currentLocations, selectedLocation];
-      console.log('TripEditor: Updating bankedLocations signal to:', newBank);
-      if (currentLocations.find(loc => loc.id === selectedLocation.id)) {
+    this.bankedLocations.update(currentBankedLocations => {
+      if (currentBankedLocations.find(banked => banked.locationId === selectedLocation.id)) {
         console.warn('Location already in bank:', selectedLocation.name);
-        return currentLocations;
+        return currentBankedLocations;
       }
-      return [...currentLocations, selectedLocation];
+      
+      const newBankedLocation: TripBankedLocation = {
+        id: crypto.randomUUID(),
+        tripId: this.tripId() || '',
+        locationId: selectedLocation.id,
+        addedAt: new Date(),
+        location: selectedLocation
+      };
+      
+      const newBank = [...currentBankedLocations, newBankedLocation];
+      console.log('TripEditor: Updating bankedLocations signal to:', newBank);
+      return newBank;
     });
     console.log('TripEditor: Location added to bank:', selectedLocation.name);
   }
@@ -161,7 +177,7 @@ export class TripEditorComponent {
     };
 
     // Remove from bankedLocations signal
-    this.bankedLocations.update(bank => bank.filter(l => l.id !== locationToMove.id));
+    this.bankedLocations.update(bank => bank.filter(banked => banked.locationId !== locationToMove.id));
 
     // add to itineraryStops signal at the correct index and re-order all
     this.itineraryStops.update(stops => {
@@ -220,7 +236,9 @@ export class TripEditorComponent {
       .filter((loc): loc is Location => loc != null); // Type guard to filter out nulls
 
     // 2. Get all locations currently in the bank.
-    const bankLocations = this.bankedLocations();
+    const bankLocations = this.bankedLocations()
+      .map(banked => banked.location)
+      .filter((loc): loc is Location => loc != null); // Type guard to filter out nulls
 
     // 3. Combine and de-duplicate them to get the full set of locations.
     // Using a Map is an easy way to ensure uniqueness based on location ID.

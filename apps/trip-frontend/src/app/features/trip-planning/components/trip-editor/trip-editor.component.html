@@ -31,7 +31,7 @@
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6" cdkDropListGroup>
     <div class="md:col-span-1">
       <app-location-bank
-        [bankedLocations]="bankedLocations()"
+        [bankedLocations]="bankedLocationsList()"
         [listId]="'bank-list'"
         [connectedDropLists]="['itinerary-list']"
         (dragStarted)="handleBankDragStart($event)"

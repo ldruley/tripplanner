@@ -1,16 +1,24 @@
 import { z } from 'zod';
 import { uuidSchema } from './base.schema';
 import { LocationSchema } from './location.schema';
+import { extendApi } from '@anatine/zod-openapi';
+import { createZodDto } from '@anatine/zod-nestjs';
 
-export const TripBankedLocationSchema = z.object({
-  id: uuidSchema,
-  tripId: uuidSchema,
-  locationId: uuidSchema,
-  addedAt: z.coerce.date(),
+export const TripBankedLocationSchema = extendApi(
+  z.object({
+    id: uuidSchema,
+    tripId: uuidSchema,
+    locationId: uuidSchema,
+    addedAt: z.coerce.date(),
 
-  // Relations
-  location: LocationSchema.optional(),
-});
+    // Relations
+    location: LocationSchema.optional(),
+  }),
+  {
+    title: 'TripBankedLocation',
+    description: 'Represents a location banked for a specific trip.',
+  },
+);
 
 export const CreateTripBankedLocationRequestSchema = TripBankedLocationSchema.pick({
   tripId: true,
@@ -26,4 +34,6 @@ export const TripBankedLocationSearchCriteriaSchema = z.object({
 
 export type TripBankedLocation = z.infer<typeof TripBankedLocationSchema>;
 export type CreateTripBankedLocationRequest = z.infer<typeof CreateTripBankedLocationRequestSchema>;
-export type TripBankedLocationSearchCriteria = z.infer<typeof TripBankedLocationSearchCriteriaSchema>;
+export type TripBankedLocationSearchCriteria = z.infer<
+  typeof TripBankedLocationSearchCriteriaSchema
+>;
