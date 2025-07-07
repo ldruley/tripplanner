@@ -26,6 +26,7 @@ export const LocationSchema = extendApi(
     // API source and category
     apiSource: ApiSourceSchema.nullable().optional(),
     apiSourceId: z.string().nullable().optional(),
+    fullData: z.any().nullable().optional(), // This is a temporary field for full API data - we will properly shape it later
     category: LocationCategorySchema.nullable().optional(),
 
     // Public flag for sharing

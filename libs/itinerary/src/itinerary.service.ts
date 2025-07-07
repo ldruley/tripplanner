@@ -2,12 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 import { TripCreationService } from './trip-creation.service';
 import { StopCoordinationService } from './stop-coordination.service';
 import { RoutingCoordinationService } from './routing-coordination.service';
+import { TripService } from '@trip-planner/trip';
 import {
   CreateTripFromOrganizedListDto,
   AddStopToTripDto,
   RemoveStopFromTripDto,
   ItineraryReorderStopsDto,
   UpdateTripRoutingDto,
+  UpdateTripWithRoutingDto,
 } from '@trip-planner/shared/dtos';
 import { Trip } from '@trip-planner/types';
 import { TravelMode } from '@prisma/client';
@@ -20,6 +22,7 @@ export class ItineraryService {
     private readonly tripCreationService: TripCreationService,
     private readonly stopCoordinationService: StopCoordinationService,
     private readonly routingCoordinationService: RoutingCoordinationService,
+    private readonly tripService: TripService,
   ) {}
 
   /**
@@ -285,6 +288,56 @@ export class ItineraryService {
       return trip;
     } catch (error) {
       this.logger.error(`Failed to calculate routing for trip ${tripId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update trip details and optionally recalculate routing.
+   * @param userId - User ID who owns the trip.
+   * @param tripId - Trip ID to update.
+   * @param data - Trip update data with routing options.
+   * @return The updated trip with optional routing recalculation.
+   */
+  async updateTripWithRouting(
+    userId: string,
+    tripId: string,
+    data: UpdateTripWithRoutingDto,
+  ): Promise<Trip> {
+    this.logger.log(`Updating trip ${tripId} with routing for user ${userId}`);
+
+    try {
+      // Step 1: Update trip basic information
+      const updateData = {
+        name: data.name,
+        description: data.description,
+      };
+
+      const updatedTrip = await this.tripService.update(tripId, updateData);
+      
+      // Step 2: Get the updated trip with stops for routing calculation
+      const tripWithStops = await this.tripService.findById(tripId, true);
+
+      // Step 3: Calculate routing if requested and there are enough stops
+      if (data.calculateRouting && tripWithStops.stops && tripWithStops.stops.length > 1) {
+        this.logger.debug(`Calculating routing after updating trip ${tripId}`);
+        
+        const routingData: UpdateTripRoutingDto = {
+          tripId,
+          travelMode: data.travelMode,
+          forceRecalculate: data.forceRecalculate,
+        };
+
+        const tripWithRouting = await this.routingCoordinationService.updateTripRouting(routingData);
+        
+        this.logger.log(`Successfully updated trip ${tripId} with routing`);
+        return tripWithRouting;
+      }
+
+      this.logger.log(`Successfully updated trip ${tripId} without routing`);
+      return tripWithStops;
+    } catch (error) {
+      this.logger.error(`Failed to update trip ${tripId} with routing for user ${userId}:`, error);
       throw error;
     }
   }

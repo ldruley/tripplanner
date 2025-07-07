@@ -7,6 +7,7 @@ import {
   ItineraryReorderStopsSchema,
   RemoveStopFromTripSchema,
   UpdateTripRoutingSchema,
+  UpdateTripWithRoutingSchema,
 } from '../../types/src/schemas/itinerary.schema';
 
 // Schema for location data from frontend with itinerary ordering
@@ -25,3 +26,5 @@ export class ItineraryReorderStopsDto extends createZodDto(ItineraryReorderStops
 export class RemoveStopFromTripDto extends createZodDto(RemoveStopFromTripSchema) {}
 
 export class UpdateTripRoutingDto extends createZodDto(UpdateTripRoutingSchema) {}
+
+export class UpdateTripWithRoutingDto extends createZodDto(UpdateTripWithRoutingSchema) {}

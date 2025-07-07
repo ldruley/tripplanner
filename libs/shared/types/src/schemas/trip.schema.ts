@@ -13,14 +13,28 @@ export const TripSchema = extendApi(
     description: z.string().nullable().optional().describe('Optional trip description'),
     startDate: z.coerce.date().nullable().optional().describe('Planned start date of the trip'),
     endDate: z.coerce.date().nullable().optional().describe('Planned end date of the trip'),
-    
+    matrix: z
+      .any()
+      .nullable()
+      .optional()
+      .describe('Optional matrix for trip planning (e.g. JSON string)'),
+    // Zod v3 does not support .json(), so for now we use any type
+
     createdAt: z.coerce.date().describe('Timestamp when trip was created'),
     updatedAt: z.coerce.date().describe('Timestamp when trip was last updated'),
-    
+
     // Relations (optional for some use cases)
     stops: z.array(StopSchema).optional().default([]).describe('Ordered list of stops in the trip'),
-    bankedLocations: z.array(TripBankedLocationSchema).optional().default([]).describe('Saved locations for this trip'),
-    travelSegments: z.array(TravelSegmentSchema).optional().default([]).describe('Travel segments between stops'),
+    bankedLocations: z
+      .array(TripBankedLocationSchema)
+      .optional()
+      .default([])
+      .describe('Saved locations for this trip'),
+    travelSegments: z
+      .array(TravelSegmentSchema)
+      .optional()
+      .default([])
+      .describe('Travel segments between stops'),
   }),
   {
     title: 'Trip',
@@ -32,6 +46,7 @@ export const TripSchema = extendApi(
       description: 'A two-week trip through Europe',
       startDate: '2024-06-01T00:00:00Z',
       endDate: '2024-06-15T00:00:00Z',
+      matrix: '{"some":"matrix data"}',
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: '2024-01-01T00:00:00Z',
       stops: [],
@@ -47,6 +62,7 @@ export const CreateTripRequestSchema = extendApi(
     description: true,
     startDate: true,
     endDate: true,
+    matrix: true,
   }),
   {
     title: 'Create Trip Request',
@@ -56,6 +72,7 @@ export const CreateTripRequestSchema = extendApi(
       description: 'A two-week trip through Europe',
       startDate: '2024-06-01T00:00:00Z',
       endDate: '2024-06-15T00:00:00Z',
+      matrix: '{"some":"matrix data"}',
     },
   },
 );
@@ -99,8 +116,16 @@ export const TripSearchCriteriaSchema = extendApi(
     userId: uuidSchema.optional().describe('Filter trips by user ID'),
     name: z.string().optional().describe('Filter trips by name (partial match)'),
     includeStops: z.boolean().optional().default(false).describe('Include stops in the response'),
-    includeBankedLocations: z.boolean().optional().default(false).describe('Include banked locations in the response'),
-    includeTravelSegments: z.boolean().optional().default(false).describe('Include travel segments in the response'),
+    includeBankedLocations: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe('Include banked locations in the response'),
+    includeTravelSegments: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe('Include travel segments in the response'),
   }),
   {
     title: 'Trip Search Criteria',
@@ -111,6 +136,7 @@ export const TripSearchCriteriaSchema = extendApi(
       includeStops: true,
       includeBankedLocations: false,
       includeTravelSegments: false,
+      includeMatrix: false,
     },
   },
 );

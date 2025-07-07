@@ -10,9 +10,18 @@ export const CreateTripFromOrganizedListSchema = extendApi(
     description: z.string().optional().describe('Optional trip description'),
     startDate: z.string().datetime().optional().describe('Planned start date (ISO 8601 format)'),
     endDate: z.string().datetime().optional().describe('Planned end date (ISO 8601 format)'),
-    organizedLocations: z.array(LocationForItinerarySchema).min(1).describe('Ordered list of locations to visit (minimum 1)'),
-    calculateRouting: z.boolean().default(true).describe('Whether to calculate routing between locations'),
-    travelMode: TravelModeSchema.default('DRIVING').describe('Travel mode for routing calculations'),
+    matrix: z.string().optional().describe('Optional matrix for trip planning (e.g. JSON string)'),
+    organizedLocations: z
+      .array(LocationForItinerarySchema)
+      .min(1)
+      .describe('Ordered list of locations to visit (minimum 1)'),
+    calculateRouting: z
+      .boolean()
+      .default(true)
+      .describe('Whether to calculate routing between locations'),
+    travelMode: TravelModeSchema.default('DRIVING').describe(
+      'Travel mode for routing calculations',
+    ),
   }),
   {
     title: 'Create Trip from Organized List',
@@ -50,9 +59,19 @@ export const AddStopToTripSchema = extendApi(
   z.object({
     tripId: z.string().uuid().describe('ID of the trip to add the stop to'),
     locationData: LocationForItinerarySchema.describe('Location information for the new stop'),
-    insertAtOrder: z.number().int().min(0).optional().describe('Position to insert the stop (optional, appends to end if not specified)'),
-    calculateRouting: z.boolean().default(true).describe('Whether to recalculate routing after adding the stop'),
-    travelMode: TravelModeSchema.default('DRIVING').describe('Travel mode for routing calculations'),
+    insertAtOrder: z
+      .number()
+      .int()
+      .min(0)
+      .optional()
+      .describe('Position to insert the stop (optional, appends to end if not specified)'),
+    calculateRouting: z
+      .boolean()
+      .default(true)
+      .describe('Whether to recalculate routing after adding the stop'),
+    travelMode: TravelModeSchema.default('DRIVING').describe(
+      'Travel mode for routing calculations',
+    ),
   }),
   {
     title: 'Add Stop to Trip',
@@ -68,7 +87,7 @@ export const AddStopToTripSchema = extendApi(
         country: 'France',
         postalCode: '75008',
         latitude: 48.8738,
-        longitude: 2.2950,
+        longitude: 2.295,
         apiSource: 'HERE',
         apiSourceId: 'here:pds:place:250jx7ps-b9d7fc1d8dbc4dd9adb39e4b7cf0b2f8',
         category: 'ATTRACTION',
@@ -94,8 +113,13 @@ export const ItineraryReorderStopsSchema = extendApi(
       )
       .min(1)
       .describe('Array of stop reordering instructions (minimum 1)'),
-    calculateRouting: z.boolean().default(true).describe('Whether to recalculate routing after reordering'),
-    travelMode: TravelModeSchema.default('DRIVING').describe('Travel mode for routing calculations'),
+    calculateRouting: z
+      .boolean()
+      .default(true)
+      .describe('Whether to recalculate routing after reordering'),
+    travelMode: TravelModeSchema.default('DRIVING').describe(
+      'Travel mode for routing calculations',
+    ),
   }),
   {
     title: 'Itinerary Reorder Stops',
@@ -123,8 +147,13 @@ export const RemoveStopFromTripSchema = extendApi(
   z.object({
     tripId: z.string().uuid().describe('ID of the trip to remove the stop from'),
     stopId: z.string().uuid().describe('ID of the stop to remove'),
-    calculateRouting: z.boolean().default(true).describe('Whether to recalculate routing after removing the stop'),
-    travelMode: TravelModeSchema.default('DRIVING').describe('Travel mode for routing calculations'),
+    calculateRouting: z
+      .boolean()
+      .default(true)
+      .describe('Whether to recalculate routing after removing the stop'),
+    travelMode: TravelModeSchema.default('DRIVING').describe(
+      'Travel mode for routing calculations',
+    ),
   }),
   {
     title: 'Remove Stop from Trip',
@@ -142,8 +171,13 @@ export const RemoveStopFromTripSchema = extendApi(
 export const UpdateTripRoutingSchema = extendApi(
   z.object({
     tripId: z.string().uuid().describe('ID of the trip to update routing for'),
-    travelMode: TravelModeSchema.default('DRIVING').describe('Travel mode for routing calculations'),
-    forceRecalculate: z.boolean().default(false).describe('Whether to force recalculation even if routing exists'),
+    travelMode: TravelModeSchema.default('DRIVING').describe(
+      'Travel mode for routing calculations',
+    ),
+    forceRecalculate: z
+      .boolean()
+      .default(false)
+      .describe('Whether to force recalculation even if routing exists'),
   }),
   {
     title: 'Update Trip Routing',
@@ -155,3 +189,35 @@ export const UpdateTripRoutingSchema = extendApi(
     },
   },
 );
+
+// Schema for updating trip details with routing recalculation
+export const UpdateTripWithRoutingSchema = extendApi(
+  z.object({
+    name: z.string().min(1).max(100).optional().describe('Trip name (1-100 characters)'),
+    description: z.string().nullable().optional().describe('Optional trip description'),
+    calculateRouting: z
+      .boolean()
+      .default(true)
+      .describe('Whether to recalculate routing after updating trip details'),
+    travelMode: TravelModeSchema.default('DRIVING').describe(
+      'Travel mode for routing calculations',
+    ),
+    forceRecalculate: z
+      .boolean()
+      .default(false)
+      .describe('Whether to force recalculation even if routing exists'),
+  }),
+  {
+    title: 'Update Trip with Routing',
+    description: 'Schema for updating trip details and optionally recalculating routing',
+    example: {
+      name: 'Updated European Adventure',
+      description: 'An updated description for the trip',
+      calculateRouting: true,
+      travelMode: 'DRIVING',
+      forceRecalculate: true,
+    },
+  },
+);
+
+export type UpdateTripWithRoutingRequest = z.infer<typeof UpdateTripWithRoutingSchema>;

@@ -22,6 +22,7 @@ import {
   RemoveStopFromTripDto,
   ItineraryReorderStopsDto,
   UpdateTripRoutingDto,
+  UpdateTripWithRoutingDto,
 } from '@trip-planner/shared/dtos';
 import { Trip } from '@trip-planner/types';
 import { TravelMode } from '@prisma/client';
@@ -148,6 +149,34 @@ export class ItineraryController {
     this.logger.log(`Reordering stops in trip ${tripId} for user ${user.id}`);
     const fullData: ItineraryReorderStopsDto = { ...data, tripId };
     return await this.itineraryService.reorderStops(user.id, fullData);
+  }
+
+  @Put('trips/:tripId')
+  @ApiOperation({ summary: 'Update trip details with optional routing recalculation' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Trip updated successfully',
+    type: Object, // Trip type would be defined in OpenAPI
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Trip not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized',
+  })
+  async updateTripWithRouting(
+    @CurrentUser() user: SafeUser,
+    @Param('tripId') tripId: string,
+    @Body() data: UpdateTripWithRoutingDto,
+  ): Promise<Trip> {
+    this.logger.log(`Updating trip ${tripId} with routing for user ${user.id}`);
+    return await this.itineraryService.updateTripWithRouting(user.id, tripId, data);
   }
 
   @Put('trips/:tripId/routing')

@@ -37,6 +37,31 @@ export class MatrixCalculationService {
     return this.transformMatrixToSegments(rawMatrix);
   });
 
+  /**
+   * Set matrix data from persisted trip instead of calculating from API
+   * @param matrix - Matrix data from backend trip
+   */
+  public setPersistedMatrix(matrix: CoordinateMatrix | null): void {
+    if (matrix) {
+      console.log('MatrixService: Using persisted matrix data from backend');
+      this.matrix.set(matrix);
+      this.lastCalculatedKey = 'persisted'; // Mark as persisted to prevent API calls
+    } else {
+      console.log('MatrixService: No persisted matrix data available');
+      this.matrix.set(null);
+      this.lastCalculatedKey = null;
+    }
+  }
+
+  /**
+   * Clear persisted matrix state to allow fresh calculations
+   */
+  public clearPersistedMatrix(): void {
+    this.matrix.set(null);
+    this.lastCalculatedKey = null;
+    this.cache.clear();
+  }
+
   public calculateMatrix(allRelevantLocations: Location[]): void {
     // The calling component is now responsible for providing the full list.
     if (allRelevantLocations.length < 2) {
@@ -104,6 +129,24 @@ export class MatrixCalculationService {
         }),
       )
       .subscribe();
+  }
+
+  /**
+   * Serializes a CoordinateMatrix object to a JSON string for storage.
+   * @param matrix The CoordinateMatrix to serialize.
+   * @returns A JSON string representation of the matrix.
+   */
+  public serializeMatrix(matrix: CoordinateMatrix): string {
+    return JSON.stringify(matrix);
+  }
+
+  /**
+   * Deserializes a JSON string back into a CoordinateMatrix object.
+   * @param jsonString The JSON string to deserialize.
+   * @returns The deserialized CoordinateMatrix object.
+   */
+  public deserializeMatrix(jsonString: string): CoordinateMatrix {
+    return JSON.parse(jsonString) as CoordinateMatrix;
   }
 
   /**

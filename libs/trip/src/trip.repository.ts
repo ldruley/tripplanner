@@ -5,6 +5,7 @@ import {
   Trip,
   TripSearchCriteria,
   TripServiceUpdateRequest,
+  CoordinateMatrix,
 } from '@trip-planner/types';
 
 @Injectable()
@@ -27,6 +28,12 @@ export class TripRepository {
   ): Promise<Partial<Trip>> {
     const client = prismaClient || this.prisma;
 
+    // Handle matrix serialization for storage
+    let matrixData: string | undefined = undefined;
+    if (data.matrix) {
+      matrixData = typeof data.matrix === 'string' ? data.matrix : JSON.stringify(data.matrix);
+    }
+
     return client.trip.create({
       data: {
         userId,
@@ -34,6 +41,7 @@ export class TripRepository {
         description: data.description || null,
         startDate: data.startDate || null,
         endDate: data.endDate || null,
+        matrix: matrixData ? matrixData : undefined,
       },
     });
   }
@@ -364,6 +372,28 @@ export class TripRepository {
             addedAt: 'desc',
           },
         },
+      },
+    });
+  }
+
+  /**
+   * Update the matrix for a trip.
+   * @param tripId - Trip ID to update.
+   * @param matrix - Matrix data to store.
+   * @param prismaClient - Optional Prisma client for transaction management.
+   * @return Updated trip.
+   */
+  async updateMatrix(
+    tripId: string,
+    matrix: CoordinateMatrix,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Partial<Trip>> {
+    const client = prismaClient || this.prisma;
+
+    return client.trip.update({
+      where: { id: tripId },
+      data: {
+        matrix: JSON.stringify(matrix),
       },
     });
   }

@@ -5,12 +5,10 @@ import { LocationService } from '@trip-planner/location';
 import { StopService } from '@trip-planner/stop';
 import { TravelSegmentService } from '@trip-planner/travel-segment';
 import { TimelineService } from '@trip-planner/timeline';
-import { RoutingCoordinationService } from './routing-coordination.service';
 import {
   AddStopToTripDto,
   RemoveStopFromTripDto,
   ItineraryReorderStopsDto,
-  UpdateTripRoutingDto,
 } from '@trip-planner/shared/dtos';
 import {
   CreateLocationRequest,
@@ -30,7 +28,6 @@ export class StopCoordinationService {
     private readonly stopService: StopService,
     private readonly travelSegmentService: TravelSegmentService,
     private readonly timelineService: TimelineService,
-    private readonly routingCoordinationService: RoutingCoordinationService,
   ) {}
 
   /**
@@ -109,10 +106,13 @@ export class StopCoordinationService {
         // Step 5: Update travel segments for the affected stops
         await this.updateTravelSegmentsAfterStopInsertion(data.tripId, insertOrder, prismaClient);
 
-        // Step 6: Recalculate timeline
+        // Step 6: Refresh matrix for persisted trips (to include new stop in matrix calculations)
+        await this.tripService.refreshMatrixOnStopAddition(data.tripId, prismaClient);
+
+        // Step 7: Recalculate timeline
         await this.recalculateAndUpdateTimeline(data.tripId, prismaClient);
 
-        // Step 7: Return the complete trip
+        // Step 8: Return the complete trip
         const completeTrip = await this.tripService.findById(
           data.tripId,
           true,
@@ -316,7 +316,7 @@ export class StopCoordinationService {
   }
 
   /**
-   * Recreate travel segments after reordering with fresh routing data.
+   * Recreate travel segments after reordering.
    * @param tripId - Trip ID.
    * @param prismaClient - Prisma client for transaction.
    */
@@ -324,34 +324,17 @@ export class StopCoordinationService {
     tripId: string,
     prismaClient: PrismaClientOrTransaction,
   ): Promise<void> {
-    // Get trip to determine travel mode
-    const trip = await this.tripService.findById(tripId, false, false, false, prismaClient);
-
-    if (!trip) {
-      throw new Error(`Trip ${tripId} not found`);
-    }
-
     // Get all stops to ensure we have at least 2 stops
     const stops = await this.stopService.findByTripId(tripId, false, prismaClient);
 
     if (stops.length < 2) {
-      this.logger.debug(`Trip ${tripId} has fewer than 2 stops, skipping routing`);
+      this.logger.debug(`Trip ${tripId} has fewer than 2 stops, skipping travel segment creation`);
       return;
     }
 
-    // Create basic travel segments between consecutive stops first
+    // Create basic travel segments between consecutive stops
     const stopIds = stops.map(stop => stop.id as string);
     await this.travelSegmentService.createSegmentsBetweenStops(tripId, stopIds, prismaClient);
-
-    // Get fresh routing data for the entire trip with the new stop order
-    await this.routingCoordinationService.updateTripRouting(
-      {
-        tripId: tripId,
-        travelMode: 'DRIVING', //TODO: implement dynamic travel mode selection
-        forceRecalculate: true, // Force fresh routing after stop changes
-      },
-      prismaClient,
-    );
   }
 
   /**

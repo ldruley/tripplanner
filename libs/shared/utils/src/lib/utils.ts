@@ -183,3 +183,76 @@ function normalizeInput(input: string, collapseWhitespace = true): string {
   }
   return result;
 }
+
+/**
+ * Validates if a matrix contains all the required coordinate keys.
+ * @param matrix - The matrix to validate.
+ * @param requiredKeys - The coordinate keys that must be present.
+ * @returns True if all required keys are present in the matrix.
+ */
+export function validateMatrixCompleteness(
+  matrix: Record<string, Record<string, unknown>>,
+  requiredKeys: string[]
+): boolean {
+  const matrixKeys = Object.keys(matrix);
+  
+  // Check if all required keys exist as matrix row keys
+  for (const key of requiredKeys) {
+    if (!matrixKeys.includes(key)) {
+      return false;
+    }
+    
+    // Check if the matrix has data for this key to all other keys
+    const rowData = matrix[key];
+    for (const targetKey of requiredKeys) {
+      if (key !== targetKey && !rowData[targetKey]) {
+        return false;
+      }
+    }
+  }
+  
+  return true;
+}
+
+/**
+ * Generates a stable cache key for matrix routing based on coordinates.
+ * @param coordinates - Array of coordinate objects.
+ * @returns A stable cache key for the matrix.
+ */
+export function generateMatrixCacheKey(coordinates: Coordinate[]): string {
+  // Sort coordinates to ensure consistent cache key regardless of order
+  const sortedCoords = coordinates
+    .map(coord => coordToString(coord))
+    .sort();
+  
+  return buildCacheKey('matrix', sortedCoords, true);
+}
+
+/**
+ * Determines if a matrix refresh is needed based on location changes.
+ * @param currentMatrixKeys - Keys present in the current matrix.
+ * @param newLocationCoordinates - New coordinates that should be in the matrix.
+ * @returns True if matrix refresh is needed.
+ */
+export function isMatrixRefreshNeeded(
+  currentMatrixKeys: string[],
+  newLocationCoordinates: Coordinate[]
+): boolean {
+  const newKeys = newLocationCoordinates.map(coord => coordToString(coord));
+  
+  // Check if there are new coordinates that aren't in the current matrix
+  for (const newKey of newKeys) {
+    if (!currentMatrixKeys.includes(newKey)) {
+      return true;
+    }
+  }
+  
+  // Check if there are coordinates in the matrix that are no longer needed
+  // (This might happen if locations were removed, though per requirements we don't refresh for removals)
+  const extraKeys = currentMatrixKeys.filter(key => !newKeys.includes(key));
+  
+  // For now, we don't refresh on removals as per requirements
+  // But we could add this logic if needed: return extraKeys.length > 0;
+  
+  return false;
+}
