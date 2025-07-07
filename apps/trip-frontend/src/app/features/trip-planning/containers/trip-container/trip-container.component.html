@@ -5,10 +5,15 @@
     </p>
   </div>
 } @else if (trip()) {
-  <app-trip-editor [initialTripData]="trip()" (tripSaved)="handleTripSave($event)">
+  <app-trip-editor (tripSaved)="handleTripSave()">
   </app-trip-editor>
+} @else if (error()) {
+  <div class="p-6 text-center">
+    <p class="text-lg text-red-600 dark:text-red-400">{{ error() }}</p>
+  </div>
 } @else {
   <div class="p-6 text-center">
     <p class="text-lg text-red-600 dark:text-red-400">Could not load trip data.</p>
+    <p class="text-sm text-gray-500 mt-2">Data source: {{ dataSource() }}</p>
   </div>
 }

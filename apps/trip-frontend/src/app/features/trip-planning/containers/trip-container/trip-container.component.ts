@@ -1,9 +1,9 @@
-import { Component, inject, OnInit, signal, WritableSignal } from '@angular/core';
+import { Component, inject, OnInit, computed } from '@angular/core';
 
 import { TripEditorComponent } from '../../components/trip-editor/trip-editor.component';
 import { ActivatedRoute } from '@angular/router';
 import { ToastService } from '../../../shared/services';
-import { Trip } from '@trip-planner/types';
+import { TripDataService } from '../../services/trip-data.service';
 
 @Component({
   selector: 'app-trip-container',
@@ -15,63 +15,51 @@ import { Trip } from '@trip-planner/types';
 export class TripContainerComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private toastService = inject(ToastService);
-  // private tripService = inject(TripService);
+  private tripDataService = inject(TripDataService);
 
-  trip: WritableSignal<Trip | null> = signal(null);
-  isLoading: WritableSignal<boolean> = signal(true);
-  tripId: WritableSignal<string | null> = signal(null);
-
+  // Use service signals for reactive state
+  trip = this.tripDataService.currentTrip;
+  isLoading = this.tripDataService.isLoading;
+  dataSource = this.tripDataService.dataSource;
+  error = this.tripDataService.error;
+  
+  // Computed properties
+  tripId = computed(() => this.route.snapshot.paramMap.get('id'));
+  
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
-    this.tripId.set(id);
-
-    if (id && id !== 'new') {
-      this.isLoading.set(true);
-      // TODO: Fetch real trip data from the service
-      console.log('Fetching trip data for ID:', id);
-
-      setTimeout(() => {
-        this.trip.set({
-          id: id,
-          userId: '',
-          name: `Trip ${id}`,
-          description: null,
-          startDate: null,
-          endDate: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          stops: [],
-          bankedLocations: [],
-          travelSegments: [],
-        });
-        this.isLoading.set(false);
-        this.toastService.showInfo('Trip loaded', `Loaded trip: ${id}`);
-      }, 1000);
+    // Check if this is the 'new' route or a specific trip ID route
+    const urlPath = this.route.snapshot.url.map(segment => segment.path).join('/');
+    
+    let tripId: string;
+    
+    if (urlPath === 'new') {
+      tripId = 'new';
     } else {
-      // Handle 'new' trip scenario - start with a default new trip object
-      console.log('TripContainer: Creating a new trip');
-      this.trip.set({
-        id: crypto.randomUUID(),
-        userId: '',
-        name: 'New Untitled Trip',
-        description: null,
-        startDate: null,
-        endDate: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        stops: [],
-        bankedLocations: [],
-        travelSegments: [],
-      });
-      this.isLoading.set(false);
-      this.toastService.showInfo('New trip', 'Started creating a new trip');
+      // Try to get the tripId parameter for existing trips
+      const id = this.route.snapshot.paramMap.get('tripId');
+      if (id) {
+        tripId = id;
+      } else {
+        console.error('TripContainer: No trip ID found and not a new trip');
+        return;
+      }
     }
+    
+    console.log('TripContainer: Initializing trip:', tripId);
+    
+    // Initialize trip through service
+    this.tripDataService.initializeTrip(tripId);
+    
+    // Show appropriate toast based on data source
+    this.showInitializationToast(tripId);
   }
 
   // This method will be called when TripEditorComponent saves the trip
-  handleTripSave(updatedTrip: Trip): void {
-    console.log('TripContainer: Trip saved/updated by editor:', updatedTrip);
-    this.isLoading.set(true);
+  handleTripSave(): void {
+    const currentTrip = this.tripDataService.currentTrip();
+    if (!currentTrip) return;
+
+    console.log('TripContainer: Saving trip to backend:', currentTrip);
     const loadingKey = 'trip-save-loading';
     this.toastService.showLoading(
       'Saving trip',
@@ -79,27 +67,43 @@ export class TripContainerComponent implements OnInit {
       loadingKey
     );
 
-    // TODO: Later, call TripService to save the trip to the backend
-    // this.tripService.saveTrip(updatedTrip).subscribe(savedTrip => {
-    //   this.trip.set(savedTrip);
-    //   this.isLoading.set(false);
-    //   this.toastService.clear(loadingKey);
-    //   this.toastService.showSuccess(
-    //     'Trip saved!',
-    //     'Your trip has been successfully saved.'
-    //   );
-    // });
+    this.tripDataService.saveTripToBackend().subscribe({
+      next: (savedTrip) => {
+        this.toastService.clear(loadingKey);
+        this.toastService.showSuccess(
+          'Trip saved!',
+          `"${savedTrip.name}" has been successfully saved.`
+        );
+        console.log('TripContainer: Trip saved successfully');
+      },
+      error: (error) => {
+        this.toastService.clear(loadingKey);
+        this.toastService.showError(
+          'Save failed',
+          `Failed to save trip: ${error.message}`
+        );
+        console.error('TripContainer: Save failed:', error);
+      }
+    });
+  }
 
-    // Placeholder simulation
+  private showInitializationToast(_id: string): void {
+    // Wait for initialization to complete before showing toast
     setTimeout(() => {
-      this.trip.set(updatedTrip); // Optimistically update
-      this.isLoading.set(false);
-      console.log('TripContainer: Mock save complete.');
-      this.toastService.clear(loadingKey);
-      this.toastService.showSuccess(
-        'Trip saved!',
-        `"${updatedTrip.name}" has been successfully saved.`
-      );
-    }, 500);
+      const dataSource = this.tripDataService.dataSource();
+      const tripName = this.tripDataService.tripName();
+      
+      switch (dataSource) {
+        case 'new':
+          this.toastService.showInfo('New trip', 'Started creating a new trip');
+          break;
+        case 'draft':
+          this.toastService.showInfo('Draft loaded', `Loaded draft: ${tripName}`);
+          break;
+        case 'persisted':
+          this.toastService.showInfo('Trip loaded', `Loaded trip: ${tripName}`);
+          break;
+      }
+    }, 100);
   }
 }

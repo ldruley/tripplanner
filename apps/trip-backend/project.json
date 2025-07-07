@@ -28,7 +28,8 @@
       },
       "configurations": {
         "development": {
-          "buildTarget": "trip-backend:build:development"
+          "buildTarget": "trip-backend:build:development",
+          "watch": true
         },
         "production": {
           "buildTarget": "trip-backend:build:production"

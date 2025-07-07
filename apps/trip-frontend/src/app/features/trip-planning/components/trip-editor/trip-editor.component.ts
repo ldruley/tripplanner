@@ -1,4 +1,4 @@
-import { Component, input, output, signal, computed, WritableSignal, effect, inject } from '@angular/core';
+import { Component, input, output, computed, inject } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { CdkDropListGroup } from '@angular/cdk/drag-drop';
@@ -8,12 +8,9 @@ import { LocationBankComponent } from '../location-bank/location-bank.component'
 import { ItineraryBuilderComponent } from '../itinerary-builder/itinerary-builder.component';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 
-import { Location, Trip, Stop, TripBankedLocation } from '@trip-planner/types';
+import { Location, Trip, Stop } from '@trip-planner/types';
 import { MatrixCalculationService } from '../../services/matrix-calculation.service';
-
-// Services (placeholders for now)
-// import { TripService } from '../../services/trip.service';
-// import { MatrixApiService } from '../../services/matrix-api.service';
+import { TripDataService } from '../../services/trip-data.service';
 
 @Component({
   selector: 'app-trip-editor',
@@ -30,20 +27,22 @@ import { MatrixCalculationService } from '../../services/matrix-calculation.serv
   styleUrls: ['./trip-editor.component.css'],
 })
 export class TripEditorComponent {
-  // Input for the initial trip data (from TripContainerComponent)
-  initialTripData = input.required<Trip | null>();
-
   // Output event when the trip is saved
-  readonly tripSaved = output<Trip>();
+  readonly tripSaved = output<void>();
 
-  // Internal state for the trip being edited
-  // These will be initialized by the effect watching initialTripData
-  tripId: WritableSignal<string | null> = signal(null);
-  currentTripName: WritableSignal<string> = signal('Untitled Trip');
-  currentTripDescription: WritableSignal<string | null | undefined> = signal(undefined);
+  // Inject services
+  private tripDataService = inject(TripDataService);
+  private matrixService = inject(MatrixCalculationService);
 
-  bankedLocations: WritableSignal<TripBankedLocation[]> = signal([]);
-  itineraryStops: WritableSignal<Stop[]> = signal([]);
+  // Use service signals for reactive state
+  currentTrip = this.tripDataService.currentTrip;
+  tripId = this.tripDataService.tripId;
+  currentTripName = this.tripDataService.tripName;
+  currentTripDescription = this.tripDataService.tripDescription;
+  bankedLocations = this.tripDataService.bankedLocations;
+  itineraryStops = this.tripDataService.itineraryStops;
+  isDirty = this.tripDataService.isDirty;
+  dataSource = this.tripDataService.dataSource;
 
   // Computed signal to extract Location objects for the LocationBankComponent
   bankedLocationsList = computed(() => 
@@ -52,76 +51,17 @@ export class TripEditorComponent {
       .filter((loc): loc is Location => loc != null)
   );
 
-  private matrixService = inject(MatrixCalculationService);
-  // For Matrix API results
+  // Matrix calculation state
   matrixData = this.matrixService.formattedMatrix;
   isLoadingMatrix = this.matrixService.isLoading;
 
-  // private tripService = inject(TripService);  For intermediate saves/persistence
+  // Helper methods for trip name/description updates
+  updateTripName(newName: string): void {
+    this.tripDataService.updateTripLocal({ name: newName });
+  }
 
-  constructor() {
-    // Effect to initialize/update local state when initialTripData changes
-    effect(() => {
-      const tripData = this.initialTripData();
-      console.log(
-        'TripEditor: Effect for initialTripData triggered. Processing tripData:',
-        tripData,
-      );
-
-      if (tripData) {
-        // Only set these if it's truly a new trip load or different trip ID
-        // This check prevents wiping state if initialTripData reference changes but it's the same trip
-        if (this.tripId() !== tripData.id) {
-          console.log('TripEditor: New or different trip loaded. Resetting state.');
-          this.tripId.set(tripData.id);
-          this.currentTripName.set(tripData.name);
-          this.currentTripDescription.set(tripData.description);
-          this.itineraryStops.set([...tripData.stops].sort((a, b) => a.order - b.order));
-
-          // Initialize bankedLocations based on initialTripData
-          // IMPORTANT: Does your 'Trip' model from the backend/initialTripData actually
-          // include a property for 'bankedLocations'? If so, use it here.
-          // If 'bankedLocations' are purely session-based and not loaded with the trip,
-          // then you should initialize it to [] only if tripId changes, or manage it outside this effect.
-          if ('bankedLocations' in tripData && Array.isArray(tripData.bankedLocations)) {
-            this.bankedLocations.set([...tripData.bankedLocations]);
-            console.log('TripEditor: BankedLocations initialized from tripData.');
-          } else {
-            // If tripData doesn't contain bankedLocations, and we're loading a new trip,
-            // then it's appropriate to reset it.
-            // However, if we're just re-processing the same trip, we might want to preserve
-            // session-banked locations. This logic depends on your exact requirements.
-            // For now, let's assume if tripData.id changes, we reset bank.
-            this.bankedLocations.set([]);
-            console.log(
-              'TripEditor: BankedLocations reset as initialTripData does not contain them or trip ID changed.',
-            );
-          }
-        } else {
-          // initialTripData reference might have changed, but it's for the same trip.
-          // Potentially update name/description if they can change, but be careful with stops/bank.
-          // For now, we'll assume if the ID is the same, we don't re-initialize stops/bank from initialTripData
-          // as they are being actively managed by the user in this component.
-          console.log(
-            'TripEditor: initialTripData updated for the same trip. Name/Desc may update.',
-          );
-          this.currentTripName.set(tripData.name); // Still update these if they can change
-          this.currentTripDescription.set(tripData.description);
-        }
-      } else {
-        // initialTripData is null (e.g., explicitly for a new trip from container)
-        console.log('TripEditor: initialTripData is null. Setting up for a new trip.');
-        // This is for a "new trip" state if container passes null
-        const newTripId = crypto.randomUUID(); // Or handle ID generation as needed
-        this.tripId.set(newTripId);
-        this.currentTripName.set('Untitled Trip');
-        this.currentTripDescription.set(undefined);
-        this.itineraryStops.set([]);
-        this.bankedLocations.set([]); // Start with an empty bank for a new trip
-      }
-      // The call to fetchMatrixData can remain here if it depends on initialized stops/bank.
-      // this.fetchMatrixData(); // This will be called when the signals it depends on are set
-    });
+  updateTripDescription(newDescription: string | null): void {
+    this.tripDataService.updateTripLocal({ description: newDescription });
   }
 
   /**
@@ -129,26 +69,7 @@ export class TripEditorComponent {
    * This location is added to the bank.
    */
   onLocationSelectedFromSearch(selectedLocation: Location): void {
-    // TODO: Backend Call - Persist this location as "banked" for the current tripId()
-    // For now, just update local state.
-    this.bankedLocations.update(currentBankedLocations => {
-      if (currentBankedLocations.find(banked => banked.locationId === selectedLocation.id)) {
-        console.warn('Location already in bank:', selectedLocation.name);
-        return currentBankedLocations;
-      }
-      
-      const newBankedLocation: TripBankedLocation = {
-        id: crypto.randomUUID(),
-        tripId: this.tripId() || '',
-        locationId: selectedLocation.id,
-        addedAt: new Date(),
-        location: selectedLocation
-      };
-      
-      const newBank = [...currentBankedLocations, newBankedLocation];
-      console.log('TripEditor: Updating bankedLocations signal to:', newBank);
-      return newBank;
-    });
+    this.tripDataService.addLocationToBank(selectedLocation);
     console.log('TripEditor: Location added to bank:', selectedLocation.name);
   }
 
@@ -163,32 +84,12 @@ export class TripEditorComponent {
     itemData: Location;
     newIndex: number;
   }): void {
-    const locationToMove = itemData; // Now correctly accesses itemData which holds the Location
+    const locationToMove = itemData;
 
-    // Create a new Stop object
-    const newStop: Stop = {
-      id: crypto.randomUUID(),
-      tripId: this.tripId() || '',
-      locationId: locationToMove.id,
-      location: locationToMove,
-      order: newIndex,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    // Remove from bank and add to itinerary via service
+    this.tripDataService.removeLocationFromBank(locationToMove.id);
+    this.tripDataService.addStopToItinerary(locationToMove, newIndex);
 
-    // Remove from bankedLocations signal
-    this.bankedLocations.update(bank => bank.filter(banked => banked.locationId !== locationToMove.id));
-
-    // add to itineraryStops signal at the correct index and re-order all
-    this.itineraryStops.update(stops => {
-      const newStopsArray = [...stops];
-      newStopsArray.splice(newIndex, 0, newStop);
-      return newStopsArray.map((s, index) => ({ ...s, order: index }));
-    });
-
-    // TODO: Backend -
-    // Call service to remove from bank persistence.
-    // Call service to add as a new stop to itinerary persistence.
     console.log(`Moved ${locationToMove.name} from bank to itinerary at index ${newIndex}`);
   }
 
@@ -196,9 +97,8 @@ export class TripEditorComponent {
    * Called by ItineraryBuilderComponent when stops are reordered within the itinerary.
    */
   handleStopsReordered(reorderedStops: Stop[]): void {
-    // TODO: Backend Call - Persist the new order of stops for this trip.
-    // The reorderedStops array already has updated 'order' properties from ItineraryBuilder.
-    this.itineraryStops.set(reorderedStops);
+    const reorderedStopIds = reorderedStops.map(stop => stop.id);
+    this.tripDataService.reorderStops(reorderedStopIds);
     console.log('TripEditor: Stops reordered.');
   }
 
@@ -206,14 +106,7 @@ export class TripEditorComponent {
    * Called by ItineraryBuilderComponent when a stop removal is requested.
    */
   handleRemoveStopRequest(stopIdToRemove: string): void {
-    // TODO: Backend Call - Remove this stop from the trip's itinerary.
-    this.itineraryStops.update(stops =>
-      stops
-        .filter(stop => {
-          return stop.id !== stopIdToRemove;
-        })
-        .map((stop, index) => ({ ...stop, order: index })),
-    ); // Re-order remaining
+    this.tripDataService.removeStopFromItinerary(stopIdToRemove);
     console.log('TripEditor: Stop removal requested:', stopIdToRemove);
   }
 
@@ -254,54 +147,7 @@ export class TripEditorComponent {
   }
 
   /**
-   * Simulates fetching matrix data.
-   * In a real app, this would call MatrixApiService.
-   */
-  /*fetchMatrixData(): void {
-    const stops = this.itineraryStops();
-    const bank = this.bankedLocations();
-
-    // Consolidate all unique locations
-    const allLocationsMap = new Map<string, Location>();
-    stops.forEach(stop => {
-      if (stop.locationDetails) allLocationsMap.set(stop.locationDetails.id, stop.locationDetails);
-    });
-    bank.forEach(loc => allLocationsMap.set(loc.id, loc));
-
-    const uniqueLocations = Array.from(allLocationsMap.values());
-
-    if (uniqueLocations.length < 2) {
-      this.matrixData.set(null); // Not enough points for a matrix
-      return;
-    }
-
-    // console.log('TripEditor: Triggering matrix data calculation for locations:', uniqueLocations.map(l => l.name));
-    this.isLoadingMatrix.set(true);
-
-    // TODO: Replace with actual call to this.matrixApiService.getMatrix(uniqueLocations)
-    setTimeout(() => {
-      const mockMatrix = new Map<string, TravelSegmentData>();
-      // Create mock data: iterate through itineraryStops to create segments
-      const currentItinerary = this.itineraryStops();
-      for (let i = 0; i < currentItinerary.length - 1; i++) {
-        const fromLoc = currentItinerary[i].locationDetails;
-        const toLoc = currentItinerary[i+1].locationDetails;
-        if (fromLoc && toLoc) {
-          const key = `${fromLoc.id}_${toLoc.id}`;
-          mockMatrix.set(key, {
-            time: `${Math.floor(Math.random() * 60) + 10} min`,
-            distance: `${(Math.random() * 20 + 5).toFixed(1)} km`
-          });
-        }
-      }
-      this.matrixData.set(mockMatrix);
-      this.isLoadingMatrix.set(false);
-      // console.log('TripEditor: Mock matrix data set.');
-    }, 1000); // Simulate API delay
-  }*/
-
-  /**
-   * Prepares the final trip object and emits it to be saved by the parent container.
+   * Emits the save event to trigger backend persistence via the container.
    */
   saveTrip(): void {
     const tripId = this.tripId();
@@ -310,21 +156,7 @@ export class TripEditorComponent {
       return;
     }
 
-    const finalTrip: Trip = {
-      id: tripId,
-      userId: '', // This would come from auth context
-      name: this.currentTripName(),
-      description: this.currentTripDescription(),
-      startDate: null,
-      endDate: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      stops: this.itineraryStops().map((stop, index) => ({ ...stop, order: index })), // Ensure order is up-to-date
-      bankedLocations: this.bankedLocations(),
-      travelSegments: [],
-    };
-
-    console.log('TripEditor: Emitting tripSaved event with:', finalTrip);
-    this.tripSaved.emit(finalTrip);
+    console.log('TripEditor: Emitting tripSaved event');
+    this.tripSaved.emit();
   }
 }

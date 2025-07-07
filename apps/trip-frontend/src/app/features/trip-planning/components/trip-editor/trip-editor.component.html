@@ -6,14 +6,14 @@
       placeholder="Trip Name (e.g., Summer Vacation)"
       class="text-3xl font-bold text-tp-text-light-primary dark:text-tp-text-primary border-b-2 border-transparent focus:border-tp-orange outline-none w-full bg-transparent"
       [ngModel]="currentTripName()"
-      (ngModelChange)="currentTripName.set($event)"
+      (ngModelChange)="updateTripName($event)"
     />
     <textarea
       aria-label="Trip Description"
       placeholder="Trip description (optional)"
       class="mt-2 text-sm text-tp-text-light-secondary dark:text-tp-text-secondary border border-tp-border-light dark:border-tp-border rounded-md p-2 focus:border-tp-orange outline-none w-full bg-tp-bg-light-primary dark:bg-tp-bg-secondary"
       [ngModel]="currentTripDescription()"
-      (ngModelChange)="currentTripDescription.set($event)"
+      (ngModelChange)="updateTripDescription($event)"
       rows="2"
     >
     </textarea>
