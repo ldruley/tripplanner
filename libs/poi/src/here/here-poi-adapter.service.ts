@@ -37,6 +37,7 @@ export class HerePoiAdapterService {
       at: '36.97693,-122.030645',
       q: query.search,
       apiKey: this.apiKey,
+      show: 'tz',
     });
 
     try {

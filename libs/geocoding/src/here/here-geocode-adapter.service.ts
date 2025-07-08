@@ -33,13 +33,13 @@ export class HereGeocodeAdapterService {
   ) {
     const apiConfig = configService.getApiKeys();
     const urlConfig = configService.getApiUrls();
-    
+
     this.apiKey = apiConfig.HERE_API_KEY;
     this.geocodeUrl = urlConfig.HERE_GEOCODE_URL;
   }
 
   async forwardGeocode(query: ForwardGeocodeQuery): Promise<GeocodingResult[]> {
-    const url = buildUrl(this.geocodeUrl, '', { q: query.search, apiKey: this.apiKey });
+    const url = buildUrl(this.geocodeUrl, '', { q: query.search, apiKey: this.apiKey, show: 'tz' });
     Logger.log(url);
     try {
       const response: AxiosResponse<HerePoiApiResponse> = await firstValueFrom(
