@@ -8,15 +8,36 @@
       [ngModel]="currentTripName()"
       (ngModelChange)="updateTripName($event)"
     />
-    <textarea
-      aria-label="Trip Description"
-      placeholder="Trip description (optional)"
-      class="mt-2 text-sm text-tp-text-light-secondary dark:text-tp-text-secondary border border-tp-border-light dark:border-tp-border rounded-md p-2 focus:border-tp-orange outline-none w-full bg-tp-bg-light-primary dark:bg-tp-bg-secondary"
-      [ngModel]="currentTripDescription()"
-      (ngModelChange)="updateTripDescription($event)"
-      rows="2"
-    >
-    </textarea>
+    <div class="mt-2 flex gap-4">
+      <div class="flex-shrink-0">
+        <label class="block text-sm font-medium text-tp-text-light-primary dark:text-tp-text-primary mb-1">
+          Start Date & Time
+        </label>
+        <p-datePicker
+          [(ngModel)]="startDate"
+          [showTime]="true"
+          [showSeconds]="false"
+          placeholder="Select start date"
+          class="w-56"
+          styleClass="w-full"
+          [inputStyle]="{'width': '100%'}"
+        />
+      </div>
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-tp-text-light-primary dark:text-tp-text-primary mb-1">
+          Description
+        </label>
+        <textarea
+          aria-label="Trip Description"
+          placeholder="Trip description (optional)"
+          class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary border border-tp-border-light dark:border-tp-border rounded-md p-2 focus:border-tp-orange outline-none w-full bg-tp-bg-light-primary dark:bg-tp-bg-secondary"
+          [ngModel]="currentTripDescription()"
+          (ngModelChange)="updateTripDescription($event)"
+          rows="2"
+        >
+        </textarea>
+      </div>
+    </div>
   </header>
 
   <section

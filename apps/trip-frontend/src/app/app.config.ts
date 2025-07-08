@@ -8,13 +8,13 @@ import { providePrimeNG } from 'primeng/config';
 import { MessageService } from 'primeng/api';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import Lara from '@primeuix/themes/lara';
+import { PrimePreset } from './primepreset';
 
 function initializeTheme(themeService: ThemeService) {
   return () => {
     themeService.initializeTheme();
   };
 }
-
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -24,12 +24,12 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     providePrimeNG({
       theme: {
-        preset: Lara,
+        preset: PrimePreset,
         options: {
-          darkModeSelector: '.dark'
-        }
+          darkModeSelector: '.dark',
+        },
       },
-      ripple: true
+      ripple: true,
     }),
     MessageService,
     {

@@ -2,6 +2,7 @@ import { Component, input, output, computed, inject } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { CdkDropListGroup } from '@angular/cdk/drag-drop';
+import { DatePickerModule } from 'primeng/datepicker';
 
 import { LocationSearchComponent } from '../location-search/location-search.component';
 import { LocationBankComponent } from '../location-bank/location-bank.component';
@@ -21,7 +22,8 @@ import { TripDataService } from '../../services/trip-data.service';
     LocationBankComponent,
     ItineraryBuilderComponent,
     CdkDropListGroup,
-    ButtonComponent
+    ButtonComponent,
+    DatePickerModule
 ],
   templateUrl: './trip-editor.component.html',
   styleUrls: ['./trip-editor.component.css'],
@@ -54,6 +56,9 @@ export class TripEditorComponent {
   // Matrix calculation state
   matrixData = this.matrixService.formattedMatrix;
   isLoadingMatrix = this.matrixService.isLoading;
+
+  // Start date property (not persisted yet)
+  startDate: Date | null = null;
 
   // Helper methods for trip name/description updates
   updateTripName(newName: string): void {
