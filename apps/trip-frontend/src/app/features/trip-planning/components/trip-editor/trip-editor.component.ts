@@ -1,4 +1,4 @@
-import { Component, input, output, computed, inject } from '@angular/core';
+import { Component, input, output, computed, inject, signal } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { CdkDropListGroup } from '@angular/cdk/drag-drop';
@@ -7,6 +7,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { LocationSearchComponent } from '../location-search/location-search.component';
 import { LocationBankComponent } from '../location-bank/location-bank.component';
 import { ItineraryBuilderComponent } from '../itinerary-builder/itinerary-builder.component';
+import { StopEditModalComponent } from '../stop-edit-modal/stop-edit-modal.component';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 
 import { Location, Trip, Stop } from '@trip-planner/types';
@@ -21,6 +22,7 @@ import { TripDataService } from '../../services/trip-data.service';
     LocationSearchComponent,
     LocationBankComponent,
     ItineraryBuilderComponent,
+    StopEditModalComponent,
     CdkDropListGroup,
     ButtonComponent,
     DatePickerModule
@@ -59,6 +61,10 @@ export class TripEditorComponent {
 
   // Start date property (not persisted yet)
   startDate: Date | null = null;
+
+  // Stop edit modal state
+  isStopEditModalOpen = signal<boolean>(false);
+  editingStop = signal<Stop | null>(null);
 
   // Helper methods for trip name/description updates
   updateTripName(newName: string): void {
@@ -116,11 +122,38 @@ export class TripEditorComponent {
   }
 
   /**
-   * Placeholder for handling edit requests from ItineraryStopComponent.
+   * Handle edit requests from ItineraryStopComponent.
    */
   handleEditStopRequest(stopIdToEdit: string): void {
-    console.log('TripEditor: Stop edit requested (not implemented yet):', stopIdToEdit);
-    // Implement opening an edit modal or inline editing for the stop
+    console.log('TripEditor: Stop edit requested:', stopIdToEdit);
+    
+    // Find the stop to edit
+    const currentStops = this.itineraryStops();
+    const stopToEdit = currentStops.find(stop => stop.id === stopIdToEdit);
+    
+    if (stopToEdit) {
+      this.editingStop.set(stopToEdit);
+      this.isStopEditModalOpen.set(true);
+    } else {
+      console.error('TripEditor: Stop not found for editing:', stopIdToEdit);
+    }
+  }
+
+  /**
+   * Handle closing the stop edit modal.
+   */
+  handleStopEditModalClose(): void {
+    this.isStopEditModalOpen.set(false);
+    this.editingStop.set(null);
+  }
+
+  /**
+   * Handle successful stop update from modal.
+   */
+  handleStopUpdated(updatedStop: Stop): void {
+    console.log('TripEditor: Stop updated successfully:', updatedStop);
+    // The modal handles updating the service, so we just need to close it
+    this.handleStopEditModalClose();
   }
 
   handleBankDragStart(draggedLocation: Location): void {

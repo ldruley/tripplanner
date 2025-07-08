@@ -1,0 +1,51 @@
+/* Stop edit modal component styles */
+
+/* PrimeNG Select styling */
+::ng-deep .p-select {
+  @apply bg-tp-bg-light-primary dark:bg-tp-bg-tertiary;
+  @apply text-tp-text-light-primary dark:text-tp-text-primary;
+  @apply border-tp-border-light dark:border-tp-border;
+  @apply focus:border-tp-orange focus:ring-2 focus:ring-tp-orange/20;
+  @apply transition-colors duration-150;
+}
+
+::ng-deep .p-select:hover {
+  @apply border-tp-orange/50;
+}
+
+::ng-deep .p-select .p-select-label {
+  @apply text-tp-text-light-primary dark:text-tp-text-primary;
+}
+
+::ng-deep .p-select .p-select-label.p-placeholder {
+  @apply text-tp-text-light-secondary dark:text-tp-text-secondary;
+}
+
+::ng-deep .p-select .p-select-dropdown {
+  @apply text-tp-text-light-secondary dark:text-tp-text-secondary;
+}
+
+/* Select overlay styling */
+::ng-deep .p-select-overlay {
+  @apply bg-tp-bg-light-primary dark:bg-tp-bg-secondary;
+  @apply border-tp-border-light dark:border-tp-border;
+  @apply rounded-lg shadow-lg;
+}
+
+::ng-deep .p-select-overlay .p-select-items {
+  @apply bg-tp-bg-light-primary dark:bg-tp-bg-secondary;
+}
+
+::ng-deep .p-select-overlay .p-select-item {
+  @apply text-tp-text-light-primary dark:text-tp-text-primary;
+  @apply hover:bg-tp-bg-light-secondary dark:hover:bg-tp-bg-tertiary;
+  @apply transition-colors duration-150;
+}
+
+::ng-deep .p-select-overlay .p-select-item.p-highlight {
+  @apply bg-tp-orange text-white;
+}
+
+::ng-deep .p-select-overlay .p-select-item.p-highlight:hover {
+  @apply bg-tp-orange-hover;
+}

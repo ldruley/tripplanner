@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, Output, EventEmitter, input } from '@angular/core';
 
 import { Router } from '@angular/router';
 import { ButtonComponent } from '../button/button.component';
@@ -26,6 +26,9 @@ export class HeaderComponent {
   private readonly authService = inject(AuthService);
   private readonly profileService = inject(ProfileService);
   //TODO: pulling full profile for photo, find a better way probably (unless we end up needing more profile data in header)
+
+  sidebarExpanded = input(true);
+  @Output() toggleMobileSidebar = new EventEmitter<void>();
 
   private readonly authState = toSignal(this.authService.authState$);
   public readonly userProfile = this.profileService.userProfile$;
@@ -76,6 +79,21 @@ export class HeaderComponent {
     return user?.email?.split('@')[0] || 'User';
   });
 
+  public readonly headerClasses = computed(() => {
+    const baseClasses = 'fixed top-0 right-0 z-30 h-14 flex items-center border-b border-tp-border-light dark:border-tp-border bg-tp-bg-light-secondary dark:bg-tp-bg-secondary';
+    
+    if (!this.isAuthenticated()) {
+      return `${baseClasses} left-0`;
+    }
+    
+    // When authenticated, header should start after sidebar and extend to right edge
+    if (this.sidebarExpanded()) {
+      return `${baseClasses} left-0 md:left-56`;
+    } else {
+      return `${baseClasses} left-0 md:left-16`;
+    }
+  });
+
   onHome(): void {
     // Navigate to dashboard if authenticated, otherwise to login
     if (this.isAuthenticated()) {
@@ -118,23 +136,15 @@ export class HeaderComponent {
     });
   }
 
-  onNewTrip(): void {
-    this.router.navigate(['/trip-planning/new']).catch(err => {
-      console.error('Navigation failed:', err);
-    });
-  }
-
-  onMyTrips(): void {
-    this.router.navigate(['/trips']).catch(err => {
-      console.error('Navigation failed:', err);
-    });
-  }
-
   toggleProfileDropdown(): void {
     this.isProfileDropdownOpen = !this.isProfileDropdownOpen;
   }
 
   closeProfileDropdown(): void {
     this.isProfileDropdownOpen = false;
+  }
+
+  onToggleMobileSidebar(): void {
+    this.toggleMobileSidebar.emit();
   }
 }

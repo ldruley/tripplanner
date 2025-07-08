@@ -25,6 +25,7 @@ model User {
   profile           Profile?
   settings          UserSettings?
   favoriteLocations UserFavoriteLocation[]
+  tripParticipants  TripParticipant[]
 
   @@map("users")
 }
@@ -63,26 +64,26 @@ model Profile {
 }
 
 model Location {
-  id          String             @id @default(uuid()) @map("location_id")
-  name        String             @db.Text
-  description String?            @db.Text
-  address     String?            @db.Text
-  city        String?
-  state       String?
-  country     String?
-  postalCode  String?            @map("postal_code")
-  latitude    Float
-  longitude   Float
-  timezone    String? // Likely make this required in the future
-  apiSource   ApiSourceProvider? @map("api_source") // Provider source
-  apiSourceId String?            @map("api_source_id") // Provider-specific ID
-  fullData    Json? // Full data from the API (normalized JSON)
-  category    LocationCategory?
-  public      Boolean            @default(false) // Flag for marking locations as public/shared
+  id           String             @id @default(uuid()) @map("location_id")
+  name         String             @db.Text
+  description  String?            @db.Text
+  address      String?            @db.Text
+  city         String?
+  state        String?
+  country      String?
+  postalCode   String?            @map("postal_code")
+  latitude     Float
+  longitude    Float
+  timezone     String? // Likely make this required in the future
+  apiSource    ApiSourceProvider? @map("api_source") // Provider source
+  apiSourceId  String?            @map("api_source_id") // Provider-specific ID
+  extendedData Json? // Full data from the API (normalized JSON)
+  category     LocationCategory?
+  public       Boolean            @default(false) // Flag for marking locations as public/shared
   // Prisma doesn't support geography types directly
   //geom        Unsupported("geography(Point, 4326)")? @map("geom")
-  createdAt   DateTime           @default(now()) @map("created_at")
-  updatedAt   DateTime           @updatedAt @map("updated_at")
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
 
   // Relations
   stops             Stop[]
@@ -124,9 +125,10 @@ model Trip {
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  stops           Stop[]
-  bankedLocations TripBankedLocation[]
-  travelSegments  TravelSegment[]
+  stops            Stop[]
+  bankedLocations  TripBankedLocation[]
+  travelSegments   TravelSegment[]
+  tripParticipants TripParticipant[]
 
   @@index([userId], name: "idx_trip_user")
   @@map("trips")
@@ -137,7 +139,7 @@ model TripBankedLocation {
   id         String   @id @default(uuid()) @map("trip_banked_location_id")
   tripId     String   @map("trip_id")
   locationId String   @map("location_id")
-  addedAt    DateTime @default(now()) @map("added_at")
+  createdAt  DateTime @default(now()) @map("created_at")
 
   trip     Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
   location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
@@ -146,6 +148,20 @@ model TripBankedLocation {
   @@index([tripId], name: "idx_trip_banked_location_trip")
   @@index([locationId], name: "idx_trip_banked_location_location")
   @@map("trip_banked_locations")
+}
+
+model TripParticipant {
+  id        String              @id @default(uuid())
+  createdAt DateTime            @default(now()) @map("created_at")
+  updatedAt DateTime            @updatedAt @map("updated_at")
+  tripId    String              @map("trip_id")
+  userId    String              @map("user_id")
+  role      TripParticipantRole @default(PARTICIPANT) // Roles: PARTICIPANT, EDITOR
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([tripId, userId]) // Ensures a user can only be a participant once per trip
 }
 
 // Stop: Represents an ordered stop in a trip's itinerary, referencing a Location.
@@ -163,6 +179,7 @@ model Stop {
   calculatedDepartureTime DateTime? @map("calculated_departure_time")
   stopType                StopType? @map("stop_type") // Type of stop (e.g., PITSTOP, OVERNIGHT)
   notes                   String?   @db.Text
+  alias                   String?   @db.Text // User's custom name for the stop
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -262,4 +279,9 @@ enum DistanceUnit {
 enum StopType {
   PITSTOP
   OVERNIGHT
+}
+
+enum TripParticipantRole {
+  PARTICIPANT
+  EDITOR
 }

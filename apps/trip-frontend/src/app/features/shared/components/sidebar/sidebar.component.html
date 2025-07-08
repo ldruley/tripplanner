@@ -1,0 +1,318 @@
+<!-- Desktop Sidebar -->
+<aside
+  class="fixed left-0 top-0 z-40 h-full bg-tp-bg-light-secondary dark:bg-tp-bg-secondary border-r border-tp-border-light dark:border-tp-border transition-all duration-300 ease-in-out hidden md:block"
+  [class.w-56]="isExpanded()"
+  [class.w-16]="!isExpanded()"
+  role="navigation"
+  aria-label="Main navigation"
+  [attr.aria-expanded]="isExpanded()"
+>
+  <!-- Sidebar Header -->
+  <div class="flex items-center justify-between h-14 px-4 border-b border-tp-border-light dark:border-tp-border">
+    @if (showLabels()) {
+      <div class="flex items-center gap-2">
+        <svg
+          class="w-6 h-6 text-tp-orange"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M9 6.75V15m6-6v8.25m.5-10.5h-7a2.25 2.25 0 00-2.25 2.25v10.5a2.25 2.25 0 002.25 2.25h7.5a2.25 2.25 0 002.25-2.25v-10.5a2.25 2.25 0 00-2.25-2.25z"
+          />
+        </svg>
+        <span class="text-lg font-semibold text-tp-text-light-primary dark:text-tp-text-primary">
+          TripPlanner
+        </span>
+      </div>
+    } @else {
+      <div class="flex items-center justify-center w-8 h-8">
+        <svg
+          class="w-6 h-6 text-tp-orange"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M9 6.75V15m6-6v8.25m.5-10.5h-7a2.25 2.25 0 00-2.25 2.25v10.5a2.25 2.25 0 002.25 2.25h7.5a2.25 2.25 0 002.25-2.25v-10.5a2.25 2.25 0 00-2.25-2.25z"
+          />
+        </svg>
+      </div>
+    }
+
+    <!-- Collapse/Expand Button -->
+    <button
+      (click)="toggleExpanded()"
+      class="p-1 rounded-lg hover:bg-tp-bg-light-tertiary dark:hover:bg-tp-bg-tertiary transition-colors duration-200"
+      [class.rotate-180]="!isExpanded()"
+      [attr.aria-label]="isExpanded() ? 'Collapse sidebar' : 'Expand sidebar'"
+      [attr.aria-expanded]="isExpanded()"
+      type="button"
+    >
+      <svg
+        class="w-4 h-4 text-tp-text-light-secondary dark:text-tp-text-secondary transition-transform duration-200"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M15.75 19.5L8.25 12l7.5-7.5"
+        />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Navigation Menu -->
+  <nav class="flex-1 px-3 py-4 space-y-2" role="menu">
+    <!-- New Trip -->
+    <button
+      (click)="onNewTrip()"
+      class="w-full flex items-center gap-3 py-2 px-2 rounded-xl bg-tp-orange hover:bg-tp-orange-hover transition-colors duration-200 text-white"
+      [class.justify-center]="!showLabels()"
+      role="menuitem"
+      aria-label="Create New Trip"
+      type="button"
+    >
+      <svg
+        class="w-5 h-5 flex-shrink-0"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M12 4.5v15m7.5-7.5h-15"
+        />
+      </svg>
+      @if (showLabels()) {
+        <span class="text-sm font-medium">New Trip</span>
+      }
+    </button>
+
+    <!-- Dashboard -->
+    <button
+      (click)="onDashboard()"
+      class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-tp-bg-light-tertiary dark:hover:bg-tp-bg-tertiary transition-colors duration-200 text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-tp-text-light-primary dark:hover:text-tp-text-primary"
+      [class.justify-center]="!showLabels()"
+      role="menuitem"
+      aria-label="Go to Dashboard"
+      type="button"
+    >
+      <svg
+        class="w-5 h-5 flex-shrink-0"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"
+        />
+      </svg>
+      @if (showLabels()) {
+        <span class="text-sm font-medium">Dashboard</span>
+      }
+    </button>
+
+    <!-- My Trips -->
+    <button
+      (click)="onMyTrips()"
+      class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-tp-bg-light-tertiary dark:hover:bg-tp-bg-tertiary transition-colors duration-200 text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-tp-text-light-primary dark:hover:text-tp-text-primary"
+      [class.justify-center]="!showLabels()"
+      role="menuitem"
+      aria-label="View My Trips"
+      type="button"
+    >
+      <svg
+        class="w-5 h-5 flex-shrink-0"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+        />
+      </svg>
+      @if (showLabels()) {
+        <span class="text-sm font-medium">My Trips</span>
+      }
+    </button>
+  </nav>
+</aside>
+
+<!-- Mobile Sidebar Overlay -->
+@if (shouldShowMobileSidebar()) {
+  <div
+    class="fixed inset-0 z-50 md:hidden"
+    [class.mobile-overlay-enter]="isMobileOpen() && !isMobileClosing()"
+    [class.mobile-overlay-exit]="isMobileClosing()"
+    (click)="closeMobileSidebar()"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Mobile navigation menu"
+  >
+    <!-- Backdrop -->
+    <div
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm"
+      [class.mobile-backdrop-enter]="isMobileOpen() && !isMobileClosing()"
+      [class.mobile-backdrop-exit]="isMobileClosing()"
+      aria-hidden="true">
+    </div>
+
+    <!-- Mobile Sidebar -->
+    <aside
+      class="fixed left-0 top-0 z-50 h-full w-56 bg-tp-bg-light-secondary dark:bg-tp-bg-secondary border-r border-tp-border-light dark:border-tp-border"
+      [class.mobile-sidebar-enter]="isMobileOpen() && !isMobileClosing()"
+      [class.mobile-sidebar-exit]="isMobileClosing()"
+      (click)="$event.stopPropagation()"
+      role="navigation"
+      aria-label="Mobile navigation"
+    >
+      <!-- Mobile Header -->
+      <div class="flex items-center justify-between h-14 px-4 border-b border-tp-border-light dark:border-tp-border">
+        <div class="flex items-center gap-2">
+          <svg
+            class="w-6 h-6 text-tp-orange"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9 6.75V15m6-6v8.25m.5-10.5h-7a2.25 2.25 0 00-2.25 2.25v10.5a2.25 2.25 0 002.25 2.25h7.5a2.25 2.25 0 002.25-2.25v-10.5a2.25 2.25 0 00-2.25-2.25z"
+            />
+          </svg>
+          <span class="text-lg font-semibold text-tp-text-light-primary dark:text-tp-text-primary">
+            TripPlanner
+          </span>
+        </div>
+
+        <!-- Close Button -->
+        <button
+          (click)="closeMobileSidebar()"
+          class="p-1 rounded-lg hover:bg-tp-bg-light-tertiary dark:hover:bg-tp-bg-tertiary transition-colors duration-200"
+          aria-label="Close mobile navigation"
+          type="button"
+        >
+          <svg
+            class="w-5 h-5 text-tp-text-light-secondary dark:text-tp-text-secondary"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Mobile Navigation Menu -->
+      <nav class="flex-1 px-3 py-4 space-y-2" role="menu">
+        <!-- Dashboard -->
+        <button
+          (click)="onDashboard()"
+          class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-tp-bg-light-tertiary dark:hover:bg-tp-bg-tertiary transition-colors duration-200 text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-tp-text-light-primary dark:hover:text-tp-text-primary"
+          role="menuitem"
+          aria-label="Go to Dashboard"
+          type="button"
+        >
+          <svg
+            class="w-5 h-5 flex-shrink-0"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"
+            />
+          </svg>
+          <span class="text-sm font-medium">Dashboard</span>
+        </button>
+
+        <!-- My Trips -->
+        <button
+          (click)="onMyTrips()"
+          class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-tp-bg-light-tertiary dark:hover:bg-tp-bg-tertiary transition-colors duration-200 text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-tp-text-light-primary dark:hover:text-tp-text-primary"
+          role="menuitem"
+          aria-label="View My Trips"
+          type="button"
+        >
+          <svg
+            class="w-5 h-5 flex-shrink-0"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+            />
+          </svg>
+          <span class="text-sm font-medium">My Trips</span>
+        </button>
+
+        <!-- New Trip -->
+        <button
+          (click)="onNewTrip()"
+          class="w-full flex items-center gap-3 py-2 px-3 rounded-md bg-tp-orange hover:bg-tp-orange-hover transition-colors duration-200 text-white"
+          role="menuitem"
+          aria-label="Create New Trip"
+          type="button"
+        >
+          <svg
+            class="w-5 h-5 flex-shrink-0"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 4.5v15m7.5-7.5h-15"
+            />
+          </svg>
+          <span class="text-sm font-medium">New Trip</span>
+        </button>
+      </nav>
+    </aside>
+  </div>
+}

@@ -1,5 +1,20 @@
-<app-header></app-header>
-<main class="main-content">
-  <router-outlet></router-outlet>
-</main>
+<div class="app-layout">
+  <!-- Sidebar -->
+  <app-sidebar 
+    #sidebarRef 
+    (expandedChange)="onSidebarExpandedChange($event)">
+  </app-sidebar>
+  
+  <!-- Main Content Area -->
+  <div [class]="mainContainerClasses()">
+    <!-- Header -->
+    <app-header [sidebarExpanded]="sidebarExpanded()" (toggleMobileSidebar)="onToggleMobileSidebar()"></app-header>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
+
 <p-toast position="bottom-right" [baseZIndex]="5000"></p-toast>

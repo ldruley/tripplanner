@@ -1,0 +1,192 @@
+@if (isOpen()) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+    (click)="onBackdropClick($event)"
+    (keyup.escape)="onClose()"
+    tabindex="0"
+    role="button"
+    aria-label="Close modal by clicking backdrop"
+  >
+    <div
+      class="bg-tp-bg-light-primary dark:bg-tp-bg-primary rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+      role="dialog"
+      aria-labelledby="modal-title"
+      aria-modal="true"
+    >
+      <!-- Header -->
+      <div class="flex items-center justify-between p-6 border-b border-tp-border-light dark:border-tp-border">
+        <h2
+          id="modal-title"
+          class="text-xl font-semibold text-tp-text-light-primary dark:text-tp-text-primary"
+        >
+          Edit Stop Details
+        </h2>
+        <button
+          (click)="onClose()"
+          class="text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-tp-text-light-primary dark:hover:text-tp-text-primary transition-colors"
+          aria-label="Close modal"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Content -->
+      <form [formGroup]="stopForm" (ngSubmit)="onSave()" class="p-6 space-y-6">
+
+        <!-- Editable Fields -->
+        <div class="space-y-4">
+
+          <!-- Planned Arrival and Departure Times -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            <!-- Planned Arrival Time -->
+            <div>
+              <label for="plannedArrivalTime" class="block text-sm font-medium text-tp-text-light-primary dark:text-tp-text-primary mb-2">
+                Planned Arrival Time
+              </label>
+              <p-datePicker
+                id="plannedArrivalTime"
+                formControlName="plannedArrivalTime"
+                [showTime]="true"
+                [showSeconds]="false"
+                placeholder="Select arrival time (optional)"
+                class="w-full"
+                styleClass="w-full"
+                [inputStyle]="{'width': '100%'}"
+              />
+              @if (isFieldInvalid('plannedArrivalTime')) {
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {{ getFieldError('plannedArrivalTime') }}
+                </p>
+              }
+              <p class="mt-1 text-xs text-tp-text-light-secondary dark:text-tp-text-secondary">
+                If not set, calculated arrival time will be used
+              </p>
+            </div>
+
+            <!-- Planned Departure Time -->
+            <div>
+              <label for="plannedDepartureTime" class="block text-sm font-medium text-tp-text-light-primary dark:text-tp-text-primary mb-2">
+                Planned Departure Time
+              </label>
+              <p-datePicker
+                id="plannedDepartureTime"
+                formControlName="plannedDepartureTime"
+                [showTime]="true"
+                [showSeconds]="false"
+                placeholder="Select departure time (optional)"
+                class="w-full"
+                styleClass="w-full"
+                [inputStyle]="{'width': '100%'}"
+              />
+              @if (isFieldInvalid('plannedDepartureTime')) {
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {{ getFieldError('plannedDepartureTime') }}
+                </p>
+              }
+              <p class="mt-1 text-xs text-tp-text-light-secondary dark:text-tp-text-secondary">
+                If not set, calculated departure time will be used
+              </p>
+            </div>
+          </div>
+
+          <!-- Stop Type -->
+          <div>
+            <label for="stopType" class="block text-sm font-medium text-tp-text-light-primary dark:text-tp-text-primary mb-2">
+              Stop Type
+            </label>
+            <p-select
+              id="stopType"
+              formControlName="stopType"
+              [options]="stopTypeOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select stop type (optional)"
+              class="w-full"
+              styleClass="w-full"
+            />
+            @if (isFieldInvalid('stopType')) {
+              <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                {{ getFieldError('stopType') }}
+              </p>
+            }
+          </div>
+
+          <!-- Notes -->
+          <div>
+            <label for="notes" class="block text-sm font-medium text-tp-text-light-primary dark:text-tp-text-primary mb-2">
+              Notes
+            </label>
+            <textarea
+              id="notes"
+              formControlName="notes"
+              rows="3"
+              placeholder="Add any notes about this stop..."
+              class="w-full px-3 py-2 border border-tp-border-light dark:border-tp-border rounded-md shadow-sm
+                     focus:outline-none focus:ring-2 focus:ring-tp-orange focus:border-tp-orange
+                     bg-tp-bg-light-primary dark:bg-tp-bg-tertiary
+                     text-tp-text-light-primary dark:text-tp-text-primary
+                     placeholder:text-tp-text-light-secondary dark:placeholder:text-tp-text-secondary
+                     transition-colors duration-150 resize-vertical"
+            ></textarea>
+            @if (isFieldInvalid('notes')) {
+              <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                {{ getFieldError('notes') }}
+              </p>
+            }
+          </div>
+
+        </div>
+
+        <!-- Read-only Location Information -->
+        <div class="bg-tp-bg-light-secondary dark:bg-tp-bg-secondary rounded-lg p-4 space-y-3">
+          <h3 class="text-lg font-medium text-tp-text-light-primary dark:text-tp-text-primary">
+            Location Information
+          </h3>
+
+          <div>
+            <label class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary mb-1">
+              Name
+            </label>
+            <div class="text-tp-text-light-primary dark:text-tp-text-primary font-medium">
+              {{ stop().location?.name || 'Unknown location' }}
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary mb-1">
+              Address
+            </label>
+            <div class="text-tp-text-light-primary dark:text-tp-text-primary">
+              {{ fullAddress() }}
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <!-- Footer -->
+      <div class="flex justify-end gap-3 p-6 border-t border-tp-border-light dark:border-tp-border">
+        <app-button
+          variant="outline"
+          size="md"
+          (buttonClick)="onClose()"
+          [disabled]="isLoading()"
+        >
+          Cancel
+        </app-button>
+
+        <app-button
+          variant="primary"
+          size="md"
+          (buttonClick)="onSave()"
+          [disabled]="stopForm.invalid || isLoading() || !hasChanges()"
+          [loading]="isLoading()"
+        >
+          Save Changes
+        </app-button>
+      </div>
+    </div>
+  </div>
+}
