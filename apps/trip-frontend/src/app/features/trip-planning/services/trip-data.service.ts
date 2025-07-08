@@ -26,6 +26,7 @@ import {
 } from './location-transformation.utils';
 import { MatrixCalculationService } from './matrix-calculation.service';
 import { UpdateTripWithRoutingRequest } from '../../../../../../../libs/shared/types/src/schemas/itinerary.schema';
+import { switchMap } from 'rxjs/operators';
 
 export type DataSource = 'new' | 'draft' | 'persisted';
 
@@ -205,22 +206,88 @@ export class TripDataService {
     const currentTrip = this.currentTrip();
     if (!currentTrip) return;
 
-    // Create a new banked location entry
-    const bankedLocation: TripBankedLocation = {
-      id: crypto.randomUUID(),
-      tripId: currentTrip.id,
-      locationId: location.id,
-      addedAt: new Date(),
-      location,
-    };
-
     // Check if location is already banked
     const existingBanked = currentTrip.bankedLocations.find(bl => bl.locationId === location.id);
     if (existingBanked) return;
 
-    this.updateTripLocal({
-      bankedLocations: [...currentTrip.bankedLocations, bankedLocation],
-    });
+    // Check if this is a persisted trip that needs backend API calls
+    if (this.dataSource() === 'persisted') {
+      this.addLocationToBankApi(currentTrip.id, location).subscribe({
+        next: bankedLocation => {
+          // Ensure the banked location includes the full location object
+          const bankedLocationWithFullLocation: TripBankedLocation = {
+            ...bankedLocation,
+            location: location, // Use the original location object to ensure all data is available
+          };
+          
+          // Update local state with the response
+          const updatedTrip = {
+            ...currentTrip,
+            bankedLocations: [...currentTrip.bankedLocations, bankedLocationWithFullLocation],
+          };
+          this.updateState({
+            trip: updatedTrip,
+            isDirty: false,
+          });
+
+          // Trigger matrix calculation for enhanced reordering without additional API calls
+          this.matrixCalculationService
+            .calculateMatrix([
+              ...updatedTrip.stops.map(s => s.location).filter((loc): loc is Location => !!loc),
+              ...updatedTrip.bankedLocations
+                .map(bl => bl.location)
+                .filter((loc): loc is Location => !!loc),
+            ])
+            .subscribe({
+              next: (matrix: CoordinateMatrix) => {
+                this.updateTripLocal({ matrix: JSON.stringify(matrix) });
+              },
+              error: (error: any) => {
+                console.warn('Failed to update matrix after banking location:', error);
+                // Don't show error to user as banking still succeeded
+              },
+            });
+        },
+        error: (error: any) => {
+          console.error('Failed to add location to bank:', error);
+          this.setError('Failed to add location to bank');
+        },
+      });
+    } else {
+      // For local/draft trips, add location directly to local state
+      const bankedLocation: TripBankedLocation = {
+        id: crypto.randomUUID(),
+        tripId: currentTrip.id,
+        locationId: location.id,
+        addedAt: new Date(),
+        location,
+      };
+
+      const updatedTrip = {
+        ...currentTrip,
+        bankedLocations: [...currentTrip.bankedLocations, bankedLocation],
+      };
+      this.updateTripLocal({
+        bankedLocations: updatedTrip.bankedLocations,
+      });
+
+      // Trigger matrix calculation for enhanced reordering without additional API calls
+      this.matrixCalculationService
+        .calculateMatrix([
+          ...updatedTrip.stops.map(s => s.location).filter((loc): loc is Location => !!loc),
+          ...updatedTrip.bankedLocations
+            .map(bl => bl.location)
+            .filter((loc): loc is Location => !!loc),
+        ])
+        .subscribe({
+          next: (matrix: CoordinateMatrix) => {
+            this.updateTripLocal({ matrix: JSON.stringify(matrix) });
+          },
+          error: (error: any) => {
+            console.warn('Failed to update matrix after banking location:', error);
+          },
+        });
+    }
   }
 
   /**
@@ -230,9 +297,68 @@ export class TripDataService {
     const currentTrip = this.currentTrip();
     if (!currentTrip) return;
 
-    this.updateTripLocal({
-      bankedLocations: currentTrip.bankedLocations.filter(bl => bl.locationId !== locationId),
-    });
+    // Check if this is a persisted trip that needs backend API calls
+    if (this.dataSource() === 'persisted') {
+      this.removeLocationFromBankApi(currentTrip.id, locationId).subscribe({
+        next: () => {
+          // Update local state by removing the location
+          const updatedTrip = {
+            ...currentTrip,
+            bankedLocations: currentTrip.bankedLocations.filter(bl => bl.locationId !== locationId),
+          };
+          this.updateTripLocal({
+            bankedLocations: updatedTrip.bankedLocations,
+          });
+
+          // Trigger matrix calculation for enhanced reordering without additional API calls
+          this.matrixCalculationService
+            .calculateMatrix([
+              ...updatedTrip.stops.map(s => s.location).filter((loc): loc is Location => !!loc),
+              ...updatedTrip.bankedLocations
+                .map(bl => bl.location)
+                .filter((loc): loc is Location => !!loc),
+            ])
+            .subscribe({
+              next: (matrix: CoordinateMatrix) => {
+                this.updateTripLocal({ matrix: JSON.stringify(matrix) });
+              },
+              error: (error: any) => {
+                console.warn('Failed to update matrix after removing banked location:', error);
+              },
+            });
+        },
+        error: (error: any) => {
+          console.error('Failed to remove location from bank:', error);
+          this.setError('Failed to remove location from bank');
+        },
+      });
+    } else {
+      // For local/draft trips, remove location directly from local state
+      const updatedTrip = {
+        ...currentTrip,
+        bankedLocations: currentTrip.bankedLocations.filter(bl => bl.locationId !== locationId),
+      };
+      this.updateTripLocal({
+        bankedLocations: updatedTrip.bankedLocations,
+      });
+
+      // Trigger matrix calculation for enhanced reordering without additional API calls
+      this.matrixCalculationService
+        .calculateMatrix([
+          ...updatedTrip.stops.map(s => s.location).filter((loc): loc is Location => !!loc),
+          ...updatedTrip.bankedLocations
+            .map(bl => bl.location)
+            .filter((loc): loc is Location => !!loc),
+        ])
+        .subscribe({
+          next: (matrix: CoordinateMatrix) => {
+            this.updateTripLocal({ matrix: JSON.stringify(matrix) });
+          },
+          error: (error: any) => {
+            console.warn('Failed to update matrix after removing banked location:', error);
+          },
+        });
+    }
   }
 
   /**
@@ -617,6 +743,7 @@ export class TripDataService {
       startDate: tripData.startDate?.toISOString(),
       endDate: tripData.endDate?.toISOString(),
       organizedLocations: organizedLocations,
+      bankedLocations: [],
       calculateRouting: true,
       travelMode: 'DRIVING',
     };
@@ -699,6 +826,61 @@ export class TripDataService {
   }
 
   /**
+   * Add a location to bank via backend API
+   * @param tripId - ID of the trip
+   * @param location - The location to add to bank
+   * @returns Observable of created banked location
+   */
+  private addLocationToBankApi(tripId: string, location: Location): Observable<TripBankedLocation> {
+    // We need to create location first to get its ID
+    return this.http.post<Location>(`${this.apiUrl}/location`, location).pipe(
+      // Then bank location
+      switchMap((persistedLocation: Location) =>
+        this.http.post<TripBankedLocation>(`${this.apiUrl}/itinerary/trips/${tripId}/bank`, {
+          locationId: persistedLocation.id,
+        }),
+      ),
+    );
+  }
+
+  /**
+   * Remove a location from bank via backend API
+   * @param tripId - ID of the trip
+   * @param locationId - ID of the location to remove from bank
+   * @returns Observable of void
+   */
+  private removeLocationFromBankApi(tripId: string, locationId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/itinerary/trips/${tripId}/bank/${locationId}`);
+  }
+
+  /**
+   * Get banked locations via backend API
+   * @param tripId - ID of the trip
+   * @returns Observable of banked locations
+   */
+  private getBankedLocationsApi(tripId: string): Observable<TripBankedLocation[]> {
+    return this.http.get<TripBankedLocation[]>(`${this.apiUrl}/itinerary/trips/${tripId}/bank`);
+  }
+
+  /**
+   * Promote a banked location to a stop via backend API
+   * @param tripId - ID of the trip
+   * @param locationId - ID of the location to promote
+   * @param position - Optional position to insert stop at
+   * @returns Observable of updated trip
+   */
+  private promoteLocationToStopApi(
+    tripId: string,
+    locationId: string,
+    position?: number,
+  ): Observable<Trip> {
+    return this.http.post<Trip>(
+      `${this.apiUrl}/itinerary/trips/${tripId}/bank/${locationId}/promote`,
+      { locationId, position },
+    );
+  }
+
+  /**
    * Get localStorage key for draft trip
    */
   private getDraftKey(tripId: string): string {
@@ -738,6 +920,13 @@ export class TripDataService {
       .subscribe(trip => {
         this.saveDraftTrip(trip);
       });
+  }
+
+  /**
+   * Set error state
+   */
+  private setError(message: string): void {
+    this.updateState({ error: message });
   }
 
   /**

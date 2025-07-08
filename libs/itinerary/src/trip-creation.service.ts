@@ -4,6 +4,7 @@ import { TripService } from '@trip-planner/trip';
 import { LocationService } from '@trip-planner/location';
 import { StopService } from '@trip-planner/stop';
 import { CreateTripFromOrganizedListDto } from '@trip-planner/shared/dtos';
+import { BankCoordinationService } from './bank-coordination.service';
 import {
   Trip,
   CreateTripRequest,
@@ -21,6 +22,7 @@ export class TripCreationService {
     private readonly tripService: TripService,
     private readonly locationService: LocationService,
     private readonly stopService: StopService,
+    private readonly bankCoordinationService: BankCoordinationService,
   ) {}
 
   /**
@@ -92,11 +94,51 @@ export class TripCreationService {
         this.logger.debug(`Created stop ${stop.id} at order ${organizedLocation.order}`);
       }
 
-      // Step 3: Return the complete trip with all details
+      // Step 3: Process banked locations if provided
+      if (data.bankedLocations && data.bankedLocations.length > 0) {
+        this.logger.debug(`Processing ${data.bankedLocations.length} banked locations`);
+        
+        for (const bankedLocation of data.bankedLocations) {
+          // Create or find existing location (with deduplication)
+          const locationData: CreateLocationRequest = {
+            name: bankedLocation.name,
+            description: bankedLocation.description,
+            address: bankedLocation.address,
+            city: bankedLocation.city,
+            state: bankedLocation.state,
+            country: bankedLocation.country,
+            postalCode: bankedLocation.postalCode,
+            latitude: bankedLocation.latitude,
+            longitude: bankedLocation.longitude,
+            apiSource: bankedLocation.apiSource,
+            apiSourceId: bankedLocation.apiSourceId,
+            category: bankedLocation.category,
+            public: false,
+          };
+
+          const location = await this.locationService.create(
+            locationData,
+            { enableExactCoordinateMatching: true, enableApiSourceMatching: true },
+            prismaClient,
+          );
+
+          // Add location to bank
+          await this.bankCoordinationService.addLocationToBank(
+            userId,
+            trip.id as string,
+            location.id as string,
+            prismaClient,
+          );
+          
+          this.logger.debug(`Added location ${location.id} to bank for ${bankedLocation.name}`);
+        }
+      }
+
+      // Step 4: Return the complete trip with all details
       const completeTrip = await this.tripService.findById(
         trip.id as string,
         true,
-        false,
+        true,
         true,
         prismaClient,
       );

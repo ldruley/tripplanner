@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { TripCreationService } from './trip-creation.service';
 import { StopCoordinationService } from './stop-coordination.service';
 import { RoutingCoordinationService } from './routing-coordination.service';
+import { BankCoordinationService } from './bank-coordination.service';
 import { TripService } from '@trip-planner/trip';
 import {
   CreateTripFromOrganizedListDto,
@@ -22,6 +23,7 @@ export class ItineraryService {
     private readonly tripCreationService: TripCreationService,
     private readonly stopCoordinationService: StopCoordinationService,
     private readonly routingCoordinationService: RoutingCoordinationService,
+    private readonly bankCoordinationService: BankCoordinationService,
     private readonly tripService: TripService,
   ) {}
 
@@ -45,15 +47,16 @@ export class ItineraryService {
       // Step 2: Calculate routing if requested
       if (data.calculateRouting && trip.stops && trip.stops.length > 1) {
         this.logger.debug(`Calculating routing for trip ${trip.id}`);
-        
+
         const routingData: UpdateTripRoutingDto = {
           tripId: trip.id!,
           travelMode: data.travelMode,
           forceRecalculate: true,
         };
 
-        const tripWithRouting = await this.routingCoordinationService.updateTripRouting(routingData);
-        
+        const tripWithRouting =
+          await this.routingCoordinationService.updateTripRouting(routingData);
+
         this.logger.log(`Successfully created trip ${trip.id!} with routing`);
         return tripWithRouting;
       }
@@ -72,10 +75,7 @@ export class ItineraryService {
    * @param data - Stop addition data.
    * @return The updated trip with the new stop.
    */
-  async addStopToTrip(
-    userId: string,
-    data: AddStopToTripDto,
-  ): Promise<Trip> {
+  async addStopToTrip(userId: string, data: AddStopToTripDto): Promise<Trip> {
     this.logger.log(`Adding stop to trip ${data.tripId} for user ${userId}`);
 
     try {
@@ -85,15 +85,16 @@ export class ItineraryService {
       // Step 2: Calculate routing if requested
       if (data.calculateRouting && trip.stops && trip.stops.length > 1) {
         this.logger.debug(`Calculating routing after adding stop to trip ${data.tripId}`);
-        
+
         const routingData: UpdateTripRoutingDto = {
           tripId: data.tripId,
           travelMode: data.travelMode,
           forceRecalculate: true,
         };
 
-        const tripWithRouting = await this.routingCoordinationService.updateTripRouting(routingData);
-        
+        const tripWithRouting =
+          await this.routingCoordinationService.updateTripRouting(routingData);
+
         this.logger.log(`Successfully added stop to trip ${data.tripId} with routing`);
         return tripWithRouting;
       }
@@ -112,10 +113,7 @@ export class ItineraryService {
    * @param data - Stop removal data.
    * @return The updated trip without the removed stop.
    */
-  async removeStopFromTrip(
-    userId: string,
-    data: RemoveStopFromTripDto,
-  ): Promise<Trip> {
+  async removeStopFromTrip(userId: string, data: RemoveStopFromTripDto): Promise<Trip> {
     this.logger.log(`Removing stop ${data.stopId} from trip ${data.tripId} for user ${userId}`);
 
     try {
@@ -125,15 +123,16 @@ export class ItineraryService {
       // Step 2: Calculate routing if requested and there are still enough stops
       if (data.calculateRouting && trip.stops && trip.stops.length > 1) {
         this.logger.debug(`Calculating routing after removing stop from trip ${data.tripId}`);
-        
+
         const routingData: UpdateTripRoutingDto = {
           tripId: data.tripId,
           travelMode: data.travelMode,
           forceRecalculate: true,
         };
 
-        const tripWithRouting = await this.routingCoordinationService.updateTripRouting(routingData);
-        
+        const tripWithRouting =
+          await this.routingCoordinationService.updateTripRouting(routingData);
+
         this.logger.log(`Successfully removed stop from trip ${data.tripId} with routing`);
         return tripWithRouting;
       }
@@ -141,7 +140,10 @@ export class ItineraryService {
       this.logger.log(`Successfully removed stop from trip ${data.tripId} without routing`);
       return trip;
     } catch (error) {
-      this.logger.error(`Failed to remove stop from trip ${data.tripId} for user ${userId}:`, error);
+      this.logger.error(
+        `Failed to remove stop from trip ${data.tripId} for user ${userId}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -152,10 +154,7 @@ export class ItineraryService {
    * @param data - Reorder data.
    * @return The updated trip with reordered stops.
    */
-  async reorderStops(
-    userId: string,
-    data: ItineraryReorderStopsDto,
-  ): Promise<Trip> {
+  async reorderStops(userId: string, data: ItineraryReorderStopsDto): Promise<Trip> {
     this.logger.log(`Reordering stops in trip ${data.tripId} for user ${userId}`);
 
     try {
@@ -165,15 +164,16 @@ export class ItineraryService {
       // Step 2: Calculate routing if requested
       if (data.calculateRouting && trip.stops && trip.stops.length > 1) {
         this.logger.debug(`Calculating routing after reordering stops in trip ${data.tripId}`);
-        
+
         const routingData: UpdateTripRoutingDto = {
           tripId: data.tripId,
           travelMode: data.travelMode,
           forceRecalculate: true,
         };
 
-        const tripWithRouting = await this.routingCoordinationService.updateTripRouting(routingData);
-        
+        const tripWithRouting =
+          await this.routingCoordinationService.updateTripRouting(routingData);
+
         this.logger.log(`Successfully reordered stops in trip ${data.tripId} with routing`);
         return tripWithRouting;
       }
@@ -181,7 +181,10 @@ export class ItineraryService {
       this.logger.log(`Successfully reordered stops in trip ${data.tripId} without routing`);
       return trip;
     } catch (error) {
-      this.logger.error(`Failed to reorder stops in trip ${data.tripId} for user ${userId}:`, error);
+      this.logger.error(
+        `Failed to reorder stops in trip ${data.tripId} for user ${userId}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -192,20 +195,20 @@ export class ItineraryService {
    * @param data - Routing update data.
    * @return The updated trip with routing information.
    */
-  async updateTripRouting(
-    userId: string,
-    data: UpdateTripRoutingDto,
-  ): Promise<Trip> {
+  async updateTripRouting(userId: string, data: UpdateTripRoutingDto): Promise<Trip> {
     this.logger.log(`Updating routing for trip ${data.tripId} for user ${userId}`);
 
     try {
       // Note: We should validate trip ownership here, but for now we'll trust the routing service
       const trip = await this.routingCoordinationService.updateTripRouting(data);
-      
+
       this.logger.log(`Successfully updated routing for trip ${data.tripId}`);
       return trip;
     } catch (error) {
-      this.logger.error(`Failed to update routing for trip ${data.tripId} for user ${userId}:`, error);
+      this.logger.error(
+        `Failed to update routing for trip ${data.tripId} for user ${userId}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -225,8 +228,10 @@ export class ItineraryService {
 
     try {
       const summary = await this.routingCoordinationService.getTripRoutingSummary(tripId);
-      
-      this.logger.debug(`Retrieved routing summary for trip ${tripId}: ${summary.segmentCount} segments`);
+
+      this.logger.debug(
+        `Retrieved routing summary for trip ${tripId}: ${summary.segmentCount} segments`,
+      );
       return summary;
     } catch (error) {
       this.logger.error(`Failed to get routing summary for trip ${tripId}:`, error);
@@ -244,8 +249,11 @@ export class ItineraryService {
     this.logger.debug(`Checking if routing is needed for trip ${tripId}`);
 
     try {
-      const needed = await this.routingCoordinationService.isRoutingNeeded(tripId, forceRecalculate);
-      
+      const needed = await this.routingCoordinationService.isRoutingNeeded(
+        tripId,
+        forceRecalculate,
+      );
+
       this.logger.debug(`Routing needed for trip ${tripId}: ${needed}`);
       return needed;
     } catch (error) {
@@ -283,7 +291,7 @@ export class ItineraryService {
       };
 
       const trip = await this.routingCoordinationService.updateTripRouting(routingData);
-      
+
       this.logger.log(`Successfully calculated routing for trip ${tripId}`);
       return trip;
     } catch (error) {
@@ -314,22 +322,23 @@ export class ItineraryService {
       };
 
       const updatedTrip = await this.tripService.update(tripId, updateData);
-      
+
       // Step 2: Get the updated trip with stops for routing calculation
       const tripWithStops = await this.tripService.findById(tripId, true);
 
       // Step 3: Calculate routing if requested and there are enough stops
       if (data.calculateRouting && tripWithStops.stops && tripWithStops.stops.length > 1) {
         this.logger.debug(`Calculating routing after updating trip ${tripId}`);
-        
+
         const routingData: UpdateTripRoutingDto = {
           tripId,
           travelMode: data.travelMode,
           forceRecalculate: data.forceRecalculate,
         };
 
-        const tripWithRouting = await this.routingCoordinationService.updateTripRouting(routingData);
-        
+        const tripWithRouting =
+          await this.routingCoordinationService.updateTripRouting(routingData);
+
         this.logger.log(`Successfully updated trip ${tripId} with routing`);
         return tripWithRouting;
       }
@@ -338,6 +347,114 @@ export class ItineraryService {
       return tripWithStops;
     } catch (error) {
       this.logger.error(`Failed to update trip ${tripId} with routing for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Add a location to trip bank.
+   * @param userId - User ID who owns the trip.
+   * @param tripId - Trip ID to add location to.
+   * @param locationId - Location ID to add to bank.
+   * @return The banked location record.
+   */
+  async addLocationToBank(userId: string, tripId: string, locationId: string): Promise<any> {
+    this.logger.log(`Adding location ${locationId} to bank for trip ${tripId} for user ${userId}`);
+
+    try {
+      const bankedLocation = await this.bankCoordinationService.addLocationToBank(
+        userId,
+        tripId,
+        locationId,
+      );
+
+      this.logger.log(`Successfully added location ${locationId} to bank for trip ${tripId}`);
+      return bankedLocation;
+    } catch (error) {
+      this.logger.error(`Failed to add location ${locationId} to bank for trip ${tripId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Remove a location from trip bank.
+   * @param userId - User ID who owns the trip.
+   * @param tripId - Trip ID to remove location from.
+   * @param locationId - Location ID to remove from bank.
+   */
+  async removeLocationFromBank(userId: string, tripId: string, locationId: string): Promise<void> {
+    this.logger.log(
+      `Removing location ${locationId} from bank for trip ${tripId} for user ${userId}`,
+    );
+
+    try {
+      await this.bankCoordinationService.removeLocationFromBank(userId, tripId, locationId);
+
+      this.logger.log(`Successfully removed location ${locationId} from bank for trip ${tripId}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to remove location ${locationId} from bank for trip ${tripId}:`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Get all banked locations for a trip.
+   * @param userId - User ID who owns the trip.
+   * @param tripId - Trip ID to get banked locations for.
+   * @return List of banked locations.
+   */
+  async getBankedLocations(userId: string, tripId: string): Promise<any[]> {
+    this.logger.log(`Getting banked locations for trip ${tripId} for user ${userId}`);
+
+    try {
+      const bankedLocations = await this.bankCoordinationService.getBankedLocations(userId, tripId);
+
+      this.logger.log(
+        `Successfully retrieved ${bankedLocations.length} banked locations for trip ${tripId}`,
+      );
+      return bankedLocations;
+    } catch (error) {
+      this.logger.error(`Failed to get banked locations for trip ${tripId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Promote a banked location to a stop.
+   * @param userId - User ID who owns the trip.
+   * @param tripId - Trip ID to promote location in.
+   * @param locationId - Location ID to promote.
+   * @param position - Optional position to insert stop at.
+   * @return The updated trip with the new stop.
+   */
+  async promoteLocationToStop(
+    userId: string,
+    tripId: string,
+    locationId: string,
+    position?: number,
+  ): Promise<Trip> {
+    this.logger.log(
+      `Promoting location ${locationId} to stop for trip ${tripId} for user ${userId}`,
+    );
+
+    try {
+      await this.bankCoordinationService.promoteLocationToStop(
+        userId,
+        tripId,
+        locationId,
+        position,
+      );
+
+      this.logger.log(`Successfully promoted location ${locationId} to stop for trip ${tripId}`);
+      return this.tripService.findById(tripId, true, true, true);
+    } catch (error) {
+      this.logger.error(
+        `Failed to promote location ${locationId} to stop for trip ${tripId}:`,
+        error,
+      );
       throw error;
     }
   }

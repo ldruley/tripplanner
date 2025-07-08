@@ -15,6 +15,11 @@ export const CreateTripFromOrganizedListSchema = extendApi(
       .array(LocationForItinerarySchema)
       .min(1)
       .describe('Ordered list of locations to visit (minimum 1)'),
+    bankedLocations: z
+      .array(LocationForItinerarySchema)
+      .optional()
+      .default([])
+      .describe('List of locations to bank for this trip (optional)'),
     calculateRouting: z
       .boolean()
       .default(true)

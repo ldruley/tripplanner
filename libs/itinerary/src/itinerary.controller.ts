@@ -23,6 +23,10 @@ import {
   ItineraryReorderStopsDto,
   UpdateTripRoutingDto,
   UpdateTripWithRoutingDto,
+  AddLocationToBankDto,
+  RemoveLocationFromBankDto,
+  PromoteLocationToStopDto,
+  TripBankedLocationDto,
 } from '@trip-planner/shared/dtos';
 import { Trip } from '@trip-planner/types';
 import { TravelMode } from '@prisma/client';
@@ -277,5 +281,108 @@ export class ItineraryController {
       forceRecalculate,
     );
     return { updated: trip !== null, trip };
+  }
+
+  @Post('trips/:tripId/bank')
+  @ApiOperation({ summary: 'Add a location to trip bank' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Location added to bank successfully',
+    type: TripBankedLocationDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Trip not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized',
+  })
+  async addLocationToBank(
+    @CurrentUser() user: SafeUser,
+    @Param('tripId') tripId: string,
+    @Body() data: AddLocationToBankDto,
+  ): Promise<any> {
+    this.logger.log(`Adding location ${data.locationId} to bank for trip ${tripId} for user ${user.id}`);
+    return await this.itineraryService.addLocationToBank(user.id, tripId, data.locationId);
+  }
+
+  @Delete('trips/:tripId/bank/:locationId')
+  @ApiOperation({ summary: 'Remove a location from trip bank' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Location removed from bank successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Trip or location not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized',
+  })
+  async removeLocationFromBank(
+    @CurrentUser() user: SafeUser,
+    @Param('tripId') tripId: string,
+    @Param('locationId') locationId: string,
+  ): Promise<void> {
+    this.logger.log(`Removing location ${locationId} from bank for trip ${tripId} for user ${user.id}`);
+    return await this.itineraryService.removeLocationFromBank(user.id, tripId, locationId);
+  }
+
+  @Get('trips/:tripId/bank')
+  @ApiOperation({ summary: 'Get all banked locations for a trip' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Banked locations retrieved successfully',
+    type: [TripBankedLocationDto],
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Trip not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized',
+  })
+  async getBankedLocations(
+    @CurrentUser() user: SafeUser,
+    @Param('tripId') tripId: string,
+  ): Promise<any[]> {
+    this.logger.log(`Getting banked locations for trip ${tripId} for user ${user.id}`);
+    return await this.itineraryService.getBankedLocations(user.id, tripId);
+  }
+
+  @Post('trips/:tripId/bank/:locationId/promote')
+  @ApiOperation({ summary: 'Promote a banked location to a stop' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Location promoted to stop successfully',
+    type: Object, // Trip type would be defined in OpenAPI
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Trip or location not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized',
+  })
+  async promoteLocationToStop(
+    @CurrentUser() user: SafeUser,
+    @Param('tripId') tripId: string,
+    @Param('locationId') locationId: string,
+    @Body() data: PromoteLocationToStopDto,
+  ): Promise<Trip> {
+    this.logger.log(`Promoting location ${locationId} to stop for trip ${tripId} for user ${user.id}`);
+    return await this.itineraryService.promoteLocationToStop(user.id, tripId, locationId, data.position);
   }
 }

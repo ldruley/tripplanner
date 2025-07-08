@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { EMPTY, Observable } from 'rxjs';
+import { EMPTY, Observable, of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { Location, Stop } from '@trip-planner/types';
 import { TravelSegmentData } from '../components/itinerary-builder/itinerary-builder.component';
@@ -62,12 +62,12 @@ export class MatrixCalculationService {
     this.cache.clear();
   }
 
-  public calculateMatrix(allRelevantLocations: Location[]): void {
+  public calculateMatrix(allRelevantLocations: Location[]): Observable<CoordinateMatrix> {
     // The calling component is now responsible for providing the full list.
     if (allRelevantLocations.length < 2) {
       this.matrix.set(null); // Not enough locations to calculate a matrix
       this.lastCalculatedKey = null;
-      return;
+      return EMPTY;
     }
 
     // Create a stable cache key from the location IDs.
@@ -79,15 +79,16 @@ export class MatrixCalculationService {
     // Check if this exact matrix has already been calculated and is active.
     if (cacheKey === this.lastCalculatedKey) {
       console.log('MatrixService: Calculation skipped, data is already fresh.');
-      return;
+      return EMPTY;
     }
 
     // Check if we have this result in our cache from a previous calculation.
     if (this.cache.has(cacheKey)) {
       console.log('MatrixService: Serving matrix from cache.');
-      this.matrix.set(this.cache.get(cacheKey)!);
+      const cachedMatrix = this.cache.get(cacheKey)!;
+      this.matrix.set(cachedMatrix);
       this.lastCalculatedKey = cacheKey;
-      return;
+      return of(cachedMatrix);
     }
 
     // If not cached, fetch from the API.
@@ -111,7 +112,7 @@ export class MatrixCalculationService {
       },
     });
 
-    this.http
+    return this.http
       .get<CoordinateMatrix>(`${this.apiUrl}/route`, { params })
       .pipe(
         tap(result => {
@@ -127,8 +128,7 @@ export class MatrixCalculationService {
           console.error('MatrixService: API Error:', err);
           return EMPTY; // Gracefully end the stream on error
         }),
-      )
-      .subscribe();
+      );
   }
 
   /**

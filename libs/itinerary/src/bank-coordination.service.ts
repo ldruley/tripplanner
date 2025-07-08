@@ -28,6 +28,21 @@ export class BankCoordinationService {
   ) {}
 
   /**
+   * Add a location to the trip's bank by location ID.
+   * @param userId - User ID who owns the trip.
+   * @param tripId - Trip ID to add location to.
+   * @param locationId - Location ID to add to bank.
+   * @param prismaClient - Optional transaction client.
+   * @return The created trip banked location.
+   */
+  async addLocationToBank(
+    userId: string,
+    tripId: string,
+    locationId: string,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<TripBankedLocation>;
+
+  /**
    * Add a location to the trip's bank.
    * Creates location if it doesn't exist and adds it to the trip's banked locations.
    * @param userId - User ID who owns the trip.
@@ -39,38 +54,53 @@ export class BankCoordinationService {
     userId: string,
     tripId: string,
     locationData: CreateLocationRequest,
+  ): Promise<TripBankedLocation>;
+
+  async addLocationToBank(
+    userId: string,
+    tripId: string,
+    locationDataOrId: CreateLocationRequest | string,
+    prismaClient?: PrismaClientOrTransaction,
   ): Promise<TripBankedLocation> {
     this.logger.debug(`Adding location to bank for trip ${tripId} by user ${userId}`);
 
-    return await this.prismaService.$transaction(async prismaClient => {
+    const executeTransaction = async (client: PrismaClientOrTransaction) => {
       // Step 1: Validate trip ownership
       const tripBelongsToUser = await this.tripService.validateTripBelongsToUser(
         tripId,
         userId,
-        prismaClient,
+        client,
       );
 
       if (!tripBelongsToUser) {
         throw new NotFoundException(`Trip ${tripId} not found or not owned by user`);
       }
 
-      // Step 2: Create or find location (with deduplication)
-      const location = await this.locationService.create(
-        locationData,
-        {
-          enableApiSourceMatching: true,
-          enableExactCoordinateMatching: true,
-        },
-        prismaClient,
-      );
-
-      this.logger.debug(`Created/found location ${location.id} for ${locationData.name}`);
+      let location: Location;
+      
+      // Step 2: Get or create location based on input type
+      if (typeof locationDataOrId === 'string') {
+        // Input is locationId
+        const existingLocation = await this.locationService.findById(locationDataOrId, client);
+        if (!existingLocation) {
+          throw new NotFoundException(`Location ${locationDataOrId} not found`);
+        }
+        location = existingLocation;
+      } else {
+        // Input is location data - create or find existing location (with deduplication)
+        location = await this.locationService.create(
+          locationDataOrId,
+          { enableExactCoordinateMatching: true, enableApiSourceMatching: true },
+          client,
+        );
+        this.logger.debug(`Created/found location ${location.id} for ${locationDataOrId.name}`);
+      }
 
       // Step 3: Check if location is already banked for this trip
       const existingBankedLocation = await this.tripBankedLocationRepository.exists(
         tripId,
         location.id as string,
-        prismaClient,
+        client,
       );
 
       if (existingBankedLocation) {
@@ -85,13 +115,19 @@ export class BankCoordinationService {
 
       const bankedLocation = await this.tripBankedLocationRepository.create(
         bankedLocationData,
-        prismaClient,
+        client,
       );
 
       this.logger.log(`Successfully added location ${location.name} to bank for trip ${tripId}`);
 
       return bankedLocation;
-    });
+    };
+
+    if (prismaClient) {
+      return executeTransaction(prismaClient);
+    } else {
+      return await this.prismaService.$transaction(executeTransaction);
+    }
   }
 
   /**
