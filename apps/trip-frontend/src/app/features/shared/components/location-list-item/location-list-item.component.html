@@ -1,0 +1,65 @@
+<div class="location-list-item" [class.compact]="compact">
+  <div class="location-content">
+    <!-- Location Icon -->
+    <div class="location-icon">
+      <svg class="w-5 h-5 text-tp-text-light-secondary dark:text-tp-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+      </svg>
+    </div>
+
+    <!-- Location Info -->
+    <div class="location-info">
+      <div class="location-header">
+        <h3 class="location-name">{{ displayName }}</h3>
+        @if (favoriteLocation.location.category) {
+          <span class="location-category">{{ favoriteLocation.location.category }}</span>
+        }
+      </div>
+      
+      @if (displayAddress) {
+        <p class="location-address">{{ displayAddress }}</p>
+      }
+      
+      @if (displayTags.length > 0) {
+        <div class="location-tags">
+          @for (tag of displayTags; track tag) {
+            <span class="location-tag">{{ tag }}</span>
+          }
+        </div>
+      }
+      
+      @if (hasNotes && !compact) {
+        <p class="location-notes">{{ truncatedNotes }}</p>
+      }
+    </div>
+
+    <!-- Actions -->
+    <div class="location-actions">
+      @if (showDetailsButton) {
+        <app-button 
+          variant="ghost" 
+          size="sm"
+          (buttonClick)="onDetailsRequested()"
+          title="View Details">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </app-button>
+      }
+      
+      @if (showFavoriteButton) {
+        <app-button 
+          variant="ghost" 
+          size="sm"
+          (buttonClick)="onFavoriteToggle()"
+          title="Remove from Favorites"
+          class="favorite-button">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          </svg>
+        </app-button>
+      }
+    </div>
+  </div>
+</div>

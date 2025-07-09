@@ -1,0 +1,224 @@
+.location-page {
+  @apply min-h-screen bg-tp-bg-light-primary dark:bg-tp-bg-primary;
+  @apply p-4 sm:p-6 lg:p-8;
+}
+
+/* Page Header */
+.page-header {
+  @apply mb-8;
+}
+
+.header-content {
+  @apply max-w-4xl mx-auto;
+}
+
+.page-title {
+  @apply text-3xl font-bold;
+  @apply text-tp-text-light-primary dark:text-tp-text-primary;
+  @apply mb-2;
+}
+
+.page-subtitle {
+  @apply text-tp-text-light-secondary dark:text-tp-text-secondary;
+  @apply text-lg;
+}
+
+/* Search Section */
+.search-section {
+  @apply mb-12;
+}
+
+.search-container {
+  @apply max-w-4xl mx-auto;
+  @apply bg-tp-bg-light-primary dark:bg-tp-bg-primary;
+  @apply border border-tp-border-light dark:border-tp-border;
+  @apply rounded-lg p-6;
+  @apply shadow-sm;
+}
+
+.section-title {
+  @apply text-xl font-semibold;
+  @apply text-tp-text-light-primary dark:text-tp-text-primary;
+  @apply mb-2;
+}
+
+.section-description {
+  @apply text-tp-text-light-secondary dark:text-tp-text-secondary;
+  @apply mb-4;
+}
+
+.search-component {
+  @apply mt-4;
+}
+
+/* Favorites Section */
+.favorites-section {
+  @apply max-w-4xl mx-auto;
+}
+
+.section-header {
+  @apply mb-6;
+}
+
+.favorites-content {
+  @apply space-y-4;
+}
+
+/* Loading State */
+.loading-container {
+  @apply flex flex-col items-center justify-center;
+  @apply py-12;
+}
+
+.loading-text {
+  @apply mt-4 text-tp-text-light-secondary dark:text-tp-text-secondary;
+  @apply text-sm;
+}
+
+/* Favorites Grid */
+.favorites-grid {
+  @apply grid gap-4;
+  @apply grid-cols-1;
+  @apply sm:grid-cols-2;
+  @apply lg:grid-cols-3;
+}
+
+/* Empty State */
+.empty-state {
+  @apply flex flex-col items-center justify-center;
+  @apply py-16 px-4;
+  @apply bg-tp-bg-light-secondary dark:bg-tp-bg-secondary;
+  @apply border border-tp-border-light dark:border-tp-border;
+  @apply rounded-lg;
+  @apply text-center;
+}
+
+.empty-icon {
+  @apply text-tp-text-light-secondary dark:text-tp-text-secondary;
+  @apply mb-4;
+}
+
+.empty-title {
+  @apply text-xl font-semibold;
+  @apply text-tp-text-light-primary dark:text-tp-text-primary;
+  @apply mb-2;
+}
+
+.empty-description {
+  @apply text-tp-text-light-secondary dark:text-tp-text-secondary;
+  @apply max-w-md;
+  @apply mb-6;
+}
+
+.empty-actions {
+  @apply flex justify-center;
+}
+
+.empty-action-button {
+  @apply inline-flex items-center gap-2 px-4 py-2;
+  @apply bg-tp-orange text-white;
+  @apply rounded-lg font-medium;
+  @apply hover:bg-tp-orange-hover;
+  @apply transition-colors;
+  @apply focus:outline-none focus:ring-2 focus:ring-tp-orange focus:ring-offset-2;
+}
+
+.empty-action-button:hover {
+  @apply bg-tp-orange/90;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .location-page {
+    @apply p-4;
+  }
+  
+  .page-title {
+    @apply text-2xl;
+  }
+  
+  .page-subtitle {
+    @apply text-base;
+  }
+  
+  .search-container {
+    @apply p-4;
+  }
+  
+  .section-title {
+    @apply text-lg;
+  }
+  
+  .favorites-grid {
+    @apply grid-cols-1;
+  }
+  
+  .empty-state {
+    @apply py-12 px-4;
+  }
+  
+  .empty-title {
+    @apply text-lg;
+  }
+  
+  .empty-description {
+    @apply text-sm;
+  }
+}
+
+@media (max-width: 768px) {
+  .favorites-grid {
+    @apply grid-cols-1 sm:grid-cols-2;
+  }
+}
+
+@media (min-width: 1024px) {
+  .favorites-grid {
+    @apply grid-cols-3;
+  }
+}
+
+/* Animation */
+.favorites-grid {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.empty-state {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.loading-container {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Focus states for accessibility */
+.empty-action-button:focus {
+  @apply outline-none ring-2 ring-tp-orange ring-offset-2;
+  @apply ring-offset-tp-bg-light-primary dark:ring-offset-tp-bg-primary;
+}
+
+/* Print styles */
+@media print {
+  .location-page {
+    @apply p-0;
+  }
+  
+  .search-section {
+    @apply hidden;
+  }
+  
+  .empty-actions {
+    @apply hidden;
+  }
+}

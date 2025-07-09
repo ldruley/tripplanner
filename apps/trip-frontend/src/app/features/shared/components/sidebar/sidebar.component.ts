@@ -53,6 +53,11 @@ export class SidebarComponent implements OnInit {
     this.closeMobileSidebar();
   }
 
+  onMyLocations(): void {
+    this.router.navigate(['/locations']);
+    this.closeMobileSidebar();
+  }
+
   onDashboard(): void {
     this.router.navigate(['/dashboard']);
     this.closeMobileSidebar();

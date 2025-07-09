@@ -53,4 +53,13 @@ export const appRoutes: Route[] = [
     title: 'My Trips - Trip Planner',
     canActivate: [authGuard],
   },
+  {
+    path: 'locations',
+    loadComponent: () =>
+      import('./features/locations/location-page.component').then(
+        m => m.LocationPageComponent,
+      ),
+    title: 'My Locations - Trip Planner',
+    canActivate: [authGuard],
+  },
 ];

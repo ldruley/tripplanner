@@ -4,11 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { DatePickerModule } from 'primeng/datepicker';
 
-import { LocationSearchComponent } from '../location-search/location-search.component';
+import { LocationSearchComponent } from '../../../shared/components';
 import { LocationBankComponent } from '../location-bank/location-bank.component';
 import { ItineraryBuilderComponent } from '../itinerary-builder/itinerary-builder.component';
 import { StopEditModalComponent } from '../stop-edit-modal/stop-edit-modal.component';
-import { ButtonComponent } from '../../../shared/components/button/button.component';
+import { ButtonComponent } from '../../../shared/components';
 
 import { Location, Trip, Stop } from '@trip-planner/types';
 import { MatrixCalculationService } from '../../services/matrix-calculation.service';
@@ -25,8 +25,8 @@ import { TripDataService } from '../../services/trip-data.service';
     StopEditModalComponent,
     CdkDropListGroup,
     ButtonComponent,
-    DatePickerModule
-],
+    DatePickerModule,
+  ],
   templateUrl: './trip-editor.component.html',
   styleUrls: ['./trip-editor.component.css'],
 })
@@ -49,10 +49,10 @@ export class TripEditorComponent {
   dataSource = this.tripDataService.dataSource;
 
   // Computed signal to extract Location objects for the LocationBankComponent
-  bankedLocationsList = computed(() => 
+  bankedLocationsList = computed(() =>
     this.bankedLocations()
       .map(banked => banked.location)
-      .filter((loc): loc is Location => loc != null)
+      .filter((loc): loc is Location => loc != null),
   );
 
   // Matrix calculation state
@@ -126,11 +126,11 @@ export class TripEditorComponent {
    */
   handleEditStopRequest(stopIdToEdit: string): void {
     console.log('TripEditor: Stop edit requested:', stopIdToEdit);
-    
+
     // Find the stop to edit
     const currentStops = this.itineraryStops();
     const stopToEdit = currentStops.find(stop => stop.id === stopIdToEdit);
-    
+
     if (stopToEdit) {
       this.editingStop.set(stopToEdit);
       this.isStopEditModalOpen.set(true);

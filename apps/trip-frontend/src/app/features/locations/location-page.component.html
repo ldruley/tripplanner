@@ -1,0 +1,99 @@
+<div class="location-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">My Locations</h1>
+      <p class="page-subtitle">
+        Search for new locations and manage your favorites
+      </p>
+    </div>
+  </div>
+
+  <!-- Location Search Section -->
+  <div class="search-section">
+    <div class="search-container">
+      <h2 class="section-title">Search Locations</h2>
+      <p class="section-description">
+        Find and add new locations to your favorites
+      </p>
+      <div class="search-component">
+        <app-location-search 
+          (locationSelected)="onLocationSelectedFromSearch($event)">
+        </app-location-search>
+      </div>
+    </div>
+  </div>
+
+  <!-- Favorites Section -->
+  <div class="favorites-section">
+    <div class="section-header">
+      <h2 class="section-title">My Favorite Locations</h2>
+      @if (hasFavorites) {
+        <p class="section-description">
+          {{ favorites().length }} favorite location{{ favorites().length === 1 ? '' : 's' }}
+        </p>
+      }
+    </div>
+
+    <div class="favorites-content">
+      @if (isLoading()) {
+        <div class="loading-container">
+          <app-loading-spinner></app-loading-spinner>
+          <p class="loading-text">Loading your favorite locations...</p>
+        </div>
+      } @else if (hasFavorites) {
+        <!-- Favorites List -->
+        <div class="favorites-grid">
+          @for (favorite of favorites(); track favorite.id) {
+            <app-location-list-item
+              [favoriteLocation]="favorite"
+              [showFavoriteButton]="true"
+              [showDetailsButton]="true"
+              (favoriteToggled)="onFavoriteToggle($event)"
+              (detailsRequested)="onDetailsRequested($event)">
+            </app-location-list-item>
+          }
+        </div>
+      } @else {
+        <!-- Empty State -->
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+          </div>
+          <h3 class="empty-title">No Favorite Locations Yet</h3>
+          <p class="empty-description">
+            Use the search above to find locations and add them to your favorites. 
+            Your saved locations will appear here for easy access.
+          </p>
+          <div class="empty-actions">
+            <button 
+              class="empty-action-button"
+              (click)="onNavigateToTrips()">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v11a2 2 0 002 2h5.586l1.707-1.707A1 1 0 0114 18.586V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+              </svg>
+              Browse My Trips
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Location Details Modal -->
+  @if (selectedFavoriteLocation) {
+    <app-location-details
+      [location]="selectedFavoriteLocation.location"
+      [favoriteData]="selectedFavoriteLocation"
+      [isEditable]="true"
+      [isModal]="true"
+      [isOpen]="isDetailModalOpen()"
+      (closeModal)="onDetailModalClose()"
+      (favoriteToggled)="onFavoriteToggleFromDetails($event)"
+      (metadataUpdated)="onMetadataUpdated($event)">
+    </app-location-details>
+  }
+</div>

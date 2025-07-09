@@ -1,0 +1,266 @@
+/* Modal styles */
+.modal-backdrop {
+  @apply fixed inset-0 z-50 flex items-center justify-center;
+  @apply bg-black bg-opacity-50 backdrop-blur-sm;
+  @apply opacity-0 pointer-events-none transition-opacity duration-300;
+}
+
+.modal-backdrop.show {
+  @apply opacity-100 pointer-events-auto;
+}
+
+.modal-content {
+  @apply bg-tp-bg-light-primary dark:bg-tp-bg-primary;
+  @apply border border-tp-border-light dark:border-tp-border;
+  @apply rounded-lg shadow-xl;
+  @apply max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden;
+  @apply transform scale-95 transition-transform duration-300;
+}
+
+.modal-backdrop.show .modal-content {
+  @apply scale-100;
+}
+
+.modal-header {
+  @apply flex items-center justify-between;
+  @apply px-6 py-4 border-b border-tp-border-light dark:border-tp-border;
+}
+
+.modal-title {
+  @apply text-lg font-semibold;
+  @apply text-tp-text-light-primary dark:text-tp-text-primary;
+}
+
+.modal-close {
+  @apply p-2 rounded-full;
+  @apply text-tp-text-light-secondary dark:text-tp-text-secondary;
+  @apply hover:bg-tp-bg-light-secondary dark:hover:bg-tp-bg-secondary;
+  @apply transition-colors;
+}
+
+.modal-body {
+  @apply px-6 py-4 overflow-y-auto;
+}
+
+/* Card styles */
+.location-details-card {
+  @apply bg-tp-bg-light-primary dark:bg-tp-bg-primary;
+  @apply border border-tp-border-light dark:border-tp-border;
+  @apply rounded-lg shadow-sm;
+  @apply p-6;
+}
+
+/* Common location details styles */
+.location-details {
+  @apply space-y-4;
+}
+
+.location-header {
+  @apply flex items-start justify-between;
+  @apply pb-4 border-b border-tp-border-light dark:border-tp-border;
+}
+
+.location-title {
+  @apply flex-1 min-w-0;
+}
+
+.location-name {
+  @apply text-lg font-semibold;
+  @apply text-tp-text-light-primary dark:text-tp-text-primary;
+  @apply mb-2;
+}
+
+.location-category {
+  @apply inline-flex items-center px-3 py-1 rounded-full;
+  @apply bg-tp-bg-light-tertiary dark:bg-tp-bg-tertiary;
+  @apply text-tp-text-light-secondary dark:text-tp-text-secondary;
+  @apply text-sm font-medium;
+}
+
+.location-actions {
+  @apply flex items-center gap-2;
+}
+
+.favorite-active {
+  @apply text-red-500 hover:text-red-600;
+  @apply dark:text-red-400 dark:hover:text-red-500;
+}
+
+.favorite-inactive {
+  @apply text-tp-text-light-secondary dark:text-tp-text-secondary;
+  @apply hover:text-red-500 dark:hover:text-red-400;
+}
+
+.location-info {
+  @apply space-y-4;
+}
+
+.location-section {
+  @apply space-y-1;
+}
+
+.section-title {
+  @apply text-sm font-medium;
+  @apply text-tp-text-light-secondary dark:text-tp-text-secondary;
+  @apply uppercase tracking-wide;
+}
+
+.section-content {
+  @apply text-tp-text-light-primary dark:text-tp-text-primary;
+  @apply text-sm;
+}
+
+.section-content.text-muted {
+  @apply text-tp-text-light-secondary dark:text-tp-text-secondary;
+  @apply italic;
+}
+
+.favorite-metadata {
+  @apply space-y-4;
+}
+
+.metadata-divider {
+  @apply border-t border-tp-border-light dark:border-tp-border;
+  @apply my-4;
+}
+
+.tags-display {
+  @apply flex flex-wrap gap-2 mt-2;
+}
+
+.tag {
+  @apply inline-flex items-center px-2 py-1 rounded-md;
+  @apply bg-tp-orange/10 text-tp-orange;
+  @apply text-sm font-medium;
+  @apply dark:bg-tp-orange/20 dark:text-tp-orange;
+}
+
+.tag.editable {
+  @apply pr-1;
+}
+
+.tag-remove {
+  @apply ml-1 p-0.5 rounded-full;
+  @apply hover:bg-tp-orange/20 dark:hover:bg-tp-orange/30;
+  @apply transition-colors;
+}
+
+/* Form styles */
+.edit-form {
+  @apply space-y-4;
+}
+
+.form-group {
+  @apply space-y-2;
+}
+
+.form-label {
+  @apply block text-sm font-medium;
+  @apply text-tp-text-light-primary dark:text-tp-text-primary;
+}
+
+.form-input,
+.form-textarea {
+  @apply w-full px-3 py-2 rounded-md;
+  @apply border border-tp-border-light dark:border-tp-border;
+  @apply bg-tp-bg-light-primary dark:bg-tp-bg-primary;
+  @apply text-tp-text-light-primary dark:text-tp-text-primary;
+  @apply placeholder-tp-text-light-secondary dark:placeholder-tp-text-secondary;
+  @apply focus:outline-none focus:ring-2 focus:ring-tp-orange focus:border-transparent;
+  @apply transition-colors;
+}
+
+.form-textarea {
+  resize: vertical;
+}
+
+.tags-input-container {
+  @apply flex gap-2 items-center;
+}
+
+.tag-input {
+  @apply flex-1 px-3 py-2 rounded-md;
+  @apply border border-tp-border-light dark:border-tp-border;
+  @apply bg-tp-bg-light-primary dark:bg-tp-bg-primary;
+  @apply text-tp-text-light-primary dark:text-tp-text-primary;
+  @apply placeholder-tp-text-light-secondary dark:placeholder-tp-text-secondary;
+  @apply focus:outline-none focus:ring-2 focus:ring-tp-orange focus:border-transparent;
+  @apply transition-colors;
+}
+
+.form-actions {
+  @apply flex justify-end gap-2;
+  @apply pt-4 border-t border-tp-border-light dark:border-tp-border;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modal-content {
+    @apply mx-2 max-w-full;
+  }
+  
+  .modal-header,
+  .modal-body {
+    @apply px-4;
+  }
+  
+  .location-header {
+    @apply flex-col items-start gap-3;
+  }
+  
+  .location-actions {
+    @apply w-full justify-end;
+  }
+  
+  .form-actions {
+    @apply flex-col-reverse;
+  }
+  
+  .form-actions .btn {
+    @apply w-full;
+  }
+}
+
+/* Accessibility improvements */
+.modal-close:focus {
+  @apply outline-none ring-2 ring-tp-orange;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.tag-input:focus {
+  @apply outline-none;
+}
+
+/* Animation improvements */
+.location-details {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.edit-form {
+  animation: slideInFromTop 0.3s ease-in-out;
+}
+
+.tags-display {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

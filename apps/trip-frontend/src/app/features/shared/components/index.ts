@@ -3,5 +3,8 @@ export * from './button/button.component';
 export * from './dropdown/dropdown.component';
 export * from './header/header.component';
 export * from './loading-spinner/loading-spinner.component';
+export * from './location-search/location-search.component';
+export * from './location-list-item/location-list-item.component';
+export * from './location-details/location-details.component';
 export * from './sidebar/sidebar.component';
 export * from './theme-toggle/theme-toggle.component';

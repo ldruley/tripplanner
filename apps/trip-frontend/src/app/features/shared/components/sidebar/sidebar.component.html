@@ -159,6 +159,39 @@
         <span class="text-sm font-medium">My Trips</span>
       }
     </button>
+
+    <!-- My Locations -->
+    <button
+      (click)="onMyLocations()"
+      class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-tp-bg-light-tertiary dark:hover:bg-tp-bg-tertiary transition-colors duration-200 text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-tp-text-light-primary dark:hover:text-tp-text-primary"
+      [class.justify-center]="!showLabels()"
+      role="menuitem"
+      aria-label="View My Locations"
+      type="button"
+    >
+      <svg
+        class="w-5 h-5 flex-shrink-0"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+        />
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+        />
+      </svg>
+      @if (showLabels()) {
+        <span class="text-sm font-medium">My Locations</span>
+      }
+    </button>
   </nav>
 </aside>
 
@@ -286,6 +319,36 @@
             />
           </svg>
           <span class="text-sm font-medium">My Trips</span>
+        </button>
+
+        <!-- My Locations -->
+        <button
+          (click)="onMyLocations()"
+          class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-tp-bg-light-tertiary dark:hover:bg-tp-bg-tertiary transition-colors duration-200 text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-tp-text-light-primary dark:hover:text-tp-text-primary"
+          role="menuitem"
+          aria-label="View My Locations"
+          type="button"
+        >
+          <svg
+            class="w-5 h-5 flex-shrink-0"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+            />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+          </svg>
+          <span class="text-sm font-medium">My Locations</span>
         </button>
 
         <!-- New Trip -->

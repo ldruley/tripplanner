@@ -16,3 +16,4 @@ export * from './external-api.schema';
 export * from './travel-segment.schema';
 export * from './timeline.schema';
 export * from './routing.schema';
+export * from './user-favorite-location.schema';
