@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Trip } from '@trip-planner/types';
+import { map } from 'rxjs/operators';
+import { Trip, TripSchema } from '@trip-planner/types';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
@@ -15,7 +16,9 @@ export class TripsService {
    * Get all trips for the current user
    */
   getTrips(): Observable<Trip[]> {
-    return this.http.get<Trip[]>(`${this.apiUrl}/trips`);
+    return this.http.get<Trip[]>(`${this.apiUrl}/trips`).pipe(
+      map(response => response.map(trip => TripSchema.parse(trip)))
+    );
   }
 
   /**
@@ -29,7 +32,9 @@ export class TripsService {
     const queryString = params.toString();
     const url = queryString ? `${this.apiUrl}/trips/${tripId}?${queryString}` : `${this.apiUrl}/trips/${tripId}`;
     
-    return this.http.get<Trip>(url);
+    return this.http.get<Trip>(url).pipe(
+      map(response => TripSchema.parse(response))
+    );
   }
 
   /**

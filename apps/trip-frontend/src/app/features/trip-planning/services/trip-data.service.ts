@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, Subject, debounceTime, distinctUntilChanged, tap, catchError, of } from 'rxjs';
+import { Observable, Subject, debounceTime, distinctUntilChanged, tap, catchError, of, map } from 'rxjs';
 import {
   Trip,
   Location,
@@ -463,13 +463,15 @@ export class TripDataService {
       // Make backend call
       this.addStopToBackendTrip(location, insertAtIndex).subscribe({
         next: updatedTrip => {
+          // Use Zod to parse and coerce dates
+          const parsedTrip = TripSchema.parse(updatedTrip);
           this.updateState({
-            trip: updatedTrip,
+            trip: parsedTrip,
             isDirty: false,
             isOperationInProgress: false,
           });
           // Load updated matrix for persisted trips after stop addition
-          this.loadPersistedMatrix(updatedTrip);
+          this.loadPersistedMatrix(parsedTrip);
         },
         error: error => {
           console.error('TripDataService: Failed to add stop to backend trip:', error);
@@ -535,8 +537,10 @@ export class TripDataService {
     if (this.dataSource() === 'persisted') {
       this.removeStopFromBackendTrip(stopId).subscribe({
         next: updatedTrip => {
+          // Use Zod to parse and coerce dates
+          const parsedTrip = TripSchema.parse(updatedTrip);
           this.updateState({
-            trip: updatedTrip,
+            trip: parsedTrip,
             isDirty: false,
           });
         },
@@ -581,8 +585,10 @@ export class TripDataService {
 
       this.reorderStopsInBackendTrip(stopOrders).subscribe({
         next: updatedTrip => {
+          // Use Zod to parse and coerce dates
+          const parsedTrip = TripSchema.parse(updatedTrip);
           this.updateState({
-            trip: updatedTrip,
+            trip: parsedTrip,
             isDirty: false,
           });
         },
@@ -685,9 +691,12 @@ export class TripDataService {
         // Clear draft from localStorage
         this.clearDraftTrip(currentTrip.id);
 
+        // Use Zod to parse and coerce dates
+        const parsedTrip = TripSchema.parse(savedTrip);
+
         // Update state to reflect persisted trip
         this.updateState({
-          trip: savedTrip,
+          trip: parsedTrip,
           isLoading: false,
           isDirty: false,
           dataSource: 'persisted',
@@ -836,7 +845,9 @@ export class TripDataService {
       travelMode: 'DRIVING',
     };
 
-    return this.http.post<Trip>(`${this.apiUrl}/itinerary/trips`, createRequest);
+    return this.http.post<Trip>(`${this.apiUrl}/itinerary/trips`, createRequest).pipe(
+      map(response => TripSchema.parse(response))
+    );
   }
 
   /**
@@ -866,6 +877,8 @@ export class TripDataService {
     return this.http.post<Trip>(
       `${this.apiUrl}/itinerary/trips/${currentTrip.id}/stops`,
       addStopRequest,
+    ).pipe(
+      map(response => TripSchema.parse(response))
     );
   }
 
@@ -885,6 +898,8 @@ export class TripDataService {
     return this.http.delete<Trip>(
       `${this.apiUrl}/itinerary/trips/${currentTrip.id}/stops/${stopId}`,
       { params },
+    ).pipe(
+      map(response => TripSchema.parse(response))
     );
   }
 
@@ -910,6 +925,8 @@ export class TripDataService {
     return this.http.put<Trip>(
       `${this.apiUrl}/itinerary/trips/${currentTrip.id}/stops/reorder`,
       reorderRequest,
+    ).pipe(
+      map(response => TripSchema.parse(response))
     );
   }
 
@@ -1038,7 +1055,9 @@ export class TripDataService {
       .set('includeBankedLocations', 'true')
       .set('includeTravelSegments', 'true');
 
-    return this.http.get<Trip>(`${this.apiUrl}/trips/${tripId}`, { params });
+    return this.http.get<Trip>(`${this.apiUrl}/trips/${tripId}`, { params }).pipe(
+      map(response => TripSchema.parse(response))
+    );
   }
 
   /**
@@ -1052,7 +1071,9 @@ export class TripDataService {
       endDate: trip.endDate,
     };
 
-    return this.http.post<Trip>(`${this.apiUrl}/trips`, createRequest);
+    return this.http.post<Trip>(`${this.apiUrl}/trips`, createRequest).pipe(
+      map(response => TripSchema.parse(response))
+    );
   }
 
   /**
@@ -1069,7 +1090,9 @@ export class TripDataService {
       forceRecalculate: false,
     };
 
-    return this.http.put<Trip>(`${this.apiUrl}/itinerary/trips/${trip.id}`, updateRequest);
+    return this.http.put<Trip>(`${this.apiUrl}/itinerary/trips/${trip.id}`, updateRequest).pipe(
+      map(response => TripSchema.parse(response))
+    );
   }
 
   /**

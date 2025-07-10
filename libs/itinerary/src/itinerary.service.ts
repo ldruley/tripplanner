@@ -180,7 +180,7 @@ export class ItineraryService {
       }
 
       this.logger.log(`Successfully reordered stops in trip ${data.tripId} without routing`);
-      return trip;
+      return this.tripService.findById(data.tripId, true, true, true);
     } catch (error) {
       this.logger.error(
         `Failed to reorder stops in trip ${data.tripId} for user ${userId}:`,
@@ -326,8 +326,8 @@ export class ItineraryService {
 
       await this.tripService.update(tripId, updateData);
 
-      // Step 2: Get the updated trip with stops for routing calculation
-      const tripWithStops = await this.tripService.findById(tripId, true);
+      // Step 2: Get the updated trip with complete data structure
+      const tripWithStops = await this.tripService.findById(tripId, true, true, true);
 
       // Step 3: Calculate routing if requested and there are enough stops
       if (data.calculateRouting && tripWithStops.stops && tripWithStops.stops.length > 1) {

@@ -6,6 +6,7 @@
 - In social, sent requests is showing the current user instead of the user who was requested.
 - May not be correctly deleting banked locations when moving to stops
 - Timezone display doesn't work after re-ordering stops.
+- some sort of auth bug, haven't been able to determine cause. random logouts, and we're not properly handling the redirect - though functions correctly deny access.
 
 ## Backend
 - Matrix routing is firing on removals (should only fire on additions).
