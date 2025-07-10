@@ -137,7 +137,7 @@ export class TripStateService {
    * @param dataSource - Source of the trip data
    * @param isDirty - Whether the trip has unsaved changes
    */
-  setTrip(trip: Trip | null, dataSource: DataSource = 'new', isDirty: boolean = false): void {
+  setTrip(trip: Trip | null, dataSource: DataSource = 'new', isDirty = false): void {
     this.updateState({
       trip,
       dataSource,

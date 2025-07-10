@@ -37,3 +37,58 @@
 .sent-requests-tab {
   min-height: 300px;
 }
+
+/* Fade-in animation for smooth transitions */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-fadeOut {
+  animation: fadeOut 0.2s ease-in forwards;
+}
+
+/* Smooth transition for search results container */
+.search-results-container {
+  transition: all 0.3s ease-in-out;
+  min-height: 120px; /* Prevent layout jump */
+}
+
+/* Staggered animation for search results */
+.animate-fadeIn > * {
+  opacity: 0;
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-fadeIn > *:nth-child(1) { animation-delay: 0.05s; }
+.animate-fadeIn > *:nth-child(2) { animation-delay: 0.1s; }
+.animate-fadeIn > *:nth-child(3) { animation-delay: 0.15s; }
+.animate-fadeIn > *:nth-child(4) { animation-delay: 0.2s; }
+.animate-fadeIn > *:nth-child(5) { animation-delay: 0.25s; }
+.animate-fadeIn > *:nth-child(n+6) { animation-delay: 0.3s; }
+
+/* Ensure smooth transitions between different states */
+.search-state-transition {
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}

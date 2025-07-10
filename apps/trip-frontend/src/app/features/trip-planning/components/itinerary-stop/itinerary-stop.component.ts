@@ -23,7 +23,7 @@ export class ItineraryStopComponent {
   isLast = input<boolean>(false);
 
   // Input to display time/distance to the NEXT stop
-  // This data would be calculated by the parent (ItineraryBuilder or TripEditor)
+  // This data would be calculated by the parent (ItineraryBuilder)
   // using the matrix routing results.
   travelInfoToNext = input<{ time: string; distance: string } | null>(null);
 

@@ -12,9 +12,7 @@ import {
   TripSchema,
 } from '@trip-planner/types';
 import { environment } from '../../../../environments/environment';
-import {
-  stopsToLocationForItinerary,
-} from './location-transformation.utils';
+import { stopsToLocationForItinerary } from './location-transformation.utils';
 import { MatrixCalculationService } from './matrix-calculation.service';
 import { UpdateTripWithRoutingRequest } from '../../../../../../../libs/shared/types/src/schemas/itinerary.schema';
 import { TripTimezoneService } from './trip-timezone.service';
@@ -152,6 +150,7 @@ export class TripDataService {
 
   /**
    * Add a location to the trip's banked locations
+   * TODO: this is messy, matrix calculation needs refactoring
    */
   addLocationToBank(location: Location): void {
     const currentTrip = this.currentTrip();
@@ -260,23 +259,6 @@ export class TripDataService {
           this.updateTripLocal({
             bankedLocations: updatedTrip.bankedLocations,
           });
-
-          // Trigger matrix calculation for enhanced reordering without additional API calls
-          this.matrixCalculationService
-            .calculateMatrix([
-              ...updatedTrip.stops.map(s => s.location).filter((loc): loc is Location => !!loc),
-              ...updatedTrip.bankedLocations
-                .map(bl => bl.location)
-                .filter((loc): loc is Location => !!loc),
-            ])
-            .subscribe({
-              next: (matrix: CoordinateMatrix) => {
-                this.updateTripLocal({ matrix: JSON.stringify(matrix) });
-              },
-              error: (error: any) => {
-                console.warn('Failed to update matrix after removing banked location:', error);
-              },
-            });
         },
         error: (error: any) => {
           console.error('Failed to remove location from bank:', error);
@@ -292,23 +274,6 @@ export class TripDataService {
       this.updateTripLocal({
         bankedLocations: updatedTrip.bankedLocations,
       });
-
-      // Trigger matrix calculation for enhanced reordering without additional API calls
-      this.matrixCalculationService
-        .calculateMatrix([
-          ...updatedTrip.stops.map(s => s.location).filter((loc): loc is Location => !!loc),
-          ...updatedTrip.bankedLocations
-            .map(bl => bl.location)
-            .filter((loc): loc is Location => !!loc),
-        ])
-        .subscribe({
-          next: (matrix: CoordinateMatrix) => {
-            this.updateTripLocal({ matrix: JSON.stringify(matrix) });
-          },
-          error: (error: any) => {
-            console.warn('Failed to update matrix after removing banked location:', error);
-          },
-        });
     }
   }
 
@@ -714,21 +679,23 @@ export class TripDataService {
       throw new Error('No current trip to promote banked location in');
     }
 
-    return this.itineraryApiService.promoteBankedLocationToStop(currentTrip.id, locationId, position).pipe(
-      tap(updatedTrip => {
-        // Use Zod to parse and coerce dates
-        const parsedTrip = TripSchema.parse(updatedTrip);
-        this.tripStateService.updateState({
-          trip: parsedTrip,
-          isDirty: false,
-        });
-      }),
-      catchError((error: unknown) => {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        this.tripStateService.setError(`Failed to promote banked location: ${errorMessage}`);
-        throw error;
-      }),
-    );
+    return this.itineraryApiService
+      .promoteBankedLocationToStop(currentTrip.id, locationId, position)
+      .pipe(
+        tap(updatedTrip => {
+          // Use Zod to parse and coerce dates
+          const parsedTrip = TripSchema.parse(updatedTrip);
+          this.tripStateService.updateState({
+            trip: parsedTrip,
+            isDirty: false,
+          });
+        }),
+        catchError((error: unknown) => {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          this.tripStateService.setError(`Failed to promote banked location: ${errorMessage}`);
+          throw error;
+        }),
+      );
   }
 
   /**
@@ -772,9 +739,9 @@ export class TripDataService {
       endDate: trip.endDate,
     };
 
-    return this.http.post<Trip>(`${this.apiUrl}/trips`, createRequest).pipe(
-      map(response => TripSchema.parse(response))
-    );
+    return this.http
+      .post<Trip>(`${this.apiUrl}/trips`, createRequest)
+      .pipe(map(response => TripSchema.parse(response)));
   }
 
   /**
@@ -791,9 +758,9 @@ export class TripDataService {
       forceRecalculate: false,
     };
 
-    return this.http.put<Trip>(`${this.apiUrl}/itinerary/trips/${trip.id}`, updateRequest).pipe(
-      map(response => TripSchema.parse(response))
-    );
+    return this.http
+      .put<Trip>(`${this.apiUrl}/itinerary/trips/${trip.id}`, updateRequest)
+      .pipe(map(response => TripSchema.parse(response)));
   }
 
   /**

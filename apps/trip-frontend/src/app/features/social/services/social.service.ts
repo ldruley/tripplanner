@@ -43,7 +43,7 @@ export class SocialService {
     );
   }
 
-  searchUsers(query: string, limit: number = 10): Observable<UserSearchResult[]> {
+  searchUsers(query: string, limit = 10): Observable<UserSearchResult[]> {
     if (query.length < 2) {
       return of([]);
     }

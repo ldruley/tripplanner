@@ -123,15 +123,17 @@
       }
     </div>
 
-    <!-- Save Button -->
-    <footer class="mt-8 flex justify-center">
-      <button
-        (click)="handleTripSave()"
-        [disabled]="isLoading()"
-        class="px-6 py-3 bg-tp-orange hover:bg-tp-orange-hover text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
-        Save Trip
-      </button>
-    </footer>
+    <!-- Floating Action Button for Save -->
+    <app-floating-action-button
+      position="bottom-right"
+      size="md"
+      icon="pi pi-save"
+      text="Save Trip"
+      [disabled]="isLoading()"
+      [loading]="isLoading()"
+      ariaLabel="Save trip"
+      (buttonClick)="handleTripSave()">
+    </app-floating-action-button>
 
     <!-- Stop Edit Modal -->
     @if (editingStop()) {

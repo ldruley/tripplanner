@@ -9,6 +9,7 @@ import { LocationSearchComponent } from '../../../shared/components/location-sea
 import { LocationBankComponent } from '../../components/location-bank/location-bank.component';
 import { ItineraryBuilderComponent } from '../../components/itinerary-builder/itinerary-builder.component';
 import { StopEditModalComponent } from '../../components/stop-edit-modal/stop-edit-modal.component';
+import { FloatingActionButtonComponent } from '../../../shared/components/floating-action-button/floating-action-button.component';
 import {
   TripEditControlsComponent,
   TripEditControlsData,
@@ -25,6 +26,7 @@ import { Location, Stop } from '@trip-planner/types';
     ItineraryBuilderComponent,
     StopEditModalComponent,
     TripEditControlsComponent,
+    FloatingActionButtonComponent,
   ],
   templateUrl: './trip-container.component.html',
   styleUrl: './trip-container.component.css',
@@ -180,7 +182,7 @@ export class TripContainerComponent implements OnInit {
     });
   }
 
-  // This method will be called when TripEditorComponent saves the trip
+  // Handle trip save action
   handleTripSave(): void {
     const currentTrip = this.tripDataService.currentTrip();
     if (!currentTrip) return;

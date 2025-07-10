@@ -1,6 +1,7 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 
 import { TabsModule } from 'primeng/tabs';
 import { ConfirmPopupModule } from 'primeng/confirmpopup';
@@ -28,7 +29,7 @@ import { ButtonComponent } from '../../../shared/components';
   styleUrls: ['./social-container.component.css'],
   providers: [MessageService, ConfirmationService],
 })
-export class SocialContainerComponent implements OnInit {
+export class SocialContainerComponent implements OnInit, OnDestroy {
   private readonly socialService = inject(SocialService);
   private readonly toastService = inject(ToastService);
   private readonly authService = inject(AuthService);
@@ -52,10 +53,49 @@ export class SocialContainerComponent implements OnInit {
   // Active tab index
   activeTabIndex = signal(0);
 
+  // RxJS subjects for search debouncing
+  private searchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
+
   ngOnInit() {
     this.loadFriends();
     this.loadPendingRequests();
     this.loadSentRequests();
+    this.setupSearchDebounce();
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private setupSearchDebounce() {
+    this.searchSubject
+      .pipe(
+        debounceTime(300), // Wait 300ms after user stops typing
+        distinctUntilChanged(), // Only emit when the value actually changes
+        takeUntil(this.destroy$) // Clean up subscription on component destroy
+      )
+      .subscribe(query => {        
+        if (query.length >= 2) {
+          this.loadingSearch.set(true);
+          this.socialService.searchUsers(query).subscribe({
+            next: results => {
+              this.searchResults.set(results);
+              this.loadingSearch.set(false);
+            },
+            error: error => {
+              console.error('Error searching users:', error);
+              this.toastService.showError('Failed to search users');
+              this.loadingSearch.set(false);
+            }
+          });
+        } else {
+          // Clear results for short queries
+          this.searchResults.set([]);
+          this.loadingSearch.set(false);
+        }
+      });
   }
 
   loadFriends() {
@@ -105,26 +145,7 @@ export class SocialContainerComponent implements OnInit {
 
   onSearchQueryChange(query: string) {
     this.searchQuery.set(query);
-    if (query.length >= 2) {
-      this.performSearch(query);
-    } else {
-      this.searchResults.set([]);
-    }
-  }
-
-  performSearch(query: string) {
-    this.loadingSearch.set(true);
-    this.socialService.searchUsers(query).subscribe({
-      next: results => {
-        this.searchResults.set(results);
-        this.loadingSearch.set(false);
-      },
-      error: error => {
-        console.error('Error searching users:', error);
-        this.toastService.showError('Failed to search users');
-        this.loadingSearch.set(false);
-      },
-    });
+    this.searchSubject.next(query);
   }
 
   onSendFriendRequest(userId: string) {
@@ -133,7 +154,7 @@ export class SocialContainerComponent implements OnInit {
         if (result.success) {
           this.toastService.showSuccess('Friend request sent successfully');
           // Update the search results to reflect the new status
-          this.performSearch(this.searchQuery());
+          this.searchSubject.next(this.searchQuery());
           // Reload sent requests to show the new request
           this.loadSentRequests();
         } else {
