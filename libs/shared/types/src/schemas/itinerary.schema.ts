@@ -200,6 +200,8 @@ export const UpdateTripWithRoutingSchema = extendApi(
   z.object({
     name: z.string().min(1).max(100).optional().describe('Trip name (1-100 characters)'),
     description: z.string().nullable().optional().describe('Optional trip description'),
+    startDate: z.coerce.date().nullable().optional().describe('Planned start date of the trip'),
+    endDate: z.coerce.date().nullable().optional().describe('Planned end date of the trip'),
     calculateRouting: z
       .boolean()
       .default(true)

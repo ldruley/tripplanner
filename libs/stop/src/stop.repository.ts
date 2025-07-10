@@ -1,10 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  PrismaService,
-  PrismaClient,
-  PrismaClientOrTransaction,
-  Prisma,
-} from '@trip-planner/prisma';
+import { PrismaService, PrismaClientOrTransaction, Prisma } from '@trip-planner/prisma';
 import {
   CreateStopRequest,
   Stop,
@@ -27,7 +22,7 @@ export class StopRepository {
   async create(data: CreateStopRequest, prismaClient?: PrismaClientOrTransaction): Promise<Stop> {
     const client = prismaClient || this.prisma;
 
-    const stop = await client.stop.create({
+    return client.stop.create({
       data: {
         tripId: data.tripId,
         locationId: data.locationId,
@@ -38,8 +33,6 @@ export class StopRepository {
         notes: data.notes || null,
       },
     });
-
-    return stop as Stop;
   }
 
   /**
@@ -51,11 +44,9 @@ export class StopRepository {
   async findById(id: string, prismaClient?: PrismaClientOrTransaction): Promise<Stop | null> {
     const client = prismaClient || this.prisma;
 
-    const stop = await client.stop.findUnique({
+    return client.stop.findUnique({
       where: { id },
     });
-
-    return stop as Stop | null;
   }
 
   /**
@@ -70,25 +61,12 @@ export class StopRepository {
   ): Promise<StopWithLocation | null> {
     const client = prismaClient || this.prisma;
 
-    const stop = await client.stop.findUnique({
+    return client.stop.findUnique({
       where: { id },
       include: {
-        location: {
-          select: {
-            id: true,
-            name: true,
-            address: true,
-            city: true,
-            state: true,
-            country: true,
-            latitude: true,
-            longitude: true,
-          },
-        },
+        location: true,
       },
     });
-
-    return stop as StopWithLocation | null;
   }
 
   /**
@@ -100,12 +78,10 @@ export class StopRepository {
   async findByTripId(tripId: string, prismaClient?: PrismaClientOrTransaction): Promise<Stop[]> {
     const client = prismaClient || this.prisma;
 
-    const stops = await client.stop.findMany({
+    return client.stop.findMany({
       where: { tripId },
       orderBy: { order: 'asc' },
     });
-
-    return stops as Stop[];
   }
 
   /**
@@ -122,14 +98,12 @@ export class StopRepository {
   ): Promise<Stop | null> {
     const client = prismaClient || this.prisma;
 
-    const stop = await client.stop.findFirst({
-      where: { 
+    return client.stop.findFirst({
+      where: {
         tripId,
         locationId,
       },
     });
-
-    return stop as Stop | null;
   }
 
   /**
@@ -141,29 +115,16 @@ export class StopRepository {
   async findByTripIdWithLocations(
     tripId: string,
     prismaClient?: PrismaClientOrTransaction,
-  ): Promise<StopWithLocation[]> {
+  ): Promise<Stop[]> {
     const client = prismaClient || this.prisma;
 
-    const stops = await client.stop.findMany({
+    return client.stop.findMany({
       where: { tripId },
       include: {
-        location: {
-          select: {
-            id: true,
-            name: true,
-            address: true,
-            city: true,
-            state: true,
-            country: true,
-            latitude: true,
-            longitude: true,
-          },
-        },
+        location: true,
       },
       orderBy: { order: 'asc' },
     });
-
-    return stops as StopWithLocation[];
   }
 
   /**
@@ -175,10 +136,10 @@ export class StopRepository {
   async search(
     criteria: StopSearchCriteria,
     prismaClient?: PrismaClientOrTransaction,
-  ): Promise<Stop[] | StopWithLocation[]> {
+  ): Promise<Stop[] | Stop[]> {
     const client = prismaClient || this.prisma;
 
-    const whereClause: any = {};
+    const whereClause: Prisma.StopWhereInput = {};
 
     if (criteria.tripId) {
       whereClause.tripId = criteria.tripId;
@@ -189,33 +150,20 @@ export class StopRepository {
     }
 
     if (criteria.stopType) {
-      whereClause.stopType = criteria.stopType as any;
+      whereClause.stopType = criteria.stopType;
     }
 
     const includeClause = criteria.includeLocation
       ? {
-          location: {
-            select: {
-              id: true,
-              name: true,
-              address: true,
-              city: true,
-              state: true,
-              country: true,
-              latitude: true,
-              longitude: true,
-            },
-          },
+          location: true,
         }
       : undefined;
 
-    const stops = await client.stop.findMany({
+    return client.stop.findMany({
       where: whereClause,
       include: includeClause,
       orderBy: { order: 'asc' },
     });
-
-    return stops as Stop[] | StopWithLocation[];
   }
 
   /**
@@ -232,20 +180,18 @@ export class StopRepository {
   ): Promise<Stop> {
     const client = prismaClient || this.prisma;
 
-    const updateData: any = {};
+    const updateData: Prisma.StopUpdateInput = {};
 
     if (data.plannedArrivalTime !== undefined)
       updateData.plannedArrivalTime = data.plannedArrivalTime;
     if (data.plannedDuration !== undefined) updateData.plannedDuration = data.plannedDuration;
-    if (data.stopType !== undefined) updateData.stopType = data.stopType as any;
+    if (data.stopType !== undefined) updateData.stopType = data.stopType;
     if (data.notes !== undefined) updateData.notes = data.notes;
 
-    const stop = await client.stop.update({
+    return client.stop.update({
       where: { id },
       data: updateData,
     });
-
-    return stop as Stop;
   }
 
   /**
@@ -262,12 +208,10 @@ export class StopRepository {
   ): Promise<Stop> {
     const client = prismaClient || this.prisma;
 
-    const stop = await client.stop.update({
+    return client.stop.update({
       where: { id },
       data: { order: newOrder },
     });
-
-    return stop as Stop;
   }
 
   /**
@@ -289,7 +233,7 @@ export class StopRepository {
         where: { id: update.id },
         data: { order: update.order },
       });
-      updatedStops.push(stop as Stop);
+      updatedStops.push(stop);
     }
 
     return updatedStops;
@@ -311,18 +255,16 @@ export class StopRepository {
   ): Promise<Stop> {
     const client = prismaClient || this.prisma;
 
-    const updateData: any = {};
+    const updateData: Prisma.StopUpdateInput = {};
     if (calculatedArrivalTime !== undefined)
       updateData.calculatedArrivalTime = calculatedArrivalTime;
     if (calculatedDepartureTime !== undefined)
       updateData.calculatedDepartureTime = calculatedDepartureTime;
 
-    const stop = await client.stop.update({
+    return client.stop.update({
       where: { id },
       data: updateData,
     });
-
-    return stop as Stop;
   }
 
   /**

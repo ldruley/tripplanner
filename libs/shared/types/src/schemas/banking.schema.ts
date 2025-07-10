@@ -20,7 +20,7 @@ export const TripBankedLocationSchema = z.object({
   id: z.string().uuid(),
   tripId: z.string().uuid(),
   locationId: z.string().uuid(),
-  addedAt: z.date(),
+  createdAt: z.date(),
   location: z.object({
     id: z.string().uuid(),
     name: z.string(),

@@ -34,7 +34,7 @@ export const LocationSchema = extendApi(
       .optional()
       .describe('Source provider of the location data'),
     apiSourceId: z.string().nullable().optional().describe('ID of the location in the source API'),
-    fullData: z
+    extendedData: z
       .any()
       .nullable()
       .optional()
@@ -67,7 +67,7 @@ export const LocationSchema = extendApi(
       timezone: 'Europe/Paris',
       apiSource: 'HERE',
       apiSourceId: 'here:pds:place:250jx7ps-b9d7fc1d8dbc4dd9adb39e4b7cf0b2f7',
-      fullData: null,
+      extendedData: null,
       category: 'ATTRACTION',
       public: true,
       createdAt: '2024-01-01T12:00:00.000Z',

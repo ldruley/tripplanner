@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import {
   CreateLocationRequest,
   CreateLocationRequestSchema,
@@ -7,8 +7,11 @@ import {
   LocationSearchCriteriaSchema,
   UpdateLocationRequest,
   UpdateLocationRequestSchema,
+  TimezoneRequest,
+  TimezoneResponse,
 } from '@trip-planner/types';
 import { PrismaClientOrTransaction } from '@trip-planner/prisma';
+import { TimezoneService } from '@trip-planner/timezone';
 import { LocationRepository } from './location.repository';
 import {
   LocationDeduplicationOptions,
@@ -20,7 +23,10 @@ import {
 export class LocationService {
   private readonly logger = new Logger(LocationService.name);
 
-  constructor(private readonly locationRepository: LocationRepository) {}
+  constructor(
+    private readonly locationRepository: LocationRepository,
+    private readonly timezoneService: TimezoneService,
+  ) {}
 
   /**
    * Create a new location with deduplication
@@ -102,13 +108,38 @@ export class LocationService {
         updateData.category = data.category;
       }
 
+      if (!duplicateCheck.existingLocation.timezone && data.timezone) {
+        updateData.timezone = data.timezone;
+      }
+
+      if (!duplicateCheck.existingLocation.timezone && !data.timezone) {
+        const timezone = await this.timezoneService.getTimezoneByCoordinates({
+          latitude: data.latitude,
+          longitude: data.longitude,
+        });
+        updateData.timezone = timezone.timezone;
+      }
+
       // Only update if we have changes to make
       if (Object.keys(updateData).length > 0) {
-        return await this.locationRepository.update(duplicateCheck.existingLocation.id, updateData, prismaClient);
+        return await this.locationRepository.update(
+          duplicateCheck.existingLocation.id,
+          updateData,
+          prismaClient,
+        );
       }
 
       // No changes needed, return existing location
       return duplicateCheck.existingLocation;
+    }
+
+    // If timezone is missing, fetch it based on coordinates
+    if (!data.timezone) {
+      const timezone = await this.timezoneService.getTimezoneByCoordinates({
+        latitude: data.latitude,
+        longitude: data.longitude,
+      });
+      data.timezone = timezone.timezone;
     }
 
     return await this.locationRepository.create(data, prismaClient);
@@ -136,7 +167,10 @@ export class LocationService {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @return Promise<Location[]>
    */
-  async search(criteria: LocationSearchCriteria, prismaClient?: PrismaClientOrTransaction): Promise<Location[]> {
+  async search(
+    criteria: LocationSearchCriteria,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Location[]> {
     LocationSearchCriteriaSchema.parse(criteria);
     return await this.locationRepository.search(criteria, prismaClient);
   }
@@ -149,8 +183,18 @@ export class LocationService {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @return Promise<Location[]>
    */
-  async findNearby(latitude: number, longitude: number, radiusMeters = 1000, prismaClient?: PrismaClientOrTransaction): Promise<Location[]> {
-    return await this.locationRepository.findByCoordinates(latitude, longitude, radiusMeters, prismaClient);
+  async findNearby(
+    latitude: number,
+    longitude: number,
+    radiusMeters = 1000,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Location[]> {
+    return await this.locationRepository.findByCoordinates(
+      latitude,
+      longitude,
+      radiusMeters,
+      prismaClient,
+    );
   }
 
   /**
@@ -160,12 +204,59 @@ export class LocationService {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @return Updated Location
    */
-  async update(id: string, data: UpdateLocationRequest, prismaClient?: PrismaClientOrTransaction): Promise<Location> {
+  async update(
+    id: string,
+    data: UpdateLocationRequest,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Location> {
     UpdateLocationRequestSchema.parse(data);
     // Verify location exists
     await this.findById(id, prismaClient);
 
     return await this.locationRepository.update(id, data, prismaClient);
+  }
+
+  /**
+   * Update timezone for a location using its coordinates
+   * @param locationId - Location ID
+   * @param coordinates - Latitude and longitude coordinates
+   * @param prismaClient - Optional Prisma client for testing or custom transactions
+   * @return Updated Location with timezone
+   */
+  async updateTimezone(
+    locationId: string,
+    coordinates: { latitude: number; longitude: number },
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Location> {
+    this.logger.debug(
+      `Updating timezone for location ${locationId} with coordinates ${coordinates.latitude}, ${coordinates.longitude}`,
+    );
+
+    // Verify location exists
+    await this.findById(locationId, prismaClient);
+
+    // Get timezone from coordinates
+    const timezoneRequest: TimezoneRequest = {
+      latitude: coordinates.latitude,
+      longitude: coordinates.longitude,
+    };
+
+    try {
+      const timezoneResponse: TimezoneResponse =
+        await this.timezoneService.getTimezoneByCoordinates(timezoneRequest);
+
+      // Update location with timezone
+      const updateData: UpdateLocationRequest = {
+        timezone: timezoneResponse.timezone,
+      };
+
+      this.logger.debug(`Found timezone ${timezoneResponse.timezone} for location ${locationId}`);
+
+      return await this.locationRepository.update(locationId, updateData, prismaClient);
+    } catch (error) {
+      this.logger.error(`Failed to update timezone for location ${locationId}:`, error);
+      throw error;
+    }
   }
 
   /**

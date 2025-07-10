@@ -7,63 +7,128 @@
   @if (bankedLocations().length > 0) {
     <div
       cdkDropList
-      id="bank-list"
+      [id]="listId()"
+      [cdkDropListConnectedTo]="connectedDropLists()"
+      (cdkDropListDropped)="onDrop($event)"
       class="space-y-2 min-h-[100px] p-2 border border-dashed border-tp-border-light dark:border-tp-border rounded-md bg-tp-bg-light-primary dark:bg-tp-bg-secondary"
       [cdkDropListData]="bankedLocations()"
     >
       @for (location of bankedLocations(); track location.id) {
-        <div
-          cdkDrag
-          [cdkDragData]="location"
-          (cdkDragStarted)="onDragStarted($event)"
-          class="p-3 bg-tp-bg-light-primary dark:bg-tp-bg-secondary border border-tp-border-light dark:border-tp-border rounded-md shadow-sm hover:shadow-md transition-shadow cdk-drag"
-          [style.opacity]="'0.8'"
-          [style.transform]="'scale(1.02)'"
-        >
-          <div class="flex items-start justify-between">
-            <div class="flex items-start space-x-3 flex-1 min-w-0">
-              <!-- Drag Handle -->
-              <div 
-                cdkDragHandle 
-                class="flex-shrink-0 cursor-grab hover:cursor-grabbing pt-0.5 text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-tp-text-light-primary dark:hover:text-tp-text-primary transition-colors"
-                title="Drag to move"
+        <!-- Desktop: draggable item -->
+        @if (!isMobile()) {
+          <div
+            cdkDrag
+            [cdkDragData]="location"
+            (cdkDragStarted)="onDragStarted($event)"
+            class="p-3 bg-tp-bg-light-primary dark:bg-tp-bg-secondary border border-tp-border-light dark:border-tp-border rounded-md shadow-sm hover:shadow-md transition-shadow cdk-drag"
+            [style.opacity]="'0.8'"
+            [style.transform]="'scale(1.02)'"
+          >
+            <div class="flex items-start justify-between">
+              <div class="flex items-start space-x-3 flex-1 min-w-0">
+                <!-- Drag Handle -->
+                <div
+                  cdkDragHandle
+                  class="flex-shrink-0 cursor-grab hover:cursor-grabbing pt-0.5 text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-tp-text-light-primary dark:hover:text-tp-text-primary transition-colors"
+                  title="Drag to move"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
+                  </svg>
+                </div>
+
+                <!-- Location Info -->
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-tp-text-light-primary dark:text-tp-text-primary">
+                    {{ location.name }}
+                  </div>
+                  @if (location.address) {
+                    <div class="text-xs text-tp-text-light-secondary dark:text-tp-text-secondary mt-1">
+                      {{ location.address }}
+                    </div>
+                  } @else if (location.city || location.country) {
+                    <div class="text-xs text-tp-text-light-secondary dark:text-tp-text-secondary mt-1">
+                      {{ location.city }}{{ location.city && location.country ? ', ' : ''
+                      }}{{ location.country }}
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- View Details Button -->
+              <button
+                (click)="onViewDetails(location, $event)"
+                class="ml-2 px-2 py-1 text-xs text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-tp-text-light-primary dark:hover:text-tp-text-primary hover:bg-tp-bg-light-secondary dark:hover:bg-tp-bg-tertiary rounded transition-colors cursor-pointer flex-shrink-0"
+                title="View details"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                 </svg>
-              </div>
-              
-              <!-- Location Info -->
-              <div class="flex-1 min-w-0">
-                <div class="font-medium text-tp-text-light-primary dark:text-tp-text-primary">
-                  {{ location.name }}
-                </div>
-                @if (location.address) {
-                  <div class="text-xs text-tp-text-light-secondary dark:text-tp-text-secondary mt-1">
-                    {{ location.address }}
-                  </div>
-                } @else if (location.city || location.country) {
-                  <div class="text-xs text-tp-text-light-secondary dark:text-tp-text-secondary mt-1">
-                    {{ location.city }}{{ location.city && location.country ? ', ' : ''
-                    }}{{ location.country }}
-                  </div>
-                }
-              </div>
+              </button>
+
+              <!-- Remove Button -->
+              <button
+                (click)="onLocationRemoved(location, $event)"
+                class="ml-2 px-2 py-1 text-xs text-red-500 hover:text-white hover:bg-red-500 dark:hover:bg-red-600 rounded transition-colors cursor-pointer flex-shrink-0"
+                title="Remove from bank"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-            
-            <!-- View Details Button -->
-            <button
-              (click)="onViewDetails(location, $event)"
-              class="ml-2 px-2 py-1 text-xs text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-tp-text-light-primary dark:hover:text-tp-text-primary hover:bg-tp-bg-light-secondary dark:hover:bg-tp-bg-tertiary rounded transition-colors cursor-pointer flex-shrink-0"
-              title="View details"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-              </svg>
-            </button>
           </div>
-        </div>
+        } @else {
+          <!-- Mobile: non-draggable item -->
+          <div
+            class="p-3 bg-tp-bg-light-primary dark:bg-tp-bg-secondary border border-tp-border-light dark:border-tp-border rounded-md shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div class="flex items-start justify-between">
+              <div class="flex items-start space-x-3 flex-1 min-w-0">
+                <!-- Add Button -->
+                <button
+                  (click)="onAddToItinerary(location, $event)"
+                  class="flex-shrink-0 px-2 py-1 text-xs bg-tp-orange hover:bg-tp-orange-hover text-white rounded transition-colors cursor-pointer"
+                  title="Add to itinerary"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                  </svg>
+                </button>
+
+                <!-- Location Info -->
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-tp-text-light-primary dark:text-tp-text-primary">
+                    {{ location.name }}
+                  </div>
+                  @if (location.address) {
+                    <div class="text-xs text-tp-text-light-secondary dark:text-tp-text-secondary mt-1">
+                      {{ location.address }}
+                    </div>
+                  } @else if (location.city || location.country) {
+                    <div class="text-xs text-tp-text-light-secondary dark:text-tp-text-secondary mt-1">
+                      {{ location.city }}{{ location.city && location.country ? ', ' : ''
+                      }}{{ location.country }}
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- View Details Button -->
+              <button
+                (click)="onViewDetails(location, $event)"
+                class="ml-2 px-2 py-1 text-xs text-tp-text-light-secondary dark:text-tp-text-secondary hover:text-tp-text-light-primary dark:hover:text-tp-text-primary hover:bg-tp-bg-light-secondary dark:hover:bg-tp-bg-tertiary rounded transition-colors cursor-pointer flex-shrink-0"
+                title="View details"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        }
       }
     </div>
   } @else {

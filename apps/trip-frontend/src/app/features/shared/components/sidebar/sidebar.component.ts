@@ -63,6 +63,11 @@ export class SidebarComponent implements OnInit {
     this.closeMobileSidebar();
   }
 
+  onSocial(): void {
+    this.router.navigate(['/social']);
+    this.closeMobileSidebar();
+  }
+
   // Sidebar state management
   toggleExpanded(): void {
     const newState = !this.isExpanded();

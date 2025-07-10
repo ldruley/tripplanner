@@ -9,7 +9,7 @@ export const TripBankedLocationSchema = extendApi(
     id: uuidSchema,
     tripId: uuidSchema,
     locationId: uuidSchema,
-    addedAt: z.coerce.date(),
+    createdAt: z.coerce.date(),
 
     // Relations
     location: LocationSchema.optional(),

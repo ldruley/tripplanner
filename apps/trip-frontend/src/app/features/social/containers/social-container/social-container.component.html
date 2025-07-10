@@ -1,0 +1,258 @@
+<div class="social-container p-4 sm:p-6 md:p-8 max-w-7xl mx-auto bg-tp-bg-light-secondary dark:bg-tp-bg-primary rounded-lg shadow-md">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-tp-text-light-primary dark:text-tp-text-primary mb-6">Social Hub</h1>
+
+    <!-- Search Section -->
+    <div class="search-section mb-8">
+      <div class="flex flex-col sm:flex-row gap-4 mb-4">
+        <input
+          pInputText
+          type="text"
+          placeholder="Search for users by name or email..."
+          class="flex-1 p-3 border border-tp-border-light dark:border-tp-border rounded-lg focus:ring-2 focus:ring-tp-orange dark:focus:ring-tp-orange-light dark:bg-tp-bg-secondary"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="onSearchQueryChange($event)"
+        />
+      </div>
+
+      <!-- Search Results -->
+      @if (searchQuery().length >= 2) {
+        <div class="search-results bg-tp-bg-light-tertiary dark:bg-tp-bg-tertiary rounded-lg border border-tp-border-light dark:border-tp-border p-4">
+          <h3 class="text-xl font-semibold mb-4 text-tp-text-light-primary dark:text-tp-text-primary">Search Results</h3>
+
+          @if (loadingSearch()) {
+            <div class="flex items-center justify-center py-6">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-tp-orange"></div>
+              <span class="ml-3 text-tp-text-light-secondary dark:text-tp-text-secondary">Searching...</span>
+            </div>
+          } @else if (searchResults().length > 0) {
+            <div class="space-y-4">
+              @for (user of searchResults(); track user.id) {
+                <div class="flex items-center justify-between p-4 bg-tp-bg-light-primary dark:bg-tp-bg-secondary rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                  <div class="flex items-center space-x-4">
+                    @if (getUserAvatarUrl(user)) {
+                      <img
+                        [src]="getUserAvatarUrl(user)"
+                        [alt]="getUserDisplayName(user)"
+                        class="w-12 h-12 rounded-full object-cover"
+                      />
+                    } @else {
+                      <div class="w-12 h-12 rounded-full bg-tp-orange flex items-center justify-center">
+                        <span class="text-white font-bold text-xl">{{ getUserDisplayName(user).charAt(0).toUpperCase() }}</span>
+                      </div>
+                    }
+                    <div>
+                      <div class="font-semibold text-tp-text-light-primary dark:text-tp-text-primary">{{ getUserDisplayName(user) }}</div>
+                      <div class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">{{ getUserEmail(user) }}</div>
+                    </div>
+                  </div>
+
+                  <div class="flex space-x-2">
+                    @if (user.friendshipStatus === 'NONE') {
+                      <app-button
+                        label="Add Friend"
+                        variant="primary"
+                        size="sm"
+                        (click)="onSendFriendRequest(user.id)"
+                      ></app-button>
+                    } @else if (user.friendshipStatus === 'PENDING_SENT') {
+                      <span class="text-sm font-medium text-yellow-600 dark:text-yellow-400 px-3 py-1 bg-yellow-100 dark:bg-yellow-800/50 rounded-full">
+                        Request Sent
+                      </span>
+                    } @else if (user.friendshipStatus === 'ACCEPTED') {
+                      <span class="text-sm font-medium text-green-600 dark:text-green-400 px-3 py-1 bg-green-100 dark:bg-green-800/50 rounded-full">
+                        Friends
+                      </span>
+                    } @else if (user.friendshipStatus === 'PENDING_RECEIVED') {
+                      <span class="text-sm font-medium text-blue-600 dark:text-blue-400 px-3 py-1 bg-blue-100 dark:bg-blue-800/50 rounded-full">
+                        Pending
+                      </span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="text-center py-6 text-tp-text-light-secondary dark:text-tp-text-secondary">
+              No users found matching "{{ searchQuery() }}"
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Tabs Section -->
+  <p-tabs [value]="activeTabIndex()">
+    <p-tablist>
+      <p-tab [value]="0" (click)="activeTabIndex.set(0)">Friends</p-tab>
+      <p-tab [value]="1" (click)="activeTabIndex.set(1)">Pending Requests</p-tab>
+      <p-tab [value]="2" (click)="activeTabIndex.set(2)">Sent Requests</p-tab>
+    </p-tablist>
+
+    <p-tabpanels>
+      <!-- Friends Tab -->
+      <p-tabpanel [value]="0">
+        <div class="friends-tab mt-4">
+          @if (loadingFriends()) {
+            <div class="flex items-center justify-center py-12">
+              <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-tp-orange"></div>
+              <span class="ml-4 text-tp-text-light-secondary dark:text-tp-text-secondary">Loading friends...</span>
+            </div>
+          } @else if (friends().length > 0) {
+            <div class="space-y-4">
+              @for (friendship of friends(); track friendship.id) {
+                <div class="flex items-center justify-between p-4 bg-tp-bg-light-primary dark:bg-tp-bg-secondary rounded-lg shadow-sm border border-tp-border-light dark:border-tp-border hover:shadow-lg transition-shadow duration-300">
+                  <div class="flex items-center space-x-4">
+                    @if (getUserAvatarUrl(friendship)) {
+                      <img
+                        [src]="getUserAvatarUrl(friendship)"
+                        [alt]="getUserDisplayName(friendship)"
+                        class="w-12 h-12 rounded-full object-cover"
+                      />
+                    } @else {
+                      <div class="w-12 h-12 rounded-full bg-tp-orange flex items-center justify-center">
+                        <span class="text-white font-bold text-xl">{{ getUserDisplayName(friendship).charAt(0).toUpperCase() }}</span>
+                      </div>
+                    }
+                    <div>
+                      <div class="font-semibold text-tp-text-light-primary dark:text-tp-text-primary">{{ getUserDisplayName(friendship) }}</div>
+                      <div class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">{{ getUserEmail(friendship) }}</div>
+                    </div>
+                  </div>
+
+                  <app-button
+                    label="Remove"
+                    variant="danger"
+                    size="sm"
+                    (click)="confirmRemoveFriend(getFriendId(friendship), $event)"
+                  >Remove</app-button>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="text-center py-12 text-tp-text-light-secondary dark:text-tp-text-secondary">
+              <div class="text-5xl mb-4">👥</div>
+              <p class="text-lg">No friends yet. Start by searching for users above!</p>
+            </div>
+          }
+        </div>
+      </p-tabpanel>
+
+      <!-- Pending Requests Tab -->
+      <p-tabpanel [value]="1">
+        <div class="pending-requests-tab mt-4">
+          @if (loadingPendingRequests()) {
+            <div class="flex items-center justify-center py-12">
+              <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-tp-orange"></div>
+              <span class="ml-4 text-tp-text-light-secondary dark:text-tp-text-secondary">Loading pending requests...</span>
+            </div>
+          } @else if (pendingRequests().length > 0) {
+            <div class="space-y-4">
+              @for (request of pendingRequests(); track request.id) {
+                <div class="flex items-center justify-between p-4 bg-tp-bg-light-primary dark:bg-tp-bg-secondary rounded-lg shadow-sm border border-tp-border-light dark:border-tp-border hover:shadow-lg transition-shadow duration-300">
+                  <div class="flex items-center space-x-4">
+                    @if (getUserAvatarUrl(request)) {
+                      <img
+                        [src]="getUserAvatarUrl(request)"
+                        [alt]="getUserDisplayName(request)"
+                        class="w-12 h-12 rounded-full object-cover"
+                      />
+                    } @else {
+                      <div class="w-12 h-12 rounded-full bg-tp-orange flex items-center justify-center">
+                        <span class="text-white font-bold text-xl">{{ getUserDisplayName(request).charAt(0).toUpperCase() }}</span>
+                      </div>
+                    }
+                    <div>
+                      <div class="font-semibold text-tp-text-light-primary dark:text-tp-text-primary">{{ getUserDisplayName(request) }}</div>
+                      <div class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">{{ getUserEmail(request) }}</div>
+                    </div>
+                  </div>
+
+                  <div class="flex space-x-3">
+                    <app-button
+                      label="Accept"
+                      variant="primary"
+                      size="sm"
+                      (click)="onAcceptFriendRequest(request.id)"
+                    ></app-button>
+                    <app-button
+                      label="Decline"
+                      variant="danger"
+                      size="sm"
+                      (click)="onDeclineFriendRequest(request.id)"
+                    ></app-button>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="text-center py-12 text-tp-text-light-secondary dark:text-tp-text-secondary">
+              <div class="text-5xl mb-4">📬</div>
+              <p class="text-lg">No pending friend requests.</p>
+            </div>
+          }
+        </div>
+      </p-tabpanel>
+
+      <!-- Sent Requests Tab -->
+      <p-tabpanel [value]="2">
+        <div class="sent-requests-tab mt-4">
+          @if (loadingSentRequests()) {
+            <div class="flex items-center justify-center py-12">
+              <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-tp-orange"></div>
+              <span class="ml-4 text-tp-text-light-secondary dark:text-tp-text-secondary">Loading sent requests...</span>
+            </div>
+          } @else if (sentRequests().length > 0) {
+            <div class="space-y-4">
+              @for (request of sentRequests(); track request.id) {
+                <div class="flex items-center justify-between p-4 bg-tp-bg-light-primary dark:bg-tp-bg-secondary rounded-lg shadow-sm border border-tp-border-light dark:border-tp-border hover:shadow-lg transition-shadow duration-300">
+                  <div class="flex items-center space-x-4">
+                    @if (getUserAvatarUrl(request)) {
+                      <img
+                        [src]="getUserAvatarUrl(request)"
+                        [alt]="getUserDisplayName(request)"
+                        class="w-12 h-12 rounded-full object-cover"
+                      />
+                    } @else {
+                      <div class="w-12 h-12 rounded-full bg-tp-orange flex items-center justify-center">
+                        <span class="text-white font-bold text-xl">{{ getUserDisplayName(request).charAt(0).toUpperCase() }}</span>
+                      </div>
+                    }
+                    <div>
+                      <div class="font-semibold text-tp-text-light-primary dark:text-tp-text-primary">{{ getUserDisplayName(request) }}</div>
+                      <div class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">{{ getUserEmail(request) }}</div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center space-x-2">
+                    @if (request.status === 'PENDING') {
+                      <span class="text-sm font-medium text-yellow-600 dark:text-yellow-400 px-3 py-1 bg-yellow-100 dark:bg-yellow-800/50 rounded-full">
+                        Pending
+                      </span>
+                    } @else if (request.status === 'ACCEPTED') {
+                      <span class="text-sm font-medium text-green-600 dark:text-green-400 px-3 py-1 bg-green-100 dark:bg-green-800/50 rounded-full">
+                        Accepted
+                      </span>
+                    } @else if (request.status === 'DECLINED') {
+                      <span class="text-sm font-medium text-red-600 dark:text-red-400 px-3 py-1 bg-red-100 dark:bg-red-800/50 rounded-full">
+                        Declined
+                      </span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="text-center py-12 text-tp-text-light-secondary dark:text-tp-text-secondary">
+              <div class="text-5xl mb-4">📤</div>
+              <p class="text-lg">No sent friend requests.</p>
+            </div>
+          }
+        </div>
+      </p-tabpanel>
+    </p-tabpanels>
+  </p-tabs>
+</div>
+
+<p-confirmpopup></p-confirmpopup>

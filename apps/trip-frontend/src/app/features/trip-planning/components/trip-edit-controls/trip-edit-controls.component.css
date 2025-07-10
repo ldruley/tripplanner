@@ -1,0 +1,40 @@
+/* Animation for expand/collapse */
+@keyframes slide-in-from-top {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: slide-in-from-top 0.2s ease-out;
+}
+
+
+
+/* Toggle button hover effects */
+.toggle-button:hover {
+  @apply bg-tp-bg-light-secondary dark:bg-tp-bg-secondary;
+}
+
+/* Form validation styling */
+.form-field-error {
+  @apply border-red-500 dark:border-red-400;
+}
+
+/* Description character count styling */
+.char-count {
+  @apply text-xs text-tp-text-light-secondary dark:text-tp-text-secondary;
+}
+
+.char-count.near-limit {
+  @apply text-tp-orange;
+}
+
+.char-count.over-limit {
+  @apply text-red-600 dark:text-red-400;
+}

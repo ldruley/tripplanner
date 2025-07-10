@@ -10,6 +10,7 @@ import {
   UpdateTripRequest,
   LocationForItinerary,
   CoordinateMatrix,
+  TripSchema,
 } from '@trip-planner/types';
 import {
   CreateTripFromOrganizedListDto,
@@ -27,6 +28,7 @@ import {
 import { MatrixCalculationService } from './matrix-calculation.service';
 import { UpdateTripWithRoutingRequest } from '../../../../../../../libs/shared/types/src/schemas/itinerary.schema';
 import { switchMap } from 'rxjs/operators';
+import { TripTimezoneService } from './trip-timezone.service';
 
 export type DataSource = 'new' | 'draft' | 'persisted';
 
@@ -46,6 +48,7 @@ export class TripDataService {
   private readonly http = inject(HttpClient);
   private readonly localStorage = inject(LocalStorageService);
   private readonly matrixCalculationService = inject(MatrixCalculationService);
+  private readonly tripTimezoneService = inject(TripTimezoneService);
   private readonly apiUrl = environment.backendApiUrl;
 
   // Auto-save debouncing
@@ -91,11 +94,23 @@ export class TripDataService {
     const lastStop = stops[stops.length - 1];
 
     if (!firstStop.calculatedArrivalTime || !lastStop.calculatedDepartureTime) {
+      console.warn(
+        'TripDataService: Missing calculated arrival/departure time for trip duration calculation.',
+      );
       return null;
     }
 
     const start = new Date(firstStop.calculatedArrivalTime);
     const end = new Date(lastStop.calculatedDepartureTime);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      console.error(
+        'TripDataService: Invalid Date object encountered during trip duration calculation.',
+        { start, end },
+      );
+      return null;
+    }
+
     return end.getTime() - start.getTime(); // Duration in milliseconds
   });
   readonly hasScheduledStops = computed(() =>
@@ -103,6 +118,37 @@ export class TripDataService {
   );
   readonly tripStartDate = computed(() => this.currentTrip()?.startDate || null);
   readonly tripEndDate = computed(() => this.currentTrip()?.endDate || null);
+
+  // Timezone-aware computed properties (delegated to TripTimezoneService)
+  readonly tripPrimaryTimezone = computed(() => {
+    const trip = this.currentTrip();
+    return this.tripTimezoneService.getTripPrimaryTimezone(trip);
+  });
+
+  readonly tripPrimaryTimezoneDisplayName = computed(() => {
+    const trip = this.currentTrip();
+    return this.tripTimezoneService.getTripPrimaryTimezoneDisplayName(trip);
+  });
+
+  readonly stopsWithTimezoneInfo = computed(() => {
+    const trip = this.currentTrip();
+    return this.tripTimezoneService.getStopsWithTimezoneInfo(trip);
+  });
+
+  readonly formattedTripStartDate = computed(() => {
+    const trip = this.currentTrip();
+    return this.tripTimezoneService.formatTripStartDate(trip);
+  });
+
+  readonly formattedTripEndDate = computed(() => {
+    const trip = this.currentTrip();
+    return this.tripTimezoneService.formatTripEndDate(trip);
+  });
+
+  readonly tripDurationInTimezone = computed(() => {
+    const trip = this.currentTrip();
+    return this.tripTimezoneService.calculateTripDurationInTimezone(trip);
+  });
 
   constructor() {
     this.initializeAutoSave();
@@ -136,6 +182,8 @@ export class TripDataService {
         isDirty: false,
         dataSource: 'new',
       });
+      // Update timezone service with the new trip
+      this.tripTimezoneService.setCurrentTrip(newTrip);
       // Clear matrix for new trips - use local calculation
       this.matrixCalculationService.clearPersistedMatrix();
     } else {
@@ -148,20 +196,27 @@ export class TripDataService {
           isDirty: true,
           dataSource: 'draft',
         });
+        // Update timezone service with the draft trip
+        this.tripTimezoneService.setCurrentTrip(draftTrip);
         // Clear matrix for draft trips - use local calculation
         this.matrixCalculationService.clearPersistedMatrix();
       } else {
         // Load from backend
         this.loadTripFromBackend(tripId).subscribe({
           next: trip => {
+            // Use Zod to parse and coerce dates
+            const parsedTrip = TripSchema.parse(trip);
+
             this.updateState({
-              trip,
+              trip: parsedTrip,
               isLoading: false,
               isDirty: false,
               dataSource: 'persisted',
             });
+            // Update timezone service with the persisted trip
+            this.tripTimezoneService.setCurrentTrip(parsedTrip);
             // Load persisted matrix for persisted trips
-            this.loadPersistedMatrix(trip);
+            this.loadPersistedMatrix(parsedTrip);
           },
           error: error => {
             console.error('TripDataService: Failed to load trip from backend:', error);
@@ -219,7 +274,7 @@ export class TripDataService {
             ...bankedLocation,
             location: location, // Use the original location object to ensure all data is available
           };
-          
+
           // Update local state with the response
           const updatedTrip = {
             ...currentTrip,
@@ -259,7 +314,7 @@ export class TripDataService {
         id: crypto.randomUUID(),
         tripId: currentTrip.id,
         locationId: location.id,
-        addedAt: new Date(),
+        createdAt: new Date(),
         location,
       };
 
@@ -660,6 +715,8 @@ export class TripDataService {
       dataSource: 'new',
       error: null,
     });
+    // Clear timezone service
+    this.tripTimezoneService.setCurrentTrip(null);
   }
 
   /**
@@ -671,6 +728,17 @@ export class TripDataService {
    */
   updateTripDates(startDate: Date | null, endDate: Date | null): void {
     this.updateTripLocal({ startDate, endDate });
+  }
+
+  /**
+   * Update trip dates with timezone awareness
+   */
+  updateTripDatesInTimezone(startDate: Date | null, endDate: Date | null, timezone?: string): void {
+    const currentTrip = this.currentTrip();
+    const { startDate: utcStartDate, endDate: utcEndDate } =
+      this.tripTimezoneService.convertTripDatesToUTC(startDate, endDate, timezone, currentTrip);
+
+    this.updateTripLocal({ startDate: utcStartDate, endDate: utcEndDate });
   }
 
   /**
@@ -686,6 +754,26 @@ export class TripDataService {
     },
   ): void {
     this.updateStop(stopId, timing);
+  }
+
+  /**
+   * Update stop timing with timezone awareness
+   */
+  updateStopTimingInTimezone(
+    stopId: string,
+    timing: {
+      plannedArrivalTime?: Date | null;
+      plannedDuration?: number | null;
+    },
+  ): void {
+    const currentTrip = this.currentTrip();
+    if (!currentTrip) return;
+
+    const stop = currentTrip.stops.find(s => s.id === stopId);
+    if (!stop || !stop.location) return;
+
+    const utcTiming = this.tripTimezoneService.convertStopTimingToUTC(stop.location, timing);
+    this.updateStop(stopId, utcTiming);
   }
 
   /**
@@ -891,7 +979,12 @@ export class TripDataService {
    * Load draft trip from localStorage
    */
   private loadDraftTrip(tripId: string): Trip | null {
-    return this.localStorage.get<Trip>(this.getDraftKey(tripId));
+    const draft = this.localStorage.get<Trip>(this.getDraftKey(tripId));
+    if (draft) {
+      // Use Zod to parse and coerce dates from local storage
+      return TripSchema.parse(draft);
+    }
+    return null;
   }
 
   /**
@@ -969,9 +1062,11 @@ export class TripDataService {
     const updateRequest: UpdateTripWithRoutingRequest = {
       name: trip.name,
       description: trip.description,
-      calculateRouting: true,
+      startDate: trip.startDate,
+      endDate: trip.endDate,
+      calculateRouting: false,
       travelMode: 'DRIVING',
-      forceRecalculate: true,
+      forceRecalculate: false,
     };
 
     return this.http.put<Trip>(`${this.apiUrl}/itinerary/trips/${trip.id}`, updateRequest);

@@ -21,6 +21,7 @@ export const GeocodingResultSchema = extendApi(
     region: regionSchema.describe('Region, state, or province'),
     country: countrySchema.describe('Country'),
     postalCode: postalCodeSchema.describe('Postal or ZIP code'),
+    timezone: z.string().nullable().optional().describe('Timezone of the location'),
     provider: z
       .enum(['mapbox', 'google', 'here'])
       .describe('The service that provided this geocoding result.'),

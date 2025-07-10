@@ -81,7 +81,7 @@ export class TripBankedLocationRepository {
         location: includeLocation,
       },
       orderBy: {
-        addedAt: 'desc',
+        createdAt: 'desc',
       },
     });
   }
@@ -106,7 +106,7 @@ export class TripBankedLocationRepository {
         location: includeLocation,
       },
       orderBy: {
-        addedAt: 'desc',
+        createdAt: 'desc',
       },
     });
   }
@@ -139,7 +139,7 @@ export class TripBankedLocationRepository {
         location: criteria.includeLocation,
       },
       orderBy: {
-        addedAt: 'desc',
+        createdAt: 'desc',
       },
     });
   }
@@ -173,10 +173,7 @@ export class TripBankedLocationRepository {
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return Number of deleted records.
    */
-  async deleteByTripId(
-    tripId: string,
-    prismaClient?: PrismaClientOrTransaction,
-  ): Promise<number> {
+  async deleteByTripId(tripId: string, prismaClient?: PrismaClientOrTransaction): Promise<number> {
     const client = prismaClient || this.prisma;
 
     const result = await client.tripBankedLocation.deleteMany({

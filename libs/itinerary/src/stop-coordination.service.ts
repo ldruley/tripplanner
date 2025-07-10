@@ -40,91 +40,89 @@ export class StopCoordinationService {
   async addStopToTrip(userId: string, data: AddStopToTripDto): Promise<Trip> {
     this.logger.debug(`Adding stop to trip ${data.tripId} for user ${userId}`);
 
-    return this.prismaService.$transaction(
-      async (prismaClient: PrismaClientOrTransaction) => {
-        // Step 1: Validate trip ownership
-        const tripBelongsToUser = await this.tripService.validateTripBelongsToUser(
-          data.tripId,
-          userId,
-          prismaClient,
-        );
+    return this.prismaService.$transaction(async (prismaClient: PrismaClientOrTransaction) => {
+      // Step 1: Validate trip ownership
+      const tripBelongsToUser = await this.tripService.validateTripBelongsToUser(
+        data.tripId,
+        userId,
+        prismaClient,
+      );
 
-        if (!tripBelongsToUser) {
-          throw new NotFoundException(`Trip ${data.tripId} not found or not owned by user`);
-        }
+      if (!tripBelongsToUser) {
+        throw new NotFoundException(`Trip ${data.tripId} not found or not owned by user`);
+      }
 
-        // Step 2: Create or find location (with deduplication)
-        const locationData: CreateLocationRequest = {
-          name: data.locationData.name,
-          description: data.locationData.description,
-          address: data.locationData.address,
-          city: data.locationData.city,
-          state: data.locationData.state,
-          country: data.locationData.country,
-          postalCode: data.locationData.postalCode,
-          latitude: data.locationData.latitude,
-          longitude: data.locationData.longitude,
-          apiSource: data.locationData.apiSource,
-          apiSourceId: data.locationData.apiSourceId,
-          category: data.locationData.category,
-          public: false, // Default to false, can be updated later
-        };
+      // Step 2: Create or find location (with deduplication)
+      const locationData: CreateLocationRequest = {
+        name: data.locationData.name,
+        description: data.locationData.description,
+        address: data.locationData.address,
+        city: data.locationData.city,
+        state: data.locationData.state,
+        country: data.locationData.country,
+        postalCode: data.locationData.postalCode,
+        latitude: data.locationData.latitude,
+        longitude: data.locationData.longitude,
+        apiSource: data.locationData.apiSource,
+        apiSourceId: data.locationData.apiSourceId,
+        category: data.locationData.category,
+        public: false, // Default to false, can be updated later
+      };
 
-        const location = await this.locationService.create(
-          locationData,
-          {
-            enableApiSourceMatching: true,
-            enableExactCoordinateMatching: true,
-          },
-          prismaClient,
-        );
-        this.logger.debug(`Created/found location ${location.id} for ${data.locationData.name}`);
+      const location = await this.locationService.create(
+        locationData,
+        {
+          enableApiSourceMatching: true,
+          enableExactCoordinateMatching: true,
+        },
+        prismaClient,
+      );
+      this.logger.debug(`Created/found location ${location.id} for ${data.locationData.name}`);
 
-        // Step 3: Determine insertion order
-        let insertOrder: number;
-        if (data.insertAtOrder !== undefined) {
-          insertOrder = data.insertAtOrder;
-          // Make room for the new stop by reordering existing stops
-          await this.makeRoomForStop(data.tripId, insertOrder, prismaClient);
-        } else {
-          // Add to the end
-          insertOrder = await this.stopService.getNextOrderForTrip(data.tripId, prismaClient);
-        }
+      // Step 3: Determine insertion order
+      let insertOrder: number;
+      if (data.insertAtOrder !== undefined) {
+        insertOrder = data.insertAtOrder;
+        // Make room for the new stop by reordering existing stops
+        await this.makeRoomForStop(data.tripId, insertOrder, prismaClient);
+      } else {
+        // Add to the end
+        insertOrder = await this.stopService.getNextOrderForTrip(data.tripId, prismaClient);
+      }
 
-        // Step 4: Create the stop
-        const stopData: CreateStopRequest = {
-          tripId: data.tripId,
-          locationId: location.id as string,
-          order: insertOrder,
-          stopType: 'PITSTOP',
-          plannedDuration: null,
-        };
+      // Step 4: Create the stop
+      const stopData: CreateStopRequest = {
+        tripId: data.tripId,
+        locationId: location.id as string,
+        order: insertOrder,
+        stopType: 'PITSTOP',
+        plannedDuration: null,
+      };
 
-        const stop = await this.stopService.create(stopData, prismaClient);
-        this.logger.debug(`Created stop ${stop.id} at order ${insertOrder}`);
+      const stop = await this.stopService.create(stopData, prismaClient);
+      this.logger.debug(`Created stop ${stop.id} at order ${insertOrder}`);
 
-        // Step 5: Update travel segments for the affected stops
-        await this.updateTravelSegmentsAfterStopInsertion(data.tripId, insertOrder, prismaClient);
+      // Step 5: Update travel segments for the affected stops
+      await this.updateTravelSegmentsAfterStopInsertion(data.tripId, insertOrder, prismaClient);
 
-        // Step 6: Refresh matrix for persisted trips (to include new stop in matrix calculations)
-        await this.tripService.refreshMatrixOnStopAddition(data.tripId, prismaClient);
+      // Step 6: Refresh matrix for persisted trips (to include new stop in matrix calculations)
+      await this.tripService.refreshMatrixOnStopAddition(data.tripId, prismaClient);
 
-        // Step 7: Recalculate timeline
-        await this.recalculateAndUpdateTimeline(data.tripId, prismaClient);
+      // Step 7: Recalculate timeline
+      await this.recalculateAndUpdateTimeline(data.tripId, prismaClient);
 
-        // Step 8: Return the complete trip
-        const completeTrip = await this.tripService.findById(
-          data.tripId,
-          true,
-          false,
-          true,
-          prismaClient,
-        );
+      // Step 8: Return the complete trip
+      const completeTrip = await this.tripService.findById(
+        data.tripId,
+        true,
+        false,
+        true,
+        prismaClient,
+      );
 
-        this.logger.log(`Successfully added stop ${stop.id} to trip ${data.tripId}`);
-        return completeTrip;
-      },
-    );
+      this.logger.log(`Successfully added stop ${stop.id} to trip ${data.tripId}`);
+      return completeTrip;
+    });
   }
 
   /**
@@ -233,7 +231,7 @@ export class StopCoordinationService {
         const completeTrip = await this.tripService.findById(
           data.tripId,
           true,
-          false,
+          true,
           true,
           prismaClient,
         );

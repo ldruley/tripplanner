@@ -12,6 +12,11 @@ export type HereBaseFeature = {
   };
   title?: string;
   id?: string;
+  timezone?: {
+    name?: string;
+    offset?: number; // offset in seconds from UTC
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 };
 

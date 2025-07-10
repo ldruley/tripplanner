@@ -83,7 +83,7 @@ export class TripRepository {
                 location: true,
               },
               orderBy: {
-                addedAt: 'desc',
+                createdAt: 'desc',
               },
             }
           : false,
@@ -133,7 +133,7 @@ export class TripRepository {
                 location: true,
               },
               orderBy: {
-                addedAt: 'desc',
+                createdAt: 'desc',
               },
             }
           : false,
@@ -193,7 +193,7 @@ export class TripRepository {
                 location: true,
               },
               orderBy: {
-                addedAt: 'desc',
+                createdAt: 'desc',
               },
             }
           : false,
@@ -315,7 +315,7 @@ export class TripRepository {
             location: true,
           },
           orderBy: {
-            addedAt: 'desc',
+            createdAt: 'desc',
           },
         },
         travelSegments: {
@@ -369,7 +369,7 @@ export class TripRepository {
             location: true,
           },
           orderBy: {
-            addedAt: 'desc',
+            createdAt: 'desc',
           },
         },
       },

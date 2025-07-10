@@ -62,4 +62,10 @@ export const appRoutes: Route[] = [
     title: 'My Locations - Trip Planner',
     canActivate: [authGuard],
   },
+  {
+    path: 'social',
+    loadChildren: () =>
+      import('./features/social/social.routes').then(m => m.SOCIAL_ROUTES),
+    canActivate: [authGuard],
+  },
 ];

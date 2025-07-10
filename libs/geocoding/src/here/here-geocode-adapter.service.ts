@@ -94,6 +94,7 @@ export class HereGeocodeAdapterService {
             city: feature.address?.city || 'Unknown city',
             region: feature.address?.state || 'Unknown region',
             postalCode: feature.address?.postalCode || 'Unknown postal code',
+            timezone: feature.timezone?.name || 'Unknown timezone',
             rawResponse: process.env['NODE_ENV'] === 'development' ? feature : undefined,
           };
           return GeocodingResultSchema.parse(location);

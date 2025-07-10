@@ -1,17 +1,14 @@
 <div class="container mx-auto p-4 md:p-6 space-y-6 bg-tp-bg-light dark:bg-tp-bg-primary">
-  <!-- Title above all content -->
-  <header class="mb-6">
-    <input
-      type="text"
-      aria-label="Trip Name"
-      placeholder="Trip Name (e.g., Summer Vacation)"
-      class="text-3xl font-bold text-tp-text-light-primary dark:text-tp-text-primary border-b-2 border-transparent focus:border-tp-orange outline-none w-full bg-transparent"
-      [ngModel]="currentTripName()"
-      (ngModelChange)="updateTripName($event)"
+  <!-- Trip Edit Controls -->
+  <div class="mb-6">
+    <app-trip-edit-controls
+      [trip]="currentTrip()"
+      [disabled]="false"
+      (tripDataChanged)="onTripDataChanged($event)"
     />
-  </header>
+  </div>
 
-  <!-- Top section: Location Search and Trip Details -->
+  <!-- Top section: Location Search -->
   <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
     <!-- Left column: Location Search -->
     <div class="md:col-span-2">
@@ -19,40 +16,9 @@
       </app-location-search>
     </div>
 
-    <!-- Right column: Trip details -->
+    <!-- Right column: Placeholder for future content -->
     <div class="md:col-span-3">
-      <div class="p-4 md:p-6 bg-tp-bg-light-primary dark:bg-tp-bg-secondary shadow-lg rounded-lg border border-tp-border-light dark:border-tp-border">
-        <div class="flex gap-4">
-          <div class="flex-shrink-0">
-            <label class="block text-sm font-medium text-tp-text-light-primary dark:text-tp-text-primary mb-1">
-              Start Date & Time
-            </label>
-            <p-datePicker
-              [(ngModel)]="startDate"
-              [showTime]="true"
-              [showSeconds]="false"
-              placeholder="Select start date"
-              class="w-56"
-              styleClass="w-full"
-              [inputStyle]="{'width': '100%'}"
-            />
-          </div>
-          <div class="flex-1">
-            <label class="block text-sm font-medium text-tp-text-light-primary dark:text-tp-text-primary mb-1">
-              Description
-            </label>
-            <textarea
-              aria-label="Trip Description"
-              placeholder="Trip description (optional)"
-              class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary border border-tp-border-light dark:border-tp-border rounded-md p-2 focus:border-tp-orange outline-none w-full bg-tp-bg-light-primary dark:bg-tp-bg-secondary"
-              [ngModel]="currentTripDescription()"
-              (ngModelChange)="updateTripDescription($event)"
-              rows="2"
-            >
-            </textarea>
-          </div>
-        </div>
-      </div>
+      <!-- This space can be used for additional trip planning tools -->
     </div>
   </div>
 

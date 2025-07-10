@@ -26,8 +26,25 @@ model User {
   settings          UserSettings?
   favoriteLocations UserFavoriteLocation[]
   tripParticipants  TripParticipant[]
+  requester         Friendship[]           @relation("SentRequests")
+  addressee         Friendship[]           @relation("ReceivedRequests")
 
   @@map("users")
+}
+
+model Friendship {
+  id         String           @id @default(uuid())
+  senderId   String           @map("sender_id")
+  receiverId String           @map("receiver_id")
+  status     FriendshipStatus @default(PENDING)
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt @map("updated_at")
+
+  sender   User @relation("SentRequests", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedRequests", fields: [receiverId], references: [id])
+
+  @@unique([senderId, receiverId])
+  @@map("friendships")
 }
 
 model UserSettings {
@@ -51,9 +68,9 @@ model Profile {
   displayName         String?    @map("display_name")
   avatarUrl           String?    @map("avatar_url")
   status              UserStatus
-  lastSignInAt        DateTime?  @map("last_sign_in_at") @db.Timestamptz(6)
-  createdAt           DateTime?  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime?  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  lastSignInAt        DateTime?  @map("last_sign_in_at")
+  createdAt           DateTime?  @default(now()) @map("created_at")
+  updatedAt           DateTime?  @updatedAt @map("updated_at")
   onboardingCompleted Boolean?   @default(false) @map("onboarding_completed")
 
   //relations
@@ -77,7 +94,7 @@ model Location {
   timezone     String? // Likely make this required in the future
   apiSource    ApiSourceProvider? @map("api_source") // Provider source
   apiSourceId  String?            @map("api_source_id") // Provider-specific ID
-  extendedData Json? // Full data from the API (normalized JSON)
+  extendedData Json?              @map("extended_data") // Full data from the API (normalized JSON)
   category     LocationCategory?
   public       Boolean            @default(false) // Flag for marking locations as public/shared
   // Prisma doesn't support geography types directly
@@ -284,4 +301,11 @@ enum StopType {
 enum TripParticipantRole {
   PARTICIPANT
   EDITOR
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  BLOCKED
 }

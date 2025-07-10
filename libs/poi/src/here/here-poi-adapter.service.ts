@@ -62,6 +62,7 @@ export class HerePoiAdapterService {
             region: feature.address?.state || 'Unknown region',
             postalCode: feature.address?.postalCode || 'Unknown postal code',
             rawResponse: this.configService.isDevelopment() ? feature : undefined,
+            timezone: feature.timezone?.name || 'Unknown timezone',
           };
 
           const parsed = PoiSearchResultSchema.safeParse(location);

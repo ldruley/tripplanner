@@ -1,0 +1,39 @@
+.search-results {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.search-results::-webkit-scrollbar {
+  width: 6px;
+}
+
+.search-results::-webkit-scrollbar-track {
+  background: var(--tp-bg-light-secondary);
+}
+
+.search-results::-webkit-scrollbar-thumb {
+  background: var(--tp-bg-light-quaternary);
+  border-radius: 3px;
+}
+
+.search-results::-webkit-scrollbar-thumb:hover {
+  background: var(--tp-border-light-strong);
+}
+
+.dark .search-results::-webkit-scrollbar-track {
+  background: var(--tp-bg-secondary);
+}
+
+.dark .search-results::-webkit-scrollbar-thumb {
+  background: var(--tp-bg-quaternary);
+}
+
+.dark .search-results::-webkit-scrollbar-thumb:hover {
+  background: var(--tp-border);
+}
+
+.friends-tab,
+.pending-requests-tab,
+.sent-requests-tab {
+  min-height: 300px;
+}

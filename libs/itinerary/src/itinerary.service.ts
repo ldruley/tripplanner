@@ -14,6 +14,7 @@ import {
 } from '@trip-planner/shared/dtos';
 import { Trip } from '@trip-planner/types';
 import { TravelMode } from '@prisma/client';
+import { UpdateTripWithRoutingSchema } from '../../shared/types/src/schemas/itinerary.schema';
 
 @Injectable()
 export class ItineraryService {
@@ -313,15 +314,17 @@ export class ItineraryService {
     data: UpdateTripWithRoutingDto,
   ): Promise<Trip> {
     this.logger.log(`Updating trip ${tripId} with routing for user ${userId}`);
-
+    const parsedData = UpdateTripWithRoutingSchema.parse(data);
     try {
       // Step 1: Update trip basic information
       const updateData = {
-        name: data.name,
-        description: data.description,
+        name: parsedData.name,
+        description: parsedData.description,
+        startDate: parsedData.startDate,
+        endDate: parsedData.endDate,
       };
 
-      const updatedTrip = await this.tripService.update(tripId, updateData);
+      await this.tripService.update(tripId, updateData);
 
       // Step 2: Get the updated trip with stops for routing calculation
       const tripWithStops = await this.tripService.findById(tripId, true);

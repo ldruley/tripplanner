@@ -20,17 +20,43 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
         </svg>
       </div>
-      <div class="flex-grow min-w-0">
-        <span class="font-semibold text-tp-text-light-primary dark:text-tp-text-primary truncate"
-          >{{ index() + 1 }}. {{ stop().location?.name || 'Unnamed Stop' }}</span
+      <div class="flex-1">
+        <div class="font-semibold text-tp-text-light-primary dark:text-tp-text-primary"
+          >{{ index() + 1 }}. {{ stop().location?.name || 'Unnamed Stop' }}</div
         >
         @if (stop().location?.address) {
           <p
-            class="text-xs text-tp-text-light-secondary dark:text-tp-text-secondary truncate"
+            class="text-xs text-tp-text-light-secondary dark:text-tp-text-secondary"
             title="{{ stop().location?.address }}"
           >
             {{ stop().location?.address }}
           </p>
+        }
+        @if (hasTimingInfo()) {
+          <div class="mt-1 text-xs text-tp-text-light-secondary dark:text-tp-text-secondary">
+            @if (displayArrivalTime()) {
+              <span class="inline-flex items-center gap-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Arrive: {{ displayArrivalTime() }}
+                @if (plannedArrivalTimeInLocation()) {
+                  <span class="text-green-600 dark:text-green-400 text-xs">(planned)</span>
+                }
+              </span>
+            }
+            @if (displayDepartureTime()) {
+              <span class="inline-flex items-center gap-1 ml-3">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+                Depart: {{ displayDepartureTime() }}
+              </span>
+            }
+            @if (stop().location?.timezone && stop().location?.timezone !== 'UTC') {
+              <span class="ml-2 text-blue-600 dark:text-blue-400 text-xs">{{ locationTimezoneDisplayName() }}</span>
+            }
+          </div>
         }
       </div>
     </div>

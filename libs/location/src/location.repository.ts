@@ -18,7 +18,10 @@ export class LocationRepository {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @returns Created Location
    */
-  async create(data: CreateLocationRequest, prismaClient?: PrismaClientOrTransaction): Promise<Location> {
+  async create(
+    data: CreateLocationRequest,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Location> {
     const client = prismaClient || this.prisma;
 
     const location = await client.location.create({
@@ -29,12 +32,13 @@ export class LocationRepository {
         city: data.city || null,
         state: data.state || null,
         country: data.country || null,
-        postalCode: data.postalCode || null,
+        postalCode: data.postalCode,
         latitude: data.latitude,
         longitude: data.longitude,
-        apiSource: (data.apiSource as any) || null,
+        timezone: data.timezone,
+        apiSource: data.apiSource || null,
         apiSourceId: data.apiSourceId || null,
-        category: (data.category as any) || null,
+        category: data.category || null,
         public: data.public || false,
       },
     });
@@ -105,7 +109,11 @@ export class LocationRepository {
     }) as Location[];
   }
 
-  async findByNameAndAddress(name: string, address?: string, prismaClient?: PrismaClientOrTransaction): Promise<Location[]> {
+  async findByNameAndAddress(
+    name: string,
+    address?: string,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Location[]> {
     const client = prismaClient || this.prisma;
 
     const whereClause: any = {
@@ -145,7 +153,11 @@ export class LocationRepository {
    * @param longitude
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    */
-  async findByExactCoordinates(latitude: number, longitude: number, prismaClient?: PrismaClientOrTransaction): Promise<Location[]> {
+  async findByExactCoordinates(
+    latitude: number,
+    longitude: number,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Location[]> {
     const client = prismaClient || this.prisma;
 
     const locations = await client.location.findMany({
@@ -164,7 +176,11 @@ export class LocationRepository {
    * @param apiSourceId - API source specific ID
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    */
-  async findByApiSourceId(apiSource: string, apiSourceId: string, prismaClient?: PrismaClientOrTransaction): Promise<Location[]> {
+  async findByApiSourceId(
+    apiSource: string,
+    apiSourceId: string,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Location[]> {
     const client = prismaClient || this.prisma;
 
     const locations = await client.location.findMany({
@@ -183,7 +199,10 @@ export class LocationRepository {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @returns Array of Locations matching the criteria
    */
-  async search(criteria: LocationSearchCriteria, prismaClient?: PrismaClientOrTransaction): Promise<Location[]> {
+  async search(
+    criteria: LocationSearchCriteria,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Location[]> {
     const client = prismaClient || this.prisma;
 
     const whereClause: any = {};
@@ -255,7 +274,11 @@ export class LocationRepository {
    * @param prismaClient - Optional Prisma client for testing or custom transactions
    * @returns Updated Location
    */
-  async update(id: string, data: UpdateLocationRequest, prismaClient?: PrismaClientOrTransaction): Promise<Location> {
+  async update(
+    id: string,
+    data: UpdateLocationRequest,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Location> {
     const client = prismaClient || this.prisma;
 
     const updateData: any = {};

@@ -26,6 +26,9 @@ export const PoiSearchResultSchema = extendApi(
     country: countrySchema.describe('Country'),
     postalCode: postalCodeSchema.describe('Postal or ZIP code'),
 
+    // Timezone information
+    timezone: z.string().nullable().optional().describe('Timezone of the location'),
+
     // Provider metadata
     provider: z
       .enum(['mapbox', 'google', 'here'])
@@ -58,7 +61,10 @@ export type PoiSearchResult = z.infer<typeof PoiSearchResultSchema>;
 
 export const PoiSearchQuerySchema = extendApi(
   z.object({
-    search: z.string().min(3, { message: 'Search query must be at least 3 characters.' }).describe('Search term for finding POIs (minimum 3 characters)'),
+    search: z
+      .string()
+      .min(3, { message: 'Search query must be at least 3 characters.' })
+      .describe('Search term for finding POIs (minimum 3 characters)'),
     limit: z.coerce
       .number()
       .int()

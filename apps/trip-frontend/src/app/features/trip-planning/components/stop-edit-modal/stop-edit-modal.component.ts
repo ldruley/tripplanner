@@ -9,6 +9,8 @@ import { StopService } from '../../services/stop.service';
 import { TripDataService } from '../../services/trip-data.service';
 import { Stop, UpdateStopRequest } from '@trip-planner/types';
 import { StopType } from '@prisma/client';
+import { TripTimezoneService } from '../../services/trip-timezone.service';
+import { DateTime } from 'luxon';
 
 interface StopTypeOption {
   label: string;
@@ -18,21 +20,15 @@ interface StopTypeOption {
 @Component({
   selector: 'app-stop-edit-modal',
   standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    DatePickerModule,
-    SelectModule,
-    ButtonComponent
-  ],
+  imports: [CommonModule, ReactiveFormsModule, DatePickerModule, SelectModule, ButtonComponent],
   templateUrl: './stop-edit-modal.component.html',
-  styleUrls: ['./stop-edit-modal.component.css']
+  styleUrls: ['./stop-edit-modal.component.css'],
 })
 export class StopEditModalComponent implements OnInit {
   // Inputs
   stop = input.required<Stop>();
   isOpen = input<boolean>(false);
-  
+
   // Outputs
   closeModal = output<void>();
   stopUpdated = output<Stop>();
@@ -42,34 +38,70 @@ export class StopEditModalComponent implements OnInit {
   private readonly stopService = inject(StopService);
   private readonly tripDataService = inject(TripDataService);
   private toastService = inject(ToastService);
+  private readonly tripTimezoneService = inject(TripTimezoneService);
 
   // Component state
   stopForm!: FormGroup;
   isLoading = signal<boolean>(false);
-  
+
   // Stop type options
   stopTypeOptions: StopTypeOption[] = [
     { label: 'Pitstop', value: StopType.PITSTOP },
-    { label: 'Overnight', value: StopType.OVERNIGHT }
+    { label: 'Overnight', value: StopType.OVERNIGHT },
   ];
 
   // Computed properties
   fullAddress = computed(() => {
     const stopLocation = this.stop().location;
     if (!stopLocation) return 'Unknown location';
-    
+
     if (stopLocation.address) {
       return stopLocation.address;
     }
-    
+
     // Build address from components
-    const addressParts = [
-      stopLocation.city,
-      stopLocation.state,
-      stopLocation.country
-    ].filter(Boolean);
-    
+    const addressParts = [stopLocation.city, stopLocation.state, stopLocation.country].filter(
+      Boolean,
+    );
+
     return addressParts.length > 0 ? addressParts.join(', ') : 'No address available';
+  });
+
+  // Timezone-aware computed properties
+  locationTimezone = computed(() => {
+    const location = this.stop().location;
+    return location?.timezone || 'UTC';
+  });
+
+  locationTimezoneDisplayName = computed(() => {
+    const location = this.stop().location;
+    return location ? this.tripTimezoneService.getLocationTimezoneDisplayName(location) : 'UTC';
+  });
+
+  // Get current times in location timezone for display
+  currentArrivalTimeInLocation = computed(() => {
+    const currentStop = this.stop();
+    if (!currentStop.plannedArrivalTime || !currentStop.location) return null;
+
+    return this.tripTimezoneService.convertDateToLocationTimezone(
+      currentStop.plannedArrivalTime,
+      currentStop.location,
+    );
+  });
+
+  currentDepartureTimeInLocation = computed(() => {
+    const currentStop = this.stop();
+    if (!currentStop.plannedArrivalTime || !currentStop.plannedDuration || !currentStop.location)
+      return null;
+
+    const arrivalTime = new Date(currentStop.plannedArrivalTime);
+    const durationMs = currentStop.plannedDuration * 60 * 1000;
+    const departureTime = new Date(arrivalTime.getTime() + durationMs);
+
+    return this.tripTimezoneService.convertDateToLocationTimezone(
+      departureTime,
+      currentStop.location,
+    );
   });
 
   plannedDuration = computed(() => {
@@ -77,11 +109,11 @@ export class StopEditModalComponent implements OnInit {
     if (!form?.plannedArrivalTime || !form?.plannedDepartureTime) {
       return null;
     }
-    
+
     const arrivalTime = new Date(form.plannedArrivalTime);
     const departureTime = new Date(form.plannedDepartureTime);
     const durationMs = departureTime.getTime() - arrivalTime.getTime();
-    
+
     // Convert milliseconds to minutes
     return Math.round(durationMs / (1000 * 60));
   });
@@ -92,20 +124,34 @@ export class StopEditModalComponent implements OnInit {
 
   private initializeForm(): void {
     const currentStop = this.stop();
-    
-    // Calculate planned departure time from arrival + duration if both exist
-    let plannedDepartureTime = null;
-    if (currentStop.plannedArrivalTime && currentStop.plannedDuration) {
+
+    // Convert UTC times to location timezone for display in form
+    let localArrivalTime = null;
+    let localDepartureTime = null;
+
+    if (currentStop.plannedArrivalTime && currentStop.location) {
+      localArrivalTime = this.tripTimezoneService.convertDateToLocationTimezone(
+        currentStop.plannedArrivalTime,
+        currentStop.location,
+      ).toJSDate();
+    }
+
+    if (currentStop.plannedArrivalTime && currentStop.plannedDuration && currentStop.location) {
       const arrivalTime = new Date(currentStop.plannedArrivalTime);
       const durationMs = currentStop.plannedDuration * 60 * 1000;
-      plannedDepartureTime = new Date(arrivalTime.getTime() + durationMs);
+      const departureTime = new Date(arrivalTime.getTime() + durationMs);
+
+      localDepartureTime = this.tripTimezoneService.convertDateToLocationTimezone(
+        departureTime,
+        currentStop.location,
+      ).toJSDate();
     }
-    
+
     this.stopForm = this.formBuilder.group({
-      plannedArrivalTime: [currentStop.plannedArrivalTime || null],
-      plannedDepartureTime: [plannedDepartureTime],
+      plannedArrivalTime: [localArrivalTime],
+      plannedDepartureTime: [localDepartureTime],
       stopType: [currentStop.stopType || null],
-      notes: [currentStop.notes || '', [Validators.maxLength(1000)]]
+      notes: [currentStop.notes || '', [Validators.maxLength(1000)]],
     });
   }
 
@@ -126,49 +172,79 @@ export class StopEditModalComponent implements OnInit {
 
     this.isLoading.set(true);
     const formValue = this.stopForm.value;
-    
-    // Calculate duration from arrival and departure times
+    const currentStop = this.stop();
+
+    // Convert form times from location timezone to UTC for backend storage
+    let utcArrivalTime = null;
     let calculatedDuration = null;
-    if (formValue.plannedArrivalTime && formValue.plannedDepartureTime) {
-      const arrivalTime = new Date(formValue.plannedArrivalTime);
-      const departureTime = new Date(formValue.plannedDepartureTime);
-      const durationMs = departureTime.getTime() - arrivalTime.getTime();
-      calculatedDuration = Math.round(durationMs / (1000 * 60)); // Convert to minutes
+
+    if (formValue.plannedArrivalTime && currentStop.location) {
+      // Convert arrival time from location timezone to UTC
+      const localArrivalTime = this.tripTimezoneService.convertDateToLocationTimezone(
+        formValue.plannedArrivalTime,
+        currentStop.location,
+      );
+      utcArrivalTime = this.tripTimezoneService.convertTimezoneAwareDateToUTC(localArrivalTime);
+
+      // Calculate duration from arrival and departure times
+      if (formValue.plannedDepartureTime) {
+        const localDepartureTime = this.tripTimezoneService.convertDateToLocationTimezone(
+          formValue.plannedDepartureTime,
+          currentStop.location,
+        );
+
+        const durationMs = localDepartureTime.diff(localArrivalTime, 'milliseconds').milliseconds;
+        calculatedDuration = Math.round(durationMs / (1000 * 60)); // Convert to minutes
+
+        // Basic validation: warn if times seem unreasonable
+        const hour = localArrivalTime.hour;
+        if (hour < 5 || hour > 23) {
+          this.toastService.showWarn(
+            'Unusual Time',
+            `Arrival time ${localArrivalTime.toFormat('HH:mm')} might be outside typical hours for this location.`,
+          );
+        }
+      }
     }
-    
+
     // Prepare update request
     const updateRequest: UpdateStopRequest = {
-      plannedArrivalTime: formValue.plannedArrivalTime || null,
+      plannedArrivalTime: utcArrivalTime,
       plannedDuration: calculatedDuration,
       stopType: formValue.stopType || null,
-      notes: formValue.notes || null
+      notes: formValue.notes || null,
     };
 
     // Remove null/undefined values
     Object.keys(updateRequest).forEach(key => {
-      if (updateRequest[key as keyof UpdateStopRequest] === null || 
-          updateRequest[key as keyof UpdateStopRequest] === undefined) {
+      if (
+        updateRequest[key as keyof UpdateStopRequest] === null ||
+        updateRequest[key as keyof UpdateStopRequest] === undefined
+      ) {
         delete updateRequest[key as keyof UpdateStopRequest];
       }
     });
 
     this.stopService.updateStop(this.stop().id, updateRequest).subscribe({
-      next: (updatedStop) => {
+      next: updatedStop => {
         // Update local state
         this.tripDataService.updateStop(updatedStop.id, updatedStop);
-        
+
         // Emit success
         this.stopUpdated.emit(updatedStop);
         this.toastService.showSuccess('Stop Updated', 'Stop details have been saved successfully.');
         this.onClose();
       },
-      error: (error) => {
+      error: error => {
         console.error('Failed to update stop:', error);
-        this.toastService.showError('Update Failed', 'Failed to update stop details. Please try again.');
+        this.toastService.showError(
+          'Update Failed',
+          'Failed to update stop details. Please try again.',
+        );
       },
       complete: () => {
         this.isLoading.set(false);
-      }
+      },
     });
   }
 
@@ -186,17 +262,18 @@ export class StopEditModalComponent implements OnInit {
     if (field.errors['required']) return `${fieldName} is required`;
     if (field.errors['min']) return `Minimum value is ${field.errors['min'].min}`;
     if (field.errors['max']) return `Maximum value is ${field.errors['max'].max}`;
-    if (field.errors['maxlength']) return `Maximum length is ${field.errors['maxlength'].requiredLength}`;
-    
+    if (field.errors['maxlength'])
+      return `Maximum length is ${field.errors['maxlength'].requiredLength}`;
+
     return 'Invalid value';
   }
 
   hasChanges(): boolean {
     if (!this.stopForm) return false;
-    
+
     const currentStop = this.stop();
     const formValue = this.stopForm.value;
-    
+
     // Calculate current departure time from arrival + duration
     let currentDepartureTime = null;
     if (currentStop.plannedArrivalTime && currentStop.plannedDuration) {
@@ -204,7 +281,7 @@ export class StopEditModalComponent implements OnInit {
       const durationMs = currentStop.plannedDuration * 60 * 1000;
       currentDepartureTime = new Date(arrivalTime.getTime() + durationMs);
     }
-    
+
     return (
       formValue.plannedArrivalTime !== currentStop.plannedArrivalTime ||
       formValue.plannedDepartureTime?.getTime() !== currentDepartureTime?.getTime() ||

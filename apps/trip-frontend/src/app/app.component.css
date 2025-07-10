@@ -39,6 +39,19 @@
   overflow-x: auto;
 }
 
+/* Auth layout for non-authenticated users */
+.auth-layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.auth-content {
+  flex: 1;
+  min-height: 100vh;
+  width: 100%;
+}
+
 /* Ensure proper z-index for toast */
 p-toast {
   z-index: 9999;

@@ -9,6 +9,7 @@ import { LocationBankComponent } from '../location-bank/location-bank.component'
 import { ItineraryBuilderComponent } from '../itinerary-builder/itinerary-builder.component';
 import { StopEditModalComponent } from '../stop-edit-modal/stop-edit-modal.component';
 import { ButtonComponent } from '../../../shared/components';
+import { TripEditControlsComponent, TripEditControlsData } from '../trip-edit-controls/trip-edit-controls.component';
 
 import { Location, Trip, Stop } from '@trip-planner/types';
 import { MatrixCalculationService } from '../../services/matrix-calculation.service';
@@ -26,6 +27,7 @@ import { TripDataService } from '../../services/trip-data.service';
     CdkDropListGroup,
     ButtonComponent,
     DatePickerModule,
+    TripEditControlsComponent,
   ],
   templateUrl: './trip-editor.component.html',
   styleUrls: ['./trip-editor.component.css'],
@@ -59,20 +61,18 @@ export class TripEditorComponent {
   matrixData = this.matrixService.formattedMatrix;
   isLoadingMatrix = this.matrixService.isLoading;
 
-  // Start date property (not persisted yet)
-  startDate: Date | null = null;
-
   // Stop edit modal state
   isStopEditModalOpen = signal<boolean>(false);
   editingStop = signal<Stop | null>(null);
 
-  // Helper methods for trip name/description updates
-  updateTripName(newName: string): void {
-    this.tripDataService.updateTripLocal({ name: newName });
-  }
-
-  updateTripDescription(newDescription: string | null): void {
-    this.tripDataService.updateTripLocal({ description: newDescription });
+  // Handle trip data changes from the trip-edit-controls component
+  onTripDataChanged(tripData: TripEditControlsData): void {
+    this.tripDataService.updateTripLocal({
+      name: tripData.name,
+      description: tripData.description,
+      startDate: tripData.startDate,
+      endDate: tripData.endDate
+    });
   }
 
   /**

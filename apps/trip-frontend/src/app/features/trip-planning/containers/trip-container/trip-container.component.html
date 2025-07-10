@@ -5,8 +5,144 @@
     </p>
   </div>
 } @else if (trip()) {
-  <app-trip-editor (tripSaved)="handleTripSave()">
-  </app-trip-editor>
+  <div class="container mx-auto p-4 md:p-6">
+
+    <!-- Trip Edit Controls -->
+    <div class="mb-6">
+      <app-trip-edit-controls
+        [trip]="trip()"
+        [disabled]="isLoading()"
+        (tripDataChanged)="onTripDataChanged($event)"
+      />
+    </div>
+
+    <!-- Mobile Navigation Buttons -->
+    <div class="flex mb-4 md:hidden">
+      <button
+        (click)="showBankView()"
+        [class.bg-tp-orange]="currentMobileView() === 'bank'"
+        [class.text-white]="currentMobileView() === 'bank'"
+        [class.bg-tp-bg-light-quaternary]="currentMobileView() !== 'bank'"
+        [class.dark:bg-tp-bg-quaternary]="currentMobileView() !== 'bank'"
+        class="flex-1 px-4 py-2 text-sm font-medium border-r border-tp-border-light dark:border-tp-border transition-colors duration-200">
+        Search
+      </button>
+      <button
+        (click)="showItineraryView()"
+        [class.bg-tp-orange]="currentMobileView() === 'itinerary'"
+        [class.text-white]="currentMobileView() === 'itinerary'"
+        [class.bg-tp-bg-light-quaternary]="currentMobileView() !== 'itinerary'"
+        [class.dark:bg-tp-bg-quaternary]="currentMobileView() !== 'itinerary'"
+        class="flex-1 px-4 py-2 text-sm font-medium transition-colors duration-200">
+        Itinerary
+      </button>
+    </div>
+
+    <!-- Desktop Layout -->
+    <div class="hidden md:block">
+
+      <!-- Location Search - Top Section -->
+      <div class="mb-6">
+        <app-location-search
+          (locationSelected)="onLocationSelected($event)">
+        </app-location-search>
+      </div>
+
+      <!-- Bank & Itinerary - Bottom Section -->
+      <div class="flex gap-6 transition-all duration-300 ease-in-out">
+
+        <!-- Left Column: Bank -->
+        <div class="transition-all duration-300 ease-in-out" [ngClass]="{'w-1/3': !isLocationBankEmpty(), 'w-0': isLocationBankEmpty(), 'opacity-0': isLocationBankEmpty(), 'overflow-hidden': isLocationBankEmpty()}">
+          <app-location-bank
+            listId="desktop-bank-list"
+            [connectedDropLists]="['desktop-itinerary-list']"
+            [bankedLocations]="bankedLocationsForBank()"
+            (dragStarted)="onLocationDragStarted($event)"
+            (addToItinerary)="onLocationAddedToItinerary($event)"
+            (locationRemovedFromBank)="onLocationRemovedFromBank($event)"
+            (itemDroppedFromItinerary)="onStopDroppedToBank($event)">
+          </app-location-bank>
+        </div>
+
+        <!-- Right Column: Itinerary -->
+        <div class="transition-all duration-300 ease-in-out" [ngClass]="{'w-2/3': !isLocationBankEmpty(), 'w-full': isLocationBankEmpty()}">
+          <app-itinerary-builder
+            listId="desktop-itinerary-list"
+            [connectedDropLists]="['desktop-bank-list']"
+            [itineraryStops]="itineraryStops()"
+            [matrixData]="matrixData()"
+            (stopsReordered)="onItineraryReorder($event)"
+            (removeStopRequested)="onStopRemoved($event)"
+            (editStopRequested)="onStopEditRequested($event)"
+            (itemDroppedFromOtherList)="onLocationDroppedFromBank($event)">
+          </app-itinerary-builder>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Layout -->
+    <div class="md:hidden">
+
+      <!-- Bank View -->
+      @if (currentMobileView() === 'bank') {
+        <div class="animate-fade-in">
+          <!-- Location Search -->
+          <div class="mb-6">
+            <app-location-search
+              (locationSelected)="onLocationSelected($event)">
+            </app-location-search>
+          </div>
+
+          <!-- Location Bank -->
+          <div>
+            <app-location-bank
+              listId="mobile-bank-list"
+              [connectedDropLists]="['mobile-itinerary-list']"
+              [bankedLocations]="bankedLocationsForBank()"
+              (dragStarted)="onLocationDragStarted($event)"
+              (addToItinerary)="onLocationAddedToItinerary($event)"
+              (itemDroppedFromItinerary)="onStopDroppedToBank($event)">
+            </app-location-bank>
+          </div>
+        </div>
+      }
+
+      <!-- Itinerary View -->
+      @if (currentMobileView() === 'itinerary') {
+        <div class="animate-fade-in">
+          <app-itinerary-builder
+            listId="mobile-itinerary-list"
+            [connectedDropLists]="['mobile-bank-list']"
+            [itineraryStops]="itineraryStops()"
+            [matrixData]="matrixData()"
+            (stopsReordered)="onItineraryReorder($event)"
+            (removeStopRequested)="onStopRemoved($event)"
+            (editStopRequested)="onStopEditRequested($event)">
+          </app-itinerary-builder>
+        </div>
+      }
+    </div>
+
+    <!-- Save Button -->
+    <footer class="mt-8 flex justify-center">
+      <button
+        (click)="handleTripSave()"
+        [disabled]="isLoading()"
+        class="px-6 py-3 bg-tp-orange hover:bg-tp-orange-hover text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+        Save Trip
+      </button>
+    </footer>
+
+    <!-- Stop Edit Modal -->
+    @if (editingStop()) {
+      <app-stop-edit-modal
+        [stop]="editingStop()!"
+        [isOpen]="isStopEditModalOpen()"
+        (closeModal)="onStopEditModalClose()"
+        (stopUpdated)="onStopUpdated($event)">
+      </app-stop-edit-modal>
+    }
+  </div>
 } @else if (error()) {
   <div class="p-6 text-center">
     <p class="text-lg text-red-600 dark:text-red-400">{{ error() }}</p>

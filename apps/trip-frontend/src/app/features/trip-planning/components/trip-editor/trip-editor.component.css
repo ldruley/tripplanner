@@ -1,12 +1,4 @@
 /* Trip editor component styles */
 
-/* DatePicker Input Field Styling for Dark Mode */
-::ng-deep .p-datepicker-input {
-  @apply bg-tp-bg-light-primary dark:bg-tp-bg-tertiary;
-  @apply text-tp-text-light-primary dark:text-tp-text-primary;
-  @apply border-tp-border-light dark:border-tp-border;
-  @apply placeholder:text-tp-text-light-secondary dark:placeholder:text-tp-text-secondary;
-  @apply focus:border-tp-orange focus:ring-2 focus:ring-tp-orange/20;
-  @apply transition-colors duration-150;
-}
+
 

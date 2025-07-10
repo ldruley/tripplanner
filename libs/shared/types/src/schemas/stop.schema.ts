@@ -4,7 +4,9 @@ import { LocationSchema } from './location.schema';
 import { uuidSchema } from './base.schema';
 import { StopType } from '@prisma/client';
 
-export const StopTypeSchema = z.nativeEnum(StopType).describe('Type of stop (PITSTOP or OVERNIGHT)');
+export const StopTypeSchema = z
+  .nativeEnum(StopType)
+  .describe('Type of stop (PITSTOP or OVERNIGHT)');
 
 export const StopSchema = extendApi(
   z.object({
@@ -15,9 +17,22 @@ export const StopSchema = extendApi(
 
     // Timing fields
     plannedArrivalTime: z.coerce.date().nullable().optional().describe('User-planned arrival time'),
-    plannedDuration: z.number().int().nullable().optional().describe('Planned duration in minutes at this stop'),
-    calculatedArrivalTime: z.coerce.date().nullable().optional().describe('System-calculated arrival time'),
-    calculatedDepartureTime: z.coerce.date().nullable().optional().describe('System-calculated departure time'),
+    plannedDuration: z
+      .number()
+      .int()
+      .nullable()
+      .optional()
+      .describe('Planned duration in minutes at this stop'),
+    calculatedArrivalTime: z.coerce
+      .date()
+      .nullable()
+      .optional()
+      .describe('System-calculated arrival time'),
+    calculatedDepartureTime: z.coerce
+      .date()
+      .nullable()
+      .optional()
+      .describe('System-calculated departure time'),
 
     stopType: StopTypeSchema.nullable().optional(),
     notes: z.string().nullable().optional().describe('User notes about this stop'),
@@ -107,6 +122,7 @@ export const StopWithLocationSchema = extendApi(
       plannedDuration: 120,
       stopType: 'PITSTOP',
       notes: 'Visit the famous cathedral',
+      extendedData: null,
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: '2024-01-01T00:00:00Z',
       location: {
@@ -152,15 +168,27 @@ export const StopOrderUpdateSchema = extendApi(
 export const BulkStopUpdateSchema = extendApi(
   z.object({
     tripId: uuidSchema.describe('ID of the trip containing the stops to update'),
-    updates: z.array(
-      z.object({
-        id: uuidSchema.describe('ID of the stop to update'),
-        plannedArrivalTime: z.coerce.date().nullable().optional().describe('Updated planned arrival time'),
-        plannedDuration: z.number().int().min(0).nullable().optional().describe('Updated planned duration in minutes'),
-        stopType: StopTypeSchema.nullable().optional(),
-        notes: z.string().nullable().optional().describe('Updated notes for the stop'),
-      }),
-    ).describe('Array of stop updates to apply'),
+    updates: z
+      .array(
+        z.object({
+          id: uuidSchema.describe('ID of the stop to update'),
+          plannedArrivalTime: z.coerce
+            .date()
+            .nullable()
+            .optional()
+            .describe('Updated planned arrival time'),
+          plannedDuration: z
+            .number()
+            .int()
+            .min(0)
+            .nullable()
+            .optional()
+            .describe('Updated planned duration in minutes'),
+          stopType: StopTypeSchema.nullable().optional(),
+          notes: z.string().nullable().optional().describe('Updated notes for the stop'),
+        }),
+      )
+      .describe('Array of stop updates to apply'),
   }),
   {
     title: 'Bulk Stop Update',
@@ -182,7 +210,11 @@ export const BulkStopUpdateSchema = extendApi(
 export const StopSearchSchema = extendApi(
   z.object({
     tripId: uuidSchema.optional().describe('Filter stops by trip ID'),
-    includeLocation: z.boolean().default(false).optional().describe('Include location details in response'),
+    includeLocation: z
+      .boolean()
+      .default(false)
+      .optional()
+      .describe('Include location details in response'),
     locationId: uuidSchema.optional().describe('Filter stops by location ID'),
     stopType: StopTypeSchema.optional().describe('Filter stops by type'),
   }),

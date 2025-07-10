@@ -22,6 +22,7 @@ import { TravelSegmentModule } from '@trip-planner/travel-segment';
 import { TimelineModule } from '@trip-planner/timeline';
 import { ItineraryModule } from '@trip-planner/itinerary';
 import { UserFavoritesModule } from '../domain/user-favorites/user-favorites.module';
+import { SocialModule } from '@trip-planner/social';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { UserFavoritesModule } from '../domain/user-favorites/user-favorites.mod
     TimelineModule,
     ItineraryModule,
     UserFavoritesModule,
+    SocialModule,
   ],
   controllers: [AppController, OpenApiController],
   providers: [AppService],
