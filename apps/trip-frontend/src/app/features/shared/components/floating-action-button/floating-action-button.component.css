@@ -1,0 +1,118 @@
+.fab {
+  @apply fixed z-50 flex items-center justify-center;
+  @apply bg-tp-orange text-white shadow-lg;
+  @apply border border-transparent transition-all duration-300 ease-in-out;
+  @apply hover:bg-tp-orange-hover hover:shadow-xl hover:scale-105;
+  @apply focus:outline-none focus:ring-2 focus:ring-tp-orange focus:ring-offset-2;
+  @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+  @apply dark:bg-tp-orange dark:hover:bg-tp-orange-hover dark:focus:ring-tp-border;
+}
+
+/* Positions */
+.fab-bottom-right {
+  @apply bottom-6 right-6;
+}
+
+.fab-bottom-left {
+  @apply bottom-6 left-6;
+}
+
+.fab-bottom-center {
+  @apply bottom-6 left-1/2 transform -translate-x-1/2;
+}
+
+/* Sizes for icon-only FABs */
+.fab-icon-only.fab-sm {
+  @apply w-12 h-12 rounded-full text-sm;
+}
+
+.fab-icon-only.fab-md {
+  @apply w-14 h-14 rounded-full text-base;
+}
+
+.fab-icon-only.fab-lg {
+  @apply w-16 h-16 rounded-full text-lg;
+}
+
+/* Sizes for FABs with text */
+.fab-with-text.fab-sm {
+  @apply px-4 py-2 rounded-full text-sm gap-2;
+  @apply min-w-max;
+}
+
+.fab-with-text.fab-md {
+  @apply px-6 py-3 rounded-full text-base gap-2;
+  @apply min-w-max;
+}
+
+.fab-with-text.fab-lg {
+  @apply px-8 py-4 rounded-full text-lg gap-3;
+  @apply min-w-max;
+}
+
+/* Text styling */
+.fab-text {
+  @apply font-medium whitespace-nowrap;
+}
+
+/* Loading spinner */
+.fab-spinner {
+  @apply w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .fab-bottom-right {
+    @apply bottom-4 right-4;
+  }
+  
+  .fab-bottom-left {
+    @apply bottom-4 left-4;
+  }
+  
+  .fab-bottom-center {
+    @apply bottom-4;
+  }
+  
+  /* Slightly smaller on mobile */
+  .fab-icon-only.fab-md {
+    @apply w-12 h-12 text-sm;
+  }
+  
+  .fab-icon-only.fab-lg {
+    @apply w-14 h-14 text-base;
+  }
+  
+  .fab-with-text.fab-md {
+    @apply px-4 py-2 text-sm;
+  }
+  
+  .fab-with-text.fab-lg {
+    @apply px-6 py-3 text-base;
+  }
+}
+
+/* Responsive text visibility */
+@media (max-width: 640px) {
+  .fab-text {
+    @apply hidden;
+  }
+  
+  .fab-with-text {
+    @apply w-12 h-12 rounded-full px-0 py-0;
+  }
+}
+
+/* Hover effects */
+.fab:hover:not(:disabled) {
+  @apply transform scale-105;
+}
+
+.fab:active:not(:disabled) {
+  @apply transform scale-95;
+}
+
+/* Focus visible for accessibility */
+.fab:focus-visible {
+  @apply ring-2 ring-tp-orange ring-offset-2;
+}

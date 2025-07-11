@@ -1,0 +1,17 @@
+<button 
+  [class]="fabClasses"
+  [disabled]="disabled || loading"
+  [attr.aria-label]="ariaLabel || text || 'Floating action button'"
+  (click)="onClick($event)"
+  type="button">
+  
+  @if (loading) {
+    <div class="fab-spinner"></div>
+  } @else if (icon) {
+    <i [class]="icon" aria-hidden="true"></i>
+  }
+  
+  @if (text) {
+    <span class="fab-text">{{ text }}</span>
+  }
+</button>
