@@ -3,6 +3,7 @@ import { PrismaService, PrismaClientOrTransaction } from '@trip-planner/prisma';
 import { TripService } from '@trip-planner/trip';
 import { LocationService } from '@trip-planner/location';
 import { StopService } from '@trip-planner/stop';
+import { TravelSegmentService } from '@trip-planner/travel-segment';
 import { CreateTripFromOrganizedListDto } from '@trip-planner/shared/dtos';
 import { BankCoordinationService } from './bank-coordination.service';
 import {
@@ -22,15 +23,16 @@ export class TripCreationService {
     private readonly tripService: TripService,
     private readonly locationService: LocationService,
     private readonly stopService: StopService,
+    private readonly travelSegmentService: TravelSegmentService,
     private readonly bankCoordinationService: BankCoordinationService,
   ) {}
 
   /**
    * Create a complete trip from an organized list of locations.
-   * Handles trip creation, location deduplication, and stop creation in a single transaction.
+   * Handles trip creation, location deduplication, stop creation, and travel segment creation in a single transaction.
    * @param userId - User ID who owns the trip.
    * @param data - Trip data with organized locations.
-   * @return The created trip with all stops and locations.
+   * @return The created trip with all stops, locations, and travel segments.
    */
   async createTripFromOrganizedList(
     userId: string,
@@ -94,7 +96,18 @@ export class TripCreationService {
         this.logger.debug(`Created stop ${stop.id} at order ${organizedLocation.order}`);
       }
 
-      // Step 3: Process banked locations if provided
+      // Step 3: Create travel segments between consecutive stops
+      if (stops.length >= 2) {
+        const stopIds = stops.map(stop => stop.id as string);
+        await this.travelSegmentService.createSegmentsBetweenStops(
+          trip.id as string,
+          stopIds,
+          prismaClient,
+        );
+        this.logger.debug(`Created travel segments between ${stops.length} stops`);
+      }
+
+      // Step 4: Process banked locations if provided
       if (data.bankedLocations && data.bankedLocations.length > 0) {
         this.logger.debug(`Processing ${data.bankedLocations.length} banked locations`);
         
@@ -134,7 +147,7 @@ export class TripCreationService {
         }
       }
 
-      // Step 4: Return the complete trip with all details
+      // Step 5: Return the complete trip with all details
       const completeTrip = await this.tripService.findById(
         trip.id as string,
         true,

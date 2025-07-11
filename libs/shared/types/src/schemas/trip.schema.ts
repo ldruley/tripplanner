@@ -22,6 +22,8 @@ export const TripSchema = extendApi(
 
     createdAt: z.coerce.date().describe('Timestamp when trip was created'),
     updatedAt: z.coerce.date().describe('Timestamp when trip was last updated'),
+    needsRoutingRecalculation: z.boolean().default(false).describe('Flag indicating if routing needs recalculation'),
+    needsTimelineRecalculation: z.boolean().default(false).describe('Flag indicating if timeline needs recalculation'),
 
     // Relations (optional for some use cases)
     stops: z.array(StopSchema).optional().default([]).describe('Ordered list of stops in the trip'),
@@ -49,6 +51,8 @@ export const TripSchema = extendApi(
       matrix: '{"some":"matrix data"}',
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: '2024-01-01T00:00:00Z',
+      needsRoutingRecalculation: false,
+      needsTimelineRecalculation: false,
       stops: [],
       bankedLocations: [],
       travelSegments: [],

@@ -85,6 +85,8 @@ export class TripDataService {
         endDate: null,
         createdAt: new Date(),
         updatedAt: new Date(),
+        needsRoutingRecalculation: false,
+        needsTimelineRecalculation: false,
         stops: [],
         bankedLocations: [],
         travelSegments: [],

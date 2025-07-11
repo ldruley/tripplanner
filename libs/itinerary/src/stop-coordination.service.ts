@@ -4,7 +4,6 @@ import { TripService } from '@trip-planner/trip';
 import { LocationService } from '@trip-planner/location';
 import { StopService } from '@trip-planner/stop';
 import { TravelSegmentService } from '@trip-planner/travel-segment';
-import { TimelineService } from '@trip-planner/timeline';
 import {
   AddStopToTripDto,
   RemoveStopFromTripDto,
@@ -14,7 +13,6 @@ import {
   CreateLocationRequest,
   CreateStopRequest,
   Trip,
-  TimelineCalculationRequest,
 } from '@trip-planner/types';
 
 @Injectable()
@@ -27,12 +25,12 @@ export class StopCoordinationService {
     private readonly locationService: LocationService,
     private readonly stopService: StopService,
     private readonly travelSegmentService: TravelSegmentService,
-    private readonly timelineService: TimelineService,
   ) {}
 
   /**
    * Add a stop to a trip with all cascading effects.
-   * Handles location creation, stop insertion, travel segment updates, and timeline recalculation.
+   * Handles location creation, stop insertion, and travel segment updates.
+   * Note: Timeline recalculation is handled by the itinerary service.
    * @param userId - User ID who owns the trip.
    * @param data - Stop data to add.
    * @return The updated trip with all stops.
@@ -108,8 +106,8 @@ export class StopCoordinationService {
       // Step 6: Refresh matrix for persisted trips (to include new stop in matrix calculations)
       await this.tripService.refreshMatrixOnStopAddition(data.tripId, prismaClient);
 
-      // Step 7: Recalculate timeline
-      await this.recalculateAndUpdateTimeline(data.tripId, prismaClient);
+      // Step 7: Set dirty flags for routing and timeline recalculation
+      await this.tripService.updateTripDirtyFlags(data.tripId, true, true, prismaClient);
 
       // Step 8: Return the complete trip
       const completeTrip = await this.tripService.findById(
@@ -127,7 +125,8 @@ export class StopCoordinationService {
 
   /**
    * Remove a stop from a trip with all cascading effects.
-   * Handles stop removal, travel segment cleanup, and timeline recalculation.
+   * Handles stop removal and travel segment cleanup.
+   * Note: Timeline recalculation is handled by the itinerary service.
    * @param userId - User ID who owns the trip.
    * @param data - Stop removal data.
    * @return The updated trip with remaining stops.
@@ -168,8 +167,8 @@ export class StopCoordinationService {
         // Step 6: Recreate travel segments between remaining stops
         await this.recreateTravelSegmentsAfterRemoval(data.tripId, prismaClient);
 
-        // Step 7: Recalculate timeline
-        await this.recalculateAndUpdateTimeline(data.tripId, prismaClient);
+        // Step 7: Set dirty flags for routing and timeline recalculation
+        await this.tripService.updateTripDirtyFlags(data.tripId, true, true, prismaClient);
 
         // Step 8: Return the complete trip
         const completeTrip = await this.tripService.findById(
@@ -188,7 +187,8 @@ export class StopCoordinationService {
 
   /**
    * Reorder stops in a trip with all cascading effects.
-   * Handles stop reordering, travel segment updates, and timeline recalculation.
+   * Handles stop reordering and travel segment updates.
+   * Note: Timeline recalculation is handled by the itinerary service.
    * @param userId - User ID who owns the trip.
    * @param data - Reorder data.
    * @return The updated trip with reordered stops.
@@ -224,8 +224,8 @@ export class StopCoordinationService {
         // Step 5: Recreate travel segments with new ordering
         await this.recreateTravelSegmentsAfterReorder(data.tripId, prismaClient);
 
-        // Step 6: Recalculate timeline
-        await this.recalculateAndUpdateTimeline(data.tripId, prismaClient);
+        // Step 6: Set dirty flags for routing and timeline recalculation
+        await this.tripService.updateTripDirtyFlags(data.tripId, true, true, prismaClient);
 
         // Step 7: Return the complete trip
         const completeTrip = await this.tripService.findById(
@@ -364,45 +364,4 @@ export class StopCoordinationService {
     }
   }
 
-  /**
-   * Recalculate timeline and update database with results.
-   * @param tripId - Trip ID to recalculate.
-   * @param prismaClient - Prisma client for transaction.
-   */
-  private async recalculateAndUpdateTimeline(
-    tripId: string,
-    prismaClient: PrismaClientOrTransaction,
-  ): Promise<void> {
-    // Get current trip data
-    const trip = await this.tripService.findById(tripId, true, false, true, prismaClient);
-
-    if (!trip.stops || trip.stops.length === 0) {
-      this.logger.debug(`No stops found for trip ${tripId}, skipping timeline calculation`);
-      return;
-    }
-
-    // Prepare timeline calculation request
-    const timelineRequest: TimelineCalculationRequest = {
-      stops: trip.stops,
-      segments: trip.travelSegments || [],
-      startTime: trip.startDate || undefined,
-    };
-
-    // Calculate timeline
-    const result = this.timelineService.calculateSequentialTimeline(timelineRequest);
-
-    // Update stops with calculated times
-    for (const updatedStop of result.updatedStops) {
-      await this.stopService.updateCalculatedTimes(
-        updatedStop.id as string,
-        updatedStop.calculatedArrivalTime ?? undefined,
-        updatedStop.calculatedDepartureTime ?? undefined,
-        prismaClient,
-      );
-    }
-
-    this.logger.debug(
-      `Updated timeline for trip ${tripId}: ${result.totalTripDuration} minutes total`,
-    );
-  }
 }

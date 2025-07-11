@@ -3,6 +3,7 @@ import { TripCreationService } from './trip-creation.service';
 import { StopCoordinationService } from './stop-coordination.service';
 import { RoutingCoordinationService } from './routing-coordination.service';
 import { BankCoordinationService } from './bank-coordination.service';
+import { TimelineCoordinationService } from './timeline-coordination.service';
 import { TripService } from '@trip-planner/trip';
 import {
   CreateTripFromOrganizedListDto,
@@ -15,6 +16,7 @@ import {
 import { Trip } from '@trip-planner/types';
 import { TravelMode } from '@prisma/client';
 import { UpdateTripWithRoutingSchema } from '../../shared/types/src/schemas/itinerary.schema';
+import { PrismaClientOrTransaction, PrismaService } from '@trip-planner/prisma';
 
 @Injectable()
 export class ItineraryService {
@@ -25,6 +27,8 @@ export class ItineraryService {
     private readonly stopCoordinationService: StopCoordinationService,
     private readonly routingCoordinationService: RoutingCoordinationService,
     private readonly bankCoordinationService: BankCoordinationService,
+    private readonly timelineCoordinationService: TimelineCoordinationService,
+    private readonly prismaService: PrismaService,
     private readonly tripService: TripService,
   ) {}
 
@@ -40,30 +44,42 @@ export class ItineraryService {
     data: CreateTripFromOrganizedListDto,
   ): Promise<Trip> {
     this.logger.log(`Creating trip from organized list for user ${userId}: ${data.name}`);
-
     try {
-      // Step 1: Create trip with stops
-      const trip = await this.tripCreationService.createTripFromOrganizedList(userId, data);
+      return await this.prismaService.$transaction(
+        async (prismaClient: PrismaClientOrTransaction) => {
+          // Step 1: Create trip with stops
+          const trip = await this.tripCreationService.createTripFromOrganizedList(userId, data);
 
-      // Step 2: Calculate routing if requested
-      if (data.calculateRouting && trip.stops && trip.stops.length > 1) {
-        this.logger.debug(`Calculating routing for trip ${trip.id}`);
+          // Step 2: Calculate routing if requested
+          if (data.calculateRouting && trip.stops && trip.stops.length > 1) {
+            this.logger.debug(`Calculating routing for trip ${trip.id}`);
 
-        const routingData: UpdateTripRoutingDto = {
-          tripId: trip.id!,
-          travelMode: data.travelMode,
-          forceRecalculate: true,
-        };
+            const routingData: UpdateTripRoutingDto = {
+              tripId: trip.id,
+              travelMode: data.travelMode,
+              forceRecalculate: true,
+            };
 
-        const tripWithRouting =
-          await this.routingCoordinationService.updateTripRouting(routingData);
+            const tripWithRouting = await this.routingCoordinationService.updateTripRouting(
+              routingData,
+              prismaClient,
+            );
 
-        this.logger.log(`Successfully created trip ${trip.id!} with routing`);
-        return tripWithRouting;
-      }
+            // Calculate timeline after routing
+            await this.timelineCoordinationService.recalculateAndUpdateTimeline(
+              trip.id,
+              prismaClient,
+              true,
+            );
 
-      this.logger.log(`Successfully created trip ${trip.id} without routing`);
-      return trip;
+            this.logger.log(`Successfully created trip ${trip.id} with routing and timeline`);
+            return tripWithRouting;
+          }
+
+          this.logger.log(`Successfully created trip ${trip.id} without routing`);
+          return trip;
+        },
+      );
     } catch (error) {
       this.logger.error(`Failed to create trip from organized list for user ${userId}:`, error);
       throw error;
@@ -80,28 +96,41 @@ export class ItineraryService {
     this.logger.log(`Adding stop to trip ${data.tripId} for user ${userId}`);
 
     try {
-      // Step 1: Add stop with coordination
+      // Step 1: Add stop with coordination - TODO - transaction handling for this
       const trip = await this.stopCoordinationService.addStopToTrip(userId, data);
+      return await this.prismaService.$transaction(
+        async (prismaClient: PrismaClientOrTransaction) => {
+          // Step 2: Calculate routing if requested
+          if (data.calculateRouting && trip.stops && trip.stops.length > 1) {
+            this.logger.debug(`Calculating routing after adding stop to trip ${data.tripId}`);
 
-      // Step 2: Calculate routing if requested
-      if (data.calculateRouting && trip.stops && trip.stops.length > 1) {
-        this.logger.debug(`Calculating routing after adding stop to trip ${data.tripId}`);
+            const routingData: UpdateTripRoutingDto = {
+              tripId: data.tripId,
+              travelMode: data.travelMode,
+              forceRecalculate: true,
+            };
 
-        const routingData: UpdateTripRoutingDto = {
-          tripId: data.tripId,
-          travelMode: data.travelMode,
-          forceRecalculate: true,
-        };
+            const tripWithRouting = await this.routingCoordinationService.updateTripRouting(
+              routingData,
+              prismaClient,
+            );
 
-        const tripWithRouting =
-          await this.routingCoordinationService.updateTripRouting(routingData);
+            // Step 3: Calculate timeline after routing
+            await this.timelineCoordinationService.recalculateAndUpdateTimeline(
+              data.tripId,
+              prismaClient,
+            );
 
-        this.logger.log(`Successfully added stop to trip ${data.tripId} with routing`);
-        return tripWithRouting;
-      }
+            this.logger.log(
+              `Successfully added stop to trip ${data.tripId} with routing and timeline`,
+            );
+            return tripWithRouting;
+          }
 
-      this.logger.log(`Successfully added stop to trip ${data.tripId} without routing`);
-      return trip;
+          this.logger.log(`Successfully added stop to trip ${data.tripId} without routing`);
+          return trip;
+        },
+      );
     } catch (error) {
       this.logger.error(`Failed to add stop to trip ${data.tripId} for user ${userId}:`, error);
       throw error;
@@ -116,30 +145,42 @@ export class ItineraryService {
    */
   async removeStopFromTrip(userId: string, data: RemoveStopFromTripDto): Promise<Trip> {
     this.logger.log(`Removing stop ${data.stopId} from trip ${data.tripId} for user ${userId}`);
-
+    // Step 1: Remove stop with coordination
+    const trip = await this.stopCoordinationService.removeStopFromTrip(userId, data);
     try {
-      // Step 1: Remove stop with coordination
-      const trip = await this.stopCoordinationService.removeStopFromTrip(userId, data);
+      return await this.prismaService.$transaction(
+        async (prismaClient: PrismaClientOrTransaction) => {
+          // Step 2: Calculate routing if requested and there are still enough stops
+          if (data.calculateRouting && trip.stops && trip.stops.length > 1) {
+            this.logger.debug(`Calculating routing after removing stop from trip ${data.tripId}`);
 
-      // Step 2: Calculate routing if requested and there are still enough stops
-      if (data.calculateRouting && trip.stops && trip.stops.length > 1) {
-        this.logger.debug(`Calculating routing after removing stop from trip ${data.tripId}`);
+            const routingData: UpdateTripRoutingDto = {
+              tripId: data.tripId,
+              travelMode: data.travelMode,
+              forceRecalculate: true,
+            };
 
-        const routingData: UpdateTripRoutingDto = {
-          tripId: data.tripId,
-          travelMode: data.travelMode,
-          forceRecalculate: true,
-        };
+            const tripWithRouting = await this.routingCoordinationService.updateTripRouting(
+              routingData,
+              prismaClient,
+            );
 
-        const tripWithRouting =
-          await this.routingCoordinationService.updateTripRouting(routingData);
+            // Step 3: Calculate timeline after routing
+            await this.timelineCoordinationService.recalculateAndUpdateTimeline(
+              data.tripId,
+              prismaClient,
+            );
 
-        this.logger.log(`Successfully removed stop from trip ${data.tripId} with routing`);
-        return tripWithRouting;
-      }
+            this.logger.log(
+              `Successfully removed stop from trip ${data.tripId} with routing and timeline`,
+            );
+            return tripWithRouting;
+          }
 
-      this.logger.log(`Successfully removed stop from trip ${data.tripId} without routing`);
-      return trip;
+          this.logger.log(`Successfully removed stop from trip ${data.tripId} without routing`);
+          return trip;
+        },
+      );
     } catch (error) {
       this.logger.error(
         `Failed to remove stop from trip ${data.tripId} for user ${userId}:`,
@@ -157,30 +198,42 @@ export class ItineraryService {
    */
   async reorderStops(userId: string, data: ItineraryReorderStopsDto): Promise<Trip> {
     this.logger.log(`Reordering stops in trip ${data.tripId} for user ${userId}`);
-
+    // Step 1: Reorder stops with coordination
+    const trip = await this.stopCoordinationService.reorderStops(userId, data);
     try {
-      // Step 1: Reorder stops with coordination
-      const trip = await this.stopCoordinationService.reorderStops(userId, data);
+      return await this.prismaService.$transaction(
+        async (prismaClient: PrismaClientOrTransaction) => {
+          // Step 2: Calculate routing if requested
+          if (data.calculateRouting && trip.stops && trip.stops.length > 1) {
+            this.logger.debug(`Calculating routing after reordering stops in trip ${data.tripId}`);
 
-      // Step 2: Calculate routing if requested
-      if (data.calculateRouting && trip.stops && trip.stops.length > 1) {
-        this.logger.debug(`Calculating routing after reordering stops in trip ${data.tripId}`);
+            const routingData: UpdateTripRoutingDto = {
+              tripId: data.tripId,
+              travelMode: data.travelMode,
+              forceRecalculate: true,
+            };
 
-        const routingData: UpdateTripRoutingDto = {
-          tripId: data.tripId,
-          travelMode: data.travelMode,
-          forceRecalculate: true,
-        };
+            const tripWithRouting = await this.routingCoordinationService.updateTripRouting(
+              routingData,
+              prismaClient,
+            );
 
-        const tripWithRouting =
-          await this.routingCoordinationService.updateTripRouting(routingData);
+            // Step 3: Calculate timeline after routing
+            await this.timelineCoordinationService.recalculateAndUpdateTimeline(
+              data.tripId,
+              prismaClient,
+            );
 
-        this.logger.log(`Successfully reordered stops in trip ${data.tripId} with routing`);
-        return tripWithRouting;
-      }
+            this.logger.log(
+              `Successfully reordered stops in trip ${data.tripId} with routing and timeline`,
+            );
+            return tripWithRouting;
+          }
 
-      this.logger.log(`Successfully reordered stops in trip ${data.tripId} without routing`);
-      return this.tripService.findById(data.tripId, true, true, true);
+          this.logger.log(`Successfully reordered stops in trip ${data.tripId} without routing`);
+          return this.tripService.findById(data.tripId, true, true, true);
+        },
+      );
     } catch (error) {
       this.logger.error(
         `Failed to reorder stops in trip ${data.tripId} for user ${userId}:`,
@@ -291,10 +344,20 @@ export class ItineraryService {
         forceRecalculate,
       };
 
-      const trip = await this.routingCoordinationService.updateTripRouting(routingData);
+      return await this.prismaService.$transaction(
+        async (prismaClient: PrismaClientOrTransaction) => {
+          const trip = await this.routingCoordinationService.updateTripRouting(
+            routingData,
+            prismaClient,
+          );
 
-      this.logger.log(`Successfully calculated routing for trip ${tripId}`);
-      return trip;
+          // Calculate timeline after routing
+          await this.timelineCoordinationService.recalculateAndUpdateTimeline(tripId, prismaClient);
+
+          this.logger.log(`Successfully calculated routing and timeline for trip ${tripId}`);
+          return trip;
+        },
+      );
     } catch (error) {
       this.logger.error(`Failed to calculate routing for trip ${tripId}:`, error);
       throw error;
@@ -316,38 +379,56 @@ export class ItineraryService {
     this.logger.log(`Updating trip ${tripId} with routing for user ${userId}`);
     const parsedData = UpdateTripWithRoutingSchema.parse(data);
     try {
-      // Step 1: Update trip basic information
-      const updateData = {
-        name: parsedData.name,
-        description: parsedData.description,
-        startDate: parsedData.startDate,
-        endDate: parsedData.endDate,
-      };
+      return await this.prismaService.$transaction(
+        async (prismaClient: PrismaClientOrTransaction) => {
+          // Step 1: Update trip basic information
+          const updateData = {
+            name: parsedData.name,
+            description: parsedData.description,
+            startDate: parsedData.startDate,
+            endDate: parsedData.endDate,
+          };
 
-      await this.tripService.update(tripId, updateData);
+          await this.tripService.update(tripId, updateData, prismaClient);
 
-      // Step 2: Get the updated trip with complete data structure
-      const tripWithStops = await this.tripService.findById(tripId, true, true, true);
+          // Step 2: Get the updated trip with complete data structure
+          const tripWithStops = await this.tripService.findById(
+            tripId,
+            true,
+            true,
+            true,
+            prismaClient,
+          );
 
-      // Step 3: Calculate routing if requested and there are enough stops
-      if (data.calculateRouting && tripWithStops.stops && tripWithStops.stops.length > 1) {
-        this.logger.debug(`Calculating routing after updating trip ${tripId}`);
+          // Step 3: Calculate routing if requested and there are enough stops
+          if (data.calculateRouting && tripWithStops.stops && tripWithStops.stops.length > 1) {
+            this.logger.debug(`Calculating routing after updating trip ${tripId}`);
 
-        const routingData: UpdateTripRoutingDto = {
-          tripId,
-          travelMode: data.travelMode,
-          forceRecalculate: data.forceRecalculate,
-        };
+            const routingData: UpdateTripRoutingDto = {
+              tripId,
+              travelMode: data.travelMode,
+              forceRecalculate: data.forceRecalculate,
+            };
 
-        const tripWithRouting =
-          await this.routingCoordinationService.updateTripRouting(routingData);
+            const tripWithRouting = await this.routingCoordinationService.updateTripRouting(
+              routingData,
+              prismaClient,
+            );
 
-        this.logger.log(`Successfully updated trip ${tripId} with routing`);
-        return tripWithRouting;
-      }
+            // Step 4: Calculate timeline after routing
+            await this.timelineCoordinationService.recalculateAndUpdateTimeline(
+              tripId,
+              prismaClient,
+            );
 
-      this.logger.log(`Successfully updated trip ${tripId} without routing`);
-      return tripWithStops;
+            this.logger.log(`Successfully updated trip ${tripId} with routing and timeline`);
+            return tripWithRouting;
+          }
+
+          this.logger.log(`Successfully updated trip ${tripId} without routing`);
+          return tripWithStops;
+        },
+      );
     } catch (error) {
       this.logger.error(`Failed to update trip ${tripId} with routing for user ${userId}:`, error);
       throw error;

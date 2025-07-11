@@ -67,7 +67,7 @@ describe('MatrixRoutingService', () => {
       // Assert
       expect(result).toEqual(mockCoordinateMatrix);
       expect(mockRedisService.getOrSet).toHaveBeenCalledWith(
-        expect.stringContaining('matrix:routing'),
+        expect.stringContaining('matrix:'),
         service['CACHE_TTL_MS'],
         expect.any(Function),
       );
@@ -245,10 +245,46 @@ describe('MatrixRoutingService', () => {
 
       // Assert
       expect(mockRedisService.getOrSet).toHaveBeenCalledWith(
-        expect.stringContaining('matrix:routing'),
+        expect.stringContaining('matrix:'),
         expect.any(Number),
         expect.any(Function),
       );
+    });
+
+    it('should generate consistent cache key regardless of coordinate order', async () => {
+      // Arrange
+      const query1: MatrixQuery = {
+        origins: [
+          { lat: 40.7128, lng: -74.006 }, // New York
+          { lat: 34.0522, lng: -118.2437 }, // Los Angeles
+        ],
+        profile: 'carFast',
+        routingMode: 'fast',
+      };
+
+      const query2: MatrixQuery = {
+        origins: [
+          { lat: 34.0522, lng: -118.2437 }, // Los Angeles (different order)
+          { lat: 40.7128, lng: -74.006 }, // New York
+        ],
+        profile: 'carFast',
+        routingMode: 'fast',
+      };
+
+      mockRedisService.getOrSet.mockResolvedValue(mockCoordinateMatrix);
+
+      // Act
+      await service.getMatrixRouting(query1);
+      await service.getMatrixRouting(query2);
+
+      // Assert
+      expect(mockRedisService.getOrSet).toHaveBeenCalledTimes(2);
+      
+      // Both calls should use the same cache key
+      const firstCallKey = mockRedisService.getOrSet.mock.calls[0][0];
+      const secondCallKey = mockRedisService.getOrSet.mock.calls[1][0];
+      
+      expect(firstCallKey).toBe(secondCallKey);
     });
   });
 });

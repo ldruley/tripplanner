@@ -423,4 +423,54 @@ export class TripService {
     // Always refresh matrix when stops are added
     return await this.refreshTripMatrix(tripId, prismaClient);
   }
+
+  /**
+   * Update the timeline recalculation flag for a trip.
+   * @param tripId - Trip ID to update.
+   * @param needsRecalculation - Whether timeline recalculation is needed.
+   * @param prismaClient - Optional Prisma client for transaction management.
+   */
+  async updateTimelineRecalculationFlag(
+    tripId: string,
+    needsRecalculation: boolean,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<void> {
+    this.logger.debug(`Updating timeline recalculation flag for trip ${tripId} to ${needsRecalculation}`);
+    
+    await this.tripRepository.updateTimelineRecalculationFlag(tripId, needsRecalculation, prismaClient);
+  }
+
+  /**
+   * Update the routing recalculation flag for a trip.
+   * @param tripId - Trip ID to update.
+   * @param needsRecalculation - Whether routing recalculation is needed.
+   * @param prismaClient - Optional Prisma client for transaction management.
+   */
+  async updateRoutingRecalculationFlag(
+    tripId: string,
+    needsRecalculation: boolean,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<void> {
+    this.logger.debug(`Updating routing recalculation flag for trip ${tripId} to ${needsRecalculation}`);
+    
+    await this.tripRepository.updateRoutingRecalculationFlag(tripId, needsRecalculation, prismaClient);
+  }
+
+  /**
+   * Update both dirty flags for a trip.
+   * @param tripId - Trip ID to update.
+   * @param needsRoutingRecalculation - Whether routing recalculation is needed.
+   * @param needsTimelineRecalculation - Whether timeline recalculation is needed.
+   * @param prismaClient - Optional Prisma client for transaction management.
+   */
+  async updateTripDirtyFlags(
+    tripId: string,
+    needsRoutingRecalculation: boolean,
+    needsTimelineRecalculation: boolean,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<void> {
+    this.logger.debug(`Updating dirty flags for trip ${tripId}: routing=${needsRoutingRecalculation}, timeline=${needsTimelineRecalculation}`);
+    
+    await this.tripRepository.updateTripDirtyFlags(tripId, needsRoutingRecalculation, needsTimelineRecalculation, prismaClient);
+  }
 }

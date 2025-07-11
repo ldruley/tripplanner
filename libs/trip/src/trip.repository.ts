@@ -397,4 +397,70 @@ export class TripRepository {
       },
     });
   }
+
+  /**
+   * Update the timeline recalculation flag for a trip.
+   * @param tripId - Trip ID to update.
+   * @param needsRecalculation - Whether timeline recalculation is needed.
+   * @param prismaClient - Optional Prisma client for transaction management.
+   */
+  async updateTimelineRecalculationFlag(
+    tripId: string,
+    needsRecalculation: boolean,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<void> {
+    const client = prismaClient || this.prisma;
+
+    await client.trip.update({
+      where: { id: tripId },
+      data: {
+        needsTimelineRecalculation: needsRecalculation,
+      },
+    });
+  }
+
+  /**
+   * Update the routing recalculation flag for a trip.
+   * @param tripId - Trip ID to update.
+   * @param needsRecalculation - Whether routing recalculation is needed.
+   * @param prismaClient - Optional Prisma client for transaction management.
+   */
+  async updateRoutingRecalculationFlag(
+    tripId: string,
+    needsRecalculation: boolean,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<void> {
+    const client = prismaClient || this.prisma;
+
+    await client.trip.update({
+      where: { id: tripId },
+      data: {
+        needsRoutingRecalculation: needsRecalculation,
+      },
+    });
+  }
+
+  /**
+   * Update both dirty flags for a trip.
+   * @param tripId - Trip ID to update.
+   * @param needsRoutingRecalculation - Whether routing recalculation is needed.
+   * @param needsTimelineRecalculation - Whether timeline recalculation is needed.
+   * @param prismaClient - Optional Prisma client for transaction management.
+   */
+  async updateTripDirtyFlags(
+    tripId: string,
+    needsRoutingRecalculation: boolean,
+    needsTimelineRecalculation: boolean,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<void> {
+    const client = prismaClient || this.prisma;
+
+    await client.trip.update({
+      where: { id: tripId },
+      data: {
+        needsRoutingRecalculation,
+        needsTimelineRecalculation,
+      },
+    });
+  }
 }

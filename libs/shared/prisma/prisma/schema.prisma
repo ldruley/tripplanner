@@ -131,15 +131,17 @@ model UserFavoriteLocation {
 }
 
 model Trip {
-  id          String    @id @default(uuid()) @map("trip_id")
-  userId      String    @map("user_id")
-  name        String    @default("Untitled Trip") @db.Text
-  description String?   @db.Text
-  startDate   DateTime? @map("start_date")
-  endDate     DateTime? @map("end_date")
-  matrix      Json?
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  id                         String    @id @default(uuid()) @map("trip_id")
+  userId                     String    @map("user_id")
+  name                       String    @default("Untitled Trip") @db.Text
+  description                String?   @db.Text
+  startDate                  DateTime? @map("start_date")
+  endDate                    DateTime? @map("end_date")
+  matrix                     Json?
+  createdAt                  DateTime  @default(now()) @map("created_at")
+  updatedAt                  DateTime  @updatedAt @map("updated_at")
+  needsRoutingRecalculation  Boolean   @default(false) @map("needs_routing_recalculation")
+  needsTimelineRecalculation Boolean   @default(false) @map("needs_timeline_recalculation")
 
   // Relations
   stops            Stop[]

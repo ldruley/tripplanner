@@ -12,6 +12,7 @@ import { TripCreationService } from './trip-creation.service';
 import { StopCoordinationService } from './stop-coordination.service';
 import { RoutingCoordinationService } from './routing-coordination.service';
 import { BankCoordinationService } from './bank-coordination.service';
+import { TimelineCoordinationService } from './timeline-coordination.service';
 import { TripBankedLocationRepository } from './trip-banked-location.repository';
 
 @Module({
@@ -31,6 +32,7 @@ import { TripBankedLocationRepository } from './trip-banked-location.repository'
     StopCoordinationService,
     RoutingCoordinationService,
     BankCoordinationService,
+    TimelineCoordinationService,
     TripBankedLocationRepository,
   ],
   exports: [
@@ -39,6 +41,7 @@ import { TripBankedLocationRepository } from './trip-banked-location.repository'
     StopCoordinationService,
     RoutingCoordinationService,
     BankCoordinationService,
+    TimelineCoordinationService,
     TripBankedLocationRepository,
   ],
 })

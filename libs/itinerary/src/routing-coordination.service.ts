@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { PrismaClientOrTransaction } from '@trip-planner/prisma';
-import { TripRepository } from '@trip-planner/trip';
+import { TripRepository, TripService } from '@trip-planner/trip';
 import { RoutingService } from '@trip-planner/routing';
 import { TravelSegmentService } from '@trip-planner/travel-segment';
 import { UpdateTripRoutingDto } from '@trip-planner/shared/dtos';
@@ -13,6 +13,7 @@ export class RoutingCoordinationService {
 
   constructor(
     private readonly tripRepository: TripRepository,
+    private readonly tripService: TripService,
     private readonly routingService: RoutingService,
     private readonly travelSegmentService: TravelSegmentService,
   ) {}
@@ -70,6 +71,9 @@ export class RoutingCoordinationService {
         data.travelMode,
         prismaClient,
       );
+
+      // Clear the routing dirty flag after successful routing
+      await this.tripService.updateRoutingRecalculationFlag(data.tripId, false, prismaClient);
 
       // Get the updated trip with routing data
       const updatedTrip = await this.tripRepository.findTripWithFullDetails(
@@ -238,7 +242,12 @@ export class RoutingCoordinationService {
       return false;
     }
 
-    // Check if any travel segments are missing routing data
+    // Check dirty flag first - if set, routing is needed
+    if (trip.needsRoutingRecalculation) {
+      return true;
+    }
+
+    // Fallback: Check if any travel segments are missing routing data
     const segments = trip.travelSegments || [];
 
     for (const segment of segments) {

@@ -4,5 +4,6 @@ export * from './trip-creation.service';
 export * from './stop-coordination.service';
 export * from './routing-coordination.service';
 export * from './bank-coordination.service';
+export * from './timeline-coordination.service';
 export * from './trip-banked-location.repository';
 export * from './itinerary.controller';

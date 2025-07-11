@@ -3,7 +3,7 @@ import { HereMatrixRoutingAdapterService } from './here/here-matrix-routing-adap
 import { MapboxMatrixRoutingAdapterService } from './mapbox/mapbox-matrix-routing-adapter.service';
 import { RedisService } from '@trip-planner/redis';
 import { ApiUsageService } from '@trip-planner/api-usage';
-import { buildCacheKey } from '@trip-planner/utils';
+import { generateMatrixCacheKey } from '@trip-planner/utils';
 import { CoordinateMatrix, MatrixQuery } from '@trip-planner/types';
 
 @Injectable()
@@ -19,7 +19,7 @@ export class MatrixRoutingService {
   ) {}
 
   async getMatrixRouting(query: MatrixQuery): Promise<CoordinateMatrix> {
-    const cacheKey = buildCacheKey('matrix:routing', [query], true);
+    const cacheKey = generateMatrixCacheKey(query.origins);
     return this.redisService.getOrSet(cacheKey, this.CACHE_TTL_MS, () =>
       this.implementMatrixStrategy(query),
     );

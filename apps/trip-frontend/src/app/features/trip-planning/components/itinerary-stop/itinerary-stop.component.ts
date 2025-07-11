@@ -83,7 +83,14 @@ export class ItineraryStopComponent {
   });
 
   displayArrivalTime = computed(() => {
-    return this.plannedArrivalTimeInLocation() || this.calculatedArrivalTimeInLocation();
+    const plannedTime = this.plannedArrivalTimeInLocation();
+    const calculatedTime = this.calculatedArrivalTimeInLocation();
+    
+    if (plannedTime && calculatedTime) {
+      return `${plannedTime} (${calculatedTime})`;
+    }
+    
+    return plannedTime || calculatedTime;
   });
 
   displayDepartureTime = computed(() => {
