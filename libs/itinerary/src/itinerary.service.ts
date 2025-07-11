@@ -45,11 +45,11 @@ export class ItineraryService {
   ): Promise<Trip> {
     this.logger.log(`Creating trip from organized list for user ${userId}: ${data.name}`);
     try {
+      // Step 1: Create trip with stops
+      const trip = await this.tripCreationService.createTripFromOrganizedList(userId, data);
+
       return await this.prismaService.$transaction(
         async (prismaClient: PrismaClientOrTransaction) => {
-          // Step 1: Create trip with stops
-          const trip = await this.tripCreationService.createTripFromOrganizedList(userId, data);
-
           // Step 2: Calculate routing if requested
           if (data.calculateRouting && trip.stops && trip.stops.length > 1) {
             this.logger.debug(`Calculating routing for trip ${trip.id}`);
@@ -237,6 +237,55 @@ export class ItineraryService {
     } catch (error) {
       this.logger.error(
         `Failed to reorder stops in trip ${data.tripId} for user ${userId}:`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * EXPERIMENTAL: Reorder stops using batched database operations.
+   * This is a proof of concept for reducing database operations through object mutation and batching.
+   * @param userId - User ID who owns the trip.
+   * @param data - Reorder data.
+   * @return The updated trip with reordered stops.
+   */
+  async reorderStopsWithBatching(userId: string, data: ItineraryReorderStopsDto): Promise<Trip> {
+    this.logger.log(`[EXPERIMENTAL] Reordering stops with batching in trip ${data.tripId} for user ${userId}`);
+    // Step 1: Reorder stops with batched coordination
+    const trip = await this.stopCoordinationService.reorderStopsWithBatching(userId, data);
+    try {
+      return await this.prismaService.$transaction(
+        async (prismaClient: PrismaClientOrTransaction) => {
+          // Step 2: Calculate routing if requested
+          if (data.calculateRouting && trip.stops && trip.stops.length > 1) {
+            this.logger.debug(`[EXPERIMENTAL] Calculating routing after batched reordering in trip ${data.tripId}`);
+            const routingData: UpdateTripRoutingDto = {
+              tripId: data.tripId,
+              travelMode: data.travelMode,
+              forceRecalculate: true,
+            };
+            const tripWithRouting = await this.routingCoordinationService.updateTripRouting(
+              routingData,
+              prismaClient,
+            );
+            // Step 3: Calculate timeline after routing
+            await this.timelineCoordinationService.recalculateAndUpdateTimeline(
+              data.tripId,
+              prismaClient,
+            );
+            this.logger.log(
+              `[EXPERIMENTAL] Successfully reordered stops in trip ${data.tripId} with batching, routing and timeline`,
+            );
+            return tripWithRouting;
+          }
+          this.logger.log(`[EXPERIMENTAL] Successfully reordered stops in trip ${data.tripId} with batching, no routing`);
+          return this.tripService.findById(data.tripId, true, true, true);
+        },
+      );
+    } catch (error) {
+      this.logger.error(
+        `[EXPERIMENTAL] Failed to reorder stops with batching in trip ${data.tripId} for user ${userId}:`,
         error,
       );
       throw error;

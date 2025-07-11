@@ -155,6 +155,35 @@ export class ItineraryController {
     return await this.itineraryService.reorderStops(user.id, fullData);
   }
 
+  @Put('trips/:tripId/stops/reorder/batched')
+  @ApiOperation({ summary: 'EXPERIMENTAL: Reorder stops using batched database operations' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Stops reordered successfully using batched operations',
+    type: Object, // Trip type would be defined in OpenAPI
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Trip not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized',
+  })
+  async reorderStopsWithBatching(
+    @CurrentUser() user: SafeUser,
+    @Param('tripId') tripId: string,
+    @Body() data: Omit<ItineraryReorderStopsDto, 'tripId'>,
+  ): Promise<Trip> {
+    this.logger.log(`[EXPERIMENTAL] Reordering stops with batching in trip ${tripId} for user ${user.id}`);
+    const fullData: ItineraryReorderStopsDto = { ...data, tripId };
+    return await this.itineraryService.reorderStopsWithBatching(user.id, fullData);
+  }
+
   @Put('trips/:tripId')
   @ApiOperation({ summary: 'Update trip details with optional routing recalculation' })
   @ApiResponse({
