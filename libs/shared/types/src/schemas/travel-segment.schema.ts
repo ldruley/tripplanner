@@ -4,7 +4,9 @@ import { uuidSchema } from './base.schema';
 import { TravelMode } from '@prisma/client';
 import { StopWithLocationSchema } from './stop.schema';
 
-export const TravelModeSchema = z.nativeEnum(TravelMode).describe('Travel mode between stops (DRIVING, WALKING, FLYING, etc.)');
+export const TravelModeSchema = z
+  .nativeEnum(TravelMode)
+  .describe('Travel mode between stops (DRIVING, WALKING, FLYING, etc.)');
 
 export const TravelSegmentSchema = extendApi(
   z.object({
@@ -40,7 +42,11 @@ export const TravelSegmentSchema = extendApi(
       .optional()
       .describe('API-calculated duration in minutes'),
     polyline: z.string().nullable().optional().describe('Encoded polyline for route visualization'),
-    routeOptions: z.any().nullable().optional().describe('Additional routing options (provider-specific)'),
+    routeOptions: z
+      .any()
+      .nullable()
+      .optional()
+      .describe('Additional routing options (provider-specific)'),
     notes: z
       .string()
       .max(1000, { message: 'Notes cannot exceed 1000 characters' })
@@ -142,16 +148,13 @@ export const UpdateTravelApiCalculatedDataSchema = extendApi(
   },
 );
 
-export const UpdateTravelSegmentNotesSchema = extendApi(
-  TravelSegmentSchema.pick({ notes: true }),
-  {
-    title: 'Update Travel Segment Notes',
-    description: 'Schema for updating only the notes of a travel segment',
-    example: {
-      notes: 'Updated route notes',
-    },
+export const UpdateTravelSegmentNotesSchema = extendApi(TravelSegmentSchema.pick({ notes: true }), {
+  title: 'Update Travel Segment Notes',
+  description: 'Schema for updating only the notes of a travel segment',
+  example: {
+    notes: 'Updated route notes',
   },
-);
+});
 
 export const TravelSegmentSearchSchema = extendApi(
   TravelSegmentSchema.pick({
@@ -212,10 +215,18 @@ export const BulkTravelSegmentUpdateSchema = extendApi(
 export const UpdateTravelSegmentRoutingDataSchema = extendApi(
   z.object({
     travelMode: TravelModeSchema,
-    distanceMeters: z.number().min(0, { message: 'Distance must be at least 0 meters' }).describe('Distance in meters'),
-    durationSeconds: z.number().min(0, { message: 'Duration must be at least 0 seconds' }).describe('Duration in seconds'),
+    distanceMeters: z
+      .number()
+      .min(0, { message: 'Distance must be at least 0 meters' })
+      .describe('Distance in meters'),
+    durationSeconds: z
+      .number()
+      .min(0, { message: 'Duration must be at least 0 seconds' })
+      .describe('Duration in seconds'),
     polyline: z.string().optional().describe('Encoded polyline for route visualization'),
-    provider: z.enum(['HERE', 'MAPBOX'], { message: 'Provider must be either HERE or MAPBOX' }).describe('Routing API provider'),
+    provider: z
+      .enum(['HERE', 'MAPBOX'], { message: 'Provider must be either HERE or MAPBOX' })
+      .describe('Routing API provider'),
   }),
   {
     title: 'Update Travel Segment Routing Data',

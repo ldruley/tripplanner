@@ -4,6 +4,7 @@ import { TripService } from '@trip-planner/trip';
 import { LocationService } from '@trip-planner/location';
 import { StopService } from '@trip-planner/stop';
 import { TravelSegmentService } from '@trip-planner/travel-segment';
+import { RoutingService } from '@trip-planner/routing';
 import {
   AddStopToTripDto,
   RemoveStopFromTripDto,
@@ -13,7 +14,20 @@ import {
   CreateLocationRequest,
   CreateStopRequest,
   Trip,
+  TravelSegment,
+  RoutingRequestSchema,
+  RoutingResponse,
 } from '@trip-planner/types';
+import { TravelMode } from '@prisma/client';
+
+interface SegmentRoutingData {
+  originStopId: string;
+  destinationStopId: string;
+  travelMode: TravelMode;
+  apiCalculatedDistance: number | null;
+  apiCalculatedDuration: number | null;
+  polyline: string | null;
+}
 
 @Injectable()
 export class StopCoordinationService {
@@ -25,6 +39,7 @@ export class StopCoordinationService {
     private readonly locationService: LocationService,
     private readonly stopService: StopService,
     private readonly travelSegmentService: TravelSegmentService,
+    private readonly routingService: RoutingService,
   ) {}
 
   /**
@@ -343,7 +358,9 @@ export class StopCoordinationService {
    * @return The updated trip with reordered stops.
    */
   async reorderStopsWithBatching(userId: string, data: ItineraryReorderStopsDto): Promise<Trip> {
-    this.logger.debug(`[EXPERIMENTAL] Batched reordering stops in trip ${data.tripId} for user ${userId}`);
+    this.logger.debug(
+      `[EXPERIMENTAL] Batched reordering stops in trip ${data.tripId} for user ${userId}`,
+    );
 
     return await this.prismaService.$transaction(
       async (prismaClient: PrismaClientOrTransaction) => {
@@ -361,41 +378,84 @@ export class StopCoordinationService {
         // Step 2: Validate stop orders
         this.validateStopOrders(data.stopOrders);
 
-        // Step 3: Get current stops and segments
-        const currentStops = await this.stopService.findByTripId(data.tripId, false, prismaClient);
-        const currentSegments = await this.travelSegmentService.findByTripId(data.tripId, prismaClient);
-
-        // Step 4: Calculate stop order changes
-        const stopOrderChanges = this.calculateStopOrderChanges(currentStops, data.stopOrders);
-
-        // Step 5: Identify segments that need updates
-        const segmentsRequiringUpdates = this.identifySegmentsRequiringUpdates(
-          currentSegments,
-          currentStops,
-          data.stopOrders,
-        );
-
-        // Step 6: Prepare batched operations
-        const stopUpdates = this.prepareBatchedStopUpdates(stopOrderChanges, prismaClient);
-        const segmentUpdates = await this.prepareBatchedSegmentUpdates(
-          segmentsRequiringUpdates,
-          currentStops,
-          data.stopOrders,
+        // Step 3: Load full trip with all relations once
+        const fullTrip = await this.tripService.findById(
+          data.tripId,
+          true, // includeStops
+          true, // includeSegments
+          true, // includeLocations
           prismaClient,
         );
 
-        // Step 7: Execute all operations in a single transaction
-        const allOperations = [...stopUpdates, ...segmentUpdates];
-        
-        if (allOperations.length > 0) {
-          await Promise.all(allOperations);
-          this.logger.debug(`[EXPERIMENTAL] Executed ${allOperations.length} batched operations`);
+        if (!fullTrip || !fullTrip.stops || fullTrip.stops.length === 0) {
+          throw new NotFoundException(`Trip ${data.tripId} not found or has no stops`);
         }
 
-        // Step 8: Set dirty flags for timeline recalculation
+        // Step 4: Calculate stop order changes (pure function)
+        const stopOrderChanges = this.calculateStopOrderChanges(fullTrip, data.stopOrders);
+
+        // Step 5: Identify all segments that reference reordered stops (pure function)
+        const conflictingSegments = this.identifyAllConflictingSegments(
+          fullTrip,
+          data.stopOrders,
+        );
+
+        // Step 6: Calculate new segments for the reordered stops
+        const newSegmentPairs = this.calculateNewSegmentPairs(fullTrip, data.stopOrders);
+
+        // Step 7: Calculate routing updates if requested (pure function)
+        let routingUpdates: Array<{ originStopId: string; destinationStopId: string; routingData: SegmentRoutingData }> = [];
+        if (data.calculateRouting) {
+          routingUpdates = await this.calculateRoutingForNewSegments(
+            newSegmentPairs,
+            fullTrip,
+            data.travelMode as TravelMode,
+          );
+        }
+
+        // Step 8: Execute batched operations with proper sequencing
+        let operationCount = 0;
+        
+        // Execute stop updates and segment deletions in parallel (no conflicts)
+        const parallelOperations: Promise<any>[] = [];
+        
+        if (stopOrderChanges.length > 0) {
+          const stopUpdatePromises = this.prepareBatchedStopUpdates(stopOrderChanges, prismaClient);
+          parallelOperations.push(...stopUpdatePromises);
+          operationCount += stopUpdatePromises.length;
+        }
+
+        if (conflictingSegments.length > 0) {
+          const segmentIds = conflictingSegments.map(s => s.id);
+          parallelOperations.push(
+            prismaClient.travelSegment.deleteMany({
+              where: { id: { in: segmentIds } }
+            })
+          );
+          operationCount += 1; // deleteMany counts as 1 operation
+        }
+
+        // Execute deletions and stop updates in parallel
+        if (parallelOperations.length > 0) {
+          await Promise.all(parallelOperations);
+          this.logger.debug(`[EXPERIMENTAL] Executed ${operationCount} operations in parallel (stops + segment deletions)`);
+        }
+
+        // Create new segments after deletions are complete (avoids constraint conflicts)
+        if (newSegmentPairs.length > 0) {
+          await this.createNewSegmentsWithRouting(
+            newSegmentPairs,
+            conflictingSegments,
+            routingUpdates,
+            prismaClient,
+          );
+          this.logger.debug(`[EXPERIMENTAL] Created ${newSegmentPairs.length} new segments for reordered stops`);
+        }
+
+        // Step 9: Set dirty flags for timeline recalculation
         await this.tripService.updateTripDirtyFlags(data.tripId, false, true, prismaClient);
 
-        // Step 9: Return the complete trip
+        // Step 10: Return the complete trip
         const completeTrip = await this.tripService.findById(
           data.tripId,
           true,
@@ -404,7 +464,9 @@ export class StopCoordinationService {
           prismaClient,
         );
 
-        this.logger.log(`[EXPERIMENTAL] Successfully reordered stops in trip ${data.tripId} using batched operations`);
+        this.logger.log(
+          `[EXPERIMENTAL] Successfully reordered stops in trip ${data.tripId} using batched operations`,
+        );
         return completeTrip;
       },
     );
@@ -412,21 +474,22 @@ export class StopCoordinationService {
 
   /**
    * Calculate which stops need order updates based on current state and new ordering.
-   * @param currentStops - Current stops in the trip.
+   * PURE FUNCTION: No database calls, operates on loaded trip data.
+   * @param trip - Full trip with stops and segments.
    * @param newStopOrders - New stop orders from the request.
    * @return Array of stop updates needed.
    */
   private calculateStopOrderChanges(
-    currentStops: any[],
+    trip: Trip,
     newStopOrders: { stopId: string; newOrder: number }[],
   ): { stopId: string; newOrder: number }[] {
     const stopOrderMap = new Map(newStopOrders.map(so => [so.stopId, so.newOrder]));
     const changes: { stopId: string; newOrder: number }[] = [];
 
-    for (const stop of currentStops) {
-      const newOrder = stopOrderMap.get(stop.id);
+    for (const stop of trip.stops || []) {
+      const newOrder = stopOrderMap.get(stop.id as string);
       if (newOrder !== undefined && newOrder !== stop.order) {
-        changes.push({ stopId: stop.id, newOrder });
+        changes.push({ stopId: stop.id as string, newOrder });
       }
     }
 
@@ -434,89 +497,173 @@ export class StopCoordinationService {
   }
 
   /**
-   * Identify which segments require updates based on stop reordering.
-   * Only segments whose origin/destination stops have changed order need updates.
-   * @param currentSegments - Current travel segments.
-   * @param currentStops - Current stops.
+   * Identify all segments that reference any of the reordered stops.
+   * PURE FUNCTION: No database calls, operates on loaded trip data.
+   * @param trip - Full trip with stops and segments.
    * @param newStopOrders - New stop orders.
-   * @return Array of segments that need updates.
+   * @return Array of segments that will conflict with reordering.
    */
-  private identifySegmentsRequiringUpdates(
-    currentSegments: any[],
-    currentStops: any[],
+  private identifyAllConflictingSegments(
+    trip: Trip,
     newStopOrders: { stopId: string; newOrder: number }[],
-  ): any[] {
-    // Create mapping of stop IDs to their new orders
-    const stopOrderMap = new Map(newStopOrders.map(so => [so.stopId, so.newOrder]));
-    
-    // Create mapping of current stop IDs to their orders
-    const currentStopOrderMap = new Map(currentStops.map(stop => [stop.id, stop.order]));
-
-    // Build new stop ordering
-    const newStopOrdering = [...currentStops].sort((a, b) => {
-      const aNewOrder = stopOrderMap.get(a.id) ?? a.order;
-      const bNewOrder = stopOrderMap.get(b.id) ?? b.order;
-      return aNewOrder - bNewOrder;
-    });
-
-    // Identify segments that need updates
-    const segmentsToUpdate: any[] = [];
-    
-    for (let i = 0; i < newStopOrdering.length - 1; i++) {
-      const originStopId = newStopOrdering[i].id;
-      const destinationStopId = newStopOrdering[i + 1].id;
-      
-      // Check if there's already a segment for this origin-destination pair
-      const existingSegment = currentSegments.find(
-        segment => segment.originStopId === originStopId && segment.destinationStopId === destinationStopId,
-      );
-      
-      if (existingSegment) {
-        // Segment exists and is correctly positioned - no update needed
-        continue;
-      } else {
-        // Need to find the segment that should be updated for this position
-        const segmentToUpdate = currentSegments.find(
-          segment => 
-            (segment.originStopId === originStopId || segment.destinationStopId === destinationStopId) &&
-            !segmentsToUpdate.includes(segment),
-        );
-        
-        if (segmentToUpdate) {
-          segmentsToUpdate.push({
-            ...segmentToUpdate,
-            newOriginStopId: originStopId,
-            newDestinationStopId: destinationStopId,
-          });
-        }
-      }
+  ): TravelSegment[] {
+    if (!trip.travelSegments || trip.travelSegments.length === 0) {
+      return [];
     }
 
-    return segmentsToUpdate;
+    // Get all stop IDs that are being reordered
+    const reorderedStopIds = new Set(newStopOrders.map(so => so.stopId));
+
+    // Find all segments that reference any reordered stop
+    const conflictingSegments = trip.travelSegments.filter(segment =>
+      reorderedStopIds.has(segment.originStopId) || reorderedStopIds.has(segment.destinationStopId)
+    );
+
+    return conflictingSegments;
   }
 
   /**
-   * Generate routing updates for segments that need them.
-   * @param segmentsRequiringUpdates - Segments that need updates.
-   * @param currentStops - Current stops.
+   * Calculate the new segment pairs needed for the reordered stops.
+   * PURE FUNCTION: No database calls, operates on loaded trip data.
+   * @param trip - Full trip with stops.
    * @param newStopOrders - New stop orders.
-   * @return Routing data for segment updates.
+   * @return Array of origin-destination pairs for new segments.
    */
-  private async generateSegmentRoutingUpdates(
-    segmentsRequiringUpdates: any[],
-    currentStops: any[],
+  private calculateNewSegmentPairs(
+    trip: Trip,
     newStopOrders: { stopId: string; newOrder: number }[],
-  ): Promise<any[]> {
-    // For now, return basic update data - routing calculation would be added later
-    return segmentsRequiringUpdates.map(segment => ({
-      id: segment.id,
-      originStopId: segment.newOriginStopId,
-      destinationStopId: segment.newDestinationStopId,
-      // Reset routing data to force recalculation
-      apiCalculatedDistance: null,
-      apiCalculatedDuration: null,
-      polyline: null,
-    }));
+  ): Array<{ originStopId: string; destinationStopId: string; tripId: string }> {
+    if (!trip.stops || trip.stops.length < 2) {
+      return [];
+    }
+
+    // Create mapping of stop IDs to their new orders
+    const stopOrderMap = new Map(newStopOrders.map(so => [so.stopId, so.newOrder]));
+    const reorderedStopIds = new Set(newStopOrders.map(so => so.stopId));
+
+    // Build new stop ordering (all stops, with updated orders for reordered ones)
+    const newStopOrdering = [...trip.stops].sort((a, b) => {
+      const aNewOrder = stopOrderMap.get(a.id as string) ?? a.order;
+      const bNewOrder = stopOrderMap.get(b.id as string) ?? b.order;
+      return aNewOrder - bNewOrder;
+    });
+
+    // Create segment pairs only between consecutive stops where at least one is reordered
+    const newSegmentPairs: Array<{ originStopId: string; destinationStopId: string; tripId: string }> = [];
+
+    for (let i = 0; i < newStopOrdering.length - 1; i++) {
+      const originStopId = newStopOrdering[i].id as string;
+      const destinationStopId = newStopOrdering[i + 1].id as string;
+
+      // Only create segment if at least one stop was reordered
+      if (reorderedStopIds.has(originStopId) || reorderedStopIds.has(destinationStopId)) {
+        newSegmentPairs.push({
+          originStopId,
+          destinationStopId,
+          tripId: trip.id,
+        });
+      }
+    }
+
+    return newSegmentPairs;
+  }
+
+  /**
+   * Calculate routing updates for new segment pairs.
+   * Makes actual routing service calls to get distance, duration, and polyline data.
+   * @param newSegmentPairs - New segment pairs that need routing.
+   * @param trip - Full trip with stops and locations.
+   * @param travelMode - Travel mode for routing.
+   * @return Routing data for new segments.
+   */
+  private async calculateRoutingForNewSegments(
+    newSegmentPairs: Array<{ originStopId: string; destinationStopId: string; tripId: string }>,
+    trip: Trip,
+    travelMode: TravelMode,
+  ): Promise<Array<{ originStopId: string; destinationStopId: string; routingData: SegmentRoutingData }>> {
+    if (newSegmentPairs.length === 0) {
+      return [];
+    }
+
+    const routingUpdates: Array<{ originStopId: string; destinationStopId: string; routingData: SegmentRoutingData }> = [];
+
+    for (const segmentPair of newSegmentPairs) {
+      const originStop = trip.stops?.find(stop => stop.id === segmentPair.originStopId);
+      const destinationStop = trip.stops?.find(stop => stop.id === segmentPair.destinationStopId);
+
+      if (!originStop?.location || !destinationStop?.location) {
+        this.logger.warn(`Missing location data for segment ${segmentPair.originStopId}-${segmentPair.destinationStopId}`);
+        continue;
+      }
+
+      try {
+        // Create waypoints for routing request
+        const waypoints = [
+          {
+            latitude: originStop.location.latitude,
+            longitude: originStop.location.longitude,
+            name: originStop.location.name,
+          },
+          {
+            latitude: destinationStop.location.latitude,
+            longitude: destinationStop.location.longitude,
+            name: destinationStop.location.name,
+          },
+        ];
+
+        // Make actual routing service call
+        const routingRequest = RoutingRequestSchema.parse({
+          waypoints,
+          options: {
+            travelMode,
+          },
+        });
+
+        const routingResult: RoutingResponse = await this.routingService.getRouting(routingRequest);
+
+        this.logger.debug(
+          `Calculated routing for new segment ${segmentPair.originStopId}-${segmentPair.destinationStopId} using ${routingResult.provider}: ${routingResult.route.distance}m, ${routingResult.route.duration}s`,
+        );
+
+        // Map routing result to segment creation format
+        const routingData = {
+          originStopId: segmentPair.originStopId,
+          destinationStopId: segmentPair.destinationStopId,
+          travelMode: travelMode,
+          apiCalculatedDistance: routingResult.route.distance,
+          apiCalculatedDuration: Math.round(routingResult.route.duration / 60), // Convert seconds to minutes
+          polyline: routingResult.route.geometry,
+        };
+
+        routingUpdates.push({
+          originStopId: segmentPair.originStopId,
+          destinationStopId: segmentPair.destinationStopId,
+          routingData,
+        });
+      } catch (error) {
+        this.logger.error(
+          `Failed to calculate routing for new segment ${segmentPair.originStopId}-${segmentPair.destinationStopId}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+
+        // Fallback: create segment without routing data
+        const routingData = {
+          originStopId: segmentPair.originStopId,
+          destinationStopId: segmentPair.destinationStopId,
+          travelMode: travelMode,
+          apiCalculatedDistance: null,
+          apiCalculatedDuration: null,
+          polyline: null,
+        };
+
+        routingUpdates.push({
+          originStopId: segmentPair.originStopId,
+          destinationStopId: segmentPair.destinationStopId,
+          routingData,
+        });
+      }
+    }
+
+    return routingUpdates;
   }
 
   /**
@@ -528,7 +675,7 @@ export class StopCoordinationService {
   private prepareBatchedStopUpdates(
     stopOrderChanges: { stopId: string; newOrder: number }[],
     prismaClient: PrismaClientOrTransaction,
-  ): Promise<any>[] {
+  ): Promise<{ id: string; order: number }>[] {
     return stopOrderChanges.map(change =>
       prismaClient.stop.update({
         where: { id: change.stopId },
@@ -538,37 +685,54 @@ export class StopCoordinationService {
   }
 
   /**
-   * Prepare batched segment updates as PrismaPromise array.
-   * @param segmentsRequiringUpdates - Segments that need updates.
-   * @param currentStops - Current stops.
-   * @param newStopOrders - New stop orders.
+   * Create new segments with routing data, preserving data from deleted segments where possible.
+   * @param newSegmentPairs - New segment pairs to create.
+   * @param deletedSegments - Segments that were deleted (for data preservation).
+   * @param routingUpdates - Routing data for new segments (empty if calculateRouting=false).
    * @param prismaClient - Prisma client for transaction.
-   * @return Array of PrismaPromise for segment updates.
    */
-  private async prepareBatchedSegmentUpdates(
-    segmentsRequiringUpdates: any[],
-    currentStops: any[],
-    newStopOrders: { stopId: string; newOrder: number }[],
+  private async createNewSegmentsWithRouting(
+    newSegmentPairs: Array<{ originStopId: string; destinationStopId: string; tripId: string }>,
+    deletedSegments: TravelSegment[],
+    routingUpdates: Array<{ originStopId: string; destinationStopId: string; routingData: SegmentRoutingData }>,
     prismaClient: PrismaClientOrTransaction,
-  ): Promise<Promise<any>[]> {
-    const routingUpdates = await this.generateSegmentRoutingUpdates(
-      segmentsRequiringUpdates,
-      currentStops,
-      newStopOrders,
+  ): Promise<void> {
+    // Create maps for efficient lookups
+    const routingMap = new Map(
+      routingUpdates.map(r => [`${r.originStopId}-${r.destinationStopId}`, r.routingData])
+    );
+    const deletedSegmentMap = new Map(
+      deletedSegments.map(s => [`${s.originStopId}-${s.destinationStopId}`, s])
     );
 
-    return routingUpdates.map(update =>
-      prismaClient.travelSegment.update({
-        where: { id: update.id },
-        data: {
-          originStopId: update.originStopId,
-          destinationStopId: update.destinationStopId,
-          apiCalculatedDistance: update.apiCalculatedDistance,
-          apiCalculatedDuration: update.apiCalculatedDuration,
-          polyline: update.polyline,
-        },
-      }),
-    );
+    // Create new segments
+    const createOperations = newSegmentPairs.map(segmentPair => {
+      const segmentKey = `${segmentPair.originStopId}-${segmentPair.destinationStopId}`;
+      const routingData = routingMap.get(segmentKey);
+      const originalSegment = deletedSegmentMap.get(segmentKey);
+
+      // Build segment data, preserving from original where possible
+      const segmentData = {
+        tripId: segmentPair.tripId,
+        originStopId: segmentPair.originStopId,
+        destinationStopId: segmentPair.destinationStopId,
+        travelMode: routingData?.travelMode ?? originalSegment?.travelMode,
+        distance: originalSegment?.distance,
+        duration: originalSegment?.duration,
+        apiCalculatedDistance: routingData?.apiCalculatedDistance ?? originalSegment?.apiCalculatedDistance,
+        apiCalculatedDuration: routingData?.apiCalculatedDuration ?? originalSegment?.apiCalculatedDuration,
+        polyline: routingData?.polyline ?? originalSegment?.polyline,
+        routeOptions: originalSegment?.routeOptions,
+        notes: originalSegment?.notes,
+      };
+
+      return prismaClient.travelSegment.create({
+        data: segmentData,
+      });
+    });
+
+    // Execute all create operations in parallel
+    await Promise.all(createOperations);
   }
 
   /**
@@ -599,5 +763,4 @@ export class StopCoordinationService {
       }
     }
   }
-
 }

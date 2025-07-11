@@ -20,7 +20,7 @@ import { locationToLocationForItinerary } from './location-transformation.utils'
 
 /**
  * ItineraryApiService
- * 
+ *
  * Handles all HTTP operations for itinerary management including:
  * - Trip creation with full itinerary data
  * - Stop management (add, remove, reorder)
@@ -55,9 +55,9 @@ export class ItineraryApiService {
       travelMode: 'DRIVING',
     };
 
-    return this.http.post<Trip>(`${this.apiUrl}/itinerary/trips`, createRequest).pipe(
-      map(response => TripSchema.parse(response))
-    );
+    return this.http
+      .post<Trip>(`${this.apiUrl}/itinerary/trips`, createRequest)
+      .pipe(map(response => TripSchema.parse(response)));
   }
 
   /**
@@ -68,10 +68,7 @@ export class ItineraryApiService {
    * @returns Observable of updated trip
    */
   addStopToTrip(tripId: string, location: Location, insertAtOrder?: number): Observable<Trip> {
-    const locationForItinerary = locationToLocationForItinerary(
-      location,
-      insertAtOrder ?? 0,
-    );
+    const locationForItinerary = locationToLocationForItinerary(location, insertAtOrder ?? 0);
 
     const addStopRequest: Omit<AddStopToTripDto, 'tripId'> = {
       locationData: locationForItinerary,
@@ -80,12 +77,9 @@ export class ItineraryApiService {
       travelMode: 'DRIVING',
     };
 
-    return this.http.post<Trip>(
-      `${this.apiUrl}/itinerary/trips/${tripId}/stops`,
-      addStopRequest,
-    ).pipe(
-      map(response => TripSchema.parse(response))
-    );
+    return this.http
+      .post<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/stops`, addStopRequest)
+      .pipe(map(response => TripSchema.parse(response)));
   }
 
   /**
@@ -97,12 +91,9 @@ export class ItineraryApiService {
   removeStopFromTrip(tripId: string, stopId: string): Observable<Trip> {
     const params = new HttpParams().set('calculateRouting', 'true').set('travelMode', 'DRIVING');
 
-    return this.http.delete<Trip>(
-      `${this.apiUrl}/itinerary/trips/${tripId}/stops/${stopId}`,
-      { params },
-    ).pipe(
-      map(response => TripSchema.parse(response))
-    );
+    return this.http
+      .delete<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/stops/${stopId}`, { params })
+      .pipe(map(response => TripSchema.parse(response)));
   }
 
   /**
@@ -121,12 +112,9 @@ export class ItineraryApiService {
       travelMode: 'DRIVING',
     };
 
-    return this.http.put<Trip>(
-      `${this.apiUrl}/itinerary/trips/${tripId}/stops/reorder`,
-      reorderRequest,
-    ).pipe(
-      map(response => TripSchema.parse(response))
-    );
+    return this.http
+      .put<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/stops/reorder/batched`, reorderRequest)
+      .pipe(map(response => TripSchema.parse(response)));
   }
 
   /**
@@ -178,12 +166,12 @@ export class ItineraryApiService {
     locationId: string,
     position?: number,
   ): Observable<Trip> {
-    return this.http.post<Trip>(
-      `${this.apiUrl}/itinerary/trips/${tripId}/bank/${locationId}/promote`,
-      { locationId, position },
-    ).pipe(
-      map(response => TripSchema.parse(response))
-    );
+    return this.http
+      .post<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/bank/${locationId}/promote`, {
+        locationId,
+        position,
+      })
+      .pipe(map(response => TripSchema.parse(response)));
   }
 
   /**
@@ -192,10 +180,13 @@ export class ItineraryApiService {
    * @param updateData - Trip update data with routing parameters
    * @returns Observable of updated trip
    */
-  updateTripWithRouting(tripId: string, updateData: UpdateTripWithRoutingRequest): Observable<Trip> {
-    return this.http.put<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}`, updateData).pipe(
-      map(response => TripSchema.parse(response))
-    );
+  updateTripWithRouting(
+    tripId: string,
+    updateData: UpdateTripWithRoutingRequest,
+  ): Observable<Trip> {
+    return this.http
+      .put<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}`, updateData)
+      .pipe(map(response => TripSchema.parse(response)));
   }
 
   /**
@@ -209,8 +200,8 @@ export class ItineraryApiService {
       .set('includeBankedLocations', 'true')
       .set('includeTravelSegments', 'true');
 
-    return this.http.get<Trip>(`${this.apiUrl}/trips/${tripId}`, { params }).pipe(
-      map(response => TripSchema.parse(response))
-    );
+    return this.http
+      .get<Trip>(`${this.apiUrl}/trips/${tripId}`, { params })
+      .pipe(map(response => TripSchema.parse(response)));
   }
 }

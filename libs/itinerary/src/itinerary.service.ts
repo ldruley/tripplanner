@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { TripCreationService } from './trip-creation.service';
+import { BatchedTripCreationService } from './batched-trip-creation.service';
 import { StopCoordinationService } from './stop-coordination.service';
 import { RoutingCoordinationService } from './routing-coordination.service';
 import { BankCoordinationService } from './bank-coordination.service';
@@ -24,6 +25,7 @@ export class ItineraryService {
 
   constructor(
     private readonly tripCreationService: TripCreationService,
+    private readonly batchedTripCreationService: BatchedTripCreationService,
     private readonly stopCoordinationService: StopCoordinationService,
     private readonly routingCoordinationService: RoutingCoordinationService,
     private readonly bankCoordinationService: BankCoordinationService,
@@ -82,6 +84,32 @@ export class ItineraryService {
       );
     } catch (error) {
       this.logger.error(`Failed to create trip from organized list for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * EXPERIMENTAL: Create a complete trip using batched database operations.
+   * This is an optimized version that reduces database operations from 3N + 2M to ~5-8 operations total.
+   * @param userId - User ID who owns the trip.
+   * @param data - Trip creation data with organized locations.
+   * @return The created trip with all stops and routing.
+   */
+  async createTripFromOrganizedListBatched(
+    userId: string,
+    data: CreateTripFromOrganizedListDto,
+  ): Promise<Trip> {
+    this.logger.log(`[EXPERIMENTAL] Creating trip from organized list with batching for user ${userId}: ${data.name}`);
+    try {
+      // Use the batched trip creation service which includes routing AND timeline pre-calculation
+      const trip = await this.batchedTripCreationService.createTripFromOrganizedListBatched(userId, data);
+
+      this.logger.log(`[EXPERIMENTAL] Successfully created trip ${trip.id} with batched operations including timeline`);
+      
+      // Trip is returned with all data already calculated - no additional operations needed
+      return trip;
+    } catch (error) {
+      this.logger.error(`[EXPERIMENTAL] Failed to create trip from organized list with batching for user ${userId}:`, error);
       throw error;
     }
   }

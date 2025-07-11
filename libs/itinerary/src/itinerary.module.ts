@@ -9,6 +9,7 @@ import { RoutingModule } from '@trip-planner/routing';
 import { ItineraryController } from './itinerary.controller';
 import { ItineraryService } from './itinerary.service';
 import { TripCreationService } from './trip-creation.service';
+import { BatchedTripCreationService } from './batched-trip-creation.service';
 import { StopCoordinationService } from './stop-coordination.service';
 import { RoutingCoordinationService } from './routing-coordination.service';
 import { BankCoordinationService } from './bank-coordination.service';
@@ -29,6 +30,7 @@ import { TripBankedLocationRepository } from './trip-banked-location.repository'
   providers: [
     ItineraryService,
     TripCreationService,
+    BatchedTripCreationService,
     StopCoordinationService,
     RoutingCoordinationService,
     BankCoordinationService,
@@ -38,6 +40,7 @@ import { TripBankedLocationRepository } from './trip-banked-location.repository'
   exports: [
     ItineraryService,
     TripCreationService,
+    BatchedTripCreationService,
     StopCoordinationService,
     RoutingCoordinationService,
     BankCoordinationService,

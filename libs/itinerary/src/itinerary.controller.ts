@@ -63,6 +63,32 @@ export class ItineraryController {
     return await this.itineraryService.createTripFromOrganizedList(user.id, data);
   }
 
+  @Post('trips/batched')
+  @ApiOperation({ 
+    summary: 'EXPERIMENTAL: Create a trip using batched database operations',
+    description: 'Optimized trip creation that reduces database operations from 3N + 2M to ~5-8 operations total. Includes pre-calculated routing data.'
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Trip created successfully with batched operations',
+    type: Object, // Trip type would be defined in OpenAPI
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized',
+  })
+  async createTripFromOrganizedListBatched(
+    @CurrentUser() user: SafeUser,
+    @Body() data: CreateTripFromOrganizedListDto,
+  ): Promise<Trip> {
+    this.logger.log(`[EXPERIMENTAL] Creating trip from organized list with batching for user ${user.id}`);
+    return await this.itineraryService.createTripFromOrganizedListBatched(user.id, data);
+  }
+
   @Post('trips/:tripId/stops')
   @ApiOperation({ summary: 'Add a stop to an existing trip' })
   @ApiResponse({
