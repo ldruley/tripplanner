@@ -22,8 +22,8 @@ type AuthFormType = 'login' | 'register' | 'recover' | 'change-password';
     LoginFormComponent,
     RegisterFormComponent,
     ChangePasswordFormComponent,
-    RecoverPasswordFormComponent
-],
+    RecoverPasswordFormComponent,
+  ],
   templateUrl: './auth-container.component.html',
   styleUrls: ['./auth-container.component.css'],
 })
@@ -59,12 +59,12 @@ export class AuthContainerComponent {
     { initialValue: 'login' as AuthFormType },
   );
 
-  public async handleRegister(credentials: CreateUser): Promise<void> {
+  public async handleRegister(credentials: Omit<CreateUser, 'darkMode'>): Promise<void> {
     const result = await firstValueFrom(this.authService.signUp(credentials));
 
     if (result.success) {
       this.toastService.showSuccess('Registration successful!', 'Please sign in to continue.');
-      this.router.navigate(['/auth/login']);
+      await this.router.navigate(['/auth/login']);
     } else if (result.error) {
       this.toastService.showError('Registration failed', result.error);
     }

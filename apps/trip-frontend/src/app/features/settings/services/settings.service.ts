@@ -55,6 +55,7 @@ export class SettingsService {
           const cached = this.getCachedSettings();
           if (cached) {
             this.settings.set(cached.settings);
+            this.syncTheme(cached.settings);
             this.isLoading.set(false);
             return of(cached.settings);
           }
@@ -144,7 +145,17 @@ export class SettingsService {
   private syncTheme(settings: UpdateUserSettings): void {
     if (settings.darkMode !== undefined) {
       const theme = settings.darkMode ? 'dark' : 'light';
-      this.themeService.updateThemeInStorage(theme);
+      const currentTheme = this.themeService.getCurrentTheme();
+      const currentThemeInStorage = this.localStorage.get<string>('theme');
+      
+      // Only update if the user's setting is different from what's currently stored/applied
+      // This prevents overriding manual theme changes or system preferences
+      if (currentThemeInStorage !== theme) {
+        this.themeService.updateThemeInStorage(theme);
+      } else if (currentTheme !== theme) {
+        // If storage matches but signal doesn't, just update the signal without touching storage
+        this.themeService.setTheme(theme);
+      }
     }
   }
 

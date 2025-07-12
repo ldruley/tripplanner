@@ -48,7 +48,7 @@ export class AuthService {
   }
 
   async register(createUser: CreateUser): Promise<SafeUser> {
-    const { email, password, firstName, lastName } = createUser;
+    const { email, password, firstName, lastName, darkMode } = createUser;
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       throw new ConflictException('Email already in use');
@@ -86,7 +86,7 @@ export class AuthService {
           userId: user.id,
           timezone: 'UTC', // Default timezone
           distanceUnit: DistanceUnit.MILES,
-          darkMode: false,
+          darkMode: darkMode,
         },
       });
 

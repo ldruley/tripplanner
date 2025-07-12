@@ -303,5 +303,218 @@ export const PrimePreset = definePreset(Lara, {
         },
       },
     },
+    toast: {
+      root: {
+        width: '24rem',
+        borderRadius: '0.5rem',
+        borderWidth: '1px',
+        transitionDuration: '300ms',
+      },
+      icon: {
+        size: '1.25rem',
+      },
+      content: {
+        padding: '1rem',
+        gap: '0.75rem',
+      },
+      text: {
+        gap: '0.25rem',
+      },
+      summary: {
+        fontWeight: '600',
+        fontSize: '0.875rem',
+      },
+      detail: {
+        fontWeight: '400',
+        fontSize: '0.75rem',
+      },
+      closeButton: {
+        width: '1.5rem',
+        height: '1.5rem',
+        borderRadius: '0.25rem',
+        focusRing: {
+          width: '2px',
+          style: 'solid',
+          offset: '2px',
+        },
+      },
+      closeIcon: {
+        size: '0.875rem',
+      },
+      colorScheme: {
+        light: {
+          info: {
+            background: '#eff6ff', // Blue-50
+            borderColor: '#93c5fd', // Blue-300
+            color: '#1e40af', // Blue-800
+            detailColor: '#3730a3', // Blue-700
+            shadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            closeButton: {
+              hoverBackground: '#dbeafe', // Blue-100
+              focusRing: {
+                color: '#3b82f6', // Blue-500
+                shadow: '0 0 0 2px #3b82f6',
+              },
+            },
+          },
+          success: {
+            background: '#f0fdf4', // Green-50
+            borderColor: '#86efac', // Green-300
+            color: '#166534', // Green-800
+            detailColor: '#15803d', // Green-700
+            shadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            closeButton: {
+              hoverBackground: '#dcfce7', // Green-100
+              focusRing: {
+                color: '#22c55e', // Green-500
+                shadow: '0 0 0 2px #22c55e',
+              },
+            },
+          },
+          warn: {
+            background: '#fffbeb', // Amber-50
+            borderColor: '#fcd34d', // Amber-300
+            color: '#92400e', // Amber-800
+            detailColor: '#d97706', // Amber-600
+            shadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            closeButton: {
+              hoverBackground: '#fef3c7', // Amber-100
+              focusRing: {
+                color: '#f59e0b', // Amber-500
+                shadow: '0 0 0 2px #f59e0b',
+              },
+            },
+          },
+          error: {
+            background: '#fef2f2', // Red-50
+            borderColor: '#fca5a5', // Red-300
+            color: '#991b1b', // Red-800
+            detailColor: '#dc2626', // Red-600
+            shadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            closeButton: {
+              hoverBackground: '#fee2e2', // Red-100
+              focusRing: {
+                color: '#ef4444', // Red-500
+                shadow: '0 0 0 2px #ef4444',
+              },
+            },
+          },
+          secondary: {
+            background: '{surface.50}',
+            borderColor: '{surface.300}',
+            color: '{surface.700}',
+            detailColor: '{surface.600}',
+            shadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            closeButton: {
+              hoverBackground: '{surface.100}',
+              focusRing: {
+                color: '{surface.500}',
+                shadow: '0 0 0 2px {surface.500}',
+              },
+            },
+          },
+          contrast: {
+            background: '{surface.900}',
+            borderColor: '{surface.700}',
+            color: '{surface.50}',
+            detailColor: '{surface.200}',
+            shadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            closeButton: {
+              hoverBackground: '{surface.800}',
+              focusRing: {
+                color: '{surface.300}',
+                shadow: '0 0 0 2px {surface.300}',
+              },
+            },
+          },
+        },
+        dark: {
+          info: {
+            background: '#0f172a', // Slate-900 with blue tint
+            borderColor: '#1e40af', // Blue-800
+            color: '#93c5fd', // Blue-300
+            detailColor: '#60a5fa', // Blue-400
+            shadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+            closeButton: {
+              hoverBackground: '#1e3a8a', // Blue-900
+              focusRing: {
+                color: '#3b82f6', // Blue-500
+                shadow: '0 0 0 2px #3b82f6',
+              },
+            },
+          },
+          success: {
+            background: '#0f1b0f', // Dark green background
+            borderColor: '#166534', // Green-800
+            color: '#86efac', // Green-300
+            detailColor: '#4ade80', // Green-400
+            shadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+            closeButton: {
+              hoverBackground: '#14532d', // Green-900
+              focusRing: {
+                color: '#22c55e', // Green-500
+                shadow: '0 0 0 2px #22c55e',
+              },
+            },
+          },
+          warn: {
+            background: '#1c1917', // Stone-900 with amber tint
+            borderColor: '#92400e', // Amber-800
+            color: '#fcd34d', // Amber-300
+            detailColor: '#fbbf24', // Amber-400
+            shadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+            closeButton: {
+              hoverBackground: '#78350f', // Amber-900
+              focusRing: {
+                color: '#f59e0b', // Amber-500
+                shadow: '0 0 0 2px #f59e0b',
+              },
+            },
+          },
+          error: {
+            background: '#1c1917', // Stone-900 with red tint
+            borderColor: '#991b1b', // Red-800
+            color: '#fca5a5', // Red-300
+            detailColor: '#f87171', // Red-400
+            shadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+            closeButton: {
+              hoverBackground: '#7f1d1d', // Red-900
+              focusRing: {
+                color: '#ef4444', // Red-500
+                shadow: '0 0 0 2px #ef4444',
+              },
+            },
+          },
+          secondary: {
+            background: '{surface.50}',
+            borderColor: '{surface.200}',
+            color: '{surface.800}',
+            detailColor: '{surface.700}',
+            shadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+            closeButton: {
+              hoverBackground: '{surface.100}',
+              focusRing: {
+                color: '{surface.500}',
+                shadow: '0 0 0 2px {surface.500}',
+              },
+            },
+          },
+          contrast: {
+            background: '{surface.950}',
+            borderColor: '{surface.800}',
+            color: '{surface.100}',
+            detailColor: '{surface.300}',
+            shadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            closeButton: {
+              hoverBackground: '{surface.900}',
+              focusRing: {
+                color: '{surface.400}',
+                shadow: '0 0 0 2px {surface.400}',
+              },
+            },
+          },
+        },
+      },
+    },
   },
 });

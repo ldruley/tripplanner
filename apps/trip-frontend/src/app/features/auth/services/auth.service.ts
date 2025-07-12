@@ -16,6 +16,7 @@ import {
 
 import { environment } from '../../../../environments/environment';
 import { SettingsService } from '../../settings/services/settings.service';
+import { ThemeService } from '../../../core/services/theme.service';
 
 export interface LoginCredentials {
   email: string;
@@ -56,6 +57,7 @@ export class AuthService {
   private readonly router = inject(Router);
   private readonly http = inject(HttpClient);
   private readonly settingsService = inject(SettingsService);
+  private readonly themeService = inject(ThemeService);
   private readonly apiUrl = `${environment.backendApiUrl}/auth`;
   private readonly TOKEN_KEY = 'auth_token';
 
@@ -108,9 +110,19 @@ export class AuthService {
     );
   }
 
-  signUp(credentials: CreateUser): Observable<{ success: boolean; error?: string }> {
+  signUp(
+    credentials: Omit<CreateUser, 'darkMode'>,
+  ): Observable<{ success: boolean; error?: string }> {
     this.setLoading(true);
-    return this.http.post<SafeUser>(`${this.apiUrl}/register`, credentials).pipe(
+
+    // Detect system theme preference and include it in registration
+    const systemPrefersDark = this.detectSystemThemePreference();
+    const credentialsWithTheme: CreateUser = {
+      ...credentials,
+      darkMode: systemPrefersDark,
+    };
+
+    return this.http.post<SafeUser>(`${this.apiUrl}/register`, credentialsWithTheme).pipe(
       tap(() => {
         // On successful registration, set loading to false. The user needs to login separately.
         this.setLoading(false);
@@ -232,5 +244,15 @@ export class AuthService {
       loading: false,
       error,
     });
+  }
+
+  /**
+   * Detect system theme preference for new user registration
+   */
+  private detectSystemThemePreference(): boolean {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false; // Default to light mode if unable to detect
   }
 }

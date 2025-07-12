@@ -240,26 +240,41 @@ export class SocialContainerComponent implements OnInit, OnDestroy {
   }
 
   getUserDisplayName(user: any): string {
-    const profile = user.profile || user.sender?.profile || user.receiver?.profile;
+    const otherUser = this.getOtherUser(user);
+    const profile = otherUser?.profile;
     return (
       profile?.displayName ||
       (profile?.firstName && profile?.lastName
         ? `${profile.firstName} ${profile.lastName}`
         : null) ||
-      user.email ||
-      user.sender?.email ||
-      user.receiver?.email ||
+      otherUser?.email ||
       'Unknown User'
     );
   }
 
   getUserEmail(user: any): string {
-    return user.email || user.sender?.email || user.receiver?.email || '';
+    const otherUser = this.getOtherUser(user);
+    return otherUser?.email || '';
   }
 
   getUserAvatarUrl(user: any): string | null {
-    const profile = user.profile || user.sender?.profile || user.receiver?.profile;
-    return profile?.avatarUrl || null;
+    const otherUser = this.getOtherUser(user);
+    return otherUser?.profile?.avatarUrl || null;
+  }
+
+  private getOtherUser(friendship: any): any {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      return friendship.sender || friendship.receiver || friendship;
+    }
+    
+    // For friendship objects with sender/receiver
+    if (friendship.sender && friendship.receiver) {
+      return friendship.senderId === currentUser.id ? friendship.receiver : friendship.sender;
+    }
+    
+    // For direct user objects, return as-is (used in search results)
+    return friendship;
   }
 
   getFriendId(friendship: FriendshipWithUsers): string {

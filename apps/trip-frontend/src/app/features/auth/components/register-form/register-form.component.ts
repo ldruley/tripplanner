@@ -16,7 +16,7 @@ import { ButtonComponent } from '../../../shared/components/button/button.compon
 export class RegisterFormComponent {
   @Input() isLoading = false;
   @Input() error: string | null = null;
-  @Output() registerSubmit = new EventEmitter<CreateUser>();
+  @Output() registerSubmit = new EventEmitter<Omit<CreateUser, 'darkMode'>>();
   readonly registerForm = buildRegisterForm(new FormBuilder());
 
   public readonly showPassword = signal(false);
@@ -54,7 +54,7 @@ export class RegisterFormComponent {
 
     const { firstName, lastName, email, password } = this.registerForm.value;
 
-    const credentials: CreateUser = {
+    const credentials: Omit<CreateUser, 'darkMode'> = {
       firstName,
       lastName,
       email,

@@ -8,7 +8,7 @@ export class ThemeService {
   private readonly localStorage = inject(LocalStorageService);
   private readonly THEME_KEY = 'theme';
 
-  private readonly currentTheme: WritableSignal<Theme> = signal<Theme>('light');
+  private readonly currentTheme: WritableSignal<Theme> = signal<Theme>(this.getInitialThemeSync());
 
   // Public readonly signal
   public readonly theme: Signal<Theme> = this.currentTheme.asReadonly();
@@ -88,6 +88,26 @@ export class ThemeService {
         htmlElement.classList.remove('dark');
       }
     }
+  }
+
+  /**
+   * Synchronous version of getInitialTheme for signal initialization
+   * Uses direct localStorage access instead of LocalStorageService to avoid injection issues
+   */
+  private getInitialThemeSync(): Theme {
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      try {
+        const savedTheme = localStorage.getItem(this.THEME_KEY) as Theme;
+        if (savedTheme === 'light' || savedTheme === 'dark') {
+          return savedTheme;
+        }
+      } catch (e) {
+        // localStorage access failed, fall through to OS preference
+      }
+    }
+
+    // Fall back to OS preference
+    return this.getOSThemePreference();
   }
 
 }
