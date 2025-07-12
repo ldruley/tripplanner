@@ -3,12 +3,15 @@ import { PrismaClientOrTransaction } from '@trip-planner/prisma';
 import {
   BulkStopUpdateRequest,
   CreateStopRequest,
+  LocationForItinerary,
   ReorderStopsRequest,
   Stop,
   StopOrderUpdate,
   StopSearchCriteria,
   StopWithLocation,
   UpdateStopRequest,
+  Location,
+  ComprehensiveStopUpdate,
 } from '@trip-planner/types';
 import { StopRepository } from './stop.repository';
 
@@ -38,6 +41,49 @@ export class StopService {
     this.logger.debug(`Creating stop for trip ${data.tripId} at order ${data.order}`);
 
     return await this.stopRepository.create(data, prismaClient);
+  }
+
+  /**
+   * Batch create all stops in a single database operation.
+   * Reduces N stop operations to 1 operation.
+   * @param tripId - Trip ID for the stops.
+   * @param organizedLocationEntries - Organized location entries with keys.
+   * @param originalOrganizedLocations - Original organized location data.
+   * @param prismaClient - Prisma client for transaction.
+   * @return Array of created stops.
+   */
+  async batchCreateStops(
+    tripId: string,
+    organizedLocationEntries: [string, Location][],
+    originalOrganizedLocations: LocationForItinerary[],
+    prismaClient: PrismaClientOrTransaction,
+  ): Promise<Stop[]> {
+    // Build stop creation data
+    const stopCreateData = organizedLocationEntries.map(([key, location]) => {
+      const originalIndex = parseInt(key.split('_')[1]);
+      const originalLocation = originalOrganizedLocations[originalIndex];
+
+      return {
+        tripId,
+        locationId: location.id as string,
+        order: originalLocation.order,
+        plannedArrivalTime: null,
+        plannedDuration: null,
+        stopType: 'PITSTOP' as const,
+        notes: null,
+        alias: null,
+      };
+    });
+
+    // Sort by order to ensure correct creation sequence
+    stopCreateData.sort((a, b) => a.order - b.order);
+
+    // Batch create all stops
+    const createdStops = await prismaClient.stop.createManyAndReturn({
+      data: stopCreateData,
+    });
+
+    return createdStops;
   }
 
   /**
@@ -201,6 +247,29 @@ export class StopService {
   }
 
   /**
+   * Calculate which stops need order changes based on new stop orders.
+   * @param stops - Array of stops to check for order changes.
+   * @param newStopOrders - Array of new stop orders to apply.
+   * @return Array of stop updates needed.
+   */
+  calculateStopOrderChanges(
+    stops: Stop[],
+    newStopOrders: { stopId: string; newOrder: number }[],
+  ): { stopId: string; newOrder: number }[] {
+    const stopOrderMap = new Map(newStopOrders.map(so => [so.stopId, so.newOrder]));
+    const changes: { stopId: string; newOrder: number }[] = [];
+
+    for (const stop of stops) {
+      const newOrder = stopOrderMap.get(stop.id as string);
+      if (newOrder !== undefined && newOrder !== stop.order) {
+        changes.push({ stopId: stop.id as string, newOrder });
+      }
+    }
+
+    return changes;
+  }
+
+  /**
    * Bulk update multiple stops for a trip.
    * @param request - Contains tripId and array of stop updates.
    * @param prismaClient - Optional Prisma client for transaction management.
@@ -355,5 +424,25 @@ export class StopService {
   ): Promise<boolean> {
     const stop = await this.stopRepository.findById(stopId, prismaClient);
     return stop?.tripId === tripId;
+  }
+
+  /**
+   * Batch update all stop fields in single operations per stop.
+   * This enables true batching where each stop is updated once with all changes.
+   * @param updates - Array of comprehensive stop updates with order, calculated times, etc.
+   * @param prismaClient - Optional Prisma client for transaction management.
+   * @return Array of updated stops.
+   */
+  async batchUpdateStopsComprehensive(
+    updates: ComprehensiveStopUpdate[],
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Stop[]> {
+    if (updates.length === 0) {
+      return [];
+    }
+
+    this.logger.debug(`Batch updating ${updates.length} stops with comprehensive data`);
+
+    return await this.stopRepository.batchUpdateStopsComprehensive(updates, prismaClient);
   }
 }

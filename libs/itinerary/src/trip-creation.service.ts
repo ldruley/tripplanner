@@ -4,8 +4,8 @@ import { TripService } from '@trip-planner/trip';
 import { LocationService } from '@trip-planner/location';
 import { StopService } from '@trip-planner/stop';
 import { TravelSegmentService } from '@trip-planner/travel-segment';
-import { CreateTripFromOrganizedListDto } from '@trip-planner/shared/dtos';
-import { BankCoordinationService } from './bank-coordination.service';
+import { CreateTripFromOrderedListDto } from '@trip-planner/shared/dtos';
+import { TripBankedLocationService } from './trip-banked-location.service';
 import {
   Trip,
   CreateTripRequest,
@@ -24,7 +24,7 @@ export class TripCreationService {
     private readonly locationService: LocationService,
     private readonly stopService: StopService,
     private readonly travelSegmentService: TravelSegmentService,
-    private readonly bankCoordinationService: BankCoordinationService,
+    private readonly bankCoordinationService: TripBankedLocationService,
   ) {}
 
   /**
@@ -36,7 +36,7 @@ export class TripCreationService {
    */
   async createTripFromOrganizedList(
     userId: string,
-    data: CreateTripFromOrganizedListDto,
+    data: CreateTripFromOrderedListDto,
   ): Promise<Trip> {
     this.logger.debug(`Creating trip from organized list for user ${userId}`);
 
@@ -110,7 +110,7 @@ export class TripCreationService {
       // Step 4: Process banked locations if provided
       if (data.bankedLocations && data.bankedLocations.length > 0) {
         this.logger.debug(`Processing ${data.bankedLocations.length} banked locations`);
-        
+
         for (const bankedLocation of data.bankedLocations) {
           // Create or find existing location (with deduplication)
           const locationData: CreateLocationRequest = {
@@ -142,7 +142,7 @@ export class TripCreationService {
             location.id as string,
             prismaClient,
           );
-          
+
           this.logger.debug(`Added location ${location.id} to bank for ${bankedLocation.name}`);
         }
       }

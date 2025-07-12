@@ -3,6 +3,17 @@ import { latitudeSchema, longitudeSchema, uuidSchema } from './base.schema';
 import { ApiSourceProvider, LocationCategory, Prisma } from '@prisma/client';
 import { extendApi } from '@anatine/zod-openapi';
 
+export interface ProcessedLocation {
+  originalIndex: number;
+  locationData: CreateLocationRequest;
+  order?: number; // Only for organized locations
+  isBanked: boolean;
+}
+
+export interface CreatedLocationMap {
+  [key: string]: Location; // Key is the location index or identifier
+}
+
 export const LocationCategorySchema = z.nativeEnum(LocationCategory);
 export const ApiSourceSchema = z.nativeEnum(ApiSourceProvider);
 

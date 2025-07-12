@@ -3,11 +3,11 @@ import { TripCreationService } from './trip-creation.service';
 import { BatchedTripCreationService } from './batched-trip-creation.service';
 import { StopCoordinationService } from './stop-coordination.service';
 import { RoutingCoordinationService } from './routing-coordination.service';
-import { BankCoordinationService } from './bank-coordination.service';
+import { TripBankedLocationService } from './trip-banked-location.service';
 import { TimelineCoordinationService } from './timeline-coordination.service';
 import { TripService } from '@trip-planner/trip';
 import {
-  CreateTripFromOrganizedListDto,
+  CreateTripFromOrderedListDto,
   AddStopToTripDto,
   RemoveStopFromTripDto,
   ItineraryReorderStopsDto,
@@ -28,7 +28,7 @@ export class ItineraryService {
     private readonly batchedTripCreationService: BatchedTripCreationService,
     private readonly stopCoordinationService: StopCoordinationService,
     private readonly routingCoordinationService: RoutingCoordinationService,
-    private readonly bankCoordinationService: BankCoordinationService,
+    private readonly bankCoordinationService: TripBankedLocationService,
     private readonly timelineCoordinationService: TimelineCoordinationService,
     private readonly prismaService: PrismaService,
     private readonly tripService: TripService,
@@ -43,7 +43,7 @@ export class ItineraryService {
    */
   async createTripFromOrganizedList(
     userId: string,
-    data: CreateTripFromOrganizedListDto,
+    data: CreateTripFromOrderedListDto,
   ): Promise<Trip> {
     this.logger.log(`Creating trip from organized list for user ${userId}: ${data.name}`);
     try {
@@ -97,19 +97,29 @@ export class ItineraryService {
    */
   async createTripFromOrganizedListBatched(
     userId: string,
-    data: CreateTripFromOrganizedListDto,
+    data: CreateTripFromOrderedListDto,
   ): Promise<Trip> {
-    this.logger.log(`[EXPERIMENTAL] Creating trip from organized list with batching for user ${userId}: ${data.name}`);
+    this.logger.log(
+      `[EXPERIMENTAL] Creating trip from organized list with batching for user ${userId}: ${data.name}`,
+    );
     try {
       // Use the batched trip creation service which includes routing AND timeline pre-calculation
-      const trip = await this.batchedTripCreationService.createTripFromOrganizedListBatched(userId, data);
+      const trip = await this.batchedTripCreationService.createTripFromOrderedListBatched(
+        userId,
+        data,
+      );
 
-      this.logger.log(`[EXPERIMENTAL] Successfully created trip ${trip.id} with batched operations including timeline`);
-      
+      this.logger.log(
+        `[EXPERIMENTAL] Successfully created trip ${trip.id} with batched operations including timeline`,
+      );
+
       // Trip is returned with all data already calculated - no additional operations needed
       return trip;
     } catch (error) {
-      this.logger.error(`[EXPERIMENTAL] Failed to create trip from organized list with batching for user ${userId}:`, error);
+      this.logger.error(
+        `[EXPERIMENTAL] Failed to create trip from organized list with batching for user ${userId}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -272,48 +282,122 @@ export class ItineraryService {
   }
 
   /**
-   * EXPERIMENTAL: Reorder stops using batched database operations.
-   * This is a proof of concept for reducing database operations through object mutation and batching.
+   * TRUE BATCHING: Add a stop to a trip using comprehensive pre-calculation and atomic batch updates.
+   * This method implements true batching where location creation, stop insertion, order adjustments,
+   * routing calculation, and timeline calculation are all pre-calculated and applied atomically.
+   * 
+   * @param userId - User ID who owns the trip.
+   * @param data - Stop addition data.
+   * @return The updated trip with the new stop.
+   */
+  async addStopToTripWithBatching(userId: string, data: AddStopToTripDto): Promise<Trip> {
+    this.logger.log(
+      `[TRUE BATCHING] Adding stop to trip with comprehensive batching ${data.tripId} for user ${userId}`,
+    );
+
+    try {
+      return await this.prismaService.$transaction(
+        async (prismaClient: PrismaClientOrTransaction) => {
+          // Single operation: add stop with complete pre-calculation and atomic updates
+          // This includes: location creation, stop insertion, order adjustments, routing calculation,
+          // timeline calculation, and all database updates in a single coordinated batch
+          const trip = await this.stopCoordinationService.addStopToTripWithBatching(
+            userId,
+            data,
+            prismaClient,
+          );
+
+          this.logger.log(
+            `[TRUE BATCHING] Successfully added stop to trip ${data.tripId} with complete batching`,
+          );
+          return trip;
+        },
+      );
+    } catch (error) {
+      this.logger.error(
+        `[TRUE BATCHING] Failed to add stop with batching to trip ${data.tripId} for user ${userId}:`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * TRUE BATCHING: Remove a stop from a trip using comprehensive pre-calculation and atomic batch updates.
+   * This method implements true batching where stop deletion, order adjustments,
+   * routing calculation, and timeline calculation are all pre-calculated and applied atomically.
+   * 
+   * @param userId - User ID who owns the trip.
+   * @param data - Stop removal data.
+   * @return The updated trip without the removed stop.
+   */
+  async removeStopFromTripWithBatching(userId: string, data: RemoveStopFromTripDto): Promise<Trip> {
+    this.logger.log(
+      `[TRUE BATCHING] Removing stop from trip with comprehensive batching ${data.tripId} for user ${userId}`,
+    );
+
+    try {
+      return await this.prismaService.$transaction(
+        async (prismaClient: PrismaClientOrTransaction) => {
+          // Single operation: remove stop with complete pre-calculation and atomic updates
+          // This includes: stop deletion, order adjustments, routing calculation,
+          // timeline calculation, and all database updates in a single coordinated batch
+          const trip = await this.stopCoordinationService.removeStopFromTripWithBatching(
+            userId,
+            data,
+            prismaClient,
+          );
+
+          this.logger.log(
+            `[TRUE BATCHING] Successfully removed stop from trip ${data.tripId} with complete batching`,
+          );
+          return trip;
+        },
+      );
+    } catch (error) {
+      this.logger.error(
+        `[TRUE BATCHING] Failed to remove stop with batching from trip ${data.tripId} for user ${userId}:`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * TRUE BATCHING: Reorder stops using comprehensive pre-calculation and atomic batch updates.
+   * This method implements true batching where each stop is updated once with all changes:
+   * order, calculated times, routing, and timeline in a single coordinated operation.
+   * 
    * @param userId - User ID who owns the trip.
    * @param data - Reorder data.
    * @return The updated trip with reordered stops.
    */
   async reorderStopsWithBatching(userId: string, data: ItineraryReorderStopsDto): Promise<Trip> {
-    this.logger.log(`[EXPERIMENTAL] Reordering stops with batching in trip ${data.tripId} for user ${userId}`);
-    // Step 1: Reorder stops with batched coordination
-    const trip = await this.stopCoordinationService.reorderStopsWithBatching(userId, data);
+    this.logger.log(
+      `[TRUE BATCHING] Reordering stops with comprehensive batching in trip ${data.tripId} for user ${userId}`,
+    );
+
     try {
       return await this.prismaService.$transaction(
         async (prismaClient: PrismaClientOrTransaction) => {
-          // Step 2: Calculate routing if requested
-          if (data.calculateRouting && trip.stops && trip.stops.length > 1) {
-            this.logger.debug(`[EXPERIMENTAL] Calculating routing after batched reordering in trip ${data.tripId}`);
-            const routingData: UpdateTripRoutingDto = {
-              tripId: data.tripId,
-              travelMode: data.travelMode,
-              forceRecalculate: true,
-            };
-            const tripWithRouting = await this.routingCoordinationService.updateTripRouting(
-              routingData,
-              prismaClient,
-            );
-            // Step 3: Calculate timeline after routing
-            await this.timelineCoordinationService.recalculateAndUpdateTimeline(
-              data.tripId,
-              prismaClient,
-            );
-            this.logger.log(
-              `[EXPERIMENTAL] Successfully reordered stops in trip ${data.tripId} with batching, routing and timeline`,
-            );
-            return tripWithRouting;
-          }
-          this.logger.log(`[EXPERIMENTAL] Successfully reordered stops in trip ${data.tripId} with batching, no routing`);
-          return this.tripService.findById(data.tripId, true, true, true);
+          // Single operation: reorder stops with complete pre-calculation and atomic updates
+          // This includes: stop order changes, routing calculation, timeline calculation,
+          // and all database updates in a single coordinated batch
+          const trip = await this.stopCoordinationService.reorderStopsWithBatching(
+            userId,
+            data,
+            prismaClient,
+          );
+
+          this.logger.log(
+            `[TRUE BATCHING] Successfully reordered stops in trip ${data.tripId} with complete batching`,
+          );
+          return trip;
         },
       );
     } catch (error) {
       this.logger.error(
-        `[EXPERIMENTAL] Failed to reorder stops with batching in trip ${data.tripId} for user ${userId}:`,
+        `[TRUE BATCHING] Failed to reorder stops with batching in trip ${data.tripId} for user ${userId}:`,
         error,
       );
       throw error;

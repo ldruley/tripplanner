@@ -194,6 +194,70 @@ export class LocationRepository {
   }
 
   /**
+   * Find locations by multiple exact coordinate pairs in a single query
+   * @param coordinates - Array of coordinate pairs to search for
+   * @param prismaClient - Optional Prisma client for testing or custom transactions
+   */
+  async findByCoordinatesIn(
+    coordinates: { latitude: number; longitude: number }[],
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Location[]> {
+    const client = prismaClient || this.prisma;
+
+    if (coordinates.length === 0) {
+      return [];
+    }
+
+    // Build OR conditions for each coordinate pair
+    const coordinateConditions = coordinates.map(coord => ({
+      AND: [
+        { latitude: coord.latitude },
+        { longitude: coord.longitude },
+      ],
+    }));
+
+    const locations = await client.location.findMany({
+      where: {
+        OR: coordinateConditions,
+      },
+    });
+
+    return locations as Location[];
+  }
+
+  /**
+   * Find locations by multiple API source and ID pairs in a single query
+   * @param apiSources - Array of API source pairs to search for
+   * @param prismaClient - Optional Prisma client for testing or custom transactions
+   */
+  async findByApiSourcesIn(
+    apiSources: { apiSource: string; apiSourceId: string }[],
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Location[]> {
+    const client = prismaClient || this.prisma;
+
+    if (apiSources.length === 0) {
+      return [];
+    }
+
+    // Build OR conditions for each API source pair
+    const apiSourceConditions = apiSources.map(source => ({
+      AND: [
+        { apiSource: source.apiSource as any },
+        { apiSourceId: source.apiSourceId },
+      ],
+    }));
+
+    const locations = await client.location.findMany({
+      where: {
+        OR: apiSourceConditions,
+      },
+    });
+
+    return locations as Location[];
+  }
+
+  /**
    * Search locations based on various criteria
    * @param criteria - LocationSearchCriteria
    * @param prismaClient - Optional Prisma client for testing or custom transactions

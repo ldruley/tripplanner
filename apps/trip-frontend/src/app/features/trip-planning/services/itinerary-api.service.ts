@@ -9,7 +9,7 @@ import {
   TripSchema,
 } from '@trip-planner/types';
 import {
-  CreateTripFromOrganizedListDto,
+  CreateTripFromOrderedListDto,
   AddStopToTripDto,
   RemoveStopFromTripDto,
   ItineraryReorderStopsDto,
@@ -44,7 +44,7 @@ export class ItineraryApiService {
     tripData: { name: string; description?: string; startDate?: Date; endDate?: Date },
     organizedLocations: LocationForItinerary[],
   ): Observable<Trip> {
-    const createRequest: CreateTripFromOrganizedListDto = {
+    const createRequest: CreateTripFromOrderedListDto = {
       name: tripData.name,
       description: tripData.description || undefined,
       startDate: tripData.startDate?.toISOString(),

@@ -12,9 +12,10 @@ import { TripCreationService } from './trip-creation.service';
 import { BatchedTripCreationService } from './batched-trip-creation.service';
 import { StopCoordinationService } from './stop-coordination.service';
 import { RoutingCoordinationService } from './routing-coordination.service';
-import { BankCoordinationService } from './bank-coordination.service';
+import { TripBankedLocationService } from './trip-banked-location.service';
 import { TimelineCoordinationService } from './timeline-coordination.service';
 import { TripBankedLocationRepository } from './trip-banked-location.repository';
+import { UnifiedBatchingService } from './unified-batching.service';
 
 @Module({
   imports: [
@@ -33,9 +34,10 @@ import { TripBankedLocationRepository } from './trip-banked-location.repository'
     BatchedTripCreationService,
     StopCoordinationService,
     RoutingCoordinationService,
-    BankCoordinationService,
+    TripBankedLocationService,
     TimelineCoordinationService,
     TripBankedLocationRepository,
+    UnifiedBatchingService,
   ],
   exports: [
     ItineraryService,
@@ -43,9 +45,10 @@ import { TripBankedLocationRepository } from './trip-banked-location.repository'
     BatchedTripCreationService,
     StopCoordinationService,
     RoutingCoordinationService,
-    BankCoordinationService,
+    TripBankedLocationService,
     TimelineCoordinationService,
     TripBankedLocationRepository,
+    UnifiedBatchingService,
   ],
 })
 export class ItineraryModule {}

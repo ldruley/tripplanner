@@ -9,6 +9,8 @@ import {
   UpdateLocationRequestSchema,
   TimezoneRequest,
   TimezoneResponse,
+  ProcessedLocation,
+  CreatedLocationMap,
 } from '@trip-planner/types';
 import { PrismaClientOrTransaction } from '@trip-planner/prisma';
 import { TimezoneService } from '@trip-planner/timezone';
@@ -53,6 +55,149 @@ export class LocationService {
     }
 
     return await this.locationRepository.create(data, prismaClient);
+  }
+
+  /**
+   * Batch create/find all locations with deduplication logic.
+   * Reduces 2N + 2M location operations to ~3 operations total.
+   * @param allLocationData - All processed location data.
+   * @param prismaClient - Prisma client for transaction.
+   * @return Map of created/found locations indexed by their type and original index.
+   */
+  async batchCreateLocations(
+    allLocationData: ProcessedLocation[],
+    prismaClient: PrismaClientOrTransaction,
+  ): Promise<CreatedLocationMap> {
+    const createdLocations: CreatedLocationMap = {};
+
+    if (allLocationData.length === 0) {
+      return createdLocations;
+    }
+
+    // Step 1: Extract all coordinates and API sources for bulk queries
+    const allCoordinates = allLocationData.map(loc => ({
+      latitude: loc.locationData.latitude,
+      longitude: loc.locationData.longitude,
+    }));
+
+    const apiSourcePairs = allLocationData
+      .filter(loc => loc.locationData.apiSource && loc.locationData.apiSourceId)
+      .map(loc => ({
+        apiSource: loc.locationData.apiSource!,
+        apiSourceId: loc.locationData.apiSourceId!,
+      }));
+
+    // Step 2: Perform bulk duplicate checks (2 queries max instead of 2N queries)
+    const [coordinateMatches, apiSourceMatches] = await Promise.all([
+      this.locationRepository.findByCoordinatesIn(allCoordinates, prismaClient),
+      apiSourcePairs.length > 0
+        ? this.locationRepository.findByApiSourcesIn(apiSourcePairs, prismaClient)
+        : Promise.resolve([]),
+    ]);
+
+    // Step 3: Create lookup maps for fast duplicate matching
+    const coordinateMatchMap = new Map<string, Location>();
+    coordinateMatches.forEach(location => {
+      const key = `${location.latitude},${location.longitude}`;
+      if (!coordinateMatchMap.has(key)) {
+        coordinateMatchMap.set(key, location);
+      }
+    });
+
+    const apiSourceMatchMap = new Map<string, Location>();
+    apiSourceMatches.forEach(location => {
+      if (location.apiSource && location.apiSourceId) {
+        const key = `${location.apiSource},${location.apiSourceId}`;
+        if (!apiSourceMatchMap.has(key)) {
+          apiSourceMatchMap.set(key, location);
+        }
+      }
+    });
+
+    // Step 4: Process each location to find duplicates or mark for creation
+    const locationsToCreate: CreateLocationRequest[] = [];
+    const locationIndexMap = new Map<number, ProcessedLocation>();
+
+    for (let i = 0; i < allLocationData.length; i++) {
+      const processedLocation = allLocationData[i];
+      const { locationData } = processedLocation;
+
+      // Check for exact coordinate match (highest priority)
+      const coordKey = `${locationData.latitude},${locationData.longitude}`;
+      const coordinateMatch = coordinateMatchMap.get(coordKey);
+
+      if (coordinateMatch) {
+        const key = processedLocation.isBanked
+          ? `banked_${processedLocation.originalIndex}`
+          : `organized_${processedLocation.originalIndex}`;
+        
+        createdLocations[key] = coordinateMatch;
+        this.logger.debug(`Found duplicate by coordinates for location ${i}: ${coordinateMatch.id}`);
+        continue;
+      }
+
+      // Check for API source match (secondary priority)
+      if (locationData.apiSource && locationData.apiSourceId) {
+        const apiKey = `${locationData.apiSource},${locationData.apiSourceId}`;
+        const apiMatch = apiSourceMatchMap.get(apiKey);
+
+        if (apiMatch) {
+          const key = processedLocation.isBanked
+            ? `banked_${processedLocation.originalIndex}`
+            : `organized_${processedLocation.originalIndex}`;
+          
+          createdLocations[key] = apiMatch;
+          this.logger.debug(`Found duplicate by API source for location ${i}: ${apiMatch.id}`);
+          continue;
+        }
+      }
+
+      // No duplicate found, mark for creation
+      locationsToCreate.push(locationData);
+      locationIndexMap.set(locationsToCreate.length - 1, processedLocation);
+    }
+
+    // Step 5: Bulk create remaining locations (1 query instead of N queries)
+    if (locationsToCreate.length > 0) {
+      this.logger.debug(`Creating ${locationsToCreate.length} new locations in bulk`);
+      
+      const createdLocationRecords = await prismaClient.location.createManyAndReturn({
+        data: locationsToCreate.map(data => ({
+          name: data.name,
+          description: data.description || null,
+          address: data.address || null,
+          city: data.city || null,
+          state: data.state || null,
+          country: data.country || null,
+          postalCode: data.postalCode,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          timezone: data.timezone,
+          apiSource: data.apiSource || null,
+          apiSourceId: data.apiSourceId || null,
+          category: data.category || null,
+          public: data.public || false,
+        })),
+      });
+
+      // Map created locations back to their original indexes
+      createdLocationRecords.forEach((location, createdIndex) => {
+        const processedLocation = locationIndexMap.get(createdIndex);
+        if (processedLocation) {
+          const key = processedLocation.isBanked
+            ? `banked_${processedLocation.originalIndex}`
+            : `organized_${processedLocation.originalIndex}`;
+          
+          createdLocations[key] = location as Location;
+        }
+      });
+    }
+
+    this.logger.debug(
+      `Batch location processing complete: ${Object.keys(createdLocations).length} locations processed, ${locationsToCreate.length} created, ${allLocationData.length - locationsToCreate.length} duplicates found`,
+    );
+
+    return createdLocations;
   }
 
   /**

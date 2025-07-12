@@ -11,9 +11,20 @@ export const UserSchema = extendApi(
     email: emailSchema.describe('User email address, must be unique'),
     password: passwordSchema.describe('Hashed password for authentication'),
     role: roleSchema,
-    emailVerified: z.boolean().default(false).describe('Whether the user has verified their email address'),
-    verificationToken: z.string().nullable().optional().describe('Token used for email verification'),
-    verificationTokenExpiry: z.date().nullable().optional().describe('Expiration date for verification token'),
+    emailVerified: z
+      .boolean()
+      .default(false)
+      .describe('Whether the user has verified their email address'),
+    verificationToken: z
+      .string()
+      .nullable()
+      .optional()
+      .describe('Token used for email verification'),
+    verificationTokenExpiry: z
+      .date()
+      .nullable()
+      .optional()
+      .describe('Expiration date for verification token'),
     resetToken: z.string().nullable().optional().describe('Token used for password reset'),
     resetTokenExpiry: z.date().nullable().optional().describe('Expiration date for reset token'),
     createdAt: z.date().describe('Timestamp when the user account was created'),
@@ -67,6 +78,7 @@ export const CreateUserSchema = extendApi(
   }).extend({
     firstName: nameSchema.describe('User first name'),
     lastName: nameSchema.describe('User last name'),
+    darkMode: z.boolean().default(false).describe('User preference for dark mode'),
   }),
   {
     title: 'Create User',
@@ -128,7 +140,10 @@ export const RequestPasswordResetSchema = extendApi(
 export const ResetPasswordSchema = extendApi(
   z
     .object({
-      token: z.string().min(1, 'Reset token is required').describe('Password reset token from email'),
+      token: z
+        .string()
+        .min(1, 'Reset token is required')
+        .describe('Password reset token from email'),
       newPassword: passwordSchema.describe('New password to set'),
       confirmPassword: passwordSchema.describe('Confirmation of new password'),
     })
@@ -149,7 +164,10 @@ export const ResetPasswordSchema = extendApi(
 
 export const VerifyEmailSchema = extendApi(
   z.object({
-    token: z.string().min(1, 'Verification token is required').describe('Email verification token from email'),
+    token: z
+      .string()
+      .min(1, 'Verification token is required')
+      .describe('Email verification token from email'),
   }),
   {
     title: 'Verify Email',

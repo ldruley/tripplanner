@@ -18,3 +18,5 @@ export * from './timeline.schema';
 export * from './routing.schema';
 export * from './user-favorite-location.schema';
 export * from './friendship.schema';
+export * from './batching.schema';
+export * from './itinerary.schema';

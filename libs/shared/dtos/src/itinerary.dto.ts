@@ -1,9 +1,13 @@
 import { createZodDto } from '@anatine/zod-nestjs';
 import { z } from 'zod';
-import { TravelModeSchema, LocationCategorySchema, LocationForItinerarySchema } from '@trip-planner/types';
+import {
+  TravelModeSchema,
+  LocationCategorySchema,
+  LocationForItinerarySchema,
+} from '@trip-planner/types';
 import {
   AddStopToTripSchema,
-  CreateTripFromOrganizedListSchema,
+  CreateTripFromOrderedListSchema,
   ItineraryReorderStopsSchema,
   RemoveStopFromTripSchema,
   UpdateTripRoutingSchema,
@@ -15,9 +19,7 @@ import {
 // DTOs
 export class LocationForItineraryDto extends createZodDto(LocationForItinerarySchema) {}
 
-export class CreateTripFromOrganizedListDto extends createZodDto(
-  CreateTripFromOrganizedListSchema,
-) {}
+export class CreateTripFromOrderedListDto extends createZodDto(CreateTripFromOrderedListSchema) {}
 
 export class AddStopToTripDto extends createZodDto(AddStopToTripSchema) {}
 

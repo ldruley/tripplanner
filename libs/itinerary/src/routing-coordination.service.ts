@@ -4,7 +4,15 @@ import { TripRepository, TripService } from '@trip-planner/trip';
 import { RoutingService } from '@trip-planner/routing';
 import { TravelSegmentService } from '@trip-planner/travel-segment';
 import { UpdateTripRoutingDto } from '@trip-planner/shared/dtos';
-import { RoutingRequestSchema, RoutingResponse, Trip, RouteLeg } from '@trip-planner/types';
+import {
+  RoutingRequestSchema,
+  RoutingResponse,
+  Trip,
+  RouteLeg,
+  Stop,
+  CreatedLocationMap,
+  SegmentRoutingData,
+} from '@trip-planner/types';
 import { TravelMode } from '@prisma/client';
 
 @Injectable()
@@ -87,6 +95,110 @@ export class RoutingCoordinationService {
       this.logger.error(`Failed to update routing for trip ${data.tripId}:`, error);
       throw error;
     }
+  }
+
+  /**
+   * TODO: Move this method to a more appropriate service for potential reuse.
+   * Calculate routing data for all consecutive stop pairs.
+   * Makes external API calls to routing service for all segments.
+   * @param stops - Created stops in order.
+   * @param createdLocations - Map of created locations.
+   * @param travelMode - Travel mode for routing.
+   * @return Routing data for all segments.
+   */
+  async calculateRoutingForAllSegments(
+    stops: Stop[],
+    createdLocations: CreatedLocationMap,
+    travelMode: TravelMode,
+  ): Promise<SegmentRoutingData[]> {
+    if (stops.length < 2) {
+      return [];
+    }
+
+    const routingUpdates: SegmentRoutingData[] = [];
+
+    // Sort stops by order to ensure correct sequence
+    const sortedStops = [...stops].sort((a, b) => a.order - b.order);
+
+    for (let i = 0; i < sortedStops.length - 1; i++) {
+      const originStop = sortedStops[i];
+      const destinationStop = sortedStops[i + 1];
+
+      // Find the location data for routing
+      const originLocation = Object.values(createdLocations).find(
+        loc => loc.id === originStop.locationId,
+      );
+      const destinationLocation = Object.values(createdLocations).find(
+        loc => loc.id === destinationStop.locationId,
+      );
+
+      if (!originLocation || !destinationLocation) {
+        this.logger.warn(
+          `Missing location data for segment ${originStop.id}-${destinationStop.id}`,
+        );
+        continue;
+      }
+
+      try {
+        // Create waypoints for routing request
+        const waypoints = [
+          {
+            latitude: originLocation.latitude,
+            longitude: originLocation.longitude,
+            name: originLocation.name,
+          },
+          {
+            latitude: destinationLocation.latitude,
+            longitude: destinationLocation.longitude,
+            name: destinationLocation.name,
+          },
+        ];
+
+        // Make actual routing service call
+        const routingRequest = RoutingRequestSchema.parse({
+          waypoints,
+          options: {
+            travelMode,
+          },
+        });
+
+        const routingResult: RoutingResponse = await this.routingService.getRouting(routingRequest);
+
+        this.logger.debug(
+          `Pre-calculated routing for segment ${originStop.id}-${destinationStop.id} using ${routingResult.provider}: ${routingResult.route.distance}m, ${routingResult.route.duration}s`,
+        );
+
+        // Map routing result to segment creation format
+        const routingData: SegmentRoutingData = {
+          originStopId: originStop.id as string,
+          destinationStopId: destinationStop.id as string,
+          travelMode: travelMode,
+          apiCalculatedDistance: routingResult.route.distance,
+          apiCalculatedDuration: Math.round(routingResult.route.duration / 60), // Convert seconds to minutes
+          polyline: routingResult.route.geometry,
+        };
+
+        routingUpdates.push(routingData);
+      } catch (error) {
+        this.logger.error(
+          `Failed to calculate routing for segment ${originStop.id}-${destinationStop.id}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+
+        // Fallback: create segment without routing data
+        const routingData: SegmentRoutingData = {
+          originStopId: originStop.id as string,
+          destinationStopId: destinationStop.id as string,
+          travelMode: travelMode,
+          apiCalculatedDistance: null,
+          apiCalculatedDuration: null,
+          polyline: null,
+        };
+
+        routingUpdates.push(routingData);
+      }
+    }
+
+    return routingUpdates;
   }
 
   /**

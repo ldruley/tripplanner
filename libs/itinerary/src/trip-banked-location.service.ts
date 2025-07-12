@@ -15,8 +15,8 @@ import {
 import { StopCoordinationService } from './stop-coordination.service';
 
 @Injectable()
-export class BankCoordinationService {
-  private readonly logger = new Logger(BankCoordinationService.name);
+export class TripBankedLocationService {
+  private readonly logger = new Logger(TripBankedLocationService.name);
 
   constructor(
     private readonly prismaService: PrismaService,
@@ -28,33 +28,34 @@ export class BankCoordinationService {
   ) {}
 
   /**
-   * Add a location to the trip's bank by location ID.
+   * Batch create bank relations for banked locations.
+   * Reduces M bank operations to 1 operation.
    * @param userId - User ID who owns the trip.
-   * @param tripId - Trip ID to add location to.
-   * @param locationId - Location ID to add to bank.
-   * @param prismaClient - Optional transaction client.
-   * @return The created trip banked location.
+   * @param tripId - Trip ID for the bank relations.
+   * @param bankedLocationEntries - Banked location entries with keys.
+   * @param prismaClient - Prisma client for transaction.
    */
-  async addLocationToBank(
+  async batchCreateBankRelations(
     userId: string,
     tripId: string,
-    locationId: string,
-    prismaClient?: PrismaClientOrTransaction,
-  ): Promise<TripBankedLocation>;
+    bankedLocationEntries: [string, Location][],
+    prismaClient: PrismaClientOrTransaction,
+  ): Promise<void> {
+    if (bankedLocationEntries.length === 0) {
+      return;
+    }
 
-  /**
-   * Add a location to the trip's bank.
-   * Creates location if it doesn't exist and adds it to the trip's banked locations.
-   * @param userId - User ID who owns the trip.
-   * @param tripId - Trip ID to add location to.
-   * @param locationData - Location data to add to bank.
-   * @return The created trip banked location.
-   */
-  async addLocationToBank(
-    userId: string,
-    tripId: string,
-    locationData: CreateLocationRequest,
-  ): Promise<TripBankedLocation>;
+    // Build bank relation creation data
+    const bankCreateData = bankedLocationEntries.map(([key, location]) => ({
+      tripId,
+      locationId: location.id as string,
+    }));
+
+    // Batch create all bank relations
+    await prismaClient.tripBankedLocation.createMany({
+      data: bankCreateData,
+    });
+  }
 
   async addLocationToBank(
     userId: string,
@@ -77,7 +78,7 @@ export class BankCoordinationService {
       }
 
       let location: Location;
-      
+
       // Step 2: Get or create location based on input type
       if (typeof locationDataOrId === 'string') {
         // Input is locationId

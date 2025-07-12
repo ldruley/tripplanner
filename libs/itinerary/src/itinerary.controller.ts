@@ -17,7 +17,7 @@ import { CurrentUser } from '@trip-planner/auth';
 import { SafeUser } from '@trip-planner/types';
 import { ItineraryService } from './itinerary.service';
 import {
-  CreateTripFromOrganizedListDto,
+  CreateTripFromOrderedListDto,
   AddStopToTripDto,
   RemoveStopFromTripDto,
   ItineraryReorderStopsDto,
@@ -57,16 +57,17 @@ export class ItineraryController {
   })
   async createTripFromOrganizedList(
     @CurrentUser() user: SafeUser,
-    @Body() data: CreateTripFromOrganizedListDto,
+    @Body() data: CreateTripFromOrderedListDto,
   ): Promise<Trip> {
     this.logger.log(`Creating trip from organized list for user ${user.id}`);
     return await this.itineraryService.createTripFromOrganizedList(user.id, data);
   }
 
   @Post('trips/batched')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'EXPERIMENTAL: Create a trip using batched database operations',
-    description: 'Optimized trip creation that reduces database operations from 3N + 2M to ~5-8 operations total. Includes pre-calculated routing data.'
+    description:
+      'Optimized trip creation that reduces database operations from 3N + 2M to ~5-8 operations total. Includes pre-calculated routing data.',
   })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -83,9 +84,11 @@ export class ItineraryController {
   })
   async createTripFromOrganizedListBatched(
     @CurrentUser() user: SafeUser,
-    @Body() data: CreateTripFromOrganizedListDto,
+    @Body() data: CreateTripFromOrderedListDto,
   ): Promise<Trip> {
-    this.logger.log(`[EXPERIMENTAL] Creating trip from organized list with batching for user ${user.id}`);
+    this.logger.log(
+      `[EXPERIMENTAL] Creating trip from organized list with batching for user ${user.id}`,
+    );
     return await this.itineraryService.createTripFromOrganizedListBatched(user.id, data);
   }
 
@@ -205,7 +208,9 @@ export class ItineraryController {
     @Param('tripId') tripId: string,
     @Body() data: Omit<ItineraryReorderStopsDto, 'tripId'>,
   ): Promise<Trip> {
-    this.logger.log(`[EXPERIMENTAL] Reordering stops with batching in trip ${tripId} for user ${user.id}`);
+    this.logger.log(
+      `[EXPERIMENTAL] Reordering stops with batching in trip ${tripId} for user ${user.id}`,
+    );
     const fullData: ItineraryReorderStopsDto = { ...data, tripId };
     return await this.itineraryService.reorderStopsWithBatching(user.id, fullData);
   }
@@ -362,7 +367,9 @@ export class ItineraryController {
     @Param('tripId') tripId: string,
     @Body() data: AddLocationToBankDto,
   ): Promise<any> {
-    this.logger.log(`Adding location ${data.locationId} to bank for trip ${tripId} for user ${user.id}`);
+    this.logger.log(
+      `Adding location ${data.locationId} to bank for trip ${tripId} for user ${user.id}`,
+    );
     return await this.itineraryService.addLocationToBank(user.id, tripId, data.locationId);
   }
 
@@ -385,7 +392,9 @@ export class ItineraryController {
     @Param('tripId') tripId: string,
     @Param('locationId') locationId: string,
   ): Promise<void> {
-    this.logger.log(`Removing location ${locationId} from bank for trip ${tripId} for user ${user.id}`);
+    this.logger.log(
+      `Removing location ${locationId} from bank for trip ${tripId} for user ${user.id}`,
+    );
     return await this.itineraryService.removeLocationFromBank(user.id, tripId, locationId);
   }
 
@@ -437,7 +446,14 @@ export class ItineraryController {
     @Param('locationId') locationId: string,
     @Body() data: PromoteLocationToStopDto,
   ): Promise<Trip> {
-    this.logger.log(`Promoting location ${locationId} to stop for trip ${tripId} for user ${user.id}`);
-    return await this.itineraryService.promoteLocationToStop(user.id, tripId, locationId, data.position);
+    this.logger.log(
+      `Promoting location ${locationId} to stop for trip ${tripId} for user ${user.id}`,
+    );
+    return await this.itineraryService.promoteLocationToStop(
+      user.id,
+      tripId,
+      locationId,
+      data.position,
+    );
   }
 }

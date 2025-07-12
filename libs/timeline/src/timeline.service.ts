@@ -5,7 +5,12 @@ import {
   TimelineCalculationRequest,
   TimelineCalculationResult,
   TimelineCalculationRequestSchema,
+  SegmentRoutingData,
+  ComprehensiveStopUpdate,
+  TimelineWithRoutingRequest,
+  TimelineWithRoutingResult,
 } from '@trip-planner/types';
+import { TravelMode } from '@prisma/client';
 import { DEFAULT_DURATIONS } from './timeline.types';
 
 @Injectable()
@@ -154,5 +159,177 @@ export class TimelineService {
     }
 
     return sortedStops;
+  }
+
+  /**
+   * Calculate complete timeline with routing data and stop reordering.
+   * This method enables true batching by working with in-memory data structures.
+   *
+   * @param request - Contains stops, routing data, and optional reordering
+   * @return Timeline calculation result with comprehensive stop updates
+   */
+  calculateTimelineWithRouting(request: TimelineWithRoutingRequest): TimelineWithRoutingResult {
+    const { stops, routingData, stopOrderChanges = [], startTime } = request;
+
+    if (!stops || stops.length === 0) {
+      return {
+        stopUpdates: [],
+        totalTripDuration: 0,
+        hasConflicts: false,
+      };
+    }
+
+    // Step 1: Apply reordering to create new stop sequence
+    const reorderedStops = this.applyStopReordering(stops, stopOrderChanges);
+
+    // Step 2: Create virtual travel segments from routing data
+    const virtualSegments = this.createVirtualSegments(routingData);
+
+    // Step 3: Calculate timeline using reordered stops and routing data
+    const timelineResult = this.calculateSequentialTimelineWithVirtualSegments(
+      reorderedStops,
+      virtualSegments,
+      startTime,
+    );
+
+    // Step 4: Convert timeline result to comprehensive stop updates
+    const stopUpdates = this.createComprehensiveStopUpdates(
+      timelineResult.updatedStops,
+      stopOrderChanges,
+    );
+
+    return {
+      stopUpdates,
+      totalTripDuration: timelineResult.totalTripDuration,
+      tripStartTime: timelineResult.tripStartTime,
+      tripEndTime: timelineResult.tripEndTime,
+      hasConflicts: timelineResult.hasConflicts,
+    };
+  }
+
+  /**
+   * Apply stop reordering to create new sequence with updated orders.
+   * Pure function - works with in-memory data.
+   */
+  private applyStopReordering(
+    stops: Stop[],
+    stopOrderChanges: { stopId: string; newOrder: number }[],
+  ): Stop[] {
+    if (stopOrderChanges.length === 0) {
+      return [...stops].sort((a, b) => a.order - b.order);
+    }
+
+    // Create map of new orders
+    const orderMap = new Map(stopOrderChanges.map(change => [change.stopId, change.newOrder]));
+
+    // Apply new orders and sort
+    const reorderedStops = stops.map(stop => ({
+      ...stop,
+      order: orderMap.get(stop.id as string) ?? stop.order,
+    }));
+
+    return reorderedStops.sort((a, b) => a.order - b.order);
+  }
+
+  /**
+   * Create virtual travel segments from routing data for timeline calculation.
+   * Pure function - converts routing data to segment format.
+   */
+  private createVirtualSegments(routingData: SegmentRoutingData[]): TravelSegment[] {
+    return routingData.map(routing => ({
+      id: `virtual-${routing.originStopId}-${routing.destinationStopId}`,
+      tripId: 'virtual',
+      originStopId: routing.originStopId,
+      destinationStopId: routing.destinationStopId,
+      travelMode: routing.travelMode,
+      distance: null,
+      duration: null,
+      apiCalculatedDistance: routing.apiCalculatedDistance,
+      apiCalculatedDuration: routing.apiCalculatedDuration,
+      polyline: routing.polyline,
+      routeOptions: null,
+      notes: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }));
+  }
+
+  /**
+   * Calculate sequential timeline using reordered stops and virtual segments.
+   * Reuses the existing timeline calculation logic but works with virtual data.
+   */
+  private calculateSequentialTimelineWithVirtualSegments(
+    sortedStops: Stop[],
+    virtualSegments: TravelSegment[],
+    startTime?: Date,
+  ): TimelineCalculationResult {
+    // Reuse existing sequential timeline calculation
+    return this.calculateSequentialTimeline({
+      stops: sortedStops,
+      segments: virtualSegments,
+      startTime,
+    });
+  }
+
+  /**
+   * Create comprehensive stop updates that include order changes and calculated times.
+   * Pure function - merges timeline results with order changes.
+   */
+  private createComprehensiveStopUpdates(
+    updatedStops: Stop[],
+    stopOrderChanges: { stopId: string; newOrder: number }[],
+  ): ComprehensiveStopUpdate[] {
+    const orderMap = new Map(stopOrderChanges.map(change => [change.stopId, change.newOrder]));
+
+    return updatedStops.map(stop => {
+      const update: ComprehensiveStopUpdate = {
+        id: stop.id as string,
+        calculatedArrivalTime: stop.calculatedArrivalTime || undefined,
+        calculatedDepartureTime: stop.calculatedDepartureTime || undefined,
+      };
+
+      // Include order change if this stop was reordered
+      const newOrder = orderMap.get(stop.id as string);
+      if (newOrder !== undefined) {
+        update.order = newOrder;
+      }
+
+      return update;
+    });
+  }
+
+  /**
+   * Validate that routing data is complete for timeline calculation.
+   * Pure function - checks data consistency.
+   */
+  validateRoutingDataCompleteness(
+    stops: Stop[],
+    routingData: SegmentRoutingData[],
+  ): { isComplete: boolean; missingSegments: string[] } {
+    if (stops.length < 2) {
+      return { isComplete: true, missingSegments: [] };
+    }
+
+    const sortedStops = [...stops].sort((a, b) => a.order - b.order);
+    const routingMap = new Map(
+      routingData.map(r => [`${r.originStopId}-${r.destinationStopId}`, r]),
+    );
+
+    const missingSegments: string[] = [];
+
+    for (let i = 0; i < sortedStops.length - 1; i++) {
+      const originId = sortedStops[i].id;
+      const destinationId = sortedStops[i + 1].id;
+      const segmentKey = `${originId}-${destinationId}`;
+
+      if (!routingMap.has(segmentKey)) {
+        missingSegments.push(segmentKey);
+      }
+    }
+
+    return {
+      isComplete: missingSegments.length === 0,
+      missingSegments,
+    };
   }
 }

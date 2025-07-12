@@ -7,6 +7,7 @@ import {
   StopSearchCriteria,
   StopWithLocation,
   UpdateStopRequest,
+  ComprehensiveStopUpdate,
 } from '@trip-planner/types';
 
 @Injectable()
@@ -326,5 +327,52 @@ export class StopRepository {
     return client.stop.count({
       where: { tripId },
     });
+  }
+
+  /**
+   * Batch update all stop fields in single operations per stop.
+   * This enables true batching where each stop is updated once with all changes.
+   * @param updates - Array of comprehensive stop updates
+   * @param prismaClient - Optional Prisma client for testing or custom transactions
+   * @returns Array of updated stops
+   */
+  async batchUpdateStopsComprehensive(
+    updates: ComprehensiveStopUpdate[],
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Stop[]> {
+    const client = prismaClient || this.prisma;
+
+    if (updates.length === 0) {
+      return [];
+    }
+
+    // Execute all updates in parallel - each stop gets updated once with all its changes
+    const updatePromises = updates.map(update => {
+      const { id, ...updateData } = update;
+
+      // Build Prisma update data, only including defined fields
+      const prismaUpdateData: Prisma.StopUpdateInput = {};
+
+      if (updateData.order !== undefined) prismaUpdateData.order = updateData.order;
+      if (updateData.calculatedArrivalTime !== undefined)
+        prismaUpdateData.calculatedArrivalTime = updateData.calculatedArrivalTime;
+      if (updateData.calculatedDepartureTime !== undefined)
+        prismaUpdateData.calculatedDepartureTime = updateData.calculatedDepartureTime;
+      if (updateData.plannedArrivalTime !== undefined)
+        prismaUpdateData.plannedArrivalTime = updateData.plannedArrivalTime;
+      if (updateData.plannedDuration !== undefined)
+        prismaUpdateData.plannedDuration = updateData.plannedDuration;
+      if (updateData.stopType !== undefined) prismaUpdateData.stopType = updateData.stopType;
+      if (updateData.notes !== undefined) prismaUpdateData.notes = updateData.notes;
+      if (updateData.alias !== undefined) prismaUpdateData.alias = updateData.alias;
+
+      return client.stop.update({
+        where: { id },
+        data: prismaUpdateData,
+      });
+    });
+
+    // Execute all updates in parallel for maximum performance
+    return Promise.all(updatePromises);
   }
 }

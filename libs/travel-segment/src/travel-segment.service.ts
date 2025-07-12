@@ -17,6 +17,8 @@ import {
   UpdateTravelSegmentRoutingDataSchema,
   UpdateTravelApiCalculatedDataSchema,
   UpdateTravelApiCalculatedData,
+  Stop,
+  SegmentRoutingData,
 } from '@trip-planner/types';
 import { TravelSegmentRepository } from './travel-segment.repository';
 
@@ -397,5 +399,62 @@ export class TravelSegmentService {
     }
 
     return segments;
+  }
+
+  /**
+   * Batch create travel segments with pre-calculated routing data.
+   * Reduces N-1 segment operations to 1 operation.
+   * @param tripId - Trip ID for the segments.
+   * @param stops - Created stops in order.
+   * @param routingUpdates - Pre-calculated routing data (empty if calculateRouting=false).
+   * @param prismaClient - Prisma client for transaction.
+   */
+  async batchCreateTravelSegments(
+    tripId: string,
+    stops: Stop[],
+    routingUpdates: SegmentRoutingData[],
+    prismaClient: PrismaClientOrTransaction,
+  ): Promise<void> {
+    if (stops.length < 2) {
+      return;
+    }
+
+    // Create routing map for efficient lookups
+    const routingMap = new Map(
+      routingUpdates.map(r => [`${r.originStopId}-${r.destinationStopId}`, r]),
+    );
+
+    // Sort stops by order to ensure correct sequence
+    const sortedStops = [...stops].sort((a, b) => a.order - b.order);
+
+    // Build segment creation data
+    const segmentCreateData = [];
+    for (let i = 0; i < sortedStops.length - 1; i++) {
+      const originStop = sortedStops[i];
+      const destinationStop = sortedStops[i + 1];
+      const segmentKey = `${originStop.id}-${destinationStop.id}`;
+      const routingData = routingMap.get(segmentKey);
+
+      const segmentData = {
+        tripId,
+        originStopId: originStop.id as string,
+        destinationStopId: destinationStop.id as string,
+        travelMode: routingData?.travelMode || undefined,
+        distance: undefined, // User can set this manually later
+        duration: undefined, // User can set this manually later
+        apiCalculatedDistance: routingData?.apiCalculatedDistance || undefined,
+        apiCalculatedDuration: routingData?.apiCalculatedDuration || undefined,
+        polyline: routingData?.polyline || undefined,
+        routeOptions: undefined,
+        notes: undefined,
+      };
+
+      segmentCreateData.push(segmentData);
+    }
+
+    // Batch create all segments
+    await prismaClient.travelSegment.createMany({
+      data: segmentCreateData,
+    });
   }
 }

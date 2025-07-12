@@ -4,7 +4,7 @@ import { LocationForItinerarySchema } from './location.schema';
 import { TravelModeSchema } from './travel-segment.schema';
 
 // Schema for creating a trip from organized locations
-export const CreateTripFromOrganizedListSchema = extendApi(
+export const CreateTripFromOrderedListSchema = extendApi(
   z.object({
     name: z.string().min(1).max(255).describe('Trip name (1-255 characters)'),
     description: z.string().optional().describe('Optional trip description'),

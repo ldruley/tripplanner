@@ -72,13 +72,7 @@ export class FriendshipService {
 
         await this.friendshipRepository.create(
           friendship.receiverId,
-          { receiverId: friendship.senderId },
-          tx,
-        );
-
-        await this.friendshipRepository.update(
-          updatedFriendship.id,
-          { status: FriendshipStatus.ACCEPTED },
+          { receiverId: friendship.senderId, status: FriendshipStatus.ACCEPTED },
           tx,
         );
 
