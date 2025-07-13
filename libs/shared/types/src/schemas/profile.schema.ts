@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { extendApi } from '@anatine/zod-openapi';
-import { nameSchema, uuidSchema } from './base.schema';
+import { nameSchema, uuidSchema, createSuccessResponseSchema } from './base.schema';
 import { UserStatus } from '@prisma/client';
 
 const displayNameSchema = z.string().max(200).describe('Display name for the user profile (max 200 characters)');
@@ -87,11 +87,7 @@ export const UpdateProfileSchema = extendApi(
 
 // API Response
 export const ProfileResponseSchema = extendApi(
-  z.object({
-    success: z.boolean().default(true).describe('Indicates if the operation was successful'),
-    data: ProfileSchema.describe('Profile data'),
-    message: z.string().optional().describe('Optional message about the operation'),
-  }),
+  createSuccessResponseSchema(ProfileSchema),
   {
     title: 'Profile Response',
     description: 'Standard response schema for profile operations',

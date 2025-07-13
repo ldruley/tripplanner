@@ -1,40 +1,11 @@
 import { z } from 'zod';
 import { extendApi } from '@anatine/zod-openapi';
-import {
-  citySchema,
-  countrySchema,
-  fullAddressSchema,
-  latitudeSchema,
-  longitudeSchema,
-  postalCodeSchema,
-  regionSchema,
-  streetAddressSchema,
-} from './base.schema';
+import { BaseLocationResultSchema, GeoProviderSchema } from './base.schema';
 
 export const PoiSearchResultSchema = extendApi(
-  z.object({
-    // Core geographic data
-    latitude: latitudeSchema.describe('Latitude of the POI location'),
-    longitude: longitudeSchema.describe('Longitude of the POI location'),
-
-    // Standardized address components
-    name: z.string().describe('The name of the point of interest (POI).'),
-    fullAddress: fullAddressSchema.describe('Complete formatted address'),
-    streetAddress: streetAddressSchema.describe('Street address component'),
-    city: citySchema.describe('City or locality'),
-    region: regionSchema.describe('Region, state, or province'),
-    country: countrySchema.describe('Country'),
-    postalCode: postalCodeSchema.describe('Postal or ZIP code'),
-
-    // Timezone information
+  BaseLocationResultSchema.extend({
     timezone: z.string().nullable().optional().describe('Timezone of the location'),
-
-    // Provider metadata
-    provider: z
-      .enum(['mapbox', 'google', 'here'])
-      .describe('The service that provided this geocoding result.'),
-    providerId: z.string().describe('The unique ID for this location from the source provider.'),
-
+    provider: GeoProviderSchema.describe('The service that provided this geocoding result.'),
     rawResponse: z.any().optional().describe('Raw response from the provider (optional)'),
   }),
   {
@@ -56,8 +27,6 @@ export const PoiSearchResultSchema = extendApi(
     },
   },
 );
-
-export type PoiSearchResult = z.infer<typeof PoiSearchResultSchema>;
 
 export const PoiSearchQuerySchema = extendApi(
   z.object({
@@ -91,5 +60,7 @@ export const PoiSearchQuerySchema = extendApi(
   },
 );
 
+// Type Exports
+export type PoiSearchResult = z.infer<typeof PoiSearchResultSchema>;
 export type PoiSearchQuery = z.infer<typeof PoiSearchQuerySchema>;
 export type SearchMode = 'place' | 'address';

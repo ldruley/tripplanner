@@ -16,6 +16,8 @@ import { TripBankedLocationService } from './trip-banked-location.service';
 import { TimelineCoordinationService } from './timeline-coordination.service';
 import { TripBankedLocationRepository } from './trip-banked-location.repository';
 import { UnifiedBatchingService } from './unified-batching.service';
+import { SharedValidationService } from './shared-validation.service';
+import { SharedLocationProcessingService } from './shared-location-processing.service';
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import { UnifiedBatchingService } from './unified-batching.service';
     TimelineCoordinationService,
     TripBankedLocationRepository,
     UnifiedBatchingService,
+    SharedValidationService,
+    SharedLocationProcessingService,
   ],
   exports: [
     ItineraryService,
@@ -49,6 +53,8 @@ import { UnifiedBatchingService } from './unified-batching.service';
     TimelineCoordinationService,
     TripBankedLocationRepository,
     UnifiedBatchingService,
+    SharedValidationService,
+    SharedLocationProcessingService,
   ],
 })
 export class ItineraryModule {}

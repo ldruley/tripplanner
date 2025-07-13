@@ -1,24 +1,19 @@
-import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService, PrismaClientOrTransaction } from '@trip-planner/prisma';
 import { TripService } from '@trip-planner/trip';
 import { LocationService } from '@trip-planner/location';
 import { StopService } from '@trip-planner/stop';
 import { TravelSegmentService } from '@trip-planner/travel-segment';
-import { RoutingService } from '@trip-planner/routing';
 import { UnifiedBatchingService } from './unified-batching.service';
+import { RoutingCoordinationService } from './routing-coordination.service';
+import { SharedValidationService } from './shared-validation.service';
+import { SharedLocationProcessingService } from './shared-location-processing.service';
 import {
   AddStopToTripDto,
   RemoveStopFromTripDto,
   ItineraryReorderStopsDto,
 } from '@trip-planner/shared/dtos';
-import {
-  CreateLocationRequest,
-  CreateStopRequest,
-  Trip,
-  TravelSegment,
-  RoutingRequestSchema,
-  RoutingResponse,
-} from '@trip-planner/types';
+import { CreateLocationRequest, CreateStopRequest, Trip, TravelSegment } from '@trip-planner/types';
 import { TravelMode } from '@prisma/client';
 
 interface SegmentRoutingData {
@@ -40,8 +35,10 @@ export class StopCoordinationService {
     private readonly locationService: LocationService,
     private readonly stopService: StopService,
     private readonly travelSegmentService: TravelSegmentService,
-    private readonly routingService: RoutingService,
     private readonly unifiedBatchingService: UnifiedBatchingService,
+    private readonly routingCoordinationService: RoutingCoordinationService,
+    private readonly sharedValidationService: SharedValidationService,
+    private readonly sharedLocationProcessingService: SharedLocationProcessingService,
   ) {}
 
   /**
@@ -67,29 +64,11 @@ export class StopCoordinationService {
         throw new NotFoundException(`Trip ${data.tripId} not found or not owned by user`);
       }
 
-      // Step 2: Create or find location (with deduplication)
-      const locationData: CreateLocationRequest = {
-        name: data.locationData.name,
-        description: data.locationData.description,
-        address: data.locationData.address,
-        city: data.locationData.city,
-        state: data.locationData.state,
-        country: data.locationData.country,
-        postalCode: data.locationData.postalCode,
-        latitude: data.locationData.latitude,
-        longitude: data.locationData.longitude,
-        apiSource: data.locationData.apiSource,
-        apiSourceId: data.locationData.apiSourceId,
-        category: data.locationData.category,
-        public: false, // Default to false, can be updated later
-      };
+      // Step 2: Create or find location (with deduplication) using shared service
+      const createLocationRequest = this.mapCreateLocationRequest(data);
 
-      const location = await this.locationService.create(
-        locationData,
-        {
-          enableApiSourceMatching: true,
-          enableExactCoordinateMatching: true,
-        },
+      const location = await this.sharedLocationProcessingService.processLocationForCreation(
+        createLocationRequest,
         prismaClient,
       );
       this.logger.debug(`Created/found location ${location.id} for ${data.locationData.name}`);
@@ -138,6 +117,25 @@ export class StopCoordinationService {
       this.logger.log(`Successfully added stop ${stop.id} to trip ${data.tripId}`);
       return completeTrip;
     });
+  }
+
+  private mapCreateLocationRequest(data: AddStopToTripDto) {
+    const createLocationRequest: CreateLocationRequest = {
+      name: data.locationData.name,
+      description: data.locationData.description,
+      address: data.locationData.address,
+      city: data.locationData.city,
+      state: data.locationData.state,
+      country: data.locationData.country,
+      postalCode: data.locationData.postalCode,
+      latitude: data.locationData.latitude,
+      longitude: data.locationData.longitude,
+      apiSource: data.locationData.apiSource,
+      apiSourceId: data.locationData.apiSourceId,
+      category: data.locationData.category,
+      public: false, // Default to false, can be updated later
+    };
+    return createLocationRequest;
   }
 
   /**
@@ -226,8 +224,8 @@ export class StopCoordinationService {
           throw new NotFoundException(`Trip ${data.tripId} not found or not owned by user`);
         }
 
-        // Step 2: Validate stop orders
-        this.validateStopOrders(data.stopOrders);
+        // Step 2: Validate stop orders using shared service
+        this.sharedValidationService.validateStopOrders(data.stopOrders);
 
         // Step 3: Update stop orders
         for (const stopOrder of data.stopOrders) {
@@ -380,8 +378,8 @@ export class StopCoordinationService {
       throw new NotFoundException(`Trip ${data.tripId} not found or not owned by user`);
     }
 
-    // Step 2: Validate stop orders
-    this.validateStopOrders(data.stopOrders);
+    // Step 2: Validate stop orders using shared service
+    this.sharedValidationService.validateStopOrders(data.stopOrders);
 
     // Step 3: Calculate routing data if requested (external API calls)
     let routingData: Array<{
@@ -398,11 +396,12 @@ export class StopCoordinationService {
       const trip = await this.tripService.findById(data.tripId, true, false, true, prismaClient);
       if (trip && trip.stops && trip.stops.length >= 2) {
         const newSegmentPairs = this.calculateNewSegmentPairs(trip, data.stopOrders);
-        const routingResults = await this.calculateRoutingForNewSegments(
-          newSegmentPairs,
-          trip,
-          data.travelMode as TravelMode,
-        );
+        const routingResults =
+          await this.routingCoordinationService.calculateRoutingForSegmentPairs(
+            newSegmentPairs,
+            trip,
+            data.travelMode as TravelMode,
+          );
 
         // Convert routing results to format expected by UnifiedBatchingService
         routingData = routingResults.map(result => result.routingData);
@@ -447,13 +446,11 @@ export class StopCoordinationService {
     const reorderedStopIds = new Set(newStopOrders.map(so => so.stopId));
 
     // Find all segments that reference any reordered stop
-    const conflictingSegments = trip.travelSegments.filter(
+    return trip.travelSegments.filter(
       segment =>
         reorderedStopIds.has(segment.originStopId) ||
         reorderedStopIds.has(segment.destinationStopId),
     );
-
-    return conflictingSegments;
   }
 
   /**
@@ -504,112 +501,6 @@ export class StopCoordinationService {
     }
 
     return newSegmentPairs;
-  }
-
-  /**
-   * Calculate routing updates for new segment pairs.
-   * Makes actual routing service calls to get distance, duration, and polyline data.
-   * @param newSegmentPairs - New segment pairs that need routing.
-   * @param trip - Full trip with stops and locations.
-   * @param travelMode - Travel mode for routing.
-   * @return Routing data for new segments.
-   */
-  private async calculateRoutingForNewSegments(
-    newSegmentPairs: Array<{ originStopId: string; destinationStopId: string; tripId: string }>,
-    trip: Trip,
-    travelMode: TravelMode,
-  ): Promise<
-    Array<{ originStopId: string; destinationStopId: string; routingData: SegmentRoutingData }>
-  > {
-    if (newSegmentPairs.length === 0) {
-      return [];
-    }
-
-    const routingUpdates: Array<{
-      originStopId: string;
-      destinationStopId: string;
-      routingData: SegmentRoutingData;
-    }> = [];
-
-    for (const segmentPair of newSegmentPairs) {
-      const originStop = trip.stops?.find(stop => stop.id === segmentPair.originStopId);
-      const destinationStop = trip.stops?.find(stop => stop.id === segmentPair.destinationStopId);
-
-      if (!originStop?.location || !destinationStop?.location) {
-        this.logger.warn(
-          `Missing location data for segment ${segmentPair.originStopId}-${segmentPair.destinationStopId}`,
-        );
-        continue;
-      }
-
-      try {
-        // Create waypoints for routing request
-        const waypoints = [
-          {
-            latitude: originStop.location.latitude,
-            longitude: originStop.location.longitude,
-            name: originStop.location.name,
-          },
-          {
-            latitude: destinationStop.location.latitude,
-            longitude: destinationStop.location.longitude,
-            name: destinationStop.location.name,
-          },
-        ];
-
-        // Make actual routing service call
-        const routingRequest = RoutingRequestSchema.parse({
-          waypoints,
-          options: {
-            travelMode,
-          },
-        });
-
-        const routingResult: RoutingResponse = await this.routingService.getRouting(routingRequest);
-
-        this.logger.debug(
-          `Calculated routing for new segment ${segmentPair.originStopId}-${segmentPair.destinationStopId} using ${routingResult.provider}: ${routingResult.route.distance}m, ${routingResult.route.duration}s`,
-        );
-
-        // Map routing result to segment creation format
-        const routingData = {
-          originStopId: segmentPair.originStopId,
-          destinationStopId: segmentPair.destinationStopId,
-          travelMode: travelMode,
-          apiCalculatedDistance: routingResult.route.distance,
-          apiCalculatedDuration: Math.round(routingResult.route.duration / 60), // Convert seconds to minutes
-          polyline: routingResult.route.geometry,
-        };
-
-        routingUpdates.push({
-          originStopId: segmentPair.originStopId,
-          destinationStopId: segmentPair.destinationStopId,
-          routingData,
-        });
-      } catch (error) {
-        this.logger.error(
-          `Failed to calculate routing for new segment ${segmentPair.originStopId}-${segmentPair.destinationStopId}: ${error instanceof Error ? error.message : String(error)}`,
-        );
-
-        // Fallback: create segment without routing data
-        const routingData = {
-          originStopId: segmentPair.originStopId,
-          destinationStopId: segmentPair.destinationStopId,
-          travelMode: travelMode,
-          apiCalculatedDistance: null,
-          apiCalculatedDuration: null,
-          polyline: null,
-        };
-
-        routingUpdates.push({
-          originStopId: segmentPair.originStopId,
-          destinationStopId: segmentPair.destinationStopId,
-          routingData,
-        });
-      }
-    }
-
-    return routingUpdates;
   }
 
   /**
@@ -692,70 +583,37 @@ export class StopCoordinationService {
    * This method implements true batching where location creation, stop insertion, order adjustments,
    * routing calculation, and timeline calculation are all pre-calculated and applied atomically.
    *
-   * @param userId - User ID who owns the trip.
+   * @param trip - Full trip object to add the stop to.
    * @param data - Stop addition data.
    * @param prismaClient - Prisma client for transaction management.
    * @return The updated trip with the new stop.
    */
   async addStopToTripWithBatching(
-    userId: string,
+    trip: Trip,
     data: AddStopToTripDto,
     prismaClient: PrismaClientOrTransaction,
   ): Promise<Trip> {
-    this.logger.debug(`[TRUE BATCHING] Adding stop to trip ${data.tripId} for user ${userId}`);
+    this.logger.debug(`[TRUE BATCHING] Adding stop to trip ${data.tripId}`);
 
-    // Step 1: Validate trip ownership
-    const tripBelongsToUser = await this.tripService.validateTripBelongsToUser(
-      data.tripId,
-      userId,
-      prismaClient,
-    );
+    // Step 3: Pre-calculate location creation/deduplication using shared service
+    const createLocationRequest = this.mapCreateLocationRequest(data);
 
-    if (!tripBelongsToUser) {
-      throw new NotFoundException(`Trip ${data.tripId} not found or not owned by user`);
-    }
-
-    // Step 2: Load current trip data with all relationships
-    const trip = await this.tripService.findById(data.tripId, true, true, true, prismaClient);
-    if (!trip) {
-      throw new NotFoundException(`Trip ${data.tripId} not found`);
-    }
-
-    // Step 3: Pre-calculate location creation/deduplication
-    const locationData: CreateLocationRequest = {
-      name: data.locationData.name,
-      description: data.locationData.description,
-      address: data.locationData.address,
-      city: data.locationData.city,
-      state: data.locationData.state,
-      country: data.locationData.country,
-      postalCode: data.locationData.postalCode,
-      latitude: data.locationData.latitude,
-      longitude: data.locationData.longitude,
-      apiSource: data.locationData.apiSource,
-      apiSourceId: data.locationData.apiSourceId,
-      category: data.locationData.category,
-      public: false,
-    };
-
-    const location = await this.locationService.create(
-      locationData,
-      {
-        enableApiSourceMatching: true,
-        enableExactCoordinateMatching: true,
-      },
+    const location = await this.sharedLocationProcessingService.processLocationForCreation(
+      createLocationRequest,
       prismaClient,
     );
 
     // Step 4: Calculate stop order changes for insertion
-    const insertOrder = data.insertAtOrder !== undefined
-      ? data.insertAtOrder
-      : await this.stopService.getNextOrderForTrip(data.tripId, prismaClient);
+    const insertOrder =
+      data.insertAtOrder !== undefined
+        ? data.insertAtOrder
+        : await this.stopService.getNextOrderForTrip(data.tripId, prismaClient);
 
-    const stopOrderChanges = this.calculateStopOrderChangesForInsertion(
-      trip.stops || [],
-      insertOrder,
-    );
+    const stopOrderChanges =
+      this.sharedLocationProcessingService.calculateStopOrderChangesForInsertion(
+        trip.stops || [],
+        insertOrder,
+      );
 
     // Step 5: Calculate routing data if requested
     let routingData: Array<{
@@ -778,11 +636,12 @@ export class StopCoordinationService {
       );
 
       if (segmentPairs.length > 0) {
-        const routingResults = await this.calculateRoutingForNewSegments(
-          segmentPairs,
-          trip,
-          data.travelMode as TravelMode,
-        );
+        const routingResults =
+          await this.routingCoordinationService.calculateRoutingForSegmentPairs(
+            segmentPairs,
+            trip,
+            data.travelMode as TravelMode,
+          );
         routingData = routingResults.map(result => result.routingData);
       }
     }
@@ -801,12 +660,22 @@ export class StopCoordinationService {
     // Step 7: Map temporary stop ID to real stop ID in routing data
     routingData = routingData.map(segment => ({
       ...segment,
-      originStopId: segment.originStopId.startsWith('temp-new-stop-') ? newStop.id as string : segment.originStopId,
-      destinationStopId: segment.destinationStopId.startsWith('temp-new-stop-') ? newStop.id as string : segment.destinationStopId,
+      originStopId: segment.originStopId.startsWith('temp-new-stop-')
+        ? (newStop.id as string)
+        : segment.originStopId,
+      destinationStopId: segment.destinationStopId.startsWith('temp-new-stop-')
+        ? (newStop.id as string)
+        : segment.destinationStopId,
     }));
 
     // Step 8: Reload trip data to include the newly created stop
-    const updatedTrip = await this.tripService.findById(data.tripId, true, true, true, prismaClient);
+    const updatedTrip = await this.tripService.findById(
+      data.tripId,
+      true,
+      true,
+      true,
+      prismaClient,
+    );
     if (!updatedTrip) {
       throw new Error(`Failed to reload trip ${data.tripId} after stop creation`);
     }
@@ -834,32 +703,6 @@ export class StopCoordinationService {
   }
 
   /**
-   * Calculate stop order changes needed when inserting a new stop at a specific position.
-   * PURE FUNCTION: No database calls, operates on loaded stop data.
-   * @param existingStops - Current stops in the trip.
-   * @param insertOrder - Order position to insert at.
-   * @return Array of stop order changes.
-   */
-  private calculateStopOrderChangesForInsertion(
-    existingStops: any[], // Using any for Stop type since it's complex
-    insertOrder: number,
-  ): { stopId: string; newOrder: number }[] {
-    const changes: { stopId: string; newOrder: number }[] = [];
-
-    // Find all stops at or after the insertion point and increment their orders
-    for (const stop of existingStops) {
-      if (stop.order >= insertOrder) {
-        changes.push({
-          stopId: stop.id as string,
-          newOrder: stop.order + 1,
-        });
-      }
-    }
-
-    return changes;
-  }
-
-  /**
    * Calculate segment pairs needed when inserting a new stop.
    * PURE FUNCTION: Works with in-memory data and location information.
    * @param trip - Full trip with stops and locations.
@@ -879,7 +722,8 @@ export class StopCoordinationService {
     }
 
     const sortedStops = [...trip.stops].sort((a, b) => a.order - b.order);
-    const segmentPairs: Array<{ originStopId: string; destinationStopId: string; tripId: string }> = [];
+    const segmentPairs: Array<{ originStopId: string; destinationStopId: string; tripId: string }> =
+      [];
 
     // Create virtual new stop for calculation
     const newVirtualStop = {
@@ -938,67 +782,21 @@ export class StopCoordinationService {
   }
 
   /**
-   * Validate stop orders for reordering.
-   * @param stopOrders - Stop orders to validate.
-   */
-  private validateStopOrders(stopOrders: { newOrder: number }[]): void {
-    if (stopOrders.length === 0) {
-      throw new BadRequestException('At least one stop order is required');
-    }
-
-    // Check for duplicate orders
-    const orders = stopOrders.map(so => so.newOrder);
-    const uniqueOrders = [...new Set(orders)];
-
-    if (orders.length !== uniqueOrders.length) {
-      throw new BadRequestException('Duplicate order values found in stop orders');
-    }
-
-    // Check for sequential ordering starting from 0
-    const sortedOrders = [...uniqueOrders].sort((a, b) => a - b);
-
-    for (let i = 0; i < sortedOrders.length; i++) {
-      if (sortedOrders[i] !== i) {
-        throw new BadRequestException(
-          `Invalid ordering: expected order ${i} but found ${sortedOrders[i]}. Orders must be sequential starting from 0.`,
-        );
-      }
-    }
-  }
-
-  /**
    * TRUE BATCHING: Remove a stop from a trip using comprehensive pre-calculation and atomic batch updates.
    * This method implements true batching where stop deletion, order adjustments, routing calculation,
    * and timeline calculation are all pre-calculated and applied atomically.
    *
-   * @param userId - User ID who owns the trip.
+   * @param trip - Full trip object to remove the stop from.
    * @param data - Stop removal data.
    * @param prismaClient - Prisma client for transaction management.
    * @return The updated trip without the removed stop.
    */
   async removeStopFromTripWithBatching(
-    userId: string,
+    trip: Trip,
     data: RemoveStopFromTripDto,
     prismaClient: PrismaClientOrTransaction,
   ): Promise<Trip> {
-    this.logger.debug(`[TRUE BATCHING] Removing stop ${data.stopId} from trip ${data.tripId} for user ${userId}`);
-
-    // Step 1: Validate trip ownership
-    const tripBelongsToUser = await this.tripService.validateTripBelongsToUser(
-      data.tripId,
-      userId,
-      prismaClient,
-    );
-
-    if (!tripBelongsToUser) {
-      throw new NotFoundException(`Trip ${data.tripId} not found or not owned by user`);
-    }
-
-    // Step 2: Load current trip data with all relationships
-    const trip = await this.tripService.findById(data.tripId, true, true, true, prismaClient);
-    if (!trip) {
-      throw new NotFoundException(`Trip ${data.tripId} not found`);
-    }
+    this.logger.debug(`[TRUE BATCHING] Removing stop ${data.stopId} from trip ${data.tripId}ty`);
 
     // Step 3: Validate stop exists and belongs to trip
     const stopToRemove = trip.stops?.find(stop => stop.id === data.stopId);
@@ -1007,10 +805,11 @@ export class StopCoordinationService {
     }
 
     // Step 4: Calculate stop order changes for remaining stops (pure function)
-    const stopOrderChanges = this.calculateStopOrderChangesForRemoval(
-      trip.stops || [],
-      stopToRemove.order,
-    );
+    const stopOrderChanges =
+      this.sharedLocationProcessingService.calculateStopOrderChangesForRemoval(
+        trip.stops || [],
+        stopToRemove.order,
+      );
 
     // Step 5: Calculate routing data if requested
     let routingData: Array<{
@@ -1024,24 +823,24 @@ export class StopCoordinationService {
 
     if (data.calculateRouting) {
       // Calculate new segment pairs needed after removal
-      const segmentPairs = this.calculateSegmentPairsForStopRemoval(
-        trip,
-        data.stopId,
-      );
+      const segmentPairs = this.calculateSegmentPairsForStopRemoval(trip, data.stopId);
 
       if (segmentPairs.length > 0) {
-        const routingResults = await this.calculateRoutingForNewSegments(
-          segmentPairs,
-          trip,
-          data.travelMode as TravelMode,
-        );
+        const routingResults =
+          await this.routingCoordinationService.calculateRoutingForSegmentPairs(
+            segmentPairs,
+            trip,
+            data.travelMode as TravelMode,
+          );
         routingData = routingResults.map(result => result.routingData);
       }
     }
 
     // Step 6: Delete the target stop first (required for constraint integrity)
     await this.stopService.delete(data.stopId, prismaClient);
-    this.logger.debug(`[TRUE BATCHING] Deleted stop ${data.stopId} from order ${stopToRemove.order}`);
+    this.logger.debug(
+      `[TRUE BATCHING] Deleted stop ${data.stopId} from order ${stopToRemove.order}`,
+    );
 
     // Step 7: Execute batch updates using UnifiedBatchingService (if there are remaining stops)
     if (stopOrderChanges.length > 0 || routingData.length > 0) {
@@ -1072,32 +871,6 @@ export class StopCoordinationService {
   }
 
   /**
-   * Calculate stop order changes needed when removing a stop at a specific position.
-   * PURE FUNCTION: No database calls, operates on loaded stop data.
-   * @param existingStops - Current stops in the trip.
-   * @param removedOrder - Order position of the stop being removed.
-   * @return Array of stop order changes.
-   */
-  private calculateStopOrderChangesForRemoval(
-    existingStops: any[], // Using any for Stop type since it's complex
-    removedOrder: number,
-  ): { stopId: string; newOrder: number }[] {
-    const changes: { stopId: string; newOrder: number }[] = [];
-
-    // Find all stops after the removed position and decrement their orders
-    for (const stop of existingStops) {
-      if (stop.order > removedOrder) {
-        changes.push({
-          stopId: stop.id as string,
-          newOrder: stop.order - 1,
-        });
-      }
-    }
-
-    return changes;
-  }
-
-  /**
    * Calculate new segment pairs needed after removing a stop.
    * PURE FUNCTION: No database calls, operates on loaded trip data.
    * @param trip - Full trip with stops and current segments.
@@ -1108,7 +881,8 @@ export class StopCoordinationService {
     trip: Trip,
     removedStopId: string,
   ): Array<{ originStopId: string; destinationStopId: string; tripId: string }> {
-    const segmentPairs: Array<{ originStopId: string; destinationStopId: string; tripId: string }> = [];
+    const segmentPairs: Array<{ originStopId: string; destinationStopId: string; tripId: string }> =
+      [];
 
     if (!trip.stops || trip.stops.length <= 2) {
       // If removing a stop leaves us with 1 or fewer stops, no segments needed

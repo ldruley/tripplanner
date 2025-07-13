@@ -63,7 +63,7 @@ export class FriendshipRepository {
 
   async create(
     senderId: string,
-    data: CreateFriendshipRequest,
+    data: CreateFriendshipRequest & { status?: FriendshipStatus },
     prismaClient?: PrismaClientOrTransaction,
   ): Promise<Friendship> {
     const client = prismaClient || this.prisma;
@@ -72,7 +72,7 @@ export class FriendshipRepository {
       data: {
         senderId,
         receiverId: data.receiverId,
-        status: FriendshipStatus.PENDING,
+        status: data.status || FriendshipStatus.PENDING,
       },
     });
   }

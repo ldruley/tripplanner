@@ -1,31 +1,11 @@
 import { z } from 'zod';
 import { extendApi } from '@anatine/zod-openapi';
-import {
-  citySchema,
-  countrySchema,
-  fullAddressSchema,
-  latitudeSchema,
-  longitudeSchema,
-  postalCodeSchema,
-  regionSchema,
-  streetAddressSchema,
-} from './base.schema';
+import { BaseLocationResultSchema, GeoProviderSchema } from './base.schema';
 
 export const GeocodingResultSchema = extendApi(
-  z.object({
-    latitude: latitudeSchema.describe('Latitude of the geocoded location'),
-    longitude: longitudeSchema.describe('Longitude of the geocoded location'),
-    fullAddress: fullAddressSchema.describe('Full formatted address'),
-    streetAddress: streetAddressSchema.describe('Street address component'),
-    city: citySchema.describe('City or locality'),
-    region: regionSchema.describe('Region, state, or province'),
-    country: countrySchema.describe('Country'),
-    postalCode: postalCodeSchema.describe('Postal or ZIP code'),
+  BaseLocationResultSchema.omit({ name: true }).extend({
     timezone: z.string().nullable().optional().describe('Timezone of the location'),
-    provider: z
-      .enum(['mapbox', 'google', 'here'])
-      .describe('The service that provided this geocoding result.'),
-    providerId: z.string().describe('The unique ID for this location from the source provider.'),
+    provider: GeoProviderSchema.describe('The service that provided this geocoding result.'),
     rawResponse: z.any().optional().describe('Raw response from the provider (optional)'),
   }),
   {
@@ -46,8 +26,6 @@ export const GeocodingResultSchema = extendApi(
   },
 );
 
-export type GeocodingResult = z.infer<typeof GeocodingResultSchema>;
-
 export const ForwardGeocodeQuerySchema = extendApi(
   z.object({
     search: z
@@ -62,7 +40,6 @@ export const ForwardGeocodeQuerySchema = extendApi(
     },
   },
 );
-export type ForwardGeocodeQuery = z.infer<typeof ForwardGeocodeQuerySchema>;
 
 export const ReverseGeocodeQuerySchema = extendApi(
   z.object({
@@ -85,4 +62,8 @@ export const ReverseGeocodeQuerySchema = extendApi(
     },
   },
 );
+
+//Type Exports
+export type GeocodingResult = z.infer<typeof GeocodingResultSchema>;
+export type ForwardGeocodeQuery = z.infer<typeof ForwardGeocodeQuerySchema>;
 export type ReverseGeocodeQuery = z.infer<typeof ReverseGeocodeQuerySchema>;

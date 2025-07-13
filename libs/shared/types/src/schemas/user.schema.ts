@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { extendApi } from '@anatine/zod-openapi';
-import { nameSchema, emailSchema, uuidSchema, passwordSchema } from './base.schema';
+import { nameSchema, emailSchema, uuidSchema, passwordSchema, createSuccessResponseSchema } from './base.schema';
 import { UserRole } from '@prisma/client';
 
 const roleSchema = z.nativeEnum(UserRole).describe('User role in the system');
@@ -192,11 +192,7 @@ export const ResendVerificationSchema = extendApi(
 );
 
 export const UserResponseSchema = extendApi(
-  z.object({
-    success: z.boolean().default(true).describe('Indicates if the operation was successful'),
-    data: UserSchema.omit({ password: true }).describe('User data without sensitive fields'),
-    message: z.string().optional().describe('Optional message about the operation'),
-  }),
+  createSuccessResponseSchema(SafeUserSchema),
   {
     title: 'User Response',
     description: 'Standard response schema for user operations',

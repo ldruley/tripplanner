@@ -417,4 +417,133 @@ export class RoutingCoordinationService {
       segmentCount: trip.travelSegments.length,
     };
   }
+
+  /**
+   * Calculate routing updates for specific segment pairs.
+   * Makes actual routing service calls to get distance, duration, and polyline data.
+   * Consolidates routing calculation logic from StopCoordinationService.
+   * @param segmentPairs - Segment pairs that need routing.
+   * @param trip - Full trip with stops and locations.
+   * @param travelMode - Travel mode for routing.
+   * @return Routing data for segments.
+   */
+  async calculateRoutingForSegmentPairs(
+    segmentPairs: Array<{ originStopId: string; destinationStopId: string; tripId: string }>,
+    trip: Trip,
+    travelMode: TravelMode,
+  ): Promise<
+    Array<{ originStopId: string; destinationStopId: string; routingData: SegmentRoutingData }>
+  > {
+    if (segmentPairs.length === 0) {
+      return [];
+    }
+
+    const routingUpdates: Array<{
+      originStopId: string;
+      destinationStopId: string;
+      routingData: SegmentRoutingData;
+    }> = [];
+
+    for (const segmentPair of segmentPairs) {
+      const originStop = trip.stops?.find(stop => stop.id === segmentPair.originStopId);
+      const destinationStop = trip.stops?.find(stop => stop.id === segmentPair.destinationStopId);
+
+      if (!originStop?.location || !destinationStop?.location) {
+        this.logger.warn(
+          `Missing location data for segment ${segmentPair.originStopId}-${segmentPair.destinationStopId}`,
+        );
+        continue;
+      }
+
+      try {
+        // Create waypoints for routing request
+        const waypoints = [
+          {
+            latitude: originStop.location.latitude,
+            longitude: originStop.location.longitude,
+            name: originStop.location.name,
+          },
+          {
+            latitude: destinationStop.location.latitude,
+            longitude: destinationStop.location.longitude,
+            name: destinationStop.location.name,
+          },
+        ];
+
+        // Make actual routing service call
+        const routingRequest = RoutingRequestSchema.parse({
+          waypoints,
+          options: {
+            travelMode,
+          },
+        });
+
+        const routingResult: RoutingResponse = await this.routingService.getRouting(routingRequest);
+
+        this.logger.debug(
+          `Calculated routing for segment ${segmentPair.originStopId}-${segmentPair.destinationStopId} using ${routingResult.provider}: ${routingResult.route.distance}m, ${routingResult.route.duration}s`,
+        );
+
+        // Map routing result to segment creation format
+        const routingData = {
+          originStopId: segmentPair.originStopId,
+          destinationStopId: segmentPair.destinationStopId,
+          travelMode: travelMode,
+          apiCalculatedDistance: routingResult.route.distance,
+          apiCalculatedDuration: Math.round(routingResult.route.duration / 60), // Convert seconds to minutes
+          polyline: routingResult.route.geometry,
+        };
+
+        routingUpdates.push({
+          originStopId: segmentPair.originStopId,
+          destinationStopId: segmentPair.destinationStopId,
+          routingData,
+        });
+      } catch (error) {
+        this.logger.error(
+          `Failed to calculate routing for segment ${segmentPair.originStopId}-${segmentPair.destinationStopId}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+
+        // Fallback: create segment without routing data
+        const routingData = {
+          originStopId: segmentPair.originStopId,
+          destinationStopId: segmentPair.destinationStopId,
+          travelMode: travelMode,
+          apiCalculatedDistance: null,
+          apiCalculatedDuration: null,
+          polyline: null,
+        };
+
+        routingUpdates.push({
+          originStopId: segmentPair.originStopId,
+          destinationStopId: segmentPair.destinationStopId,
+          routingData,
+        });
+      }
+    }
+
+    return routingUpdates;
+  }
+
+  /**
+   * Create waypoints for routing request from stop locations.
+   * Utility method to standardize waypoint creation across routing operations.
+   * @param originStop - Origin stop with location data.
+   * @param destinationStop - Destination stop with location data.
+   * @return Array of waypoints for routing.
+   */
+  createWaypointsFromStops(originStop: any, destinationStop: any) {
+    return [
+      {
+        latitude: originStop.location.latitude,
+        longitude: originStop.location.longitude,
+        name: originStop.location.name,
+      },
+      {
+        latitude: destinationStop.location.latitude,
+        longitude: destinationStop.location.longitude,
+        name: destinationStop.location.name,
+      },
+    ];
+  }
 }

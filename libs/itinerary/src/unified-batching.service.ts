@@ -4,9 +4,9 @@ import { TripService } from '@trip-planner/trip';
 import { StopService } from '@trip-planner/stop';
 import { TravelSegmentService } from '@trip-planner/travel-segment';
 import { TimelineService } from '@trip-planner/timeline';
-import { 
-  Trip, 
-  Stop,
+import { RoutingCoordinationService } from './routing-coordination.service';
+import {
+  Trip,
   SegmentRoutingData,
   ComprehensiveStopUpdate,
   BatchExecutionPlan,
@@ -23,6 +23,7 @@ export class UnifiedBatchingService {
     private readonly stopService: StopService,
     private readonly travelSegmentService: TravelSegmentService,
     private readonly timelineService: TimelineService,
+    private readonly routingCoordinationService: RoutingCoordinationService,
   ) {}
 
   /**
@@ -31,7 +32,7 @@ export class UnifiedBatchingService {
    * 1. Pre-calculation of routing and timeline (pure functions)
    * 2. Preparation of batch execution plan
    * 3. Atomic execution of all database operations
-   * 
+   *
    * @param tripId - Trip ID to update
    * @param stopOrderChanges - Array of stop order changes
    * @param routingData - Pre-calculated routing data for segments
@@ -45,7 +46,7 @@ export class UnifiedBatchingService {
     tripId: string,
     stopOrderChanges: { stopId: string; newOrder: number }[],
     routingData: SegmentRoutingData[],
-    calculateTimeline: boolean = true,
+    calculateTimeline = true,
     startTime?: Date,
     prismaClient?: PrismaClientOrTransaction,
     tripData?: Trip,
@@ -53,7 +54,8 @@ export class UnifiedBatchingService {
     const planningStartTime = Date.now();
 
     // Step 1: Load current trip data (or use provided trip data)
-    const trip = tripData || await this.tripService.findById(tripId, true, true, true, prismaClient);
+    const trip =
+      tripData || (await this.tripService.findById(tripId, true, true, true, prismaClient));
     if (!trip || !trip.stops || trip.stops.length === 0) {
       throw new Error(`Trip ${tripId} not found or has no stops`);
     }
@@ -196,9 +198,7 @@ export class UnifiedBatchingService {
 
     // Step 2: Delete existing segments if we're creating new ones
     if (plan.segmentCreationData.length > 0) {
-      parallelOperations.push(
-        this.travelSegmentService.deleteByTripId(tripId, prismaClient),
-      );
+      parallelOperations.push(this.travelSegmentService.deleteByTripId(tripId, prismaClient));
       totalOperations += 1;
       this.logger.debug(`[BATCH] Queued segment deletion for trip ${tripId}`);
     }

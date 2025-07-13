@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { extendApi } from '@anatine/zod-openapi';
-import { uuidSchema } from './base.schema';
+import { uuidSchema, createSuccessResponseSchema } from './base.schema';
 import { FriendshipStatus } from '@prisma/client';
 
 const friendshipStatusSchema = z.nativeEnum(FriendshipStatus).describe('Status of the friendship');
@@ -149,11 +149,7 @@ export const UserSearchResultSchema = extendApi(
 );
 
 export const FriendshipResponseSchema = extendApi(
-  z.object({
-    success: z.boolean().default(true).describe('Indicates if the operation was successful'),
-    data: FriendshipSchema.describe('Friendship data'),
-    message: z.string().optional().describe('Optional message about the operation'),
-  }),
+  createSuccessResponseSchema(FriendshipSchema),
   {
     title: 'Friendship Response',
     description: 'Standard response schema for friendship operations',
@@ -173,11 +169,7 @@ export const FriendshipResponseSchema = extendApi(
 );
 
 export const FriendshipListResponseSchema = extendApi(
-  z.object({
-    success: z.boolean().default(true).describe('Indicates if the operation was successful'),
-    data: z.array(FriendshipWithUsersSchema).describe('Array of friendships with user information'),
-    message: z.string().optional().describe('Optional message about the operation'),
-  }),
+  createSuccessResponseSchema(z.array(FriendshipWithUsersSchema)),
   {
     title: 'Friendship List Response',
     description: 'Standard response schema for friendship list operations',
@@ -219,11 +211,7 @@ export const FriendshipListResponseSchema = extendApi(
 );
 
 export const UserSearchResponseSchema = extendApi(
-  z.object({
-    success: z.boolean().default(true).describe('Indicates if the operation was successful'),
-    data: z.array(UserSearchResultSchema).describe('Array of user search results'),
-    message: z.string().optional().describe('Optional message about the operation'),
-  }),
+  createSuccessResponseSchema(z.array(UserSearchResultSchema)),
   {
     title: 'User Search Response',
     description: 'Standard response schema for user search operations',

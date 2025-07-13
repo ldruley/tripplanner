@@ -1,10 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { TripCreationService } from './trip-creation.service';
 import { BatchedTripCreationService } from './batched-trip-creation.service';
 import { StopCoordinationService } from './stop-coordination.service';
 import { RoutingCoordinationService } from './routing-coordination.service';
 import { TripBankedLocationService } from './trip-banked-location.service';
 import { TimelineCoordinationService } from './timeline-coordination.service';
+import { SharedValidationService } from './shared-validation.service';
+import { SharedLocationProcessingService } from './shared-location-processing.service';
 import { TripService } from '@trip-planner/trip';
 import {
   CreateTripFromOrderedListDto,
@@ -32,6 +34,8 @@ export class ItineraryService {
     private readonly timelineCoordinationService: TimelineCoordinationService,
     private readonly prismaService: PrismaService,
     private readonly tripService: TripService,
+    private readonly sharedValidationService: SharedValidationService,
+    private readonly sharedLocationProcessingService: SharedLocationProcessingService,
   ) {}
 
   /**
@@ -285,7 +289,7 @@ export class ItineraryService {
    * TRUE BATCHING: Add a stop to a trip using comprehensive pre-calculation and atomic batch updates.
    * This method implements true batching where location creation, stop insertion, order adjustments,
    * routing calculation, and timeline calculation are all pre-calculated and applied atomically.
-   * 
+   *
    * @param userId - User ID who owns the trip.
    * @param data - Stop addition data.
    * @return The updated trip with the new stop.
@@ -295,14 +299,16 @@ export class ItineraryService {
       `[TRUE BATCHING] Adding stop to trip with comprehensive batching ${data.tripId} for user ${userId}`,
     );
 
+    // Validate trip ownership and grab full trip data
+    const trip = await this.validateTrip(data.tripId, userId);
     try {
       return await this.prismaService.$transaction(
         async (prismaClient: PrismaClientOrTransaction) => {
           // Single operation: add stop with complete pre-calculation and atomic updates
           // This includes: location creation, stop insertion, order adjustments, routing calculation,
           // timeline calculation, and all database updates in a single coordinated batch
-          const trip = await this.stopCoordinationService.addStopToTripWithBatching(
-            userId,
+          const updatedTrip = await this.stopCoordinationService.addStopToTripWithBatching(
+            trip,
             data,
             prismaClient,
           );
@@ -310,7 +316,7 @@ export class ItineraryService {
           this.logger.log(
             `[TRUE BATCHING] Successfully added stop to trip ${data.tripId} with complete batching`,
           );
-          return trip;
+          return updatedTrip;
         },
       );
     } catch (error) {
@@ -323,10 +329,29 @@ export class ItineraryService {
   }
 
   /**
+   * Validate trip ownership and retrieve full trip data.
+   * Throws NotFoundException if trip does not exist or UnauthorizedException if user does not own the trip.
+   *
+   * @param tripId - Trip ID to validate.
+   * @param userId - User ID who owns the trip.
+   * @return The validated trip object.
+   */
+  private async validateTrip(tripId: string, userId: string) {
+    const trip = await this.tripService.findById(tripId, true, true, true);
+    if (!trip) {
+      throw new NotFoundException(`Trip ${tripId} not found`);
+    }
+    if (trip.userId !== userId) {
+      throw new UnauthorizedException(`Trip ${tripId} not owned by user`);
+    }
+    return trip;
+  }
+
+  /**
    * TRUE BATCHING: Remove a stop from a trip using comprehensive pre-calculation and atomic batch updates.
    * This method implements true batching where stop deletion, order adjustments,
    * routing calculation, and timeline calculation are all pre-calculated and applied atomically.
-   * 
+   *
    * @param userId - User ID who owns the trip.
    * @param data - Stop removal data.
    * @return The updated trip without the removed stop.
@@ -336,14 +361,17 @@ export class ItineraryService {
       `[TRUE BATCHING] Removing stop from trip with comprehensive batching ${data.tripId} for user ${userId}`,
     );
 
+    // Validate trip ownership and grab full trip data
+    const trip = await this.validateTrip(data.tripId, userId);
+
     try {
       return await this.prismaService.$transaction(
         async (prismaClient: PrismaClientOrTransaction) => {
           // Single operation: remove stop with complete pre-calculation and atomic updates
           // This includes: stop deletion, order adjustments, routing calculation,
           // timeline calculation, and all database updates in a single coordinated batch
-          const trip = await this.stopCoordinationService.removeStopFromTripWithBatching(
-            userId,
+          const updatedTrip = await this.stopCoordinationService.removeStopFromTripWithBatching(
+            trip,
             data,
             prismaClient,
           );
@@ -351,7 +379,7 @@ export class ItineraryService {
           this.logger.log(
             `[TRUE BATCHING] Successfully removed stop from trip ${data.tripId} with complete batching`,
           );
-          return trip;
+          return updatedTrip;
         },
       );
     } catch (error) {
@@ -367,7 +395,7 @@ export class ItineraryService {
    * TRUE BATCHING: Reorder stops using comprehensive pre-calculation and atomic batch updates.
    * This method implements true batching where each stop is updated once with all changes:
    * order, calculated times, routing, and timeline in a single coordinated operation.
-   * 
+   *
    * @param userId - User ID who owns the trip.
    * @param data - Reorder data.
    * @return The updated trip with reordered stops.
