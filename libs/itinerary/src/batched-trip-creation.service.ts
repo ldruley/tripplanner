@@ -63,6 +63,7 @@ export class BatchedTripCreationService {
         description: data.description,
         startDate: data.startDate ? new Date(data.startDate) : null,
         endDate: data.endDate ? new Date(data.endDate) : null,
+        matrix: data.matrix,
       };
 
       const trip = await this.tripService.create(userId, tripData, prismaClient);

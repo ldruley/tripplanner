@@ -41,7 +41,7 @@ export class ItineraryApiService {
    * @returns Observable of created trip
    */
   createTripWithItinerary(
-    tripData: { name: string; description?: string; startDate?: Date; endDate?: Date },
+    tripData: { name: string; description?: string; startDate?: Date; endDate?: Date; matrix?: string },
     organizedLocations: LocationForItinerary[],
   ): Observable<Trip> {
     const createRequest: CreateTripFromOrderedListDto = {
@@ -49,6 +49,7 @@ export class ItineraryApiService {
       description: tripData.description || undefined,
       startDate: tripData.startDate?.toISOString(),
       endDate: tripData.endDate?.toISOString(),
+      matrix: tripData.matrix || undefined,
       organizedLocations: organizedLocations,
       bankedLocations: [],
       calculateRouting: true,
@@ -56,7 +57,7 @@ export class ItineraryApiService {
     };
 
     return this.http
-      .post<Trip>(`${this.apiUrl}/itinerary/trips`, createRequest)
+      .post<Trip>(`${this.apiUrl}/itinerary/trips/batched`, createRequest)
       .pipe(map(response => TripSchema.parse(response)));
   }
 

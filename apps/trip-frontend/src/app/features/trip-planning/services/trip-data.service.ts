@@ -517,6 +517,7 @@ export class TripDataService {
           description: currentTrip.description || undefined,
           startDate: currentTrip.startDate || undefined,
           endDate: currentTrip.endDate || undefined,
+          matrix: currentTrip.matrix || undefined,
         },
         organizedLocations,
       );
@@ -739,6 +740,7 @@ export class TripDataService {
       description: trip.description,
       startDate: trip.startDate,
       endDate: trip.endDate,
+      matrix: trip.matrix,
     };
 
     return this.http

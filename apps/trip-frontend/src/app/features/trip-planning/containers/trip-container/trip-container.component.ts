@@ -1,7 +1,9 @@
-import { Component, inject, OnInit, computed, signal } from '@angular/core';
+import { Component, inject, OnInit, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { ActivatedRoute, Router } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 import { ToastService } from '../../../shared/services';
 import { TripDataService } from '../../services/trip-data.service';
 import { MatrixCalculationService } from '../../services/matrix-calculation.service';
@@ -62,35 +64,40 @@ export class TripContainerComponent implements OnInit {
   isStopEditModalOpen = signal<boolean>(false);
   editingStop = signal<Stop | null>(null);
 
+  // Reactive route parameters
+  private routeParams = toSignal(this.route.paramMap);
+  private routeUrl = toSignal(this.route.url);
+  
   // Computed properties
-  tripId = computed(() => this.route.snapshot.paramMap.get('tripId'));
+  tripId = computed(() => {
+    const url = this.routeUrl();
+    const params = this.routeParams();
+    
+    // Check if this is the 'new' route
+    if (url && url.length > 0 && url[url.length - 1].path === 'new') {
+      return 'new';
+    }
+    
+    // Otherwise get tripId from route parameters
+    return params?.get('tripId') || null;
+  });
+
+  // React to route changes and initialize trip accordingly (called in injection context)
+  private tripInitializationEffect = effect(() => {
+    const currentTripId = this.tripId();
+    
+    if (currentTripId) {
+      console.log('TripContainer: Route changed, initializing trip:', currentTripId);
+      this.tripDataService.initializeTrip(currentTripId);
+      this.showInitializationToast(currentTripId);
+    } else {
+      console.error('TripContainer: No trip ID found in route');
+    }
+  });
 
   ngOnInit(): void {
-    // Check if this is the 'new' route or a specific trip ID route
-    const urlPath = this.route.snapshot.url.map(segment => segment.path).join('/');
-
-    let tripId: string;
-
-    if (urlPath === 'new') {
-      tripId = 'new';
-    } else {
-      // Try to get the tripId parameter for existing trips
-      const id = this.route.snapshot.paramMap.get('tripId');
-      if (id) {
-        tripId = id;
-      } else {
-        console.error('TripContainer: No trip ID found and not a new trip');
-        return;
-      }
-    }
-
-    console.log('TripContainer: Initializing trip:', tripId);
-
-    // Initialize trip through service
-    this.tripDataService.initializeTrip(tripId);
-
-    // Show appropriate toast based on data source
-    this.showInitializationToast(tripId);
+    // Effect is already set up in the field initializer above
+    // No additional initialization needed
   }
 
   // Mobile view switching methods
@@ -196,6 +203,9 @@ export class TripContainerComponent implements OnInit {
       loadingKey,
     );
 
+    // Check if this is a new trip before saving by looking at the data source
+    const isNewTrip = this.tripDataService.dataSource() === 'new';
+
     this.tripDataService.saveTripToBackend().subscribe({
       next: savedTrip => {
         this.toastService.clear(loadingKey);
@@ -204,6 +214,15 @@ export class TripContainerComponent implements OnInit {
           `"${savedTrip.name}" has been successfully saved.`,
         );
         console.log('TripContainer: Trip saved successfully');
+
+        // Handle redirect for new trips that were just persisted
+        if (isNewTrip && savedTrip.id) {
+          console.log('TripContainer: Redirecting to persisted trip:', savedTrip.id);
+          // Navigate to the persisted trip's URL
+          this.router.navigate(['/trip-planning', savedTrip.id], { 
+            replaceUrl: true // This replaces the current URL instead of adding to history
+          });
+        }
       },
       error: error => {
         this.toastService.clear(loadingKey);
