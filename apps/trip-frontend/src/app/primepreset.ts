@@ -516,5 +516,105 @@ export const PrimePreset = definePreset(Lara, {
         },
       },
     },
+    card: {
+      colorScheme: {
+        light: {
+          root: {
+            background: '{surface.50}', // tp-bg-light-primary
+            borderRadius: '0.5rem',
+            color: '{surface.900}', // tp-text-light-primary
+            shadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+          },
+          body: {
+            padding: '1rem',
+            gap: '0.75rem',
+          },
+          title: {
+            fontSize: '1.125rem',
+            fontWeight: '600',
+          },
+          subtitle: {
+            color: '{surface.600}', // tp-text-light-secondary
+          },
+        },
+        dark: {
+          root: {
+            background: '{surface.0}', // tp-bg-primary
+            borderRadius: '0.5rem',
+            color: '{surface.900}', // tp-text-primary
+            shadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06)',
+          },
+          body: {
+            padding: '1rem',
+            gap: '0.75rem',
+          },
+          title: {
+            fontSize: '1.125rem',
+            fontWeight: '600',
+          },
+          subtitle: {
+            color: '{surface.600}', // tp-text-secondary
+          },
+        },
+      },
+    },
+    timeline: {
+      event: {
+        minHeight: '3rem',
+      },
+      eventMarker: {
+        size: '2.5rem',
+        borderRadius: '50%',
+        borderWidth: '2px',
+        background: '{primary.color}',
+        borderColor: '{surface.0}',
+        content: {
+          borderRadius: '50%',
+          size: '1.5rem',
+          background: '{primary.color}',
+          insetShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+        },
+      },
+      eventConnector: {
+        color: '{surface.300}',
+        size: '2px',
+      },
+      vertical: {
+        eventContent: {
+          padding: '0 0 1.5rem 1rem',
+        },
+      },
+      horizontal: {
+        eventContent: {
+          padding: '1rem 0 0 0',
+        },
+      },
+      colorScheme: {
+        light: {
+          eventConnector: {
+            color: '{surface.300}',
+          },
+          eventMarker: {
+            background: '{primary.color}',
+            borderColor: '{surface.0}',
+            content: {
+              background: '{primary.color}',
+            },
+          },
+        },
+        dark: {
+          eventConnector: {
+            color: '{surface.600}',
+          },
+          eventMarker: {
+            background: '{primary.color}',
+            borderColor: '{surface.0}',
+            content: {
+              background: '{primary.color}',
+            },
+          },
+        },
+      },
+    },
   },
 });

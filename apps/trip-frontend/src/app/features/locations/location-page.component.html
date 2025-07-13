@@ -4,35 +4,27 @@
     <div class="header-content">
       <h1 class="page-title">My Locations</h1>
       <p class="page-subtitle">
-        Search for new locations and manage your favorites
+        Manage your favorite locations
       </p>
-    </div>
-  </div>
-
-  <!-- Location Search Section -->
-  <div class="search-section">
-    <div class="search-container">
-      <h2 class="section-title">Search Locations</h2>
-      <p class="section-description">
-        Find and add new locations to your favorites
-      </p>
-      <div class="search-component">
-        <app-location-search 
-          (locationSelected)="onLocationSelectedFromSearch($event)">
-        </app-location-search>
-      </div>
     </div>
   </div>
 
   <!-- Favorites Section -->
   <div class="favorites-section">
-    <div class="section-header">
+    <!--<div class="section-header">
       <h2 class="section-title">My Favorite Locations</h2>
       @if (hasFavorites) {
         <p class="section-description">
           {{ favorites().length }} favorite location{{ favorites().length === 1 ? '' : 's' }}
         </p>
       }
+    </div>-->
+
+    <!-- Add Location Search -->
+    <div class="add-location-section">
+      <app-location-search
+        (locationSelected)="onLocationSelectedFromSearch($event)">
+      </app-location-search>
     </div>
 
     <div class="favorites-content">
@@ -65,11 +57,11 @@
           </div>
           <h3 class="empty-title">No Favorite Locations Yet</h3>
           <p class="empty-description">
-            Use the search above to find locations and add them to your favorites. 
+            Use the search above to find locations and add them to your favorites.
             Your saved locations will appear here for easy access.
           </p>
           <div class="empty-actions">
-            <button 
+            <button
               class="empty-action-button"
               (click)="onNavigateToTrips()">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

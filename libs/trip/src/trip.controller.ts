@@ -31,11 +31,13 @@ export class TripController {
     @Param('id') id: string,
     @Query('includeStops') includeStops?: string,
     @Query('includeBankedLocations') includeBankedLocations?: string,
+    @Query('includeTravelSegments') includeTravelSegments?: string,
   ) {
     const trip = await this.tripService.findById(
       id,
       includeStops === 'true',
       includeBankedLocations === 'true',
+      includeTravelSegments === 'true',
     );
 
     // Ensure user owns the trip
@@ -51,11 +53,13 @@ export class TripController {
     @CurrentUser() user: SafeUser,
     @Query('includeStops') includeStops?: string,
     @Query('includeBankedLocations') includeBankedLocations?: string,
+    @Query('includeTravelSegments') includeTravelSegments?: string,
   ) {
     return await this.tripService.findByUserId(
       user.id,
       includeStops === 'true',
       includeBankedLocations === 'true',
+      includeTravelSegments === 'true',
     );
   }
 

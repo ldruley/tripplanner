@@ -23,19 +23,7 @@
   @apply text-lg;
 }
 
-/* Search Section */
-.search-section {
-  @apply mb-12;
-}
-
-.search-container {
-  @apply max-w-4xl mx-auto;
-  @apply bg-tp-bg-light-primary dark:bg-tp-bg-primary;
-  @apply border border-tp-border-light dark:border-tp-border;
-  @apply rounded-lg p-6;
-  @apply shadow-sm;
-}
-
+/* Section Headers */
 .section-title {
   @apply text-xl font-semibold;
   @apply text-tp-text-light-primary dark:text-tp-text-primary;
@@ -47,8 +35,10 @@
   @apply mb-4;
 }
 
-.search-component {
-  @apply mt-4;
+/* Add Location Section */
+.add-location-section {
+  @apply mb-6 pb-6;
+  @apply border-b border-tp-border-light dark:border-tp-border;
 }
 
 /* Favorites Section */
@@ -141,9 +131,6 @@
     @apply text-base;
   }
   
-  .search-container {
-    @apply p-4;
-  }
   
   .section-title {
     @apply text-lg;
@@ -214,9 +201,6 @@
     @apply p-0;
   }
   
-  .search-section {
-    @apply hidden;
-  }
   
   .empty-actions {
     @apply hidden;

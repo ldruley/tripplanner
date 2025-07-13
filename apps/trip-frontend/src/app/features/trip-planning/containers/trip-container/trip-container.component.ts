@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ToastService } from '../../../shared/services';
 import { TripDataService } from '../../services/trip-data.service';
 import { MatrixCalculationService } from '../../services/matrix-calculation.service';
@@ -33,6 +33,7 @@ import { Location, Stop } from '@trip-planner/types';
 })
 export class TripContainerComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private toastService = inject(ToastService);
   private tripDataService = inject(TripDataService);
   private matrixCalculationService = inject(MatrixCalculationService);
@@ -62,7 +63,7 @@ export class TripContainerComponent implements OnInit {
   editingStop = signal<Stop | null>(null);
 
   // Computed properties
-  tripId = computed(() => this.route.snapshot.paramMap.get('id'));
+  tripId = computed(() => this.route.snapshot.paramMap.get('tripId'));
 
   ngOnInit(): void {
     // Check if this is the 'new' route or a specific trip ID route
@@ -210,6 +211,21 @@ export class TripContainerComponent implements OnInit {
         console.error('TripContainer: Save failed:', error);
       },
     });
+  }
+
+  // Navigate to timeline view
+  navigateToTimeline(): void {
+    const currentTripId = this.tripId();
+    console.log('Navigating to timeline, tripId:', currentTripId);
+    console.log('Current route params:', this.route.snapshot.paramMap);
+    console.log('Current URL:', this.route.snapshot.url);
+
+    if (currentTripId && currentTripId !== 'new') {
+      console.log('Attempting navigation to:', ['/trip-planning', currentTripId, 'timeline']);
+      this.router.navigate(['/trip-planning', currentTripId, 'timeline']);
+    } else {
+      console.log('Navigation blocked - tripId is:', currentTripId);
+    }
   }
 
   private showInitializationToast(_id: string): void {

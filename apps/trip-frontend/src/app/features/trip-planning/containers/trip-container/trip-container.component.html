@@ -16,6 +16,23 @@
       />
     </div>
 
+    <!-- View Navigation -->
+    @if (trip() && tripId() !== 'new') {
+      <div class="flex mb-6 border-b border-tp-border-light dark:border-tp-border">
+        <button
+          class="px-4 py-2 text-sm font-medium border-b-2 border-tp-orange text-tp-orange transition-colors duration-150">
+          Planning View
+        </button>
+        <button
+          (click)="navigateToTimeline()"
+          class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-tp-text-light-secondary dark:text-tp-text-secondary
+                 hover:text-tp-text-light-primary dark:hover:text-tp-text-primary hover:border-gray-300 dark:hover:border-gray-600
+                 transition-colors duration-150">
+          Timeline View
+        </button>
+      </div>
+    }
+
     <!-- Mobile Navigation Buttons -->
     <div class="flex mb-4 md:hidden">
       <button
