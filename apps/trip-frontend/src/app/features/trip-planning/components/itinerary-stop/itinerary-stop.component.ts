@@ -87,6 +87,25 @@ export class ItineraryStopComponent {
     return plannedTime || calculatedTime;
   });
 
+  hasPlannedAndCalculatedArrival = computed(() => {
+    const plannedTime = this.plannedArrivalTimeInLocation();
+    const calculatedTime = this.calculatedArrivalTimeInLocation();
+    return !!(plannedTime && calculatedTime);
+  });
+
+  arrivalTimeDisplay = computed(() => {
+    const plannedTime = this.plannedArrivalTimeInLocation();
+    const calculatedTime = this.calculatedArrivalTimeInLocation();
+    
+    return {
+      planned: plannedTime,
+      calculated: calculatedTime,
+      hasPlanned: !!plannedTime,
+      hasCalculated: !!calculatedTime,
+      hasBoth: !!(plannedTime && calculatedTime)
+    };
+  });
+
   displayDepartureTime = computed(() => {
     return this.calculatedDepartureTimeInLocation();
   });

@@ -7,6 +7,11 @@ export const TRIP_PLANNING_ROUTES: Routes = [
     component: TripContainerComponent,
   },
   {
+    path: 'new/timeline',
+    redirectTo: 'new',
+    pathMatch: 'full',
+  },
+  {
     path: ':tripId/timeline',
     component: TripContainerComponent,
   },

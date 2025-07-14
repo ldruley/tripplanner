@@ -70,6 +70,7 @@ module.exports = {
           orange: '#cc785c', // Trip planner's signature orange
           'orange-hover': '#b8654a', // Darker orange for hover
           'orange-light': '#f7931e', // Lighter orange variant
+          'orange-dark': 'rgba(204,120,92,0.83)', // Darker orange variant
 
           // Borders - Dark theme
           border: '#38352f', // Default border in dark

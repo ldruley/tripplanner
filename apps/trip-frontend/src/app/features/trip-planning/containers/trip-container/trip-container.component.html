@@ -1,47 +1,47 @@
 <!-- Desktop Layout: Two-pane side by side -->
-<div class="hidden lg:flex h-screen flex-col">
+<div class="hidden lg:flex h-screen">
   
-  <!-- View Navigation (Desktop) -->
-  @if (trip() && tripId() !== 'new') {
-    <div class="flex border-b border-tp-border-light dark:border-tp-border bg-tp-bg-light-primary dark:bg-tp-bg-primary px-6">
-      <button
-        (click)="navigateToPlanningView()"
-        [class.border-tp-orange]="currentView() === 'planning'"
-        [class.text-tp-orange]="currentView() === 'planning'"
-        [class.border-transparent]="currentView() !== 'planning'"
-        [class.text-tp-text-light-secondary]="currentView() !== 'planning'"
-        [class.dark:text-tp-text-secondary]="currentView() !== 'planning'"
-        class="px-4 py-3 text-sm font-medium border-b-2 hover:text-tp-text-light-primary dark:hover:text-tp-text-primary hover:border-gray-300 dark:hover:border-gray-600 transition-colors duration-150">
-        Planning View
-      </button>
-      <button
-        (click)="navigateToTimeline()"
-        [class.border-tp-orange]="currentView() === 'timeline'"
-        [class.text-tp-orange]="currentView() === 'timeline'"
-        [class.border-transparent]="currentView() !== 'timeline'"
-        [class.text-tp-text-light-secondary]="currentView() !== 'timeline'"
-        [class.dark:text-tp-text-secondary]="currentView() !== 'timeline'"
-        class="px-4 py-3 text-sm font-medium border-b-2 hover:text-tp-text-light-primary dark:hover:text-tp-text-primary hover:border-gray-300 dark:hover:border-gray-600 transition-colors duration-150">
-        Timeline View
-      </button>
-    </div>
-  }
-  
-  <!-- Content Area -->
-  <div class="flex flex-1 overflow-hidden">
+  <!-- Left Content Area -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- View Navigation (Desktop) -->
+    @if (trip() && tripId() !== 'new') {
+      <div class="flex border-b border-tp-border-light dark:border-tp-border bg-tp-bg-light-primary dark:bg-tp-bg-primary px-6">
+        <button
+          (click)="navigateToPlanningView()"
+          [class.border-tp-orange]="currentView() === 'planning'"
+          [class.text-tp-orange]="currentView() === 'planning'"
+          [class.border-transparent]="currentView() !== 'planning'"
+          [class.text-tp-text-light-secondary]="currentView() !== 'planning'"
+          [class.dark:text-tp-text-secondary]="currentView() !== 'planning'"
+          class="px-4 py-3 text-sm font-medium border-b-2 hover:text-tp-text-light-primary dark:hover:text-tp-text-primary hover:border-gray-300 dark:hover:border-gray-600 transition-colors duration-150">
+          Planning View
+        </button>
+        <button
+          (click)="navigateToTimeline()"
+          [class.border-tp-orange]="currentView() === 'timeline'"
+          [class.text-tp-orange]="currentView() === 'timeline'"
+          [class.border-transparent]="currentView() !== 'timeline'"
+          [class.text-tp-text-light-secondary]="currentView() !== 'timeline'"
+          [class.dark:text-tp-text-secondary]="currentView() !== 'timeline'"
+          class="px-4 py-3 text-sm font-medium border-b-2 hover:text-tp-text-light-primary dark:hover:text-tp-text-primary hover:border-gray-300 dark:hover:border-gray-600 transition-colors duration-150">
+          Timeline View
+        </button>
+      </div>
+    }
+    
     <!-- Main Content Pane -->
-    <div class="flex-1 overflow-auto">
+    <div class="flex-1 overflow-auto pr-6">
       @if (currentView() === 'planning') {
         <app-trip-edit-view />
       } @else {
         <app-trip-timeline-view />
       }
     </div>
-    
-    <!-- Side Details Pane -->
-    <div class="w-80 border-l border-tp-border-light dark:border-tp-border bg-tp-bg-light-secondary dark:bg-tp-bg-secondary overflow-auto">
-      <app-trip-details-view />
-    </div>
+  </div>
+  
+  <!-- Side Details Pane (extends full height) -->
+  <div class="w-80 border-l border-tp-border-light dark:border-tp-border bg-tp-bg-light-secondary dark:bg-tp-bg-secondary overflow-auto">
+    <app-trip-details-view />
   </div>
   
 </div>

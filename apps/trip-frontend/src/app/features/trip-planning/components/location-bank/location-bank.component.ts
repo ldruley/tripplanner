@@ -38,9 +38,7 @@ export class LocationBankComponent {
   });
 
   constructor() {
-    effect(() => {
-      console.log('LocationBankComponent: bankedLocations input changed:', this.bankedLocations());
-    });
+    // Effect removed to reduce debug logging
   }
 
   onDragStarted(event: CdkDragStart): void {
