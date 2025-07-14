@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
 import { TripContainerComponent } from './containers/trip-container/trip-container.component';
-import { TimelineContainerComponent } from './containers/timeline-container/timeline-container.component';
 
 export const TRIP_PLANNING_ROUTES: Routes = [
   {
@@ -9,7 +8,7 @@ export const TRIP_PLANNING_ROUTES: Routes = [
   },
   {
     path: ':tripId/timeline',
-    component: TimelineContainerComponent,
+    component: TripContainerComponent,
   },
   {
     path: ':tripId',

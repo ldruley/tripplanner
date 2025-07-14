@@ -1,174 +1,133 @@
-@if (isLoading()) {
-  <div class="flex justify-center items-center h-64">
-    <p class="text-lg text-tp-text-light-secondary dark:text-tp-text-secondary">
-      Loading trip data...
-    </p>
-  </div>
-} @else if (trip()) {
-  <div class="container mx-auto p-4 md:p-6 pb-20 md:pb-24">
-
-    <!-- Trip Edit Controls -->
-    <div class="mb-6">
-      <app-trip-edit-controls
-        [trip]="trip()"
-        [disabled]="isLoading()"
-        (tripDataChanged)="onTripDataChanged($event)"
-      />
-    </div>
-
-    <!-- View Navigation -->
-    @if (trip() && tripId() !== 'new') {
-      <div class="flex mb-6 border-b border-tp-border-light dark:border-tp-border">
-        <button
-          class="px-4 py-2 text-sm font-medium border-b-2 border-tp-orange text-tp-orange transition-colors duration-150">
-          Planning View
-        </button>
-        <button
-          (click)="navigateToTimeline()"
-          class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-tp-text-light-secondary dark:text-tp-text-secondary
-                 hover:text-tp-text-light-primary dark:hover:text-tp-text-primary hover:border-gray-300 dark:hover:border-gray-600
-                 transition-colors duration-150">
-          Timeline View
-        </button>
-      </div>
-    }
-
-    <!-- Mobile Navigation Buttons -->
-    <div class="flex mb-4 md:hidden">
+<!-- Desktop Layout: Two-pane side by side -->
+<div class="hidden lg:flex h-screen flex-col">
+  
+  <!-- View Navigation (Desktop) -->
+  @if (trip() && tripId() !== 'new') {
+    <div class="flex border-b border-tp-border-light dark:border-tp-border bg-tp-bg-light-primary dark:bg-tp-bg-primary px-6">
       <button
-        (click)="showBankView()"
-        [class.bg-tp-orange]="currentMobileView() === 'bank'"
-        [class.text-white]="currentMobileView() === 'bank'"
-        [class.bg-tp-bg-light-quaternary]="currentMobileView() !== 'bank'"
-        [class.dark:bg-tp-bg-quaternary]="currentMobileView() !== 'bank'"
-        class="flex-1 px-4 py-2 text-sm font-medium border-r border-tp-border-light dark:border-tp-border transition-colors duration-200">
-        Search
+        (click)="navigateToPlanningView()"
+        [class.border-tp-orange]="currentView() === 'planning'"
+        [class.text-tp-orange]="currentView() === 'planning'"
+        [class.border-transparent]="currentView() !== 'planning'"
+        [class.text-tp-text-light-secondary]="currentView() !== 'planning'"
+        [class.dark:text-tp-text-secondary]="currentView() !== 'planning'"
+        class="px-4 py-3 text-sm font-medium border-b-2 hover:text-tp-text-light-primary dark:hover:text-tp-text-primary hover:border-gray-300 dark:hover:border-gray-600 transition-colors duration-150">
+        Planning View
       </button>
       <button
-        (click)="showItineraryView()"
-        [class.bg-tp-orange]="currentMobileView() === 'itinerary'"
-        [class.text-white]="currentMobileView() === 'itinerary'"
-        [class.bg-tp-bg-light-quaternary]="currentMobileView() !== 'itinerary'"
-        [class.dark:bg-tp-bg-quaternary]="currentMobileView() !== 'itinerary'"
-        class="flex-1 px-4 py-2 text-sm font-medium transition-colors duration-200">
-        Itinerary
+        (click)="navigateToTimeline()"
+        [class.border-tp-orange]="currentView() === 'timeline'"
+        [class.text-tp-orange]="currentView() === 'timeline'"
+        [class.border-transparent]="currentView() !== 'timeline'"
+        [class.text-tp-text-light-secondary]="currentView() !== 'timeline'"
+        [class.dark:text-tp-text-secondary]="currentView() !== 'timeline'"
+        class="px-4 py-3 text-sm font-medium border-b-2 hover:text-tp-text-light-primary dark:hover:text-tp-text-primary hover:border-gray-300 dark:hover:border-gray-600 transition-colors duration-150">
+        Timeline View
       </button>
     </div>
-
-    <!-- Desktop Layout -->
-    <div class="hidden md:block">
-
-      <!-- Location Search - Top Section -->
-      <div class="mb-6">
-        <app-location-search
-          (locationSelected)="onLocationSelected($event)">
-        </app-location-search>
-      </div>
-
-      <!-- Bank & Itinerary - Bottom Section -->
-      <div class="flex gap-6 transition-all duration-300 ease-in-out">
-
-        <!-- Left Column: Bank -->
-        <div class="transition-all duration-300 ease-in-out" [ngClass]="{'w-1/3': !isLocationBankEmpty(), 'w-0': isLocationBankEmpty(), 'opacity-0': isLocationBankEmpty(), 'overflow-hidden': isLocationBankEmpty()}">
-          <app-location-bank
-            listId="desktop-bank-list"
-            [connectedDropLists]="['desktop-itinerary-list']"
-            [bankedLocations]="bankedLocationsForBank()"
-            (dragStarted)="onLocationDragStarted($event)"
-            (addToItinerary)="onLocationAddedToItinerary($event)"
-            (locationRemovedFromBank)="onLocationRemovedFromBank($event)"
-            (itemDroppedFromItinerary)="onStopDroppedToBank($event)">
-          </app-location-bank>
-        </div>
-
-        <!-- Right Column: Itinerary -->
-        <div class="transition-all duration-300 ease-in-out" [ngClass]="{'w-2/3': !isLocationBankEmpty(), 'w-full': isLocationBankEmpty()}">
-          <app-itinerary-builder
-            listId="desktop-itinerary-list"
-            [connectedDropLists]="['desktop-bank-list']"
-            [itineraryStops]="itineraryStops()"
-            [matrixData]="matrixData()"
-            (stopsReordered)="onItineraryReorder($event)"
-            (removeStopRequested)="onStopRemoved($event)"
-            (editStopRequested)="onStopEditRequested($event)"
-            (itemDroppedFromOtherList)="onLocationDroppedFromBank($event)">
-          </app-itinerary-builder>
-        </div>
-      </div>
-    </div>
-
-    <!-- Mobile Layout -->
-    <div class="md:hidden">
-
-      <!-- Bank View -->
-      @if (currentMobileView() === 'bank') {
-        <div class="animate-fade-in">
-          <!-- Location Search -->
-          <div class="mb-6">
-            <app-location-search
-              (locationSelected)="onLocationSelected($event)">
-            </app-location-search>
-          </div>
-
-          <!-- Location Bank -->
-          <div>
-            <app-location-bank
-              listId="mobile-bank-list"
-              [connectedDropLists]="['mobile-itinerary-list']"
-              [bankedLocations]="bankedLocationsForBank()"
-              (dragStarted)="onLocationDragStarted($event)"
-              (addToItinerary)="onLocationAddedToItinerary($event)"
-              (itemDroppedFromItinerary)="onStopDroppedToBank($event)">
-            </app-location-bank>
-          </div>
-        </div>
-      }
-
-      <!-- Itinerary View -->
-      @if (currentMobileView() === 'itinerary') {
-        <div class="animate-fade-in">
-          <app-itinerary-builder
-            listId="mobile-itinerary-list"
-            [connectedDropLists]="['mobile-bank-list']"
-            [itineraryStops]="itineraryStops()"
-            [matrixData]="matrixData()"
-            (stopsReordered)="onItineraryReorder($event)"
-            (removeStopRequested)="onStopRemoved($event)"
-            (editStopRequested)="onStopEditRequested($event)">
-          </app-itinerary-builder>
-        </div>
+  }
+  
+  <!-- Content Area -->
+  <div class="flex flex-1 overflow-hidden">
+    <!-- Main Content Pane -->
+    <div class="flex-1 overflow-auto">
+      @if (currentView() === 'planning') {
+        <app-trip-edit-view />
+      } @else {
+        <app-trip-timeline-view />
       }
     </div>
+    
+    <!-- Side Details Pane -->
+    <div class="w-80 border-l border-tp-border-light dark:border-tp-border bg-tp-bg-light-secondary dark:bg-tp-bg-secondary overflow-auto">
+      <app-trip-details-view />
+    </div>
+  </div>
+  
+</div>
 
-    <!-- Floating Action Button for Save -->
-    <app-floating-action-button
-      position="bottom-right"
-      size="md"
-      icon="pi pi-save"
-      text="Save Trip"
-      [disabled]="isLoading()"
-      [loading]="isLoading()"
-      ariaLabel="Save trip"
-      (buttonClick)="handleTripSave()">
-    </app-floating-action-button>
-
-    <!-- Stop Edit Modal -->
-    @if (editingStop()) {
-      <app-stop-edit-modal
-        [stop]="editingStop()!"
-        [isOpen]="isStopEditModalOpen()"
-        (closeModal)="onStopEditModalClose()"
-        (stopUpdated)="onStopUpdated($event)">
-      </app-stop-edit-modal>
+<!-- Mobile Layout: Fullscreen main with overlay side pane -->
+<div class="lg:hidden h-screen relative flex flex-col">
+  
+  <!-- View Navigation (Mobile) -->
+  @if (trip() && tripId() !== 'new') {
+    <div class="flex border-b border-tp-border-light dark:border-tp-border bg-tp-bg-light-primary dark:bg-tp-bg-primary px-4">
+      <button
+        (click)="navigateToPlanningView()"
+        [class.border-tp-orange]="currentView() === 'planning'"
+        [class.text-tp-orange]="currentView() === 'planning'"
+        [class.border-transparent]="currentView() !== 'planning'"
+        [class.text-tp-text-light-secondary]="currentView() !== 'planning'"
+        [class.dark:text-tp-text-secondary]="currentView() !== 'planning'"
+        class="px-4 py-3 text-sm font-medium border-b-2 hover:text-tp-text-light-primary dark:hover:text-tp-text-primary hover:border-gray-300 dark:hover:border-gray-600 transition-colors duration-150">
+        Planning View
+      </button>
+      <button
+        (click)="navigateToTimeline()"
+        [class.border-tp-orange]="currentView() === 'timeline'"
+        [class.text-tp-orange]="currentView() === 'timeline'"
+        [class.border-transparent]="currentView() !== 'timeline'"
+        [class.text-tp-text-light-secondary]="currentView() !== 'timeline'"
+        [class.dark:text-tp-text-secondary]="currentView() !== 'timeline'"
+        class="px-4 py-3 text-sm font-medium border-b-2 hover:text-tp-text-light-primary dark:hover:text-tp-text-primary hover:border-gray-300 dark:hover:border-gray-600 transition-colors duration-150">
+        Timeline View
+      </button>
+    </div>
+  }
+  
+  <!-- Main Content -->
+  <div class="flex-1 overflow-auto">
+    @if (currentView() === 'planning') {
+      <app-trip-edit-view />
+    } @else {
+      <app-trip-timeline-view />
     }
   </div>
-} @else if (error()) {
-  <div class="p-6 text-center">
-    <p class="text-lg text-red-600 dark:text-red-400">{{ error() }}</p>
-  </div>
-} @else {
-  <div class="p-6 text-center">
-    <p class="text-lg text-red-600 dark:text-red-400">Could not load trip data.</p>
-    <p class="text-sm text-gray-500 mt-2">Data source: {{ dataSource() }}</p>
-  </div>
-}
+  
+  <!-- Mobile Side Pane Toggle Button -->
+  <button
+    (click)="toggleSidePane()"
+    class="fixed top-4 right-4 z-40 p-3 bg-tp-orange text-white rounded-full shadow-lg
+           hover:bg-tp-orange/90 transition-colors duration-200"
+    aria-label="Toggle trip details">
+    <i class="pi pi-cog text-lg"></i>
+  </button>
+  
+  <!-- Side Pane Overlay -->
+  @if (isSidePaneOpen()) {
+    <!-- Backdrop -->
+    <div 
+      class="fixed inset-0 bg-black/50 z-50 transition-opacity duration-300"
+      (click)="closeSidePane()">
+    </div>
+    
+    <!-- Side Pane -->
+    <div class="fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-tp-bg-light-primary dark:bg-tp-bg-primary 
+                border-l border-tp-border-light dark:border-tp-border z-50 
+                transform transition-transform duration-300 ease-in-out shadow-xl overflow-auto">
+      
+      <!-- Side Pane Header -->
+      <div class="flex items-center justify-between p-4 border-b border-tp-border-light dark:border-tp-border bg-tp-bg-light-secondary dark:bg-tp-bg-secondary">
+        <h2 class="text-lg font-semibold text-tp-text-light-primary dark:text-tp-text-primary">
+          Trip Details
+        </h2>
+        <button
+          (click)="closeSidePane()"
+          class="p-2 text-tp-text-light-secondary dark:text-tp-text-secondary 
+                 hover:text-tp-text-light-primary dark:hover:text-tp-text-primary
+                 hover:bg-tp-bg-light-tertiary dark:hover:bg-tp-bg-tertiary 
+                 rounded-lg transition-colors duration-200"
+          aria-label="Close trip details">
+          <i class="pi pi-times text-lg"></i>
+        </button>
+      </div>
+      
+      <!-- Side Pane Content -->
+      <div class="flex-1">
+        <app-trip-details-view />
+      </div>
+      
+    </div>
+  }
+  
+</div>

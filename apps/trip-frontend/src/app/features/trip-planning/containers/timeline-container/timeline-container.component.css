@@ -1,8 +1,0 @@
-.timeline-container-wrapper {
-  padding: 1rem;
-  background-color: var(--tp-bg-light-primary);
-}
-
-:host-context(.dark) .timeline-container-wrapper {
-  background-color: var(--tp-bg-primary);
-}
