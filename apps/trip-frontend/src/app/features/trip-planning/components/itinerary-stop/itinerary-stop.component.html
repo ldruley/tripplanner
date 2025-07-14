@@ -77,21 +77,4 @@
     </div>
   </div>
 
-  @if (!isLast() && travelInfoToNext(); as travel) {
-    <div
-      class="travel-connector-info text-center py-3 text-xs text-tp-text-light-secondary dark:text-tp-text-secondary"
-    >
-      <div class="inline-flex items-center space-x-2">
-        <span>↓</span>
-        <span>{{ travel.time }} / {{ travel.distance }}</span>
-        <span>↓</span>
-      </div>
-    </div>
-  } @else if (!isLast()) {
-    <div
-      class="travel-connector-info text-center py-3 text-xs text-tp-text-light-tertiary dark:text-tp-text-tertiary"
-    >
-      <span>↓ ...calculating... ↓</span>
-    </div>
-  }
 </div>
