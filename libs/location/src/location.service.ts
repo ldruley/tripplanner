@@ -11,8 +11,17 @@ import {
   TimezoneResponse,
   ProcessedLocation,
   CreatedLocationMap,
+  HereGeocodeApiResponse,
+  HerePoiApiResponse,
+  MapboxGeocodeApiResponse,
+  MapboxPoiApiResponse,
 } from '@trip-planner/types';
-import { PrismaClientOrTransaction } from '@trip-planner/prisma';
+import {
+  ApiSourceProvider,
+  PrismaClientOrTransaction,
+  Prisma,
+  PrismaService,
+} from '@trip-planner/prisma';
 import { TimezoneService } from '@trip-planner/timezone';
 import { LocationRepository } from './location.repository';
 import {
@@ -20,6 +29,7 @@ import {
   LocationDuplicateCheck,
   DEFAULT_DEDUPLICATION_OPTIONS,
 } from './location.types';
+import { LocationProcessorService } from './location-processor.service';
 
 @Injectable()
 export class LocationService {
@@ -28,6 +38,8 @@ export class LocationService {
   constructor(
     private readonly locationRepository: LocationRepository,
     private readonly timezoneService: TimezoneService,
+    private readonly locationProcessor: LocationProcessorService,
+    private readonly prisma: PrismaService,
   ) {}
 
   /**
@@ -55,6 +67,36 @@ export class LocationService {
     }
 
     return await this.locationRepository.create(data, prismaClient);
+  }
+
+  // should refactor this to use repository model
+  async processAndStoreExternalLocation(
+    response:
+      | HereGeocodeApiResponse
+      | HerePoiApiResponse
+      | MapboxGeocodeApiResponse
+      | MapboxPoiApiResponse,
+    provider: ApiSourceProvider,
+  ): Promise<Location[]> {
+    const locationsToCreate: Prisma.LocationCreateInput[] = [];
+
+    if (provider === ApiSourceProvider.HERE && 'items' in response) {
+      for (const item of (response as HereGeocodeApiResponse | HerePoiApiResponse).items) {
+        locationsToCreate.push(this.locationProcessor.processHereFeature(item));
+      }
+    } else if (provider === ApiSourceProvider.MAPBOX && 'features' in response) {
+      for (const feature of response.features) {
+        locationsToCreate.push(this.locationProcessor.processMapboxFeature(feature));
+      }
+    } else {
+      throw new Error('Unsupported API response structure or provider.');
+    }
+
+    const createdLocations = await this.prisma.location.createManyAndReturn({
+      data: locationsToCreate,
+    });
+
+    return createdLocations as Location[];
   }
 
   /**
@@ -130,9 +172,11 @@ export class LocationService {
         const key = processedLocation.isBanked
           ? `banked_${processedLocation.originalIndex}`
           : `organized_${processedLocation.originalIndex}`;
-        
+
         createdLocations[key] = coordinateMatch;
-        this.logger.debug(`Found duplicate by coordinates for location ${i}: ${coordinateMatch.id}`);
+        this.logger.debug(
+          `Found duplicate by coordinates for location ${i}: ${coordinateMatch.id}`,
+        );
         continue;
       }
 
@@ -145,7 +189,7 @@ export class LocationService {
           const key = processedLocation.isBanked
             ? `banked_${processedLocation.originalIndex}`
             : `organized_${processedLocation.originalIndex}`;
-          
+
           createdLocations[key] = apiMatch;
           this.logger.debug(`Found duplicate by API source for location ${i}: ${apiMatch.id}`);
           continue;
@@ -160,7 +204,7 @@ export class LocationService {
     // Step 5: Bulk create remaining locations (1 query instead of N queries)
     if (locationsToCreate.length > 0) {
       this.logger.debug(`Creating ${locationsToCreate.length} new locations in bulk`);
-      
+
       const createdLocationRecords = await prismaClient.location.createManyAndReturn({
         data: locationsToCreate.map(data => ({
           name: data.name,
@@ -187,7 +231,7 @@ export class LocationService {
           const key = processedLocation.isBanked
             ? `banked_${processedLocation.originalIndex}`
             : `organized_${processedLocation.originalIndex}`;
-          
+
           createdLocations[key] = location as Location;
         }
       });

@@ -63,7 +63,7 @@ export const CreateTripFromOrderedListSchema = extendApi(
 export const AddStopToTripSchema = extendApi(
   z.object({
     tripId: z.string().uuid().describe('ID of the trip to add the stop to'),
-    locationData: LocationForItinerarySchema.describe('Location information for the new stop'),
+    locationId: z.string().uuid().describe('ID of existing location to add as stop'),
     insertAtOrder: z
       .number()
       .int()
@@ -80,24 +80,10 @@ export const AddStopToTripSchema = extendApi(
   }),
   {
     title: 'Add Stop to Trip',
-    description: 'Schema for adding a new stop to an existing trip',
+    description: 'Schema for adding a new stop to an existing trip using an existing location ID',
     example: {
       tripId: '550e8400-e29b-41d4-a716-446655440000',
-      locationData: {
-        name: 'Arc de Triomphe',
-        description: 'Iconic triumphal arch in Paris',
-        address: 'Place Charles de Gaulle',
-        city: 'Paris',
-        state: 'Île-de-France',
-        country: 'France',
-        postalCode: '75008',
-        latitude: 48.8738,
-        longitude: 2.295,
-        apiSource: 'HERE',
-        apiSourceId: 'here:pds:place:250jx7ps-b9d7fc1d8dbc4dd9adb39e4b7cf0b2f8',
-        category: 'ATTRACTION',
-        order: 1,
-      },
+      locationId: '550e8400-e29b-41d4-a716-446655440002',
       insertAtOrder: 1,
       calculateRouting: true,
       travelMode: 'WALKING',

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { latitudeSchema, longitudeSchema, uuidSchema } from './base.schema';
 import { ApiSourceProvider, LocationCategory, Prisma } from '@prisma/client';
 import { extendApi } from '@anatine/zod-openapi';
+import { LocationExtendedDataSchema } from './external-api.schema';
 
 export interface ProcessedLocation {
   originalIndex: number;
@@ -28,6 +29,7 @@ export const LocationSchema = extendApi(
 
     // Address fields to match Prisma
     address: z.string().nullable().optional().describe('Street address of the location'),
+    houseNumber: z.string().nullable().optional().describe('House number of the location'),
     city: z.string().nullable().optional().describe('City where the location is situated'),
     state: z.string().nullable().optional().describe('State or region of the location'),
     country: z.string().nullable().optional().describe('Country of the location'),
@@ -45,11 +47,9 @@ export const LocationSchema = extendApi(
       .optional()
       .describe('Source provider of the location data'),
     apiSourceId: z.string().nullable().optional().describe('ID of the location in the source API'),
-    extendedData: z
-      .any()
-      .nullable()
+    extendedData: LocationExtendedDataSchema.nullable()
       .optional()
-      .describe('Raw API data for the location (temporary field)'),
+      .describe('Provider-specific extended data for the location'),
     category: LocationCategorySchema.nullable()
       .optional()
       .describe('Category of the location (e.g., attraction, restaurant)'),
@@ -69,6 +69,7 @@ export const LocationSchema = extendApi(
       name: 'Eiffel Tower',
       description: 'Iconic iron lattice tower in Paris',
       address: 'Champ de Mars, 5 Avenue Anatole France',
+      houseNumber: '5',
       city: 'Paris',
       state: 'Île-de-France',
       country: 'France',
@@ -135,6 +136,7 @@ export const LocationForItinerarySchema = extendApi(
       name: 'Eiffel Tower',
       description: 'Iconic iron lattice tower in Paris',
       address: 'Champ de Mars, 5 Avenue Anatole France',
+      houseNumber: '5',
       city: 'Paris',
       state: 'Île-de-France',
       country: 'France',

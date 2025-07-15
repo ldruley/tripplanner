@@ -11,11 +11,12 @@ import { AxiosResponse } from 'axios';
 import { buildUrl } from '@trip-planner/utils';
 import {
   PoiSearchQuery,
-  PoiSearchResult,
-  PoiSearchResultSchema,
   HerePoiApiResponse,
-  HerePoiFeature,
+  HerePlaceFeature,
+  Location,
 } from '@trip-planner/types';
+import { LocationProcessorService, LocationService } from '@trip-planner/location';
+import { PrismaService } from '@trip-planner/prisma';
 
 @Injectable()
 export class HerePoiAdapterService {
@@ -26,12 +27,15 @@ export class HerePoiAdapterService {
   constructor(
     private readonly configService: ValidationConfigService,
     private readonly httpService: HttpService,
+    private readonly locationProcessor: LocationProcessorService,
+    private readonly locationService: LocationService,
+    private readonly prisma: PrismaService,
   ) {
     const apiKeys = this.configService.getApiKeys();
     this.apiKey = apiKeys.HERE_API_KEY;
   }
 
-  async searchPoi(query: PoiSearchQuery): Promise<PoiSearchResult[]> {
+  async searchPoi(query: PoiSearchQuery): Promise<Location[]> {
     //TODO: implement proximity in place of hardcoded location
     const url = buildUrl(this.baseUrl, '', {
       at: '36.97693,-122.030645',
@@ -45,43 +49,74 @@ export class HerePoiAdapterService {
         this.httpService.get(url),
       );
       Logger.log(response);
-      const results: Array<PoiSearchResult | null> = response.data.items.map(
-        (feature: HerePoiFeature) => {
-          const location: Partial<PoiSearchResult> = {
-            latitude: feature.position?.lat,
-            longitude: feature.position?.lng,
-            name: feature.title || 'Unknown',
-            fullAddress: feature.address?.label || 'No address available',
-            streetAddress:
-              `${feature.address?.houseNumber ?? ''} ${feature.address?.street ?? ''}`.trim() ||
-              'No street address available',
-            provider: 'here',
-            providerId: feature.id,
-            country: feature.address?.countryName || 'Unknown country',
-            city: feature.address?.city || 'Unknown city',
-            region: feature.address?.state || 'Unknown region',
-            postalCode: feature.address?.postalCode || 'Unknown postal code',
-            rawResponse: this.configService.isDevelopment() ? feature : undefined,
-            timezone: feature.timezone?.name || 'Unknown timezone',
-          };
-
-          const parsed = PoiSearchResultSchema.safeParse(location);
-          if (!parsed.success) {
-            this.logger.warn('Invalid POI result from HERE', {
-              errors: parsed.error.flatten(),
-              source: feature,
-            });
-            return null;
-          }
-
-          return parsed.data;
-        },
-      );
-
-      return results.filter((item): item is PoiSearchResult => item !== null);
+      
+      // Process with LocationProcessorService and store, returning full Location objects
+      return await this.processAndStoreLocations(response.data);
     } catch (error) {
       this.logger.error('Error fetching POI data', error);
       throw new BadGatewayException('Failed to search POI');
     }
   }
+
+
+  /**
+   * Process HERE POI API response and store locations with extended data using LocationProcessorService
+   */
+  private async processAndStoreLocations(apiResponse: HerePoiApiResponse): Promise<Location[]> {
+    const locationsToCreate = apiResponse.items
+      .filter(
+        (feature: HerePlaceFeature) =>
+          feature.position && feature.position.lat != null && feature.position.lng != null,
+      )
+      .map((feature: HerePlaceFeature) => 
+        this.locationProcessor.processHereFeature(feature)
+      );
+
+    if (locationsToCreate.length === 0) {
+      return [];
+    }
+
+    // Create all locations using LocationService which handles deduplication and preserves timezone data
+    const createdLocations: Location[] = [];
+    for (const locationData of locationsToCreate) {
+      try {
+        // Convert Prisma.LocationCreateInput to CreateLocationRequest
+        const createLocationRequest = {
+          name: locationData.name,
+          description: locationData.description || undefined,
+          address: locationData.address || undefined,
+          houseNumber: locationData.houseNumber || undefined,
+          city: locationData.city || undefined,
+          state: locationData.state || undefined,
+          country: locationData.country || undefined,
+          postalCode: locationData.postalCode || undefined,
+          latitude: locationData.latitude as number,
+          longitude: locationData.longitude as number,
+          apiSource: locationData.apiSource as any,
+          apiSourceId: locationData.apiSourceId || undefined,
+          timezone: locationData.timezone, // Preserve HERE timezone data
+          category: locationData.category as any,
+          public: locationData.public as boolean,
+        };
+
+        // Use LocationService.upsert() which handles deduplication and timezone preservation
+        const created = await this.locationService.upsert(createLocationRequest);
+        createdLocations.push(created);
+      } catch (error) {
+        this.logger.warn('Failed to upsert location:', {
+          error: error instanceof Error ? error.message : String(error),
+          locationData: { 
+            name: locationData.name, 
+            apiSourceId: locationData.apiSourceId,
+            coordinates: `${locationData.latitude},${locationData.longitude}`
+          }
+        });
+        // Continue processing other locations even if one fails
+      }
+    }
+
+    this.logger.debug(`Successfully processed and stored ${createdLocations.length} locations from HERE POI search`);
+    return createdLocations;
+  }
+
 }

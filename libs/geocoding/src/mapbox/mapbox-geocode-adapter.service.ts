@@ -11,12 +11,13 @@ import { firstValueFrom } from 'rxjs';
 import { buildUrl } from '@trip-planner/utils';
 import {
   ForwardGeocodeQuery,
-  GeocodingResult,
-  GeocodingResultSchema,
   MapboxGeocodeApiResponse,
   MapboxGeocodeFeature,
   ReverseGeocodeQuery,
+  Location,
 } from '@trip-planner/types';
+import { LocationProcessorService } from '@trip-planner/location';
+import { PrismaService } from '@trip-planner/prisma';
 
 @Injectable()
 export class MapboxGeocodeAdapterService {
@@ -27,27 +28,31 @@ export class MapboxGeocodeAdapterService {
   constructor(
     private configService: ValidationConfigService,
     private httpService: HttpService,
+    private readonly locationProcessor: LocationProcessorService,
+    private readonly prisma: PrismaService,
   ) {
     const apiKeys = this.configService.getApiKeys();
     this.apiKey = apiKeys.MAPBOX_API_KEY;
   }
 
-  async forwardGeocode(query: ForwardGeocodeQuery): Promise<GeocodingResult[]> {
+  async forwardGeocode(query: ForwardGeocodeQuery): Promise<Location[]> {
     const url = buildUrl(this.apiBaseUrl, 'forward', {
       q: query.search,
       access_token: this.apiKey,
     });
     try {
-      const response: AxiosResponse = await firstValueFrom(this.httpService.get(url));
+      const response: AxiosResponse<MapboxGeocodeApiResponse> = await firstValueFrom(this.httpService.get(url));
       Logger.log(`Forward geocoding response for "${query.search}":`, response.data);
-      return this.processResponse(response.data);
+      
+      // Process with LocationProcessorService and store, returning full Location objects
+      return await this.processAndStoreLocations(response.data);
     } catch (error) {
       this.logger.error(`Error during forward geocoding with "${query.search}"`, error);
       throw new BadGatewayException('Failed to perform forward geocoding');
     }
   }
 
-  async reverseGeocode(query: ReverseGeocodeQuery): Promise<GeocodingResult[]> {
+  async reverseGeocode(query: ReverseGeocodeQuery): Promise<Location[]> {
     const url = buildUrl(this.apiBaseUrl, 'reverse', {
       longitude: query.longitude,
       latitude: query.latitude,
@@ -55,48 +60,68 @@ export class MapboxGeocodeAdapterService {
     });
     Logger.log(`Geocoding [${query.latitude}, ${query.longitude}]`);
     try {
-      const response: AxiosResponse = await firstValueFrom(this.httpService.get(url));
+      const response: AxiosResponse<MapboxGeocodeApiResponse> = await firstValueFrom(this.httpService.get(url));
       Logger.log(
         `Reverse geocoding response for [${query.longitude}, ${query.latitude}]:`,
         response.data,
       );
-      return this.processResponse(response.data);
+      
+      // Process with LocationProcessorService and store, returning full Location objects
+      return await this.processAndStoreLocations(response.data);
     } catch (error) {
       this.logger.error(
-        `Error during forward geocoding with "${query.latitude} - ${query.longitude}"`,
+        `Error during reverse geocoding with "${query.latitude} - ${query.longitude}"`,
         error,
       );
       throw new BadGatewayException('Failed to perform reverse geocoding');
     }
   }
 
-  async processResponse(response: MapboxGeocodeApiResponse): Promise<GeocodingResult[]> {
-    if (response && response.features) {
-      return response.features
-        .filter(
-          (feature: MapboxGeocodeFeature) =>
-            feature.properties?.coordinates?.latitude != null &&
-            feature.properties?.coordinates?.longitude != null,
-        )
-        .map((feature: MapboxGeocodeFeature) => {
-          const location: Partial<GeocodingResult> = {
-            latitude: feature.properties?.coordinates?.latitude,
-            longitude: feature.properties?.coordinates?.longitude,
-            fullAddress: feature.properties?.full_address || 'No address found',
-            streetAddress: feature.properties?.name || 'No street address found',
-            provider: 'mapbox',
-            providerId: feature.properties?.mapbox_id,
-            country: feature.properties?.context?.country?.name || 'No country found',
-            region: feature.properties?.context?.region?.name || 'No region found',
-            city: feature.properties?.context?.place?.name || 'No city found',
-            postalCode: feature.properties?.context?.postcode?.name || 'No postal code found',
-            rawResponse: this.configService.isDevelopment() ? feature : undefined,
-          };
-
-          // Use Zod to parse. This will throw an error if the data doesn't match our schema.
-          return GeocodingResultSchema.parse(location);
-        });
+  /**
+   * Process Mapbox API response and store locations with extended data using LocationProcessorService
+   */
+  private async processAndStoreLocations(apiResponse: MapboxGeocodeApiResponse): Promise<Location[]> {
+    if (!apiResponse || !apiResponse.features) {
+      return [];
     }
-    return [];
+
+    const locationsToCreate = apiResponse.features
+      .filter(
+        (feature: MapboxGeocodeFeature) =>
+          feature.properties?.coordinates?.latitude != null &&
+          feature.properties?.coordinates?.longitude != null,
+      )
+      .map((feature: MapboxGeocodeFeature) => 
+        this.locationProcessor.processMapboxFeature(feature)
+      );
+
+    if (locationsToCreate.length === 0) {
+      return [];
+    }
+
+    // Create all locations in bulk
+    const createdLocations: Location[] = [];
+    for (const locationData of locationsToCreate) {
+      try {
+        const created = await this.prisma.location.create({ 
+          data: locationData 
+        }) as unknown as Location;
+        createdLocations.push(created);
+      } catch (error) {
+        this.logger.warn('Failed to create location, possibly duplicate:', {
+          error: error instanceof Error ? error.message : String(error),
+          locationData: { 
+            name: locationData.name, 
+            apiSourceId: locationData.apiSourceId,
+            coordinates: `${locationData.latitude},${locationData.longitude}`
+          }
+        });
+        // Continue processing other locations even if one fails
+      }
+    }
+
+    this.logger.debug(`Successfully processed and stored ${createdLocations.length} locations from Mapbox geocoding`);
+    return createdLocations;
   }
+
 }

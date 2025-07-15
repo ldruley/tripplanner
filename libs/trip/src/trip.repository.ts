@@ -93,7 +93,7 @@ export class TripRepository {
             }
           : false,
       },
-    });
+    }) as unknown as Trip | null;
   }
 
   /**
@@ -146,7 +146,7 @@ export class TripRepository {
       orderBy: {
         updatedAt: 'desc',
       },
-    });
+    }) as unknown as Trip[];
   }
 
   /**
@@ -206,7 +206,7 @@ export class TripRepository {
       orderBy: {
         updatedAt: 'desc',
       },
-    });
+    }) as unknown as Trip[];
   }
 
   /**
@@ -334,7 +334,7 @@ export class TripRepository {
           orderBy: [{ originStop: { order: 'asc' } }, { destinationStop: { order: 'asc' } }],
         },
       },
-    });
+    }) as unknown as Trip | null;
   }
 
   /**
@@ -373,7 +373,7 @@ export class TripRepository {
           },
         },
       },
-    });
+    }) as unknown as Trip | null;
   }
 
   /**

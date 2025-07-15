@@ -4,7 +4,7 @@ import { HereGeocodeAdapterService } from './here/here-geocode-adapter.service';
 import { RedisService } from '@trip-planner/redis';
 import { ApiUsageService } from '@trip-planner/api-usage';
 import { buildCacheKey } from '@trip-planner/utils';
-import { ForwardGeocodeQuery, GeocodingResult, ReverseGeocodeQuery } from '@trip-planner/types';
+import { ForwardGeocodeQuery, Location, ReverseGeocodeQuery } from '@trip-planner/types';
 
 @Injectable()
 export class GeocodingService {
@@ -18,15 +18,15 @@ export class GeocodingService {
     private readonly apiUsageService: ApiUsageService,
   ) {}
 
-  async forwardGeocode(query: ForwardGeocodeQuery): Promise<GeocodingResult[]> {
+  async forwardGeocode(query: ForwardGeocodeQuery): Promise<Location[]> {
     const cacheKey = buildCacheKey('geocode:forward', [query], true);
     return this.redisService.getOrSet(cacheKey, this.CACHE_TTL_MS, () =>
       this.implementForwardGeocodeStrategy(query),
     );
   }
 
-  async implementForwardGeocodeStrategy(query: ForwardGeocodeQuery): Promise<GeocodingResult[]> {
-    let results: GeocodingResult[] = [];
+  async implementForwardGeocodeStrategy(query: ForwardGeocodeQuery): Promise<Location[]> {
+    let results: Location[] = [];
     if (await this.apiUsageService.checkQuota('here', 'geocoding')) {
       results = await this.hereAdapter.forwardGeocode(query);
       await this.apiUsageService.increment('here', 'geocoding');
@@ -39,15 +39,15 @@ export class GeocodingService {
     return results;
   }
 
-  async reverseGeocode(query: ReverseGeocodeQuery): Promise<GeocodingResult[]> {
+  async reverseGeocode(query: ReverseGeocodeQuery): Promise<Location[]> {
     const cacheKey = buildCacheKey('geocode:reverse', [query], true);
     return this.redisService.getOrSet(cacheKey, this.CACHE_TTL_MS, () =>
       this.implementReverseGeocodeStrategy(query),
     );
   }
 
-  async implementReverseGeocodeStrategy(query: ReverseGeocodeQuery): Promise<GeocodingResult[]> {
-    let results: GeocodingResult[] = [];
+  async implementReverseGeocodeStrategy(query: ReverseGeocodeQuery): Promise<Location[]> {
+    let results: Location[] = [];
     if (await this.apiUsageService.checkQuota('here', 'geocoding')) {
       results = await this.hereAdapter.reverseGeocode(query);
       await this.apiUsageService.increment('here', 'geocoding');

@@ -23,7 +23,7 @@ export class UserFavoriteLocationRepository {
       orderBy: {
         createdAt: 'desc',
       },
-    });
+    }) as unknown as UserFavoriteLocationWithLocation[];
   }
 
   async findByUserAndLocation(
@@ -40,7 +40,7 @@ export class UserFavoriteLocationRepository {
       include: {
         location: true,
       },
-    });
+    }) as unknown as UserFavoriteLocationWithLocation | null;
   }
 
   async create(
@@ -59,7 +59,7 @@ export class UserFavoriteLocationRepository {
       include: {
         location: true,
       },
-    });
+    }) as unknown as UserFavoriteLocationWithLocation;
   }
 
   async update(
@@ -74,7 +74,7 @@ export class UserFavoriteLocationRepository {
       include: {
         location: true,
       },
-    });
+    }) as unknown as UserFavoriteLocationWithLocation;
   }
 
   async delete(id: string): Promise<void> {

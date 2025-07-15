@@ -85,6 +85,7 @@ model Location {
   name         String             @db.Text
   description  String?            @db.Text
   address      String?            @db.Text
+  houseNumber  String?            @map("house_number") // Optional house number
   city         String?
   state        String?
   country      String?

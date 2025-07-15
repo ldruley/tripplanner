@@ -60,8 +60,8 @@ export class LocationPageComponent implements OnInit {
   }
 
   onLocationSelectedFromSearch(location: Location) {
-    // Create the location and add to favorites
-    this.locationService.createLocationAndAddToFavorites(location).pipe(
+    // Location is already created by backend, add to favorites directly
+    this.locationService.addToFavorites(location.id).pipe(
       catchError(error => {
         console.error('Error adding location to favorites:', error);
         if (error.status === 409) {

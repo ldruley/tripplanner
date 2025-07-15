@@ -3,7 +3,7 @@ import { GeocodingService } from './geocoding.service';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import {
   ForwardGeocodeQueryDto,
-  GeocodingResultDto,
+  LocationDto,
   ReverseGeocodeQueryDto,
 } from '@trip-planner/shared/dtos';
 import { ForwardGeocodeQuery, ReverseGeocodeQuery } from '@trip-planner/types';
@@ -22,7 +22,7 @@ export class GeocodingController {
   @ApiResponse({
     status: 200,
     description: 'An array of matching locations found by the geocoding provider.',
-    type: [GeocodingResultDto],
+    type: [LocationDto],
   })
   @ApiResponse({
     status: 400,
@@ -52,7 +52,7 @@ export class GeocodingController {
   @ApiResponse({
     status: 200,
     description: 'Location details for the specified latitude and longitude.',
-    type: GeocodingResultDto,
+    type: [LocationDto],
   })
   @ApiResponse({ status: 400, description: 'Bad Request. Latitude and longitude are required.' })
   @ApiResponse({ status: 500, description: 'Internal Server Error.' })

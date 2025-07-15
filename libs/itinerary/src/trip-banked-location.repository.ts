@@ -58,7 +58,7 @@ export class TripBankedLocationRepository {
       include: {
         location: includeLocation,
       },
-    });
+    }) as unknown as TripBankedLocation | null;
   }
 
   /**
@@ -83,7 +83,7 @@ export class TripBankedLocationRepository {
       orderBy: {
         createdAt: 'desc',
       },
-    });
+    }) as unknown as TripBankedLocation[];
   }
 
   /**
@@ -108,7 +108,7 @@ export class TripBankedLocationRepository {
       orderBy: {
         createdAt: 'desc',
       },
-    });
+    }) as unknown as TripBankedLocation[];
   }
 
   /**
@@ -141,7 +141,7 @@ export class TripBankedLocationRepository {
       orderBy: {
         createdAt: 'desc',
       },
-    });
+    }) as unknown as TripBankedLocation[];
   }
 
   /**

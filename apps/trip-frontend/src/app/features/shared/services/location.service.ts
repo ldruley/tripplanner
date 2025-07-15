@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from 'apps/trip-frontend/src/environments/environment';
 import {
   Location,
+  CreateLocationRequest,
   UserFavoriteLocationWithLocation,
   CreateUserFavoriteLocation,
   UpdateUserFavoriteLocation,
@@ -188,15 +189,29 @@ export class LocationService {
   }
 
   /**
+   * Create a new location
+   */
+  createLocation(locationData: CreateLocationRequest): Observable<Location> {
+    return this.http
+      .post<Location>(`${this.apiUrl}/location`, locationData)
+      .pipe(
+        catchError(error => {
+          console.error('Error creating location:', error);
+          throw error;
+        }),
+      );
+  }
+
+  /**
    * Create a new location and optionally add it to favorites
    */
   createLocationAndAddToFavorites(
-    location: Omit<Location, 'createdAt' | 'updatedAt'>,
+    locationData: CreateLocationRequest,
     metadata: Partial<CreateUserFavoriteLocation> = {},
   ): Observable<UserFavoriteLocationWithLocation> {
     // First create the location - the location endpoint returns a raw Location object, not wrapped
     return this.http
-      .post<Location>(`${this.apiUrl}/location`, location)
+      .post<Location>(`${this.apiUrl}/location`, locationData)
       .pipe(
         // Then add it to favorites
         switchMap(createdLocation => this.addToFavorites(createdLocation.id, metadata)),

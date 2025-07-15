@@ -356,6 +356,7 @@ export class LocationRepository {
     if (data.postalCode !== undefined) updateData.postalCode = data.postalCode;
     if (data.latitude !== undefined) updateData.latitude = data.latitude;
     if (data.longitude !== undefined) updateData.longitude = data.longitude;
+    if (data.timezone !== undefined) updateData.timezone = data.timezone;
     if (data.apiSource !== undefined) updateData.apiSource = data.apiSource as any;
     if (data.apiSourceId !== undefined) updateData.apiSourceId = data.apiSourceId;
     if (data.category !== undefined) updateData.category = data.category as any;

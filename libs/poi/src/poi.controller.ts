@@ -1,8 +1,8 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { PoiService } from './poi.service';
-import { PoiSearchQuery, PoiSearchResult } from '@trip-planner/types';
+import { PoiSearchQuery, Location } from '@trip-planner/types';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
-import { PoiSearchQueryDto, PoiSearchResultDto } from '@trip-planner/shared/dtos';
+import { PoiSearchQueryDto, LocationDto } from '@trip-planner/shared/dtos';
 
 @Controller('poi')
 export class PoiController {
@@ -13,10 +13,10 @@ export class PoiController {
   @ApiResponse({
     status: 200,
     description: 'Returns a list of Points of Interest matching the search criteria.',
-    type: [PoiSearchResultDto],
+    type: [LocationDto],
   })
   @Get('poi-search')
-  async poiSearch(@Query() query: PoiSearchQueryDto): Promise<PoiSearchResult[]> {
+  async poiSearch(@Query() query: PoiSearchQueryDto): Promise<Location[]> {
     return this.poiService.poiSearch(query as PoiSearchQuery);
   }
 }

@@ -16,7 +16,6 @@ import {
 } from '@trip-planner/shared/dtos';
 import { UpdateTripWithRoutingRequest } from '../../../../../../../libs/shared/types/src/schemas/itinerary.schema';
 import { environment } from '../../../../environments/environment';
-import { locationToLocationForItinerary } from './location-transformation.utils';
 
 /**
  * ItineraryApiService
@@ -41,7 +40,13 @@ export class ItineraryApiService {
    * @returns Observable of created trip
    */
   createTripWithItinerary(
-    tripData: { name: string; description?: string; startDate?: Date; endDate?: Date; matrix?: string },
+    tripData: {
+      name: string;
+      description?: string;
+      startDate?: Date;
+      endDate?: Date;
+      matrix?: string;
+    },
     organizedLocations: LocationForItinerary[],
   ): Observable<Trip> {
     const createRequest: CreateTripFromOrderedListDto = {
@@ -69,17 +74,15 @@ export class ItineraryApiService {
    * @returns Observable of updated trip
    */
   addStopToTrip(tripId: string, location: Location, insertAtOrder?: number): Observable<Trip> {
-    const locationForItinerary = locationToLocationForItinerary(location, insertAtOrder ?? 0);
-
     const addStopRequest: Omit<AddStopToTripDto, 'tripId'> = {
-      locationData: locationForItinerary,
+      locationId: location.id,
       insertAtOrder: insertAtOrder,
       calculateRouting: false,
       travelMode: 'DRIVING',
     };
 
     return this.http
-      .post<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/stops`, addStopRequest)
+      .post<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/stops/batched`, addStopRequest)
       .pipe(map(response => TripSchema.parse(response)));
   }
 
@@ -93,7 +96,7 @@ export class ItineraryApiService {
     const params = new HttpParams().set('calculateRouting', 'true').set('travelMode', 'DRIVING');
 
     return this.http
-      .delete<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/stops/${stopId}`, { params })
+      .delete<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/stops/${stopId}/batched`, { params })
       .pipe(map(response => TripSchema.parse(response)));
   }
 
@@ -125,15 +128,10 @@ export class ItineraryApiService {
    * @returns Observable of created banked location
    */
   addBankedLocationToTrip(tripId: string, location: Location): Observable<TripBankedLocation> {
-    // We need to create location first to get its ID
-    return this.http.post<Location>(`${this.apiUrl}/location`, location).pipe(
-      // Then bank location
-      switchMap((persistedLocation: Location) =>
-        this.http.post<TripBankedLocation>(`${this.apiUrl}/itinerary/trips/${tripId}/bank`, {
-          locationId: persistedLocation.id,
-        }),
-      ),
-    );
+    // Since location already exists with ID from search, use it directly
+    return this.http.post<TripBankedLocation>(`${this.apiUrl}/itinerary/trips/${tripId}/bank`, {
+      locationId: location.id,
+    });
   }
 
   /**

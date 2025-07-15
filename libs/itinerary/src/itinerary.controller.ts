@@ -121,6 +121,35 @@ export class ItineraryController {
     return await this.itineraryService.addStopToTrip(user.id, fullData);
   }
 
+  @Post('trips/:tripId/stops/batched')
+  @ApiOperation({ summary: 'Add a stop to an existing trip' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Stop added successfully',
+    type: Object, // Trip type would be defined in OpenAPI
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Trip not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized',
+  })
+  async addStopToTripBatched(
+    @CurrentUser() user: SafeUser,
+    @Param('tripId') tripId: string,
+    @Body() data: Omit<AddStopToTripDto, 'tripId'>,
+  ): Promise<Trip> {
+    this.logger.log(`Adding stop to trip ${tripId} for user ${user.id}`);
+    const fullData: AddStopToTripDto = { ...data, tripId };
+    return await this.itineraryService.addStopToTripWithBatching(user.id, fullData);
+  }
+
   @Delete('trips/:tripId/stops/:stopId')
   @ApiOperation({ summary: 'Remove a stop from a trip' })
   @ApiResponse({

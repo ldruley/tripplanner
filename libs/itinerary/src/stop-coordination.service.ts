@@ -64,14 +64,8 @@ export class StopCoordinationService {
         throw new NotFoundException(`Trip ${data.tripId} not found or not owned by user`);
       }
 
-      // Step 2: Create or find location (with deduplication) using shared service
-      const createLocationRequest = this.mapCreateLocationRequest(data);
-
-      const location = await this.sharedLocationProcessingService.processLocationForCreation(
-        createLocationRequest,
-        prismaClient,
-      );
-      this.logger.debug(`Created/found location ${location.id} for ${data.locationData.name}`);
+      // Step 2: Use existing location ID directly (no creation needed)
+      this.logger.debug(`Using existing location ${data.locationId} for stop creation`);
 
       // Step 3: Determine insertion order
       let insertOrder: number;
@@ -87,7 +81,7 @@ export class StopCoordinationService {
       // Step 4: Create the stop
       const stopData: CreateStopRequest = {
         tripId: data.tripId,
-        locationId: location.id as string,
+        locationId: data.locationId,
         order: insertOrder,
         stopType: 'PITSTOP',
         plannedDuration: null,
@@ -119,24 +113,6 @@ export class StopCoordinationService {
     });
   }
 
-  private mapCreateLocationRequest(data: AddStopToTripDto) {
-    const createLocationRequest: CreateLocationRequest = {
-      name: data.locationData.name,
-      description: data.locationData.description,
-      address: data.locationData.address,
-      city: data.locationData.city,
-      state: data.locationData.state,
-      country: data.locationData.country,
-      postalCode: data.locationData.postalCode,
-      latitude: data.locationData.latitude,
-      longitude: data.locationData.longitude,
-      apiSource: data.locationData.apiSource,
-      apiSourceId: data.locationData.apiSourceId,
-      category: data.locationData.category,
-      public: false, // Default to false, can be updated later
-    };
-    return createLocationRequest;
-  }
 
   /**
    * Remove a stop from a trip with all cascading effects.
@@ -595,13 +571,8 @@ export class StopCoordinationService {
   ): Promise<Trip> {
     this.logger.debug(`[TRUE BATCHING] Adding stop to trip ${data.tripId}`);
 
-    // Step 3: Pre-calculate location creation/deduplication using shared service
-    const createLocationRequest = this.mapCreateLocationRequest(data);
-
-    const location = await this.sharedLocationProcessingService.processLocationForCreation(
-      createLocationRequest,
-      prismaClient,
-    );
+    // Step 3: Use existing location ID directly (no creation needed)
+    this.logger.debug(`Using existing location ${data.locationId} for batched stop creation`);
 
     // Step 4: Calculate stop order changes for insertion
     const insertOrder =
@@ -649,7 +620,7 @@ export class StopCoordinationService {
     // Step 6: Create the new stop in database first (needed for routing data mapping)
     const stopData: CreateStopRequest = {
       tripId: data.tripId,
-      locationId: location.id as string,
+      locationId: data.locationId,
       order: insertOrder,
       stopType: 'PITSTOP',
       plannedDuration: null,

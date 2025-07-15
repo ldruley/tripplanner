@@ -6,9 +6,11 @@ import { MapboxPoiAdapterService } from './mapbox/mapbox-poi-adapter.service';
 import { HttpModule } from '@nestjs/axios';
 import { HerePoiAdapterService } from './here/here-poi-adapter.service';
 import { ApiUsageModule } from '@trip-planner/api-usage';
+import { LocationModule } from '@trip-planner/location';
+import { PrismaModule } from '@trip-planner/prisma';
 
 @Module({
-  imports: [ConfigModule, HttpModule, ApiUsageModule],
+  imports: [ConfigModule, HttpModule, ApiUsageModule, LocationModule, PrismaModule],
   controllers: [PoiController],
   providers: [PoiService, MapboxPoiAdapterService, HerePoiAdapterService],
   exports: [PoiService],

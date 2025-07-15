@@ -67,7 +67,7 @@ export class StopRepository {
       include: {
         location: true,
       },
-    });
+    }) as unknown as StopWithLocation | null;
   }
 
   /**
@@ -125,7 +125,7 @@ export class StopRepository {
         location: true,
       },
       orderBy: { order: 'asc' },
-    });
+    }) as unknown as Stop[];
   }
 
   /**
