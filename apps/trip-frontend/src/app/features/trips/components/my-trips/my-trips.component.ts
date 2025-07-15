@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Trip } from '@trip-planner/types';
-import { TripsService } from '../../../trip-planning/services/trips.service';
+import { TripsService } from '../../../shared/services/trips.service';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { ToastService } from '../../../shared/services/toast.service';
@@ -42,7 +42,8 @@ export class MyTripsComponent implements OnInit {
     this._loading.set(true);
     this._error.set(null);
 
-    this.tripsService.getTrips()
+    this.tripsService
+      .getTrips()
       .pipe(
         catchError(error => {
           console.error('Failed to load trips:', error);
@@ -50,7 +51,7 @@ export class MyTripsComponent implements OnInit {
           this.toastService.showError('Error', 'Failed to load trips. Please try again.');
           return of([]);
         }),
-        finalize(() => this._loading.set(false))
+        finalize(() => this._loading.set(false)),
       )
       .subscribe(trips => {
         this._trips.set(trips);
@@ -72,13 +73,14 @@ export class MyTripsComponent implements OnInit {
       return;
     }
 
-    this.tripsService.deleteTrip(tripId)
+    this.tripsService
+      .deleteTrip(tripId)
       .pipe(
         catchError(error => {
           console.error('Failed to delete trip:', error);
           this.toastService.showError('Error', 'Failed to delete trip. Please try again.');
           return of(null);
-        })
+        }),
       )
       .subscribe(result => {
         if (result) {
@@ -98,22 +100,25 @@ export class MyTripsComponent implements OnInit {
     return d.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   }
 
-  formatDateRange(startDate: Date | string | null | undefined, endDate: Date | string | null | undefined): string {
+  formatDateRange(
+    startDate: Date | string | null | undefined,
+    endDate: Date | string | null | undefined,
+  ): string {
     if (!startDate && !endDate) return 'Dates not set';
     if (!startDate) return `Ends ${this.formatDate(endDate)}`;
     if (!endDate) return `Starts ${this.formatDate(startDate)}`;
-    
+
     const start = new Date(startDate);
     const end = new Date(endDate);
-    
+
     if (start.getTime() === end.getTime()) {
       return this.formatDate(startDate);
     }
-    
+
     return `${this.formatDate(startDate)} - ${this.formatDate(endDate)}`;
   }
 

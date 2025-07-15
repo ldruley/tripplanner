@@ -5,7 +5,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { ToastService } from '../../../shared/services';
-import { StopService } from '../../services/stop.service';
+import { StopService } from '../../../shared/services/stop.service';
 import { TripDataService } from '../../services/trip-data.service';
 import { Stop, UpdateStopRequest } from '@trip-planner/types';
 import { StopType } from '@prisma/client';
@@ -130,10 +130,9 @@ export class StopEditModalComponent implements OnInit {
     let localDepartureTime = null;
 
     if (currentStop.plannedArrivalTime && currentStop.location) {
-      localArrivalTime = this.tripTimezoneService.convertDateToLocationTimezone(
-        currentStop.plannedArrivalTime,
-        currentStop.location,
-      ).toJSDate();
+      localArrivalTime = this.tripTimezoneService
+        .convertDateToLocationTimezone(currentStop.plannedArrivalTime, currentStop.location)
+        .toJSDate();
     }
 
     if (currentStop.plannedArrivalTime && currentStop.plannedDuration && currentStop.location) {
@@ -141,10 +140,9 @@ export class StopEditModalComponent implements OnInit {
       const durationMs = currentStop.plannedDuration * 60 * 1000;
       const departureTime = new Date(arrivalTime.getTime() + durationMs);
 
-      localDepartureTime = this.tripTimezoneService.convertDateToLocationTimezone(
-        departureTime,
-        currentStop.location,
-      ).toJSDate();
+      localDepartureTime = this.tripTimezoneService
+        .convertDateToLocationTimezone(departureTime, currentStop.location)
+        .toJSDate();
     }
 
     this.stopForm = this.formBuilder.group({

@@ -48,7 +48,7 @@ export class HerePoiAdapterService {
       const response: AxiosResponse<HerePoiApiResponse> = await firstValueFrom(
         this.httpService.get(url),
       );
-      Logger.log(response);
+      this.logger.debug(`POI search completed with ${response.data.items?.length || 0} results`);
       
       // Process with LocationProcessorService and store, returning full Location objects
       return await this.processAndStoreLocations(response.data);

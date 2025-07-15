@@ -13,52 +13,14 @@ export const UserFavoriteLocationSchema = extendApi(
       .nullable()
       .optional()
       .describe('Custom alias/name for the location set by the user'),
-    tags: z
-      .array(z.string())
-      .default([])
-      .describe('Array of user-defined tags for the location'),
-    notes: z
-      .string()
-      .nullable()
-      .optional()
-      .describe('Personal notes about the location'),
+    tags: z.array(z.string()).default([]).describe('Array of user-defined tags for the location'),
+    notes: z.string().nullable().optional().describe('Personal notes about the location'),
     createdAt: z.coerce.date().describe('Timestamp when the location was favorited'),
+    location: LocationSchema,
   }),
   {
     title: 'User Favorite Location',
     description: 'Represents a location that a user has added to their favorites',
-    example: {
-      id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
-      userId: 'b7e23ec29af22b0b4e41da31e868d572',
-      locationId: 'a3f5c89e-1234-5678-9abc-def012345678',
-      alias: 'My Favorite Coffee Shop',
-      tags: ['coffee', 'work', 'breakfast'],
-      notes: 'Great wifi and quiet atmosphere. Perfect for morning work sessions.',
-      createdAt: '2024-01-01T12:00:00.000Z',
-    },
-  },
-);
-
-export const CreateUserFavoriteLocationSchema = UserFavoriteLocationSchema.omit({
-  id: true,
-  userId: true,
-  createdAt: true,
-});
-
-export const UpdateUserFavoriteLocationSchema = UserFavoriteLocationSchema.omit({
-  id: true,
-  userId: true,
-  locationId: true,
-  createdAt: true,
-}).partial();
-
-export const UserFavoriteLocationWithLocationSchema = extendApi(
-  UserFavoriteLocationSchema.extend({
-    location: LocationSchema,
-  }),
-  {
-    title: 'User Favorite Location with Location Details',
-    description: 'User favorite location with full location information',
     example: {
       id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
       userId: 'b7e23ec29af22b0b4e41da31e868d572',
@@ -92,7 +54,20 @@ export const UserFavoriteLocationWithLocationSchema = extendApi(
   },
 );
 
+export const CreateUserFavoriteLocationSchema = UserFavoriteLocationSchema.omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+  location: true,
+});
+
+export const UpdateUserFavoriteLocationSchema = UserFavoriteLocationSchema.omit({
+  id: true,
+  userId: true,
+  locationId: true,
+  createdAt: true,
+}).partial();
+
 export type UserFavoriteLocation = z.infer<typeof UserFavoriteLocationSchema>;
 export type CreateUserFavoriteLocation = z.infer<typeof CreateUserFavoriteLocationSchema>;
 export type UpdateUserFavoriteLocation = z.infer<typeof UpdateUserFavoriteLocationSchema>;
-export type UserFavoriteLocationWithLocation = z.infer<typeof UserFavoriteLocationWithLocationSchema>;

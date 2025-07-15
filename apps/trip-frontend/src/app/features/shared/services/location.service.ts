@@ -4,9 +4,7 @@ import { map, tap, catchError, switchMap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'apps/trip-frontend/src/environments/environment';
 import {
-  Location,
-  CreateLocationRequest,
-  UserFavoriteLocationWithLocation,
+  UserFavoriteLocation,
   CreateUserFavoriteLocation,
   UpdateUserFavoriteLocation,
 } from '@trip-planner/types';
@@ -18,11 +16,11 @@ export class LocationService {
   private readonly apiUrl = environment.backendApiUrl;
 
   // Reactive state for favorites
-  private favoritesSubject = new BehaviorSubject<UserFavoriteLocationWithLocation[]>([]);
+  private favoritesSubject = new BehaviorSubject<UserFavoriteLocation[]>([]);
   public favorites$ = this.favoritesSubject.asObservable();
 
   // Signal for UI reactivity
-  public favoritesSignal = signal<UserFavoriteLocationWithLocation[]>([]);
+  public favoritesSignal = signal<UserFavoriteLocation[]>([]);
   public isLoading = signal<boolean>(false);
 
   constructor(private http: HttpClient) {}
@@ -30,13 +28,13 @@ export class LocationService {
   /**
    * Get all user favorite locations
    */
-  getUserFavorites(): Observable<UserFavoriteLocationWithLocation[]> {
+  getUserFavorites(): Observable<UserFavoriteLocation[]> {
     this.isLoading.set(true);
 
     return this.http
       .get<{
         success: boolean;
-        data: UserFavoriteLocationWithLocation[];
+        data: UserFavoriteLocation[];
         message: string;
       }>(`${this.apiUrl}/user-favorites`)
       .pipe(
@@ -60,7 +58,7 @@ export class LocationService {
   addToFavorites(
     locationId: string,
     metadata: Partial<CreateUserFavoriteLocation> = {},
-  ): Observable<UserFavoriteLocationWithLocation> {
+  ): Observable<UserFavoriteLocation> {
     const data: CreateUserFavoriteLocation = {
       locationId,
       alias: metadata.alias || null,
@@ -71,7 +69,7 @@ export class LocationService {
     return this.http
       .post<{
         success: boolean;
-        data: UserFavoriteLocationWithLocation;
+        data: UserFavoriteLocation;
         message: string;
       }>(`${this.apiUrl}/user-favorites`, data)
       .pipe(
@@ -123,11 +121,11 @@ export class LocationService {
   updateFavoriteMetadata(
     locationId: string,
     metadata: UpdateUserFavoriteLocation,
-  ): Observable<UserFavoriteLocationWithLocation> {
+  ): Observable<UserFavoriteLocation> {
     return this.http
       .put<{
         success: boolean;
-        data: UserFavoriteLocationWithLocation;
+        data: UserFavoriteLocation;
         message: string;
       }>(`${this.apiUrl}/user-favorites/${locationId}`, metadata)
       .pipe(
@@ -177,48 +175,14 @@ export class LocationService {
   /**
    * Get favorite metadata for a location
    */
-  getFavoriteMetadata(locationId: string): UserFavoriteLocationWithLocation | null {
+  getFavoriteMetadata(locationId: string): UserFavoriteLocation | null {
     return this.favoritesSignal().find(favorite => favorite.locationId === locationId) || null;
   }
 
   /**
    * Refresh favorites from server
    */
-  refreshFavorites(): Observable<UserFavoriteLocationWithLocation[]> {
+  refreshFavorites(): Observable<UserFavoriteLocation[]> {
     return this.getUserFavorites();
-  }
-
-  /**
-   * Create a new location
-   */
-  createLocation(locationData: CreateLocationRequest): Observable<Location> {
-    return this.http
-      .post<Location>(`${this.apiUrl}/location`, locationData)
-      .pipe(
-        catchError(error => {
-          console.error('Error creating location:', error);
-          throw error;
-        }),
-      );
-  }
-
-  /**
-   * Create a new location and optionally add it to favorites
-   */
-  createLocationAndAddToFavorites(
-    locationData: CreateLocationRequest,
-    metadata: Partial<CreateUserFavoriteLocation> = {},
-  ): Observable<UserFavoriteLocationWithLocation> {
-    // First create the location - the location endpoint returns a raw Location object, not wrapped
-    return this.http
-      .post<Location>(`${this.apiUrl}/location`, locationData)
-      .pipe(
-        // Then add it to favorites
-        switchMap(createdLocation => this.addToFavorites(createdLocation.id, metadata)),
-        catchError(error => {
-          console.error('Error creating location and adding to favorites:', error);
-          throw error;
-        }),
-      );
   }
 }

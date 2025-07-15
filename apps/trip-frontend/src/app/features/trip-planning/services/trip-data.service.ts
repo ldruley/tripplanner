@@ -12,7 +12,7 @@ import {
   TripSchema,
 } from '@trip-planner/types';
 import { environment } from '../../../../environments/environment';
-import { stopsToLocationForItinerary } from './location-transformation.utils';
+import { stopsToLocationForItinerary } from '../../shared/services/location-transformation.utils';
 import { MatrixCalculationService } from './matrix-calculation.service';
 import { UpdateTripWithRoutingRequest } from '../../../../../../../libs/shared/types/src/schemas/itinerary.schema';
 import { TripTimezoneService } from './trip-timezone.service';
