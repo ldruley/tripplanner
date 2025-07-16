@@ -5,6 +5,12 @@ import { StopService } from '@trip-planner/stop';
 import { TravelSegmentService } from '@trip-planner/travel-segment';
 import { TimelineService } from '@trip-planner/timeline';
 import { RoutingCoordinationService } from './routing-coordination.service';
+import { SegmentPlanningService } from './segment-planning.service';
+import { RoutingIntegrationService } from './routing-integration.service';
+import { OrderManagementService } from './order-management.service';
+import { TimelineCoordinationService } from './timeline-coordination.service';
+import { SharedValidationService } from './shared-validation.service';
+import { SharedTransactionService } from './shared-transaction.service';
 import {
   Trip,
   SegmentRoutingData,
@@ -12,6 +18,12 @@ import {
   BatchExecutionPlan,
   BatchResult,
 } from '@trip-planner/types';
+import {
+  AddStopToTripDto,
+  RemoveStopFromTripDto,
+  ItineraryReorderStopsDto,
+  CreateTripFromOrderedListDto,
+} from '@trip-planner/shared/dtos';
 import { TravelMode } from '@prisma/client';
 
 @Injectable()
@@ -19,11 +31,20 @@ export class UnifiedBatchingService {
   private readonly logger = new Logger(UnifiedBatchingService.name);
 
   constructor(
+    // Core services
     private readonly tripService: TripService,
     private readonly stopService: StopService,
     private readonly travelSegmentService: TravelSegmentService,
     private readonly timelineService: TimelineService,
     private readonly routingCoordinationService: RoutingCoordinationService,
+    
+    // Advanced orchestration services
+    private readonly segmentPlanningService: SegmentPlanningService,
+    private readonly routingIntegrationService: RoutingIntegrationService,
+    private readonly orderManagementService: OrderManagementService,
+    private readonly timelineCoordinationService: TimelineCoordinationService,
+    private readonly sharedValidationService: SharedValidationService,
+    private readonly sharedTransactionService: SharedTransactionService,
   ) {}
 
   /**
@@ -314,5 +335,245 @@ export class UnifiedBatchingService {
       isValid: errors.length === 0,
       errors,
     };
+  }
+
+  // ===== HIGH-LEVEL BATCH OPERATIONS USING ADVANCED ARCHITECTURE =====
+
+  /**
+   * Execute comprehensive stop reordering batch operation.
+   * Leverages the full advanced service ecosystem for intelligent processing.
+   */
+  async executeReorderingBatch(
+    trip: Trip,
+    data: ItineraryReorderStopsDto,
+    prismaClient: PrismaClientOrTransaction,
+  ): Promise<BatchResult> {
+    const startTime = Date.now();
+
+    this.logger.debug(
+      `[ADVANCED BATCHING] Executing reordering batch for trip ${trip.id} with ${data.stopOrders.length} order changes`,
+    );
+
+    // Step 1: Comprehensive validation  
+    // Note: Trip ownership validation is handled at the controller level before reaching this service
+    this.sharedValidationService.validateStopOrders(data.stopOrders);
+
+    // Step 2: Process reordering with advanced order management
+    const reorderingResult = this.orderManagementService.processStopReordering({
+      stops: trip.stops || [],
+      newOrdering: data.stopOrders,
+      preserveTimestamps: false,
+      validateSequence: true,
+    });
+
+    // Step 3: Plan segments with advanced segment planning
+    const planningResult = await this.segmentPlanningService.planReorderingSegments(
+      trip,
+      reorderingResult.reorderedStops,
+      trip.matrix,
+      {
+        includeAllDownstream: true,
+        travelMode: data.travelMode as TravelMode,
+      },
+    );
+
+    // Step 4: Acquire routing data with intelligent strategy
+    const routingStrategy = this.routingIntegrationService.getOptimalStrategy(
+      planningResult.segmentPairs.length,
+      !!trip.matrix,
+      !data.calculateRouting,
+      data.calculateRouting || false,
+    );
+
+    const routingResult = await this.routingIntegrationService.acquireRoutingData({
+      segmentPairs: planningResult.segmentPairs,
+      stops: reorderingResult.reorderedStops,
+      trip,
+      strategy: routingStrategy,
+      travelMode: data.travelMode as TravelMode,
+      matrix: trip.matrix,
+    });
+
+    // Step 5: Execute with enhanced timeline coordination
+    const result = await this.executeCompleteBatch(
+      trip.id,
+      data.stopOrders,
+      routingResult.routingData,
+      true,
+      undefined,
+      prismaClient,
+      trip,
+    );
+
+    const totalTime = Date.now() - startTime;
+    this.logger.log(
+      `[ADVANCED BATCHING] Reordering batch completed: ${result.totalOperations} operations in ${totalTime}ms`,
+    );
+
+    return { ...result, executionTime: totalTime };
+  }
+
+  /**
+   * Execute comprehensive stop insertion batch operation.
+   * Handles validation, location processing, order management, and routing.
+   */
+  async executeStopInsertionBatch(
+    trip: Trip,
+    data: AddStopToTripDto,
+    prismaClient: PrismaClientOrTransaction,
+  ): Promise<BatchResult> {
+    const startTime = Date.now();
+
+    this.logger.debug(
+      `[ADVANCED BATCHING] Executing stop insertion batch for trip ${trip.id}`,
+    );
+
+    // Step 1: Validate location exists
+    await this.sharedValidationService.validateLocationExists(data.locationId);
+
+    // Step 2: Handle order management for insertion
+    const { updates: stopOrderChanges } = this.orderManagementService.createInsertionOrderUpdates(
+      trip.stops || [],
+      data.insertAtOrder ?? (trip.stops?.length || 0),
+    );
+
+    // Step 3: Plan segments for insertion
+    const newStopOrdering = [...(trip.stops || [])];
+    newStopOrdering.splice(data.insertAtOrder ?? newStopOrdering.length, 0, {
+      id: 'temp-new-stop',
+      tripId: trip.id,
+      locationId: data.locationId,
+      order: data.insertAtOrder ?? newStopOrdering.length,
+    } as any);
+
+    const planningResult = await this.segmentPlanningService.planInsertionSegments(
+      trip,
+      newStopOrdering,
+      data.insertAtOrder ?? newStopOrdering.length - 1,
+      trip.matrix,
+      {
+        includeAllDownstream: true,
+        travelMode: data.travelMode as TravelMode,
+      },
+    );
+
+    // Step 4: Acquire routing data
+    const routingStrategy = this.routingIntegrationService.getOptimalStrategy(
+      planningResult.segmentPairs.length,
+      !!trip.matrix,
+      !data.calculateRouting,
+      data.calculateRouting || false,
+    );
+
+    const routingResult = await this.routingIntegrationService.acquireRoutingData({
+      segmentPairs: planningResult.segmentPairs,
+      stops: newStopOrdering,
+      trip,
+      strategy: routingStrategy,
+      travelMode: data.travelMode as TravelMode,
+      matrix: trip.matrix,
+    });
+
+    // Note: This is a simplified version - actual implementation would need
+    // to handle stop creation first, then execute the batch
+    this.logger.warn('[ADVANCED BATCHING] Stop insertion batch - implementation pending full stop creation logic');
+
+    const totalTime = Date.now() - startTime;
+    return {
+      updatedStops: [],
+      totalOperations: 0,
+      executionTime: totalTime,
+      planningTime: 0,
+    };
+  }
+
+  /**
+   * Execute comprehensive stop removal batch operation.
+   * Handles validation, stop deletion, order updates, and routing recalculation.
+   */
+  async executeStopRemovalBatch(
+    trip: Trip,
+    data: RemoveStopFromTripDto,
+    prismaClient: PrismaClientOrTransaction,
+  ): Promise<BatchResult> {
+    const startTime = Date.now();
+
+    this.logger.debug(
+      `[ADVANCED BATCHING] Executing stop removal batch for trip ${trip.id}`,
+    );
+
+    // Step 1: Validate and prepare stop removal
+    const stopToRemove = trip.stops?.find(stop => stop.id === data.stopId);
+    if (!stopToRemove) {
+      throw new Error(`Stop ${data.stopId} not found in trip ${trip.id}`);
+    }
+
+    // Step 2: Handle order management for removal
+    const remainingStops = (trip.stops || []).filter(stop => stop.id !== data.stopId);
+    const { updates } = this.orderManagementService.createRemovalOrderUpdates(
+      remainingStops,
+      stopToRemove.order,
+    );
+
+    // Step 3: Plan segments for remaining stops
+    const planningRequest = {
+      trip,
+      operationType: 'remove' as const,
+      newStopOrdering: remainingStops,
+      removedStopIndex: stopToRemove.order,
+      matrix: trip.matrix,
+      travelMode: data.travelMode as TravelMode,
+      includeAllDownstream: true,
+    };
+
+    const planningResult = await this.segmentPlanningService.planSegmentsForOperation(planningRequest);
+
+    // Step 4: Acquire routing data for remaining segments
+    const routingStrategy = this.routingIntegrationService.getOptimalStrategy(
+      planningResult.segmentPairs.length,
+      !!trip.matrix,
+      !data.calculateRouting,
+      data.calculateRouting || false,
+    );
+
+    const routingResult = await this.routingIntegrationService.acquireRoutingData({
+      segmentPairs: planningResult.segmentPairs,
+      stops: remainingStops,
+      trip,
+      strategy: routingStrategy,
+      travelMode: data.travelMode as TravelMode,
+      matrix: trip.matrix,
+    });
+
+    // Step 5: Delete the stop first, then execute batch updates
+    await this.stopService.delete(data.stopId, prismaClient);
+
+    let result: BatchResult;
+    if (updates.length > 0 || routingResult.routingData.length > 0) {
+      result = await this.executeCompleteBatch(
+        trip.id,
+        updates.map(update => ({ stopId: update.id, newOrder: update.order })),
+        routingResult.routingData,
+        true,
+        undefined,
+        prismaClient,
+      );
+    } else {
+      // If no remaining stops, just update dirty flags
+      await this.tripService.updateTripDirtyFlags(trip.id, false, false, prismaClient);
+      result = {
+        updatedStops: [],
+        totalOperations: 1,
+        executionTime: 0,
+        planningTime: 0,
+      };
+    }
+
+    const totalTime = Date.now() - startTime;
+    this.logger.log(
+      `[ADVANCED BATCHING] Stop removal batch completed: ${result.totalOperations} operations in ${totalTime}ms`,
+    );
+
+    return { ...result, executionTime: totalTime };
   }
 }

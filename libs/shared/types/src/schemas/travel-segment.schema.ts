@@ -284,6 +284,13 @@ export const TravelSegmentWithStopsSchema = extendApi(
   },
 );
 
+// Schema for segment pairs used in planning
+export const SegmentPairSchema = z.object({
+  originStopId: uuidSchema.describe('ID of the origin stop'),
+  destinationStopId: uuidSchema.describe('ID of the destination stop'),
+  tripId: uuidSchema.describe('ID of the trip this segment belongs to'),
+});
+
 // Types
 export type TravelSegment = z.infer<typeof TravelSegmentSchema>;
 export type TravelSegmentWithStops = z.infer<typeof TravelSegmentWithStopsSchema>;
@@ -294,3 +301,4 @@ export type TravelSegmentSearchCriteria = z.infer<typeof TravelSegmentSearchSche
 export type BulkTravelSegmentUpdateRequest = z.infer<typeof BulkTravelSegmentUpdateSchema>;
 export type UpdateTravelSegmentRoutingData = z.infer<typeof UpdateTravelSegmentRoutingDataSchema>;
 export type UpdateTravelApiCalculatedData = z.infer<typeof UpdateTravelApiCalculatedDataSchema>;
+export type SegmentPair = z.infer<typeof SegmentPairSchema>;

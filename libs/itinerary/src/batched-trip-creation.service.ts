@@ -18,7 +18,7 @@ import {
 import { TravelMode } from '@prisma/client';
 import { TravelSegmentService } from '@trip-planner/travel-segment';
 import { StopService } from '@trip-planner/stop';
-import { TripBankedLocationService } from './trip-banked-location.service';
+import { TripBankedLocationService } from './tripbankedlocation/trip-banked-location.service';
 import { RoutingCoordinationService } from './routing-coordination.service';
 
 @Injectable()
@@ -39,7 +39,7 @@ export class BatchedTripCreationService {
   ) {}
 
   /**
-   * EXPERIMENTAL: Create a complete trip using batched database operations.
+   * REFACTORED BATCHING: Create a complete trip using batched database operations.
    * This reduces database operations from 3N + 2M to ~5-8 operations total.
    * @param userId - User ID who owns the trip.
    * @param data - Trip data with organized locations.
@@ -50,136 +50,289 @@ export class BatchedTripCreationService {
     data: CreateTripFromOrderedListDto,
   ): Promise<Trip> {
     this.logger.debug(
-      `[EXPERIMENTAL] Creating trip from organized list with batching for user ${userId}`,
+      `[REFACTORED BATCHING] Creating trip from organized list with batching for user ${userId}`,
     );
 
-    // Validate organized locations have sequential order using shared service
-    this.sharedValidationService.validateOrganizedLocations(data.organizedLocations);
+    // Step 1: Validate the request
+    this.validateTripCreationRequest(data);
 
     return await this.prismaService.$transaction(async prismaClient => {
-      // Step 1: Create the trip (1 DB operation)
-      const tripData: CreateTripRequest = {
-        name: data.name,
-        description: data.description,
-        startDate: data.startDate ? new Date(data.startDate) : null,
-        endDate: data.endDate ? new Date(data.endDate) : null,
-        matrix: data.matrix,
-      };
+      // Step 2: Create the base trip
+      const trip = await this.createBaseTripEntity(userId, data, prismaClient);
 
-      const trip = await this.tripService.create(userId, tripData, prismaClient);
-      this.logger.debug(`[EXPERIMENTAL] Created trip ${trip.id}`);
+      // Step 3: Process and create all locations
+      const createdLocations = await this.processAndCreateLocations(data, prismaClient);
 
-      // Step 2: Process all locations (organized + banked) with deduplication using shared service
-      const allLocationData = this.sharedLocationProcessingService.preprocessAllLocations(
-        data.organizedLocations,
-        data.bankedLocations || [],
-      );
-      const createdLocations = await this.sharedLocationProcessingService.batchProcessLocations(
-        allLocationData,
-        prismaClient,
-      );
-
-      this.logger.debug(
-        `[EXPERIMENTAL] Created/found ${Object.keys(createdLocations).length} locations via batched processing`,
-      );
-
-      // Step 3: Extract organized locations for stop creation
-      const organizedLocationEntries = Object.entries(createdLocations).filter(([key]) =>
-        key.startsWith('organized_'),
-      );
-
-      // Step 4: Batch create stops (1 DB operation)
-      const stops = await this.stopService.batchCreateStops(
+      // Step 4: Create stops from organized locations
+      const stops = await this.createStopsFromOrganizedLocations(
         trip.id as string,
-        organizedLocationEntries,
-        data.organizedLocations,
+        data,
+        createdLocations,
         prismaClient,
       );
 
-      this.logger.debug(`[EXPERIMENTAL] Created ${stops.length} stops via batched operation`);
+      // Step 5: Calculate routing if requested
+      const routingUpdates = await this.calculateRoutingIfRequested(
+        data,
+        stops,
+        createdLocations,
+      );
 
-      // Step 5: Calculate routing data if requested
-      let routingUpdates: SegmentRoutingData[] = [];
-      if (data.calculateRouting && stops.length >= 2) {
-        routingUpdates = await this.routingCoordinationService.calculateRoutingForAllSegments(
-          stops,
-          createdLocations,
-          data.travelMode as TravelMode,
-        );
-        this.logger.debug(
-          `[EXPERIMENTAL] Pre-calculated routing for ${routingUpdates.length} segments`,
-        );
-      }
-
-      // Step 6: Batch create travel segments with routing data (1 DB operation)
-      if (stops.length >= 2) {
-        await this.travelSegmentService.batchCreateTravelSegments(
-          trip.id as string,
-          stops,
-          routingUpdates,
-          prismaClient,
-        );
-        this.logger.debug(
-          `[EXPERIMENTAL] Created ${stops.length - 1} travel segments via batched operation`,
-        );
-      }
-
-      // Step 7: Calculate and apply timeline data (includes arrival/departure times)
-      if (stops.length >= 1) {
-        await this.calculateAndApplyTimeline(
-          trip.id as string,
-          stops,
-          routingUpdates,
-          data.startDate ? new Date(data.startDate) : undefined,
-          prismaClient,
-        );
-        this.logger.debug(
-          `[EXPERIMENTAL] Calculated and applied timeline data for ${stops.length} stops`,
-        );
-      }
-
-      // Step 8: Process banked locations if provided
-      if (data.bankedLocations && data.bankedLocations.length > 0) {
-        const bankedLocationEntries = Object.entries(createdLocations).filter(([key]) =>
-          key.startsWith('banked_'),
-        );
-        await this.bankedLocationService.batchCreateBankRelations(
-          userId,
-          trip.id as string,
-          bankedLocationEntries,
-          prismaClient,
-        );
-        this.logger.debug(
-          `[EXPERIMENTAL] Created ${bankedLocationEntries.length} bank relations via batched operation`,
-        );
-      }
-
-      // Step 9: Set dirty flags based on routing calculation
-      const needsRouting = !data.calculateRouting && stops.length >= 2;
-      await this.tripService.updateTripDirtyFlags(
+      // Step 6: Create travel segments with routing data
+      await this.createTravelSegmentsWithRouting(
         trip.id as string,
-        needsRouting,
-        false,
+        stops,
+        routingUpdates,
         prismaClient,
       );
 
-      // Step 10: Return the complete trip
-      const completeTrip = await this.tripService.findById(
+      // Step 7: Calculate and apply timeline
+      await this.calculateAndApplyTimelineForStops(
         trip.id as string,
-        true,
-        true,
-        true,
+        stops,
+        routingUpdates,
+        data.startDate,
         prismaClient,
       );
 
-      this.logger.log(
-        `[EXPERIMENTAL] Successfully created trip ${trip.id} with ${stops.length} stops using batched operations`,
+      // Step 8: Process banked locations
+      await this.processBankedLocations(
+        userId,
+        trip.id as string,
+        data,
+        createdLocations,
+        prismaClient,
       );
-      return completeTrip;
+
+      // Step 9: Set appropriate dirty flags
+      await this.setTripDirtyFlags(trip.id as string, data, stops.length, prismaClient);
+
+      // Step 10: Return complete trip
+      return await this.loadCompleteTrip(trip.id as string, prismaClient);
     });
   }
 
+  /**
+   * Validate trip creation request for completeness and consistency.
+   */
+  private validateTripCreationRequest(data: CreateTripFromOrderedListDto): void {
+    this.sharedValidationService.validateOrganizedLocations(data.organizedLocations);
 
+    if (!data.name || data.name.trim().length === 0) {
+      throw new Error('Trip name is required');
+    }
+
+    if (data.organizedLocations.length === 0) {
+      throw new Error('At least one organized location is required');
+    }
+  }
+
+  /**
+   * Create the base trip entity.
+   */
+  private async createBaseTripEntity(
+    userId: string,
+    data: CreateTripFromOrderedListDto,
+    prismaClient: PrismaClientOrTransaction,
+  ): Promise<Trip> {
+    const tripData: CreateTripRequest = {
+      name: data.name,
+      description: data.description,
+      startDate: data.startDate ? new Date(data.startDate) : null,
+      endDate: data.endDate ? new Date(data.endDate) : null,
+      matrix: data.matrix,
+    };
+
+    const createdTrip = await this.tripService.create(userId, tripData, prismaClient);
+    this.logger.debug(`[REFACTORED BATCHING] Created trip ${createdTrip.id}`);
+    
+    // Fetch the complete trip with all relations
+    const trip = await this.tripService.findById(createdTrip.id!, true, true, true, prismaClient);
+    if (!trip) {
+      throw new Error(`Failed to fetch created trip ${createdTrip.id}`);
+    }
+    
+    return trip;
+  }
+
+  /**
+   * Process and create all locations (organized + banked) with deduplication.
+   */
+  private async processAndCreateLocations(
+    data: CreateTripFromOrderedListDto,
+    prismaClient: PrismaClientOrTransaction,
+  ): Promise<Record<string, any>> {
+    const allLocationData = this.sharedLocationProcessingService.preprocessAllLocations(
+      data.organizedLocations,
+      data.bankedLocations || [],
+    );
+    
+    const createdLocations = await this.sharedLocationProcessingService.batchProcessLocations(
+      allLocationData,
+      prismaClient,
+    );
+
+    this.logger.debug(
+      `[REFACTORED BATCHING] Created/found ${Object.keys(createdLocations).length} locations via batched processing`,
+    );
+    
+    return createdLocations;
+  }
+
+  /**
+   * Create stops from organized locations.
+   */
+  private async createStopsFromOrganizedLocations(
+    tripId: string,
+    data: CreateTripFromOrderedListDto,
+    createdLocations: Record<string, any>,
+    prismaClient: PrismaClientOrTransaction,
+  ): Promise<Stop[]> {
+    const organizedLocationEntries = Object.entries(createdLocations).filter(([key]) =>
+      key.startsWith('organized_'),
+    );
+
+    const stops = await this.stopService.batchCreateStops(
+      tripId,
+      organizedLocationEntries,
+      data.organizedLocations,
+      prismaClient,
+    );
+
+    this.logger.debug(`[REFACTORED BATCHING] Created ${stops.length} stops via batched operation`);
+    return stops;
+  }
+
+  /**
+   * Calculate routing data if requested.
+   */
+  private async calculateRoutingIfRequested(
+    data: CreateTripFromOrderedListDto,
+    stops: Stop[],
+    createdLocations: Record<string, any>,
+  ): Promise<SegmentRoutingData[]> {
+    if (!data.calculateRouting || stops.length < 2) {
+      return [];
+    }
+
+    const routingUpdates = await this.routingCoordinationService.calculateRoutingForAllSegments(
+      stops,
+      createdLocations,
+      data.travelMode as TravelMode,
+    );
+    
+    this.logger.debug(
+      `[REFACTORED BATCHING] Pre-calculated routing for ${routingUpdates.length} segments`,
+    );
+    
+    return routingUpdates;
+  }
+
+  /**
+   * Create travel segments with routing data.
+   */
+  private async createTravelSegmentsWithRouting(
+    tripId: string,
+    stops: Stop[],
+    routingUpdates: SegmentRoutingData[],
+    prismaClient: PrismaClientOrTransaction,
+  ): Promise<void> {
+    if (stops.length < 2) {
+      return;
+    }
+
+    await this.travelSegmentService.batchCreateTravelSegments(
+      tripId,
+      stops,
+      routingUpdates,
+      prismaClient,
+    );
+    
+    this.logger.debug(
+      `[REFACTORED BATCHING] Created ${stops.length - 1} travel segments via batched operation`,
+    );
+  }
+
+  /**
+   * Calculate and apply timeline data for all stops.
+   */
+  private async calculateAndApplyTimelineForStops(
+    tripId: string,
+    stops: Stop[],
+    routingUpdates: SegmentRoutingData[],
+    startDate: string | undefined,
+    prismaClient: PrismaClientOrTransaction,
+  ): Promise<void> {
+    if (stops.length === 0) {
+      return;
+    }
+
+    const startTime = startDate ? new Date(startDate) : undefined;
+    await this.calculateAndApplyTimeline(tripId, stops, routingUpdates, startTime, prismaClient);
+    
+    this.logger.debug(
+      `[REFACTORED BATCHING] Calculated and applied timeline data for ${stops.length} stops`,
+    );
+  }
+
+  /**
+   * Process banked locations if provided.
+   */
+  private async processBankedLocations(
+    userId: string,
+    tripId: string,
+    data: CreateTripFromOrderedListDto,
+    createdLocations: Record<string, any>,
+    prismaClient: PrismaClientOrTransaction,
+  ): Promise<void> {
+    if (!data.bankedLocations || data.bankedLocations.length === 0) {
+      return;
+    }
+
+    const bankedLocationEntries = Object.entries(createdLocations).filter(([key]) =>
+      key.startsWith('banked_'),
+    );
+    
+    await this.bankedLocationService.batchCreateBankRelations(
+      userId,
+      tripId,
+      bankedLocationEntries,
+      prismaClient,
+    );
+    
+    this.logger.debug(
+      `[REFACTORED BATCHING] Created ${bankedLocationEntries.length} bank relations via batched operation`,
+    );
+  }
+
+  /**
+   * Set appropriate dirty flags based on routing calculation.
+   */
+  private async setTripDirtyFlags(
+    tripId: string,
+    data: CreateTripFromOrderedListDto,
+    stopCount: number,
+    prismaClient: PrismaClientOrTransaction,
+  ): Promise<void> {
+    const needsRouting = !data.calculateRouting && stopCount >= 2;
+    await this.tripService.updateTripDirtyFlags(tripId, needsRouting, false, prismaClient);
+  }
+
+  /**
+   * Load and return the complete trip with all relations.
+   */
+  private async loadCompleteTrip(
+    tripId: string,
+    prismaClient: PrismaClientOrTransaction,
+  ): Promise<Trip> {
+    const completeTrip = await this.tripService.findById(tripId, true, true, true, prismaClient);
+    
+    this.logger.log(
+      `[REFACTORED BATCHING] Successfully created trip ${tripId} with ${completeTrip.stops?.length || 0} stops using batched operations`,
+    );
+    
+    return completeTrip;
+  }
 
   /**
    * Calculate timeline data and apply it to stops in a single batch operation.
@@ -202,7 +355,6 @@ export class BatchedTripCreationService {
     }
 
     // Create segments data structure needed for timeline calculation
-    // Map routing data to segment-like objects for timeline service
     const segments: TravelSegment[] = routingUpdates.map(routingData => ({
       id: crypto.randomUUID(), // Generate valid UUID for timeline calculation
       tripId,
@@ -224,12 +376,11 @@ export class BatchedTripCreationService {
     const timelineRequest: TimelineCalculationRequest = {
       stops: stops.map(stop => ({
         ...stop,
-        // Ensure all required stop fields are present for timeline calculation
-        plannedArrivalTime: undefined, // Let timeline service calculate
-        plannedDuration: undefined, // Use defaults
+        plannedArrivalTime: undefined,
+        plannedDuration: undefined,
         calculatedArrivalTime: undefined,
         calculatedDepartureTime: undefined,
-        stopType: 'PITSTOP', // Default stop type
+        stopType: 'PITSTOP',
         notes: undefined,
         alias: undefined,
         createdAt: new Date(),
@@ -239,7 +390,7 @@ export class BatchedTripCreationService {
       startTime,
     };
 
-    // Calculate timeline using the pure timeline service
+    // Calculate timeline using the timeline service
     const timelineResult: TimelineCalculationResult =
       this.timelineService.calculateSequentialTimeline(timelineRequest);
 
@@ -261,11 +412,10 @@ export class BatchedTripCreationService {
       }),
     );
 
-    // Execute all timeline updates in parallel
     await Promise.all(updateOperations);
 
     this.logger.debug(
-      `[EXPERIMENTAL] Applied timeline data to ${stopTimeUpdates.length} stops. Trip duration: ${timelineResult.totalTripDuration} minutes`,
+      `Applied timeline data to ${stopTimeUpdates.length} stops. Trip duration: ${timelineResult.totalTripDuration} minutes`,
     );
   }
 }

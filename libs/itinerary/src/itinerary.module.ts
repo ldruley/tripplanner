@@ -12,12 +12,18 @@ import { TripCreationService } from './trip-creation.service';
 import { BatchedTripCreationService } from './batched-trip-creation.service';
 import { StopCoordinationService } from './stop-coordination.service';
 import { RoutingCoordinationService } from './routing-coordination.service';
-import { TripBankedLocationService } from './trip-banked-location.service';
+import { TripBankedLocationService } from './tripbankedlocation/trip-banked-location.service';
 import { TimelineCoordinationService } from './timeline-coordination.service';
-import { TripBankedLocationRepository } from './trip-banked-location.repository';
+import { TripBankedLocationRepository } from './tripbankedlocation/trip-banked-location.repository';
 import { UnifiedBatchingService } from './unified-batching.service';
 import { SharedValidationService } from './shared-validation.service';
 import { SharedLocationProcessingService } from './shared-location-processing.service';
+import { SegmentPlanningService } from './segment-planning.service';
+import { SegmentCalculationService } from './segment-calculation.service';
+import { RoutingIntegrationService } from './routing-integration.service';
+import { RoutingTransformationService } from './routing-transformation.service';
+import { OrderManagementService } from './order-management.service';
+import { SharedTransactionService } from './shared-transaction.service';
 
 @Module({
   imports: [
@@ -42,6 +48,13 @@ import { SharedLocationProcessingService } from './shared-location-processing.se
     UnifiedBatchingService,
     SharedValidationService,
     SharedLocationProcessingService,
+    // Advanced orchestration services
+    SegmentPlanningService,
+    SegmentCalculationService,
+    RoutingIntegrationService,
+    RoutingTransformationService,
+    OrderManagementService,
+    SharedTransactionService,
   ],
   exports: [
     ItineraryService,

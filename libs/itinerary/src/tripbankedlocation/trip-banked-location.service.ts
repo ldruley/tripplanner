@@ -12,7 +12,8 @@ import {
   CreateStopRequest,
   Stop,
 } from '@trip-planner/types';
-import { StopCoordinationService } from './stop-coordination.service';
+import { StopCoordinationService } from '../stop-coordination.service';
+import { OrderManagementService } from '../order-management.service';
 
 @Injectable()
 export class TripBankedLocationService {
@@ -25,6 +26,7 @@ export class TripBankedLocationService {
     private readonly stopService: StopService,
     private readonly tripBankedLocationRepository: TripBankedLocationRepository,
     private readonly stopCoordinationService: StopCoordinationService,
+    private readonly orderManagementService: OrderManagementService,
   ) {}
 
   /**
@@ -276,12 +278,18 @@ export class TripBankedLocationService {
         let insertOrder: number;
         if (insertAtOrder !== undefined) {
           insertOrder = insertAtOrder;
-          // Make room for the new stop by reordering existing stops
-          await this.stopCoordinationService.makeRoomForStop(
-            tripId,
-            insertOrder,
-            transactionClient,
-          );
+          // Make room for the new stop by reordering existing stops using OrderManagementService
+          const trip = await this.tripService.findById(tripId, true, false, false, transactionClient);
+          if (trip && trip.stops) {
+            const { updates } = this.orderManagementService.createInsertionOrderUpdates(
+              trip.stops,
+              insertOrder,
+            );
+            // Apply the updates to make room for the new stop
+            for (const update of updates) {
+              await this.stopService.updateOrder(update.id, update.order, transactionClient);
+            }
+          }
         } else {
           // Add to the end
           insertOrder = await this.stopService.getNextOrderForTrip(tripId, transactionClient);
@@ -310,24 +318,4 @@ export class TripBankedLocationService {
     );
   }
 
-  /**
-   * Make room for a new stop by incrementing the order of existing stops.
-   * @param tripId - Trip ID.
-   * @param insertOrder - Order position to insert at.
-   * @param prismaClient - Prisma client for transaction.
-   */
-  private async makeRoomForStop(
-    tripId: string,
-    insertOrder: number,
-    prismaClient: PrismaClientOrTransaction,
-  ): Promise<void> {
-    // Get all stops at or after the insertion point
-    const stopsToReorder = await this.stopService.findByTripId(tripId, false, prismaClient);
-    const stopsAfterInsertionPoint = stopsToReorder.filter(stop => stop.order >= insertOrder);
-
-    // Increment order for each stop after insertion point
-    for (const stop of stopsAfterInsertionPoint) {
-      await this.stopService.updateOrder(stop.id as string, stop.order + 1, prismaClient);
-    }
-  }
 }

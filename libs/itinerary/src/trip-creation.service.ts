@@ -5,7 +5,7 @@ import { LocationService } from '@trip-planner/location';
 import { StopService } from '@trip-planner/stop';
 import { TravelSegmentService } from '@trip-planner/travel-segment';
 import { CreateTripFromOrderedListDto } from '@trip-planner/shared/dtos';
-import { TripBankedLocationService } from './trip-banked-location.service';
+import { TripBankedLocationService } from './tripbankedlocation/trip-banked-location.service';
 import {
   Trip,
   CreateTripRequest,

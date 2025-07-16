@@ -55,24 +55,15 @@ export class ItineraryController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'Unauthorized',
   })
-  async createTripFromOrganizedList(
-    @CurrentUser() user: SafeUser,
-    @Body() data: CreateTripFromOrderedListDto,
-  ): Promise<Trip> {
-    this.logger.log(`Creating trip from organized list for user ${user.id}`);
-    return await this.itineraryService.createTripFromOrganizedList(user.id, data);
-  }
-
-  @Post('trips/batched')
+  @Post('trips')
   @ApiOperation({
-    summary: 'EXPERIMENTAL: Create a trip using batched database operations',
-    description:
-      'Optimized trip creation that reduces database operations from 3N + 2M to ~5-8 operations total. Includes pre-calculated routing data.',
+    summary: 'Create a trip',
+    description: 'Create a trip from an organized list of locations.',
   })
   @ApiResponse({
     status: HttpStatus.CREATED,
-    description: 'Trip created successfully with batched operations',
-    type: Object, // Trip type would be defined in OpenAPI
+    description: 'Trip created successfully',
+    type: Object,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
@@ -86,39 +77,8 @@ export class ItineraryController {
     @CurrentUser() user: SafeUser,
     @Body() data: CreateTripFromOrderedListDto,
   ): Promise<Trip> {
-    this.logger.log(
-      `[EXPERIMENTAL] Creating trip from organized list with batching for user ${user.id}`,
-    );
+    this.logger.log(`Creating trip from organized list for user ${user.id}`);
     return await this.itineraryService.createTripFromOrganizedListBatched(user.id, data);
-  }
-
-  @Post('trips/:tripId/stops')
-  @ApiOperation({ summary: 'Add a stop to an existing trip' })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: 'Stop added successfully',
-    type: Object, // Trip type would be defined in OpenAPI
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid input data',
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Trip not found',
-  })
-  @ApiResponse({
-    status: HttpStatus.UNAUTHORIZED,
-    description: 'Unauthorized',
-  })
-  async addStopToTrip(
-    @CurrentUser() user: SafeUser,
-    @Param('tripId') tripId: string,
-    @Body() data: Omit<AddStopToTripDto, 'tripId'>,
-  ): Promise<Trip> {
-    this.logger.log(`Adding stop to trip ${tripId} for user ${user.id}`);
-    const fullData: AddStopToTripDto = { ...data, tripId };
-    return await this.itineraryService.addStopToTrip(user.id, fullData);
   }
 
   @Post('trips/:tripId/stops/batched')
@@ -181,43 +141,14 @@ export class ItineraryController {
       travelMode,
     };
 
-    return await this.itineraryService.removeStopFromTrip(user.id, data);
+    return await this.itineraryService.removeStopFromTripWithBatching(user.id, data);
   }
 
-  @Put('trips/:tripId/stops/reorder')
+  @Put('trips/:tripId/stops/reorder/batched')
   @ApiOperation({ summary: 'Reorder stops in a trip' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Stops reordered successfully',
-    type: Object, // Trip type would be defined in OpenAPI
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid input data',
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Trip not found',
-  })
-  @ApiResponse({
-    status: HttpStatus.UNAUTHORIZED,
-    description: 'Unauthorized',
-  })
-  async reorderStops(
-    @CurrentUser() user: SafeUser,
-    @Param('tripId') tripId: string,
-    @Body() data: Omit<ItineraryReorderStopsDto, 'tripId'>,
-  ): Promise<Trip> {
-    this.logger.log(`Reordering stops in trip ${tripId} for user ${user.id}`);
-    const fullData: ItineraryReorderStopsDto = { ...data, tripId };
-    return await this.itineraryService.reorderStops(user.id, fullData);
-  }
-
-  @Put('trips/:tripId/stops/reorder/batched')
-  @ApiOperation({ summary: 'EXPERIMENTAL: Reorder stops using batched database operations' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Stops reordered successfully using batched operations',
     type: Object, // Trip type would be defined in OpenAPI
   })
   @ApiResponse({
@@ -237,9 +168,7 @@ export class ItineraryController {
     @Param('tripId') tripId: string,
     @Body() data: Omit<ItineraryReorderStopsDto, 'tripId'>,
   ): Promise<Trip> {
-    this.logger.log(
-      `[EXPERIMENTAL] Reordering stops with batching in trip ${tripId} for user ${user.id}`,
-    );
+    this.logger.log(`Reordering stops in trip ${tripId} for user ${user.id}`);
     const fullData: ItineraryReorderStopsDto = { ...data, tripId };
     return await this.itineraryService.reorderStopsWithBatching(user.id, fullData);
   }
