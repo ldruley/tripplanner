@@ -13,7 +13,7 @@ import {
   RemoveStopFromTripDto,
   ItineraryReorderStopsDto,
 } from '@trip-planner/shared/dtos';
-import { CreateLocationRequest, CreateStopRequest, Trip, TravelSegment } from '@trip-planner/types';
+import { CreateStopRequest, Trip, TravelSegment, CoordinateMatrix, toCoordinateKey } from '@trip-planner/types';
 import { TravelMode } from '@prisma/client';
 
 interface SegmentRoutingData {
@@ -382,6 +382,24 @@ export class StopCoordinationService {
         // Convert routing results to format expected by UnifiedBatchingService
         routingData = routingResults.map(result => result.routingData);
       }
+    } else {
+      // Use matrix data for timeline construction without full routing
+      this.logger.debug(`Using matrix data for timeline construction in trip ${data.tripId}`);
+      
+      // Load trip to get matrix data and segment requirements
+      const trip = await this.tripService.findById(data.tripId, true, false, true, prismaClient);
+      if (trip && trip.stops && trip.stops.length >= 2) {
+        const newSegmentPairs = this.calculateNewSegmentPairs(trip, data.stopOrders);
+        
+        if (newSegmentPairs.length > 0) {
+          // Transform matrix data to routing format for timeline construction
+          routingData = this.transformMatrixToRoutingData(
+            trip,
+            newSegmentPairs,
+            data.travelMode as TravelMode,
+          );
+        }
+      }
     }
 
     // Step 4: Execute complete batch using UnifiedBatchingService
@@ -571,7 +589,11 @@ export class StopCoordinationService {
   ): Promise<Trip> {
     this.logger.debug(`[TRUE BATCHING] Adding stop to trip ${data.tripId}`);
 
-    // Step 3: Use existing location ID directly (no creation needed)
+    // Step 3: Get location data (needed for routing calculations)
+    const location = await this.locationService.findById(data.locationId, prismaClient);
+    if (!location) {
+      throw new NotFoundException(`Location ${data.locationId} not found`);
+    }
     this.logger.debug(`Using existing location ${data.locationId} for batched stop creation`);
 
     // Step 4: Calculate stop order changes for insertion
@@ -628,18 +650,7 @@ export class StopCoordinationService {
 
     const newStop = await this.stopService.create(stopData, prismaClient);
 
-    // Step 7: Map temporary stop ID to real stop ID in routing data
-    routingData = routingData.map(segment => ({
-      ...segment,
-      originStopId: segment.originStopId.startsWith('temp-new-stop-')
-        ? (newStop.id as string)
-        : segment.originStopId,
-      destinationStopId: segment.destinationStopId.startsWith('temp-new-stop-')
-        ? (newStop.id as string)
-        : segment.destinationStopId,
-    }));
-
-    // Step 8: Reload trip data to include the newly created stop
+    // Step 7: Reload trip data to include the newly created stop
     const updatedTrip = await this.tripService.findById(
       data.tripId,
       true,
@@ -651,7 +662,55 @@ export class StopCoordinationService {
       throw new Error(`Failed to reload trip ${data.tripId} after stop creation`);
     }
 
-    // Step 9: Execute batch updates using UnifiedBatchingService with updated trip data
+    // Step 8: Map temporary stop ID to real stop ID in routing data (for full routing only)
+    if (data.calculateRouting) {
+      routingData = routingData.map(segment => ({
+        ...segment,
+        originStopId: segment.originStopId.startsWith('temp-new-stop-')
+          ? (newStop.id as string)
+          : segment.originStopId,
+        destinationStopId: segment.destinationStopId.startsWith('temp-new-stop-')
+          ? (newStop.id as string)
+          : segment.destinationStopId,
+      }));
+    }
+
+    // Step 9: Refresh matrix for the trip (to include new stop in matrix calculations)
+    await this.tripService.refreshMatrixOnStopAddition(data.tripId, prismaClient);
+
+    // Step 10: Handle matrix-based routing data if not using full routing (AFTER matrix refresh)
+    if (!data.calculateRouting) {
+      // Use matrix data for timeline construction without full routing
+      this.logger.debug(`Using matrix data for timeline construction in trip ${data.tripId}`);
+      
+      // Reload trip again to get the updated matrix data
+      const tripWithNewMatrix = await this.tripService.findById(
+        data.tripId,
+        true,
+        true,
+        true,
+        prismaClient,
+      );
+      
+      if (tripWithNewMatrix) {
+        // Calculate segment pairs for the added stop using updated trip data
+        const segmentPairs = this.calculateSegmentPairsAfterStopAddition(
+          tripWithNewMatrix, // Use trip with refreshed matrix
+          newStop.id as string, // Real stop ID
+        );
+
+        if (segmentPairs.length > 0) {
+          // Transform matrix data to routing format for timeline construction
+          routingData = this.transformMatrixToRoutingData(
+            tripWithNewMatrix, // Use trip data with refreshed matrix
+            segmentPairs,
+            data.travelMode as TravelMode,
+          );
+        }
+      }
+    }
+
+    // Step 11: Execute batch updates using UnifiedBatchingService with updated trip data
     const batchResult = await this.unifiedBatchingService.executeCompleteBatch(
       data.tripId,
       stopOrderChanges,
@@ -662,14 +721,11 @@ export class StopCoordinationService {
       updatedTrip, // Pass the updated trip data that includes the new stop
     );
 
-    // Step 10: Refresh matrix for the trip (to include new stop in matrix calculations)
-    await this.tripService.refreshMatrixOnStopAddition(data.tripId, prismaClient);
-
     this.logger.log(
       `[TRUE BATCHING] Successfully added stop ${newStop.id} to trip ${data.tripId}: ${batchResult.totalOperations} operations in ${batchResult.executionTime}ms`,
     );
 
-    // Step 11: Return the complete updated trip
+    // Step 12: Return the complete updated trip
     return await this.tripService.findById(data.tripId, true, true, true, prismaClient);
   }
 
@@ -805,6 +861,21 @@ export class StopCoordinationService {
           );
         routingData = routingResults.map(result => result.routingData);
       }
+    } else {
+      // Use matrix data for timeline construction without full routing
+      this.logger.debug(`Using matrix data for timeline construction in trip ${data.tripId}`);
+      
+      // Calculate segment pairs needed after removal
+      const segmentPairs = this.calculateSegmentPairsForStopRemoval(trip, data.stopId);
+
+      if (segmentPairs.length > 0) {
+        // Transform matrix data to routing format for timeline construction
+        routingData = this.transformMatrixToRoutingData(
+          trip,
+          segmentPairs,
+          data.travelMode as TravelMode,
+        );
+      }
     }
 
     // Step 6: Delete the target stop first (required for constraint integrity)
@@ -885,5 +956,191 @@ export class StopCoordinationService {
     // and the remaining consecutive stops will have their segments recreated by the batching service
 
     return segmentPairs;
+  }
+
+  /**
+   * Calculate segment pairs involving a newly added stop.
+   * Works with trip data after the stop has already been created.
+   * @param trip - Full trip with stops including the newly added stop.
+   * @param addedStopId - ID of the stop that was just added.
+   * @return Array of segment pairs that involve the new stop.
+   */
+  private calculateSegmentPairsAfterStopAddition(
+    trip: Trip,
+    addedStopId: string,
+  ): Array<{ originStopId: string; destinationStopId: string; tripId: string }> {
+    const segmentPairs: Array<{ originStopId: string; destinationStopId: string; tripId: string }> = [];
+
+    if (!trip.stops || trip.stops.length < 2) {
+      return segmentPairs;
+    }
+
+    // Sort stops by order to get correct sequence
+    const sortedStops = [...trip.stops].sort((a, b) => a.order - b.order);
+    
+    // Find the position of the added stop
+    const addedStopIndex = sortedStops.findIndex(stop => stop.id === addedStopId);
+    if (addedStopIndex === -1) {
+      this.logger.warn(`Added stop ${addedStopId} not found in trip stops`);
+      return segmentPairs;
+    }
+
+    // Create segments involving the new stop
+    if (addedStopIndex > 0) {
+      // Segment from previous stop to new stop
+      segmentPairs.push({
+        originStopId: sortedStops[addedStopIndex - 1].id as string,
+        destinationStopId: addedStopId,
+        tripId: trip.id,
+      });
+    }
+
+    if (addedStopIndex < sortedStops.length - 1) {
+      // Segment from new stop to next stop
+      segmentPairs.push({
+        originStopId: addedStopId,
+        destinationStopId: sortedStops[addedStopIndex + 1].id as string,
+        tripId: trip.id,
+      });
+    }
+
+    return segmentPairs;
+  }
+
+  /**
+   * Transform matrix routing data to routingData format for timeline construction.
+   * Uses stored matrix data to create routing information without additional API calls.
+   * @param trip - Full trip with stops and matrix data.
+   * @param segmentPairs - Array of segment pairs that need routing data.
+   * @param travelMode - Travel mode for the routing data.
+   * @return Array of routing data formatted for UnifiedBatchingService.
+   */
+  private transformMatrixToRoutingData(
+    trip: Trip,
+    segmentPairs: Array<{ originStopId: string; destinationStopId: string; tripId: string }>,
+    travelMode: TravelMode,
+  ): Array<{
+    originStopId: string;
+    destinationStopId: string;
+    travelMode: TravelMode;
+    apiCalculatedDistance: number | null;
+    apiCalculatedDuration: number | null;
+    polyline: string | null;
+  }> {
+    const routingData: Array<{
+      originStopId: string;
+      destinationStopId: string;
+      travelMode: TravelMode;
+      apiCalculatedDistance: number | null;
+      apiCalculatedDuration: number | null;
+      polyline: string | null;
+    }> = [];
+
+    // Check if trip has matrix data
+    let matrix: CoordinateMatrix | null = null;
+    
+    if (trip.matrix) {
+      // Parse matrix data if it's a string, otherwise use as-is
+      try {
+        const matrixData = typeof trip.matrix === 'string' ? JSON.parse(trip.matrix) : trip.matrix;
+        matrix = matrixData as CoordinateMatrix;
+        
+        this.logger.debug(`Raw matrix data type: ${typeof trip.matrix}`);
+        this.logger.debug(`Parsed matrix keys: ${Object.keys(matrix).slice(0, 3).join(', ')}...`);
+      } catch (error) {
+        this.logger.error(`Failed to parse matrix data for trip ${trip.id}:`, error);
+        return routingData;
+      }
+    }
+    
+    if (!matrix) {
+      this.logger.warn(`Trip ${trip.id} has no matrix data, cannot transform to routing data`);
+      return routingData;
+    }
+
+    this.logger.debug(`Matrix data found for trip ${trip.id}, keys: ${Object.keys(matrix).length}`);
+
+    // Create a map of stop IDs to their locations for efficient lookup
+    const stopLocationMap = new Map<string, { latitude: number; longitude: number }>();
+    if (trip.stops) {
+      for (const stop of trip.stops) {
+        if (stop.location) {
+          stopLocationMap.set(stop.id as string, {
+            latitude: stop.location.latitude,
+            longitude: stop.location.longitude,
+          });
+        }
+      }
+    }
+
+    // Transform each segment pair using matrix data
+    for (const segmentPair of segmentPairs) {
+      const originLocation = stopLocationMap.get(segmentPair.originStopId);
+      const destinationLocation = stopLocationMap.get(segmentPair.destinationStopId);
+
+      if (!originLocation || !destinationLocation) {
+        this.logger.warn(
+          `Missing location data for segment ${segmentPair.originStopId}-${segmentPair.destinationStopId}`,
+        );
+        // Create segment without routing data
+        routingData.push({
+          originStopId: segmentPair.originStopId,
+          destinationStopId: segmentPair.destinationStopId,
+          travelMode,
+          apiCalculatedDistance: null,
+          apiCalculatedDuration: null,
+          polyline: null,
+        });
+        continue;
+      }
+
+      // Generate coordinate keys for matrix lookup
+      const originKey = toCoordinateKey({
+        lat: originLocation.latitude,
+        lng: originLocation.longitude,
+      });
+      const destinationKey = toCoordinateKey({
+        lat: destinationLocation.latitude,
+        lng: destinationLocation.longitude,
+      });
+
+      this.logger.debug(`Looking up matrix data: ${originKey} -> ${destinationKey}`);
+
+      // Look up data in matrix
+      const matrixCell = matrix[originKey]?.[destinationKey];
+      if (matrixCell) {
+        // Transform matrix data to routing format
+        // Matrix stores time in seconds, routing expects duration in minutes
+        const durationMinutes = Math.round(matrixCell.time / 60);
+        
+        routingData.push({
+          originStopId: segmentPair.originStopId,
+          destinationStopId: segmentPair.destinationStopId,
+          travelMode,
+          apiCalculatedDistance: matrixCell.distance, // Matrix stores distance in meters
+          apiCalculatedDuration: durationMinutes, // Convert seconds to minutes
+          polyline: null, // Matrix data doesn't include polyline information
+        });
+
+        this.logger.debug(
+          `Transformed matrix data for segment ${segmentPair.originStopId}-${segmentPair.destinationStopId}: ${matrixCell.distance}m, ${durationMinutes}min`,
+        );
+      } else {
+        this.logger.warn(
+          `Matrix data not found for segment ${segmentPair.originStopId}-${segmentPair.destinationStopId} (${originKey} -> ${destinationKey})`,
+        );
+        // Create segment without routing data
+        routingData.push({
+          originStopId: segmentPair.originStopId,
+          destinationStopId: segmentPair.destinationStopId,
+          travelMode,
+          apiCalculatedDistance: null,
+          apiCalculatedDuration: null,
+          polyline: null,
+        });
+      }
+    }
+
+    return routingData;
   }
 }

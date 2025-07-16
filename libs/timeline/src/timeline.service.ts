@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import {
   Stop,
   TravelSegment,
@@ -237,8 +238,8 @@ export class TimelineService {
    */
   private createVirtualSegments(routingData: SegmentRoutingData[]): TravelSegment[] {
     return routingData.map(routing => ({
-      id: `virtual-${routing.originStopId}-${routing.destinationStopId}`,
-      tripId: 'virtual',
+      id: randomUUID(),
+      tripId: randomUUID(),
       originStopId: routing.originStopId,
       destinationStopId: routing.destinationStopId,
       travelMode: routing.travelMode,
