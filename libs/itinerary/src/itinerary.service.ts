@@ -1,12 +1,9 @@
 import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { TripCreationService } from './trip-creation.service';
 import { BatchedTripCreationService } from './batched-trip-creation.service';
 import { StopCoordinationService } from './stop-coordination.service';
 import { RoutingCoordinationService } from './routing-coordination.service';
 import { TripBankedLocationService } from './tripbankedlocation/trip-banked-location.service';
 import { TimelineCoordinationService } from './timeline-coordination.service';
-import { SharedValidationService } from './shared-validation.service';
-import { SharedLocationProcessingService } from './shared-location-processing.service';
 import { TripService } from '@trip-planner/trip';
 import {
   CreateTripFromOrderedListDto,
@@ -16,9 +13,8 @@ import {
   UpdateTripRoutingDto,
   UpdateTripWithRoutingDto,
 } from '@trip-planner/shared/dtos';
-import { Trip } from '@trip-planner/types';
+import { Trip, UpdateTripWithRoutingSchema } from '@trip-planner/types';
 import { TravelMode } from '@prisma/client';
-import { UpdateTripWithRoutingSchema } from '../../shared/types/src/schemas/itinerary.schema';
 import { PrismaClientOrTransaction, PrismaService } from '@trip-planner/prisma';
 
 @Injectable()
@@ -26,7 +22,6 @@ export class ItineraryService {
   private readonly logger = new Logger(ItineraryService.name);
 
   constructor(
-    private readonly tripCreationService: TripCreationService,
     private readonly batchedTripCreationService: BatchedTripCreationService,
     private readonly stopCoordinationService: StopCoordinationService,
     private readonly routingCoordinationService: RoutingCoordinationService,
@@ -34,63 +29,7 @@ export class ItineraryService {
     private readonly timelineCoordinationService: TimelineCoordinationService,
     private readonly prismaService: PrismaService,
     private readonly tripService: TripService,
-    private readonly sharedValidationService: SharedValidationService,
-    private readonly sharedLocationProcessingService: SharedLocationProcessingService,
   ) {}
-
-  /**
-   * Create a complete trip from an organized list of locations.
-   * This is the main workflow for frontend trip creation.
-   * @param userId - User ID who owns the trip.
-   * @param data - Trip creation data with organized locations.
-   * @return The created trip with all stops and routing.
-   */
-  async createTripFromOrganizedList(
-    userId: string,
-    data: CreateTripFromOrderedListDto,
-  ): Promise<Trip> {
-    this.logger.log(`Creating trip from organized list for user ${userId}: ${data.name}`);
-    try {
-      // Step 1: Create trip with stops
-      const trip = await this.tripCreationService.createTripFromOrganizedList(userId, data);
-
-      return await this.prismaService.$transaction(
-        async (prismaClient: PrismaClientOrTransaction) => {
-          // Step 2: Calculate routing if requested
-          if (data.calculateRouting && trip.stops && trip.stops.length > 1) {
-            this.logger.debug(`Calculating routing for trip ${trip.id}`);
-
-            const routingData: UpdateTripRoutingDto = {
-              tripId: trip.id,
-              travelMode: data.travelMode,
-              forceRecalculate: true,
-            };
-
-            const tripWithRouting = await this.routingCoordinationService.updateTripRouting(
-              routingData,
-              prismaClient,
-            );
-
-            // Calculate timeline after routing
-            await this.timelineCoordinationService.recalculateAndUpdateTimeline(
-              trip.id,
-              prismaClient,
-              true,
-            );
-
-            this.logger.log(`Successfully created trip ${trip.id} with routing and timeline`);
-            return tripWithRouting;
-          }
-
-          this.logger.log(`Successfully created trip ${trip.id} without routing`);
-          return trip;
-        },
-      );
-    } catch (error) {
-      this.logger.error(`Failed to create trip from organized list for user ${userId}:`, error);
-      throw error;
-    }
-  }
 
   /**
    * EXPERIMENTAL: Create a complete trip using batched database operations.
@@ -127,9 +66,6 @@ export class ItineraryService {
       throw error;
     }
   }
-
-
-
 
   /**
    * TRUE BATCHING: Add a stop to a trip using comprehensive pre-calculation and atomic batch updates.
