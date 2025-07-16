@@ -7,7 +7,7 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UserFavoriteLocationWithLocation } from '@trip-planner/types';
+import { UserFavoriteLocation } from '@trip-planner/types';
 import { ButtonComponent } from '../button/button.component';
 
 @Component({
@@ -19,13 +19,13 @@ import { ButtonComponent } from '../button/button.component';
   imports: [CommonModule, ButtonComponent],
 })
 export class LocationListItemComponent implements OnInit {
-  @Input() favoriteLocation!: UserFavoriteLocationWithLocation;
+  @Input() favoriteLocation!: UserFavoriteLocation;
   @Input() showFavoriteButton = true;
   @Input() showDetailsButton = true;
   @Input() compact = false;
 
-  @Output() favoriteToggled = new EventEmitter<UserFavoriteLocationWithLocation>();
-  @Output() detailsRequested = new EventEmitter<UserFavoriteLocationWithLocation>();
+  @Output() favoriteToggled = new EventEmitter<UserFavoriteLocation>();
+  @Output() detailsRequested = new EventEmitter<UserFavoriteLocation>();
 
   displayName = '';
   displayAddress = '';

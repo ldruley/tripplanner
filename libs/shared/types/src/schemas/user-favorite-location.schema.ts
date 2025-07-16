@@ -66,6 +66,7 @@ export const UpdateUserFavoriteLocationSchema = UserFavoriteLocationSchema.omit(
   userId: true,
   locationId: true,
   createdAt: true,
+  location: true,
 }).partial();
 
 export type UserFavoriteLocation = z.infer<typeof UserFavoriteLocationSchema>;

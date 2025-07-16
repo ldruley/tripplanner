@@ -10,20 +10,14 @@ import {
   UseGuards,
   Logger,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { UserFavoritesService } from '../services/user-favorites.service';
 import { SafeUser } from '@trip-planner/types';
 import { JwtAuthGuard, CurrentUser } from '@trip-planner/auth';
 import {
   CreateUserFavoriteLocationDto,
   UpdateUserFavoriteLocationDto,
-  UserFavoriteLocationWithLocationDto,
+  UserFavoriteLocationDto,
   ErrorResponseDto,
 } from '@trip-planner/shared/dtos';
 
@@ -44,7 +38,7 @@ export class UserFavoritesController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'User favorites retrieved successfully',
-    type: [UserFavoriteLocationWithLocationDto],
+    type: [UserFavoriteLocationDto],
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
@@ -65,12 +59,12 @@ export class UserFavoritesController {
   @Post()
   @ApiOperation({
     summary: 'Add location to favorites',
-    description: 'Add a location to the authenticated user\'s favorites',
+    description: "Add a location to the authenticated user's favorites",
   })
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'Location added to favorites successfully',
-    type: UserFavoriteLocationWithLocationDto,
+    type: UserFavoriteLocationDto,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
@@ -109,7 +103,7 @@ export class UserFavoritesController {
   @Delete(':locationId')
   @ApiOperation({
     summary: 'Remove location from favorites',
-    description: 'Remove a location from the authenticated user\'s favorites',
+    description: "Remove a location from the authenticated user's favorites",
   })
   @ApiParam({
     name: 'locationId',
@@ -156,7 +150,7 @@ export class UserFavoritesController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Favorite location metadata updated successfully',
-    type: UserFavoriteLocationWithLocationDto,
+    type: UserFavoriteLocationDto,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
@@ -197,7 +191,7 @@ export class UserFavoritesController {
   @Get(':locationId/is-favorite')
   @ApiOperation({
     summary: 'Check if location is favorite',
-    description: 'Check if a location is in the authenticated user\'s favorites',
+    description: "Check if a location is in the authenticated user's favorites",
   })
   @ApiParam({
     name: 'locationId',
@@ -213,10 +207,7 @@ export class UserFavoritesController {
     description: 'User not authenticated',
     type: ErrorResponseDto,
   })
-  async isFavorite(
-    @CurrentUser() user: SafeUser,
-    @Param('locationId') locationId: string,
-  ) {
+  async isFavorite(@CurrentUser() user: SafeUser, @Param('locationId') locationId: string) {
     this.logger.debug(`GET /user-favorites/${locationId}/is-favorite - User: ${user.id}`);
 
     const isFavorite = await this.userFavoritesService.isFavorite(user.id, locationId);

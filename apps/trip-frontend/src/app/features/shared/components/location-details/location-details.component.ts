@@ -8,8 +8,14 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Location, UserFavoriteLocationWithLocation, UpdateUserFavoriteLocation } from '@trip-planner/types';
+import {
+  FormsModule,
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators,
+} from '@angular/forms';
+import { Location, UserFavoriteLocation, UpdateUserFavoriteLocation } from '@trip-planner/types';
 import { ButtonComponent } from '../button/button.component';
 
 @Component({
@@ -18,11 +24,11 @@ import { ButtonComponent } from '../button/button.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonComponent],
   templateUrl: './location-details.component.html',
-  styleUrls: ['./location-details.component.css']
+  styleUrls: ['./location-details.component.css'],
 })
 export class LocationDetailsComponent implements OnInit {
   location = input.required<Location>();
-  favoriteData = input<UserFavoriteLocationWithLocation | null>(null);
+  favoriteData = input<UserFavoriteLocation | null>(null);
   isEditable = input<boolean>(false);
   isModal = input<boolean>(false);
   isOpen = input<boolean>(false);
@@ -48,20 +54,16 @@ export class LocationDetailsComponent implements OnInit {
     this.editForm = this.fb.group({
       alias: [favorite?.alias || '', [Validators.maxLength(100)]],
       notes: [favorite?.notes || '', [Validators.maxLength(500)]],
-      tags: [favorite?.tags || []]
+      tags: [favorite?.tags || []],
     });
   }
 
   // Computed properties for display
   fullAddress = computed(() => {
     const loc = this.location();
-    const addressParts = [
-      loc.address,
-      loc.city,
-      loc.state,
-      loc.country,
-      loc.postalCode
-    ].filter(Boolean);
+    const addressParts = [loc.address, loc.city, loc.state, loc.country, loc.postalCode].filter(
+      Boolean,
+    );
 
     return addressParts.length > 0 ? addressParts.join(', ') : null;
   });
@@ -90,11 +92,11 @@ export class LocationDetailsComponent implements OnInit {
     if (!provider) return null;
 
     const providerMap: Record<string, string> = {
-      'HERE': 'HERE',
-      'MAPBOX': 'Mapbox',
-      'GOOGLE_PLACES': 'Google Places',
-      'USER_INPUT': 'User Input',
-      'INTERNAL_SEED': 'Internal'
+      HERE: 'HERE',
+      MAPBOX: 'Mapbox',
+      GOOGLE_PLACES: 'Google Places',
+      USER_INPUT: 'User Input',
+      INTERNAL_SEED: 'Internal',
     };
 
     return providerMap[provider] || provider;
@@ -104,7 +106,9 @@ export class LocationDetailsComponent implements OnInit {
     const category = this.location().category;
     if (!category) return null;
 
-    return category.replace(/_/g, ' ').toLowerCase()
+    return category
+      .replace(/_/g, ' ')
+      .toLowerCase()
       .split(' ')
       .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
@@ -124,7 +128,7 @@ export class LocationDetailsComponent implements OnInit {
   onFavoriteToggle() {
     this.favoriteToggled.emit({
       locationId: this.location().id,
-      isFavorite: !this.isFavorite()
+      isFavorite: !this.isFavorite(),
     });
   }
 
@@ -146,12 +150,12 @@ export class LocationDetailsComponent implements OnInit {
       const metadata: UpdateUserFavoriteLocation = {
         alias: formValue.alias?.trim() || null,
         notes: formValue.notes?.trim() || null,
-        tags: formValue.tags || []
+        tags: formValue.tags || [],
       };
 
       this.metadataUpdated.emit({
         locationId: this.location().id,
-        metadata
+        metadata,
       });
 
       this.isEditMode.set(false);

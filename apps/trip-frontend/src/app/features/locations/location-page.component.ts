@@ -1,11 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import {
-  Location,
-  UserFavoriteLocationWithLocation,
-  UpdateUserFavoriteLocation
-} from '@trip-planner/types';
+import { Location, UserFavoriteLocation, UpdateUserFavoriteLocation } from '@trip-planner/types';
 import { LocationService } from '../shared/services/location.service';
 import { LocationSearchComponent } from '../shared/components/location-search/location-search.component';
 import { LocationListItemComponent } from '../shared/components/location-list-item/location-list-item.component';
@@ -23,22 +19,22 @@ import { catchError, of, finalize } from 'rxjs';
     LocationSearchComponent,
     LocationListItemComponent,
     LocationDetailsComponent,
-    LoadingSpinnerComponent
+    LoadingSpinnerComponent,
   ],
   templateUrl: './location-page.component.html',
-  styleUrls: ['./location-page.component.css']
+  styleUrls: ['./location-page.component.css'],
 })
 export class LocationPageComponent implements OnInit {
   // State signals
-  favorites = signal<UserFavoriteLocationWithLocation[]>([]);
+  favorites = signal<UserFavoriteLocation[]>([]);
   isLoading = signal<boolean>(false);
-  selectedLocation = signal<UserFavoriteLocationWithLocation | null>(null);
+  selectedLocation = signal<UserFavoriteLocation | null>(null);
   isDetailModalOpen = signal<boolean>(false);
 
   constructor(
     private locationService: LocationService,
     private toastService: ToastService,
-    private router: Router
+    private router: Router,
   ) {}
 
   ngOnInit() {
@@ -47,39 +43,45 @@ export class LocationPageComponent implements OnInit {
 
   private loadFavorites() {
     this.isLoading.set(true);
-    this.locationService.getUserFavorites().pipe(
-      catchError(error => {
-        console.error('Error loading favorites:', error);
-        this.toastService.error('Failed to load favorite locations');
-        return of([]);
-      }),
-      finalize(() => this.isLoading.set(false))
-    ).subscribe(favorites => {
-      this.favorites.set(favorites);
-    });
+    this.locationService
+      .getUserFavorites()
+      .pipe(
+        catchError(error => {
+          console.error('Error loading favorites:', error);
+          this.toastService.error('Failed to load favorite locations');
+          return of([]);
+        }),
+        finalize(() => this.isLoading.set(false)),
+      )
+      .subscribe(favorites => {
+        this.favorites.set(favorites);
+      });
   }
 
   onLocationSelectedFromSearch(location: Location) {
     // Location is already created by backend, add to favorites directly
-    this.locationService.addToFavorites(location.id).pipe(
-      catchError(error => {
-        console.error('Error adding location to favorites:', error);
-        if (error.status === 409) {
-          this.toastService.error('Location is already in your favorites');
-        } else {
-          this.toastService.error('Failed to add location to favorites');
+    this.locationService
+      .addToFavorites(location.id)
+      .pipe(
+        catchError(error => {
+          console.error('Error adding location to favorites:', error);
+          if (error.status === 409) {
+            this.toastService.error('Location is already in your favorites');
+          } else {
+            this.toastService.error('Failed to add location to favorites');
+          }
+          return of(null);
+        }),
+      )
+      .subscribe(favorite => {
+        if (favorite) {
+          this.toastService.success('Location added to favorites');
+          this.loadFavorites(); // Refresh the list
         }
-        return of(null);
-      })
-    ).subscribe(favorite => {
-      if (favorite) {
-        this.toastService.success('Location added to favorites');
-        this.loadFavorites(); // Refresh the list
-      }
-    });
+      });
   }
 
-  onFavoriteToggle(favoriteLocation: UserFavoriteLocationWithLocation) {
+  onFavoriteToggle(favoriteLocation: UserFavoriteLocation) {
     // Show confirmation dialog
     const locationName = favoriteLocation.alias || favoriteLocation.location.name;
     if (confirm(`Remove "${locationName}" from your favorites?`)) {
@@ -87,20 +89,23 @@ export class LocationPageComponent implements OnInit {
     }
   }
 
-  private removeFavorite(favoriteLocation: UserFavoriteLocationWithLocation) {
-    this.locationService.removeFromFavorites(favoriteLocation.locationId).pipe(
-      catchError(error => {
-        console.error('Error removing favorite:', error);
-        this.toastService.error('Failed to remove location from favorites');
-        return of(null);
-      })
-    ).subscribe(() => {
-      this.toastService.success('Location removed from favorites');
-      this.loadFavorites(); // Refresh the list
-    });
+  private removeFavorite(favoriteLocation: UserFavoriteLocation) {
+    this.locationService
+      .removeFromFavorites(favoriteLocation.locationId)
+      .pipe(
+        catchError(error => {
+          console.error('Error removing favorite:', error);
+          this.toastService.error('Failed to remove location from favorites');
+          return of(null);
+        }),
+      )
+      .subscribe(() => {
+        this.toastService.success('Location removed from favorites');
+        this.loadFavorites(); // Refresh the list
+      });
   }
 
-  onDetailsRequested(favoriteLocation: UserFavoriteLocationWithLocation) {
+  onDetailsRequested(favoriteLocation: UserFavoriteLocation) {
     this.selectedLocation.set(favoriteLocation);
     this.isDetailModalOpen.set(true);
   }
@@ -121,19 +126,22 @@ export class LocationPageComponent implements OnInit {
   }
 
   onMetadataUpdated(event: { locationId: string; metadata: UpdateUserFavoriteLocation }) {
-    this.locationService.updateFavoriteMetadata(event.locationId, event.metadata).pipe(
-      catchError(error => {
-        console.error('Error updating favorite metadata:', error);
-        this.toastService.error('Failed to update location details');
-        return of(null);
-      })
-    ).subscribe(updatedFavorite => {
-      if (updatedFavorite) {
-        this.toastService.success('Location details updated');
-        this.loadFavorites(); // Refresh the list
-        this.selectedLocation.set(updatedFavorite); // Update the selected location
-      }
-    });
+    this.locationService
+      .updateFavoriteMetadata(event.locationId, event.metadata)
+      .pipe(
+        catchError(error => {
+          console.error('Error updating favorite metadata:', error);
+          this.toastService.error('Failed to update location details');
+          return of(null);
+        }),
+      )
+      .subscribe(updatedFavorite => {
+        if (updatedFavorite) {
+          this.toastService.success('Location details updated');
+          this.loadFavorites(); // Refresh the list
+          this.selectedLocation.set(updatedFavorite); // Update the selected location
+        }
+      });
   }
 
   onNavigateToTrips() {
@@ -144,7 +152,7 @@ export class LocationPageComponent implements OnInit {
     return this.favorites().length > 0;
   }
 
-  get selectedFavoriteLocation(): UserFavoriteLocationWithLocation | null {
+  get selectedFavoriteLocation(): UserFavoriteLocation | null {
     return this.selectedLocation();
   }
 }

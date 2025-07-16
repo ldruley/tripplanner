@@ -3,7 +3,7 @@ import { PrismaService } from '@trip-planner/prisma';
 import {
   CreateUserFavoriteLocation,
   UpdateUserFavoriteLocation,
-  UserFavoriteLocationWithLocation,
+  UserFavoriteLocation,
 } from '@trip-planner/types';
 
 @Injectable()
@@ -12,7 +12,7 @@ export class UserFavoriteLocationRepository {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByUserId(userId: string): Promise<UserFavoriteLocationWithLocation[]> {
+  async findByUserId(userId: string): Promise<UserFavoriteLocation[]> {
     this.logger.debug(`Finding favorites for user: ${userId}`);
 
     return this.prisma.userFavoriteLocation.findMany({
@@ -23,13 +23,13 @@ export class UserFavoriteLocationRepository {
       orderBy: {
         createdAt: 'desc',
       },
-    }) as unknown as UserFavoriteLocationWithLocation[];
+    }) as unknown as UserFavoriteLocation[];
   }
 
   async findByUserAndLocation(
     userId: string,
     locationId: string,
-  ): Promise<UserFavoriteLocationWithLocation | null> {
+  ): Promise<UserFavoriteLocation | null> {
     this.logger.debug(`Finding favorite for user: ${userId}, location: ${locationId}`);
 
     return this.prisma.userFavoriteLocation.findFirst({
@@ -40,12 +40,12 @@ export class UserFavoriteLocationRepository {
       include: {
         location: true,
       },
-    }) as unknown as UserFavoriteLocationWithLocation | null;
+    }) as unknown as UserFavoriteLocation | null;
   }
 
   async create(
     data: CreateUserFavoriteLocation & { userId: string },
-  ): Promise<UserFavoriteLocationWithLocation> {
+  ): Promise<UserFavoriteLocation> {
     this.logger.debug(`Creating favorite for user: ${data.userId}, location: ${data.locationId}`);
 
     return this.prisma.userFavoriteLocation.create({
@@ -59,13 +59,10 @@ export class UserFavoriteLocationRepository {
       include: {
         location: true,
       },
-    }) as unknown as UserFavoriteLocationWithLocation;
+    }) as unknown as UserFavoriteLocation;
   }
 
-  async update(
-    id: string,
-    data: UpdateUserFavoriteLocation,
-  ): Promise<UserFavoriteLocationWithLocation> {
+  async update(id: string, data: UpdateUserFavoriteLocation): Promise<UserFavoriteLocation> {
     this.logger.debug(`Updating favorite: ${id}`);
 
     return this.prisma.userFavoriteLocation.update({
@@ -74,7 +71,7 @@ export class UserFavoriteLocationRepository {
       include: {
         location: true,
       },
-    }) as unknown as UserFavoriteLocationWithLocation;
+    }) as unknown as UserFavoriteLocation;
   }
 
   async delete(id: string): Promise<void> {

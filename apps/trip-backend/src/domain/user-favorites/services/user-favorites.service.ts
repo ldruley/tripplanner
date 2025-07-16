@@ -3,22 +3,20 @@ import { UserFavoriteLocationRepository } from '../repositories/user-favorites.r
 import {
   CreateUserFavoriteLocation,
   UpdateUserFavoriteLocation,
-  UserFavoriteLocationWithLocation,
+  UserFavoriteLocation,
 } from '@trip-planner/types';
 
 @Injectable()
 export class UserFavoritesService {
   private readonly logger = new Logger(UserFavoritesService.name);
 
-  constructor(
-    private readonly userFavoriteLocationRepository: UserFavoriteLocationRepository,
-  ) {}
+  constructor(private readonly userFavoriteLocationRepository: UserFavoriteLocationRepository) {}
 
-  async getUserFavorites(userId: string): Promise<UserFavoriteLocationWithLocation[]> {
+  async getUserFavorites(userId: string): Promise<UserFavoriteLocation[]> {
     this.logger.debug(`Getting user favorites for user: ${userId}`);
-    
+
     const favorites = await this.userFavoriteLocationRepository.findByUserId(userId);
-    
+
     this.logger.debug(`Found ${favorites.length} favorites for user: ${userId}`);
     return favorites;
   }
@@ -26,8 +24,10 @@ export class UserFavoritesService {
   async addToFavorites(
     userId: string,
     data: CreateUserFavoriteLocation,
-  ): Promise<UserFavoriteLocationWithLocation> {
-    this.logger.debug(`Adding location to favorites for user: ${userId}, locationId: ${data.locationId}`);
+  ): Promise<UserFavoriteLocation> {
+    this.logger.debug(
+      `Adding location to favorites for user: ${userId}, locationId: ${data.locationId}`,
+    );
 
     // Check if location is already in favorites
     const existingFavorite = await this.userFavoriteLocationRepository.findByUserAndLocation(
@@ -49,7 +49,9 @@ export class UserFavoritesService {
   }
 
   async removeFromFavorites(userId: string, locationId: string): Promise<void> {
-    this.logger.debug(`Removing location from favorites for user: ${userId}, locationId: ${locationId}`);
+    this.logger.debug(
+      `Removing location from favorites for user: ${userId}, locationId: ${locationId}`,
+    );
 
     const favorite = await this.userFavoriteLocationRepository.findByUserAndLocation(
       userId,
@@ -68,7 +70,7 @@ export class UserFavoritesService {
     userId: string,
     locationId: string,
     data: UpdateUserFavoriteLocation,
-  ): Promise<UserFavoriteLocationWithLocation> {
+  ): Promise<UserFavoriteLocation> {
     this.logger.debug(`Updating favorite metadata for user: ${userId}, locationId: ${locationId}`);
 
     const favorite = await this.userFavoriteLocationRepository.findByUserAndLocation(
@@ -82,18 +84,20 @@ export class UserFavoritesService {
 
     const updatedFavorite = await this.userFavoriteLocationRepository.update(favorite.id, data);
     this.logger.debug(`Updated favorite metadata: ${updatedFavorite.id}`);
-    
+
     return updatedFavorite;
   }
 
   async isFavorite(userId: string, locationId: string): Promise<boolean> {
-    this.logger.debug(`Checking if location is favorite for user: ${userId}, locationId: ${locationId}`);
-    
+    this.logger.debug(
+      `Checking if location is favorite for user: ${userId}, locationId: ${locationId}`,
+    );
+
     const favorite = await this.userFavoriteLocationRepository.findByUserAndLocation(
       userId,
       locationId,
     );
-    
+
     return !!favorite;
   }
 }

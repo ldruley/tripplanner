@@ -230,7 +230,8 @@ export class UnifiedBatchingService {
   }
 
   /**
-   * Create travel segments in batch using createManyAndReturn for optimal performance.
+   * Create travel segments in batch using createMany for optimal performance.
+   * Creates segments directly from routing data pairs instead of flattening stop IDs.
    */
   private async createSegmentsBatch(
     segmentData: Array<{
@@ -252,13 +253,31 @@ export class UnifiedBatchingService {
       return;
     }
 
-    // Create segments using the batch method from TravelSegmentService
-    const stopIds = segmentData.map(data => [data.originStopId, data.destinationStopId]).flat();
-    await this.travelSegmentService.createSegmentsBetweenStops(
-      segmentData[0].tripId,
-      stopIds,
-      prismaClient,
-    );
+    // Create segments directly from routing data pairs to avoid duplicate destination_stop_id errors
+    // that can occur when flattening segment pairs into consecutive stop IDs
+    const segmentCreateData = segmentData.map(data => ({
+      tripId: data.tripId,
+      originStopId: data.originStopId,
+      destinationStopId: data.destinationStopId,
+      travelMode: data.travelMode || undefined,
+      distance: data.distance || undefined,
+      duration: data.duration || undefined,
+      apiCalculatedDistance: data.apiCalculatedDistance || undefined,
+      apiCalculatedDuration: data.apiCalculatedDuration || undefined,
+      polyline: data.polyline || undefined,
+      routeOptions: data.routeOptions || undefined,
+      notes: data.notes || undefined,
+    }));
+
+    // Use createMany for efficient batch creation
+    if (prismaClient) {
+      await prismaClient.travelSegment.createMany({
+        data: segmentCreateData,
+      });
+    } else {
+      // This shouldn't happen in practice since we're always in a transaction
+      throw new Error('PrismaClient is required for batch segment creation');
+    }
   }
 
   /**
