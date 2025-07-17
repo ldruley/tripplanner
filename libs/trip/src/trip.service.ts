@@ -229,14 +229,14 @@ export class TripService {
   ): Promise<Partial<Trip>> {
     // Validate the matrix structure
     const validatedMatrix = CoordinateMatrixSchema.parse(matrix);
-    
+
     this.logger.debug(`Updating matrix for trip ${tripId}`);
-    
+
     // Verify trip exists
     await this.findById(tripId, false, false, false, prismaClient);
-    
+
     await this.tripRepository.updateMatrix(tripId, validatedMatrix, prismaClient);
-    
+
     // Return the updated trip
     return await this.findById(tripId, true, true, true, prismaClient);
   }
@@ -252,11 +252,11 @@ export class TripService {
     prismaClient?: PrismaClientOrTransaction,
   ): Promise<CoordinateMatrix | null> {
     const trip = await this.findById(tripId, false, false, false, prismaClient);
-    
+
     if (!trip?.matrix) {
       return null;
     }
-    
+
     try {
       // Parse the stored JSON matrix
       const matrix = typeof trip.matrix === 'string' ? JSON.parse(trip.matrix) : trip.matrix;
@@ -282,57 +282,57 @@ export class TripService {
     if (forceRefresh) {
       return true;
     }
-    
+
     const trip = await this.findById(tripId, true, true, false, prismaClient);
-    
+
     if (!trip) {
       return false;
     }
-    
+
     // If no matrix exists, refresh is needed
     if (!trip.matrix) {
       return true;
     }
-    
+
     // If trip has less than 2 locations total, no matrix needed
     const totalLocations = (trip.stops?.length || 0) + (trip.bankedLocations?.length || 0);
     if (totalLocations < 2) {
       return false;
     }
-    
+
     // Check if matrix covers all current locations
     const currentMatrix = await this.getTripMatrix(tripId, prismaClient);
     if (!currentMatrix) {
       return true;
     }
-    
+
     // Generate coordinate keys for all locations
     const coordinateKeys = new Set<string>();
-    
+
     // Add stops
     if (trip.stops) {
       for (const stop of trip.stops) {
         if (stop.location) {
-          coordinateKeys.add(toCoordinateKey({ 
-            lat: stop.location.latitude, 
-            lng: stop.location.longitude 
+          coordinateKeys.add(toCoordinateKey({
+            lat: stop.location.latitude,
+            lng: stop.location.longitude
           }));
         }
       }
     }
-    
+
     // Add banked locations
     if (trip.bankedLocations) {
       for (const banked of trip.bankedLocations) {
         if (banked.location) {
-          coordinateKeys.add(toCoordinateKey({ 
-            lat: banked.location.latitude, 
-            lng: banked.location.longitude 
+          coordinateKeys.add(toCoordinateKey({
+            lat: banked.location.latitude,
+            lng: banked.location.longitude
           }));
         }
       }
     }
-    
+
     // Check if all coordinate keys exist in the matrix
     const matrixKeys = Object.keys(currentMatrix);
     for (const key of coordinateKeys) {
@@ -340,7 +340,7 @@ export class TripService {
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -355,55 +355,69 @@ export class TripService {
     prismaClient?: PrismaClientOrTransaction,
   ): Promise<Partial<Trip>> {
     this.logger.debug(`Refreshing matrix for trip ${tripId}`);
-    
+
     const trip = await this.findById(tripId, true, true, false, prismaClient);
-    
+
     if (!trip) {
       throw new NotFoundException(`Trip with ID ${tripId} not found`);
     }
-    
+
     // Collect all locations from stops and banked locations
     const coordinates: { lat: number; lng: number }[] = [];
-    
+
+    this.logger.debug(`Trip ${tripId} has ${trip.stops?.length || 0} stops and ${trip.bankedLocations?.length || 0} banked locations`);
+
     // Add stops
     if (trip.stops) {
       for (const stop of trip.stops) {
         if (stop.location) {
-          coordinates.push({ 
-            lat: stop.location.latitude, 
-            lng: stop.location.longitude 
+          coordinates.push({
+            lat: stop.location.latitude,
+            lng: stop.location.longitude
           });
+          this.logger.debug(`Added stop ${stop.id} coordinates: ${stop.location.latitude}, ${stop.location.longitude}`);
+        } else {
+          this.logger.warn(`Stop ${stop.id} has no location data`);
         }
       }
     }
-    
+
     // Add banked locations
     if (trip.bankedLocations) {
       for (const banked of trip.bankedLocations) {
         if (banked.location) {
-          coordinates.push({ 
-            lat: banked.location.latitude, 
-            lng: banked.location.longitude 
+          coordinates.push({
+            lat: banked.location.latitude,
+            lng: banked.location.longitude
           });
+          this.logger.debug(`Added banked location ${banked.id} coordinates: ${banked.location.latitude}, ${banked.location.longitude}`);
+        } else {
+          this.logger.warn(`Banked location ${banked.id} has no location data`);
         }
       }
     }
-    
+
+    this.logger.debug(`Trip ${tripId} matrix refresh: collected ${coordinates.length} total coordinates`);
+
     // Need at least 2 locations for matrix calculation
     if (coordinates.length < 2) {
       this.logger.warn(`Trip ${tripId} has fewer than 2 locations, skipping matrix refresh`);
       return trip;
     }
-    
+
     // Fetch new matrix from routing service
     const matrixQuery: MatrixQuery = {
       origins: coordinates,
       profile: 'carFast',
       routingMode: 'fast',
     };
-    
+
+    this.logger.debug(`Trip ${tripId} sending ${coordinates.length} coordinates to matrix service`);
+
     const newMatrix = await this.matrixRoutingService.getMatrixRouting(matrixQuery);
-    
+
+    this.logger.debug(`Trip ${tripId} received matrix with ${Object.keys(newMatrix).length} coordinate keys`);
+
     // Update the trip with new matrix
     return await this.updateTripMatrix(tripId, newMatrix, prismaClient);
   }
@@ -419,7 +433,7 @@ export class TripService {
     prismaClient?: PrismaClientOrTransaction,
   ): Promise<Partial<Trip>> {
     this.logger.debug(`Refreshing matrix for trip ${tripId} after stop addition`);
-    
+
     // Always refresh matrix when stops are added
     return await this.refreshTripMatrix(tripId, prismaClient);
   }
@@ -436,7 +450,7 @@ export class TripService {
     prismaClient?: PrismaClientOrTransaction,
   ): Promise<void> {
     this.logger.debug(`Updating timeline recalculation flag for trip ${tripId} to ${needsRecalculation}`);
-    
+
     await this.tripRepository.updateTimelineRecalculationFlag(tripId, needsRecalculation, prismaClient);
   }
 
@@ -452,7 +466,7 @@ export class TripService {
     prismaClient?: PrismaClientOrTransaction,
   ): Promise<void> {
     this.logger.debug(`Updating routing recalculation flag for trip ${tripId} to ${needsRecalculation}`);
-    
+
     await this.tripRepository.updateRoutingRecalculationFlag(tripId, needsRecalculation, prismaClient);
   }
 
@@ -470,7 +484,7 @@ export class TripService {
     prismaClient?: PrismaClientOrTransaction,
   ): Promise<void> {
     this.logger.debug(`Updating dirty flags for trip ${tripId}: routing=${needsRoutingRecalculation}, timeline=${needsTimelineRecalculation}`);
-    
+
     await this.tripRepository.updateTripDirtyFlags(tripId, needsRoutingRecalculation, needsTimelineRecalculation, prismaClient);
   }
 }

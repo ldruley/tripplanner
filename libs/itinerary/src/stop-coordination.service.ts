@@ -260,7 +260,7 @@ export class StopCoordinationService {
     const routingResult = await this.routingIntegrationService.acquireRoutingData({
       segmentPairs: planningResult.segmentPairs,
       stops: sortedStops,
-      trip,
+      trip: trip,
       strategy: routingStrategy,
       travelMode: data.travelMode as TravelMode,
       matrix: trip.matrix,

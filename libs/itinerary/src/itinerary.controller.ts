@@ -81,7 +81,7 @@ export class ItineraryController {
     return await this.itineraryService.createTripFromOrganizedListBatched(user.id, data);
   }
 
-  @Post('trips/:tripId/stops/batched')
+  @Post('trips/:tripId/stops')
   @ApiOperation({ summary: 'Add a stop to an existing trip' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -144,7 +144,7 @@ export class ItineraryController {
     return await this.itineraryService.removeStopFromTripWithBatching(user.id, data);
   }
 
-  @Put('trips/:tripId/stops/reorder/batched')
+  @Put('trips/:tripId/stops/reorder')
   @ApiOperation({ summary: 'Reorder stops in a trip' })
   @ApiResponse({
     status: HttpStatus.OK,

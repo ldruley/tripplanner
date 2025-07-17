@@ -380,9 +380,6 @@ export class SharedValidationService {
         throw new BadRequestException(`Location at index ${i} is null or undefined`);
       }
 
-      if (typeof location.id !== 'string' || location.id.trim().length === 0) {
-        throw new BadRequestException(`Location at index ${i} must have a valid ID`);
-      }
 
       if (typeof location.name !== 'string' || location.name.trim().length === 0) {
         throw new BadRequestException(`Location at index ${i} must have a valid name`);

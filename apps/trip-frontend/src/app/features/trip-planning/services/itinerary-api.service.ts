@@ -62,7 +62,7 @@ export class ItineraryApiService {
     };
 
     return this.http
-      .post<Trip>(`${this.apiUrl}/itinerary/trips/batched`, createRequest)
+      .post<Trip>(`${this.apiUrl}/itinerary/trips`, createRequest)
       .pipe(map(response => TripSchema.parse(response)));
   }
 
@@ -82,7 +82,7 @@ export class ItineraryApiService {
     };
 
     return this.http
-      .post<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/stops/batched`, addStopRequest)
+      .post<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/stops`, addStopRequest)
       .pipe(map(response => TripSchema.parse(response)));
   }
 
@@ -96,7 +96,7 @@ export class ItineraryApiService {
     const params = new HttpParams().set('calculateRouting', 'true').set('travelMode', 'DRIVING');
 
     return this.http
-      .delete<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/stops/${stopId}/batched`, { params })
+      .delete<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/stops/${stopId}`, { params })
       .pipe(map(response => TripSchema.parse(response)));
   }
 
@@ -117,7 +117,7 @@ export class ItineraryApiService {
     };
 
     return this.http
-      .put<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/stops/reorder/batched`, reorderRequest)
+      .put<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/stops/reorder`, reorderRequest)
       .pipe(map(response => TripSchema.parse(response)));
   }
 
