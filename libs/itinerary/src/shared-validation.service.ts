@@ -3,7 +3,7 @@ import { PrismaClientOrTransaction } from '@trip-planner/prisma';
 import { TripService } from '@trip-planner/trip';
 import { StopService } from '@trip-planner/stop';
 import { LocationService } from '@trip-planner/location';
-import { Trip, Stop, Location, CoordinateMatrix } from '@trip-planner/types';
+import { Trip, Stop, Location, CoordinateMatrix, toCoordinateKey } from '@trip-planner/types';
 
 export interface TripValidationResult {
   trip: Trip;
@@ -222,8 +222,14 @@ export class SharedValidationService {
         continue;
       }
 
-      const originKey = `${originStop.location.latitude},${originStop.location.longitude}`;
-      const destinationKey = `${destinationStop.location.latitude},${destinationStop.location.longitude}`;
+      const originKey = toCoordinateKey({
+        lat: originStop.location.latitude,
+        lng: originStop.location.longitude,
+      });
+      const destinationKey = toCoordinateKey({
+        lat: destinationStop.location.latitude,
+        lng: destinationStop.location.longitude,
+      });
 
       if (!matrix[originKey] || !matrix[originKey][destinationKey]) {
         missingCoordinates.push(`${originKey} -> ${destinationKey}`);

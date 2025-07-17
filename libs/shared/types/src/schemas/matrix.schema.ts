@@ -38,7 +38,10 @@ export const CoordinateMatrixSchema: z.ZodType<Record<string, Record<string, Mat
 export type CoordinateMatrix = z.infer<typeof CoordinateMatrixSchema>;
 
 export function toCoordinateKey(coord: { lat: number; lng: number }): string {
-  return `${coord.lat},${coord.lng}`;
+  // Round to 5 decimal places to ensure consistent string representation
+  const lat = coord.lat.toFixed(5);
+  const lng = coord.lng.toFixed(5);
+  return `${lat},${lng}`;
 }
 
 export function toReverseCoordinateKey(coord: { lat: number; lng: number }): string {

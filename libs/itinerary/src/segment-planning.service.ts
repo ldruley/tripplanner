@@ -188,16 +188,20 @@ export class SegmentPlanningService {
         transformedCount: 0,
       };
     }
-
+    this.logger.debug('Matrix data received:', JSON.stringify(matrix, null, 2));
+    
+    // Ensure matrix is parsed as object if it's a string
+    const parsedMatrix = typeof matrix === 'string' ? JSON.parse(matrix) : matrix;
+    
     // Validate matrix completeness before transformation
-    const matrixValidation = this.sharedValidationService.validateMatrixCompleteness(matrix, stops);
+    const matrixValidation = this.sharedValidationService.validateMatrixCompleteness(parsedMatrix, stops);
     if (!matrixValidation.isValid) {
       this.logger.warn(`Matrix validation warnings: ${matrixValidation.errors.join(', ')}`);
     }
 
     // Transform matrix to routing data
     return this.routingTransformationService.transformMatrixToRoutingData(
-      matrix,
+      parsedMatrix,
       segmentPairs,
       stops,
       options,

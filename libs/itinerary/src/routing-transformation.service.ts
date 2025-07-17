@@ -76,6 +76,20 @@ export class RoutingTransformationService {
       const matrixEntry = matrix[originKey]?.[destinationKey];
 
       if (!matrixEntry) {
+        // Debug logging to understand the mismatch
+        this.logger.debug(`Debug matrix lookup failure:`);
+        this.logger.debug(`  Generated originKey: ${originKey}`);
+        this.logger.debug(`  Generated destinationKey: ${destinationKey}`);
+        this.logger.debug(`  Matrix type: ${typeof matrix}`);
+        this.logger.debug(`  Matrix is Array: ${Array.isArray(matrix)}`);
+        this.logger.debug(`  Matrix constructor: ${matrix.constructor.name}`);
+        this.logger.debug(`  Matrix keys sample (first 10): ${Object.keys(matrix).slice(0, 10).join(', ')}`);
+        this.logger.debug(`  Matrix has originKey: ${matrix[originKey] ? 'YES' : 'NO'}`);
+        this.logger.debug(`  Matrix direct property access: ${matrix.hasOwnProperty(originKey)}`);
+        if (matrix[originKey]) {
+          this.logger.debug(`  Available destination keys for ${originKey}: ${Object.keys(matrix[originKey]).join(', ')}`);
+        }
+        
         this.logger.warn(
           `Missing matrix data for coordinates ${originKey} -> ${destinationKey}`,
         );

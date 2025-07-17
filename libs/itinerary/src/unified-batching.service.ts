@@ -151,6 +151,20 @@ export class UnifiedBatchingService {
     // Step 2: Create segment creation data
     const segmentCreationData = this.createSegmentCreationData(routingData, trip.id);
 
+    // DEBUG: Log detailed information about segment creation
+    this.logger.debug(`[BATCH] Segment creation debug for trip ${trip.id}:`);
+    this.logger.debug(`[BATCH] - routingData.length: ${routingData.length}`);
+    this.logger.debug(`[BATCH] - segmentCreationData.length: ${segmentCreationData.length}`);
+    
+    if (routingData.length === 0) {
+      this.logger.warn(`[BATCH] No routing data available for trip ${trip.id} - segments will not be created`);
+    } else {
+      this.logger.debug(`[BATCH] Routing data sample for trip ${trip.id}:`);
+      routingData.slice(0, 3).forEach((routing, index) => {
+        this.logger.debug(`[BATCH] - Routing ${index}: ${routing.originStopId} -> ${routing.destinationStopId} (${routing.travelMode})`);
+      });
+    }
+
     return {
       routingData,
       stopUpdates,
@@ -222,6 +236,8 @@ export class UnifiedBatchingService {
       parallelOperations.push(this.travelSegmentService.deleteByTripId(tripId, prismaClient));
       totalOperations += 1;
       this.logger.debug(`[BATCH] Queued segment deletion for trip ${tripId}`);
+    } else {
+      this.logger.warn(`[BATCH] No segments to create for trip ${tripId} - skipping segment deletion`);
     }
 
     // Execute stop updates and segment deletions in parallel
@@ -230,9 +246,16 @@ export class UnifiedBatchingService {
 
     // Step 3: Create new segments after deletions complete
     if (plan.segmentCreationData.length > 0) {
-      await this.createSegmentsBatch(plan.segmentCreationData, prismaClient);
-      totalOperations += plan.segmentCreationData.length;
-      this.logger.debug(`[BATCH] Created ${plan.segmentCreationData.length} new segments`);
+      try {
+        await this.createSegmentsBatch(plan.segmentCreationData, prismaClient);
+        totalOperations += plan.segmentCreationData.length;
+        this.logger.debug(`[BATCH] Created ${plan.segmentCreationData.length} new segments`);
+      } catch (error) {
+        this.logger.error(`[BATCH] Failed to create segments for trip ${tripId}:`, error);
+        throw new Error(`Failed to create travel segments: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    } else {
+      this.logger.warn(`[BATCH] No new segments created for trip ${tripId} - trip may be left without segments`);
     }
 
     // Step 4: Update trip dirty flags
@@ -329,6 +352,16 @@ export class UnifiedBatchingService {
       if (orders.length !== uniqueOrders.size) {
         errors.push('Duplicate order values found in stop updates');
       }
+    }
+
+    // Validate routing data consistency - ensure routing data exists if segments are expected
+    if (plan.needsRoutingRecalculation && plan.segmentCreationData.length === 0) {
+      errors.push('Routing recalculation needed but no segment creation data available');
+    }
+
+    // Check for inconsistencies between routing data and segment creation
+    if (plan.routingData.length > 0 && plan.segmentCreationData.length === 0) {
+      errors.push('Routing data exists but no segment creation data was generated');
     }
 
     return {
