@@ -124,7 +124,7 @@ export class StopCoordinationService {
       stopOrderChanges,
       routingResult.routingData,
       true, // calculateTimeline
-      undefined, // startTime
+      updatedTrip.startDate || undefined, // Preserve original trip start time to prevent timeline drift
       prismaClient,
       updatedTrip,
     );
@@ -229,6 +229,11 @@ export class StopCoordinationService {
     data: AddStopToTripDto,
     insertOrder: number,
   ) {
+    // Parse matrix if it's a string (from database) to ensure proper routing
+    const parsedMatrix = typeof trip.matrix === 'string' 
+      ? JSON.parse(trip.matrix) 
+      : trip.matrix;
+
     // Find the added stop index in the sorted stops
     const sortedStops = [...(trip.stops || [])].sort((a, b) => a.order - b.order);
     const addedStopIndex = sortedStops.findIndex(stop => stop.id === newStop.id);
@@ -242,19 +247,19 @@ export class StopCoordinationService {
       trip,
       sortedStops,
       addedStopIndex,
-      trip.matrix,
+      parsedMatrix,
       {
         includeAllDownstream: true,
         travelMode: data.travelMode as TravelMode,
       },
     );
 
-    // Acquire routing data using routing integration service
+    // Acquire routing data using matrix-first strategy for consistent timing
     const routingStrategy = this.routingIntegrationService.getOptimalStrategy(
       planningResult.segmentPairs.length,
-      !!trip.matrix,
-      !data.calculateRouting, // prefer speed when not calculating full routing
-      data.calculateRouting || false, // require accuracy when calculating routing
+      !!parsedMatrix,
+      true, // preferSpeed: true for matrix-first timing calculations
+      data.calculateRouting || false, // requireAccuracy only when polylines/detailed routing needed
     );
 
     const routingResult = await this.routingIntegrationService.acquireRoutingData({
@@ -263,7 +268,7 @@ export class StopCoordinationService {
       trip: trip,
       strategy: routingStrategy,
       travelMode: data.travelMode as TravelMode,
-      matrix: trip.matrix,
+      matrix: parsedMatrix,
     });
 
     return routingResult;

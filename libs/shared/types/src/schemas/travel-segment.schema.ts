@@ -24,10 +24,10 @@ export const TravelSegmentSchema = extendApi(
     duration: z
       .number()
       .int()
-      .min(0, { message: 'Duration must be at least 0 minutes' })
+      .min(0, { message: 'Duration must be at least 0 seconds' })
       .nullable()
       .optional()
-      .describe('User-entered duration in minutes'),
+      .describe('User-entered duration in seconds'),
     apiCalculatedDistance: z
       .number()
       .min(0, { message: 'API calculated distance must be at least 0 meters' })
@@ -37,10 +37,10 @@ export const TravelSegmentSchema = extendApi(
     apiCalculatedDuration: z
       .number()
       .int()
-      .min(0, { message: 'API calculated duration must be at least 0 minutes' })
+      .min(0, { message: 'API calculated duration must be at least 0 seconds' })
       .nullable()
       .optional()
-      .describe('API-calculated duration in minutes'),
+      .describe('API-calculated duration in seconds'),
     polyline: z.string().nullable().optional().describe('Encoded polyline for route visualization'),
     routeOptions: z
       .any()
@@ -66,9 +66,9 @@ export const TravelSegmentSchema = extendApi(
       destinationStopId: '550e8400-e29b-41d4-a716-446655440003',
       travelMode: 'DRIVING',
       distance: 15000,
-      duration: 20,
+      duration: 1200,
       apiCalculatedDistance: 14800,
-      apiCalculatedDuration: 18,
+      apiCalculatedDuration: 1080,
       polyline: 'encoded_polyline_string',
       routeOptions: {},
       notes: 'Scenic route through the countryside',
@@ -114,7 +114,7 @@ export const UpdateTravelSegmentSchema = extendApi(
     example: {
       travelMode: 'WALKING',
       distance: 1200,
-      duration: 15,
+      duration: 900,
       notes: 'Updated notes about the route',
     },
   },
@@ -131,8 +131,8 @@ export const UpdateTravelApiCalculatedDataSchema = extendApi(
       apiCalculatedDuration: z
         .number()
         .int()
-        .min(0, { message: 'API calculated duration must be at least 0 minutes' })
-        .describe('API-calculated duration in minutes'),
+        .min(0, { message: 'API calculated duration must be at least 0 seconds' })
+        .describe('API-calculated duration in seconds'),
       polyline: z.string().describe('Encoded polyline for route visualization'),
     })
     .required(),
@@ -142,7 +142,7 @@ export const UpdateTravelApiCalculatedDataSchema = extendApi(
     example: {
       id: '550e8400-e29b-41d4-a716-446655440000',
       apiCalculatedDistance: 14800,
-      apiCalculatedDuration: 18,
+      apiCalculatedDuration: 1080,
       polyline: 'encoded_polyline_string',
     },
   },
@@ -256,7 +256,7 @@ export const TravelSegmentWithStopsSchema = extendApi(
       destinationStopId: '550e8400-e29b-41d4-a716-446655440003',
       travelMode: 'DRIVING',
       distance: 15000,
-      duration: 20,
+      duration: 1200,
       notes: 'Scenic route',
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: '2024-01-01T00:00:00Z',

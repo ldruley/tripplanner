@@ -108,13 +108,13 @@ export class RoutingTransformationService {
       }
 
       // Transform matrix entry to routing data
-      // Note: Matrix has 'time' property (in seconds), convert to minutes for duration
+      // Note: Matrix has 'time' property (in seconds), store as seconds to preserve precision
       routingData.push({
         originStopId: pair.originStopId,
         destinationStopId: pair.destinationStopId,
         travelMode: defaultTravelMode,
-        apiCalculatedDistance: matrixEntry.distance || fallbackDistance,
-        apiCalculatedDuration: matrixEntry.time ? Math.ceil(matrixEntry.time / 60) : fallbackDuration,
+        apiCalculatedDistance: Math.round(matrixEntry.distance || fallbackDistance),
+        apiCalculatedDuration: Math.round(matrixEntry.time || fallbackDuration),
         polyline: includePolyline ? null : null, // Matrix doesn't provide polyline data
       });
     }
@@ -171,8 +171,8 @@ export class RoutingTransformationService {
         originStopId: pair.originStopId,
         destinationStopId: pair.destinationStopId,
         travelMode,
-        apiCalculatedDistance: response.distance || null,
-        apiCalculatedDuration: response.duration || null,
+        apiCalculatedDistance: response.distance ? Math.round(response.distance) : null,
+        apiCalculatedDuration: response.duration ? Math.round(response.duration) : null,
         polyline: response.polyline || null,
       });
     }

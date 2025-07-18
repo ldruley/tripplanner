@@ -131,8 +131,10 @@ export class TripTimelineViewComponent {
   private formatStopTiming(stop: Stop): string {
     const duration = stop.plannedDuration;
     if (duration) {
-      const hours = Math.floor(duration / 60);
-      const minutes = duration % 60;
+      // plannedDuration is stored in seconds, convert to minutes for display
+      const totalMinutes = Math.round(duration / 60);
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
       if (hours > 0) {
         return `${hours}h ${minutes}m`;
       }
@@ -173,8 +175,10 @@ export class TripTimelineViewComponent {
     }
 
     if (duration) {
-      const hours = Math.floor(duration / 60);
-      const minutes = duration % 60;
+      // Duration is stored in seconds, convert to minutes for display
+      const totalMinutes = Math.round(duration / 60);
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
       if (hours > 0) {
         parts.push(`${hours}h ${minutes}m`);
       } else {

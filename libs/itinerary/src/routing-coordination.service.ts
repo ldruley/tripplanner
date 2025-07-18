@@ -174,7 +174,7 @@ export class RoutingCoordinationService {
           destinationStopId: destinationStop.id as string,
           travelMode: travelMode,
           apiCalculatedDistance: routingResult.route.distance,
-          apiCalculatedDuration: Math.round(routingResult.route.duration / 60), // Convert seconds to minutes
+          apiCalculatedDuration: Math.round(routingResult.route.duration), // Store duration in seconds to match timeline service expectations
           polyline: routingResult.route.geometry,
         };
 
@@ -404,7 +404,7 @@ export class RoutingCoordinationService {
     for (const segment of trip.travelSegments) {
       if (segment.apiCalculatedDistance && segment.apiCalculatedDuration) {
         totalDistance += segment.apiCalculatedDistance;
-        totalDuration += segment.apiCalculatedDuration * 60; // Convert minutes to seconds
+        totalDuration += segment.apiCalculatedDuration; // Duration is already stored in seconds
       } else {
         hasCompleteRouting = false;
       }
@@ -490,7 +490,7 @@ export class RoutingCoordinationService {
           destinationStopId: segmentPair.destinationStopId,
           travelMode: travelMode,
           apiCalculatedDistance: routingResult.route.distance,
-          apiCalculatedDuration: Math.round(routingResult.route.duration / 60), // Convert seconds to minutes
+          apiCalculatedDuration: Math.round(routingResult.route.duration), // Store duration in seconds to match timeline service expectations
           polyline: routingResult.route.geometry,
         };
 

@@ -1,9 +1,9 @@
 import { Stop, TravelSegment } from '@trip-planner/types';
 
 export const DEFAULT_DURATIONS = {
-  PITSTOP: 30, // 30 minutes
-  OVERNIGHT: 720, // 12 hours
-  null: 60, // 1 hour default
+  PITSTOP: 1800, // 30 minutes in seconds
+  OVERNIGHT: 43200, // 12 hours in seconds
+  null: 3600, // 1 hour default in seconds
 } as const;
 
 export interface StopTypeDefaults {

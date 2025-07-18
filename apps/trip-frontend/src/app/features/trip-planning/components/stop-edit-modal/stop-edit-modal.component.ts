@@ -95,7 +95,7 @@ export class StopEditModalComponent implements OnInit {
       return null;
 
     const arrivalTime = new Date(currentStop.plannedArrivalTime);
-    const durationMs = currentStop.plannedDuration * 60 * 1000;
+    const durationMs = currentStop.plannedDuration * 1000;
     const departureTime = new Date(arrivalTime.getTime() + durationMs);
 
     return this.tripTimezoneService.convertDateToLocationTimezone(
@@ -115,7 +115,7 @@ export class StopEditModalComponent implements OnInit {
     const durationMs = departureTime.getTime() - arrivalTime.getTime();
 
     // Convert milliseconds to minutes
-    return Math.round(durationMs / (1000 * 60));
+    return Math.round(durationMs / 1000);
   });
 
   ngOnInit(): void {
@@ -137,7 +137,7 @@ export class StopEditModalComponent implements OnInit {
 
     if (currentStop.plannedArrivalTime && currentStop.plannedDuration && currentStop.location) {
       const arrivalTime = new Date(currentStop.plannedArrivalTime);
-      const durationMs = currentStop.plannedDuration * 60 * 1000;
+      const durationMs = currentStop.plannedDuration * 1000;
       const departureTime = new Date(arrivalTime.getTime() + durationMs);
 
       localDepartureTime = this.tripTimezoneService
@@ -192,7 +192,7 @@ export class StopEditModalComponent implements OnInit {
         );
 
         const durationMs = localDepartureTime.diff(localArrivalTime, 'milliseconds').milliseconds;
-        calculatedDuration = Math.round(durationMs / (1000 * 60)); // Convert to minutes
+        calculatedDuration = Math.round(durationMs / 1000); // Keep in seconds
 
         // Basic validation: warn if times seem unreasonable
         const hour = localArrivalTime.hour;
@@ -276,7 +276,7 @@ export class StopEditModalComponent implements OnInit {
     let currentDepartureTime = null;
     if (currentStop.plannedArrivalTime && currentStop.plannedDuration) {
       const arrivalTime = new Date(currentStop.plannedArrivalTime);
-      const durationMs = currentStop.plannedDuration * 60 * 1000;
+      const durationMs = currentStop.plannedDuration * 1000;
       currentDepartureTime = new Date(arrivalTime.getTime() + durationMs);
     }
 

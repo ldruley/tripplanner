@@ -76,7 +76,7 @@ export function validateTimeConflicts(stops: Stop[]): TimeConflictResult {
     
     if (currentStop.plannedArrivalTime && nextStop.plannedArrivalTime) {
       const currentDeparture = currentStop.calculatedDepartureTime || 
-        new Date(currentStop.plannedArrivalTime.getTime() + (currentStop.plannedDuration || 60) * 60000);
+        new Date(currentStop.plannedArrivalTime.getTime() + (currentStop.plannedDuration || 3600) * 1000);
       
       if (currentDeparture > nextStop.plannedArrivalTime) {
         conflicts.push({

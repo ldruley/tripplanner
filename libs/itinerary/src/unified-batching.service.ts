@@ -410,12 +410,17 @@ export class UnifiedBatchingService {
       },
     );
 
-    // Step 4: Acquire routing data with intelligent strategy
+    // Step 4: Parse matrix if it's a string (from database) to ensure proper routing
+    const parsedMatrix = typeof trip.matrix === 'string' 
+      ? JSON.parse(trip.matrix) 
+      : trip.matrix;
+
+    // Step 5: Acquire routing data with matrix-first strategy for consistent timing
     const routingStrategy = this.routingIntegrationService.getOptimalStrategy(
       planningResult.segmentPairs.length,
-      !!trip.matrix,
-      !data.calculateRouting,
-      data.calculateRouting || false,
+      !!parsedMatrix,
+      true, // preferSpeed: true for matrix-first timing calculations
+      data.calculateRouting || false, // requireAccuracy only when polylines/detailed routing needed
     );
 
     const routingResult = await this.routingIntegrationService.acquireRoutingData({
@@ -424,16 +429,16 @@ export class UnifiedBatchingService {
       trip,
       strategy: routingStrategy,
       travelMode: data.travelMode as TravelMode,
-      matrix: trip.matrix,
+      matrix: parsedMatrix,
     });
 
-    // Step 5: Execute with enhanced timeline coordination
+    // Step 6: Execute with enhanced timeline coordination
     const result = await this.executeCompleteBatch(
       trip.id,
       data.stopOrders,
       routingResult.routingData,
       true,
-      undefined,
+      trip.startDate || undefined, // Preserve original trip start time to prevent timeline drift
       prismaClient,
       trip,
     );
@@ -461,16 +466,21 @@ export class UnifiedBatchingService {
       `[ADVANCED BATCHING] Executing stop insertion batch for trip ${trip.id}`,
     );
 
-    // Step 1: Validate location exists
+    // Step 1: Parse matrix if it's a string (from database) to ensure proper routing
+    const parsedMatrix = typeof trip.matrix === 'string' 
+      ? JSON.parse(trip.matrix) 
+      : trip.matrix;
+
+    // Step 2: Validate location exists
     await this.sharedValidationService.validateLocationExists(data.locationId);
 
-    // Step 2: Handle order management for insertion
+    // Step 3: Handle order management for insertion
     const { updates: stopOrderChanges } = this.orderManagementService.createInsertionOrderUpdates(
       trip.stops || [],
       data.insertAtOrder ?? (trip.stops?.length || 0),
     );
 
-    // Step 3: Plan segments for insertion
+    // Step 4: Plan segments for insertion
     const newStopOrdering = [...(trip.stops || [])];
     newStopOrdering.splice(data.insertAtOrder ?? newStopOrdering.length, 0, {
       id: 'temp-new-stop',
@@ -483,19 +493,19 @@ export class UnifiedBatchingService {
       trip,
       newStopOrdering,
       data.insertAtOrder ?? newStopOrdering.length - 1,
-      trip.matrix,
+      parsedMatrix,
       {
         includeAllDownstream: true,
         travelMode: data.travelMode as TravelMode,
       },
     );
 
-    // Step 4: Acquire routing data
+    // Step 5: Acquire routing data with matrix-first strategy for consistent timing
     const routingStrategy = this.routingIntegrationService.getOptimalStrategy(
       planningResult.segmentPairs.length,
-      !!trip.matrix,
-      !data.calculateRouting,
-      data.calculateRouting || false,
+      !!parsedMatrix,
+      true, // preferSpeed: true for matrix-first timing calculations
+      data.calculateRouting || false, // requireAccuracy only when polylines/detailed routing needed
     );
 
     const routingResult = await this.routingIntegrationService.acquireRoutingData({
@@ -504,7 +514,7 @@ export class UnifiedBatchingService {
       trip,
       strategy: routingStrategy,
       travelMode: data.travelMode as TravelMode,
-      matrix: trip.matrix,
+      matrix: parsedMatrix,
     });
 
     // Note: This is a simplified version - actual implementation would need
@@ -535,38 +545,43 @@ export class UnifiedBatchingService {
       `[ADVANCED BATCHING] Executing stop removal batch for trip ${trip.id}`,
     );
 
-    // Step 1: Validate and prepare stop removal
+    // Step 1: Parse matrix if it's a string (from database) to ensure proper routing
+    const parsedMatrix = typeof trip.matrix === 'string' 
+      ? JSON.parse(trip.matrix) 
+      : trip.matrix;
+
+    // Step 2: Validate and prepare stop removal
     const stopToRemove = trip.stops?.find(stop => stop.id === data.stopId);
     if (!stopToRemove) {
       throw new Error(`Stop ${data.stopId} not found in trip ${trip.id}`);
     }
 
-    // Step 2: Handle order management for removal
+    // Step 3: Handle order management for removal
     const remainingStops = (trip.stops || []).filter(stop => stop.id !== data.stopId);
     const { updates } = this.orderManagementService.createRemovalOrderUpdates(
       remainingStops,
       stopToRemove.order,
     );
 
-    // Step 3: Plan segments for remaining stops
+    // Step 4: Plan segments for remaining stops
     const planningRequest = {
       trip,
       operationType: 'remove' as const,
       newStopOrdering: remainingStops,
       removedStopIndex: stopToRemove.order,
-      matrix: trip.matrix,
+      matrix: parsedMatrix,
       travelMode: data.travelMode as TravelMode,
       includeAllDownstream: true,
     };
 
     const planningResult = await this.segmentPlanningService.planSegmentsForOperation(planningRequest);
 
-    // Step 4: Acquire routing data for remaining segments
+    // Step 5: Acquire routing data with matrix-first strategy for consistent timing
     const routingStrategy = this.routingIntegrationService.getOptimalStrategy(
       planningResult.segmentPairs.length,
-      !!trip.matrix,
-      !data.calculateRouting,
-      data.calculateRouting || false,
+      !!parsedMatrix,
+      true, // preferSpeed: true for matrix-first timing calculations
+      data.calculateRouting || false, // requireAccuracy only when polylines/detailed routing needed
     );
 
     const routingResult = await this.routingIntegrationService.acquireRoutingData({
@@ -575,10 +590,10 @@ export class UnifiedBatchingService {
       trip,
       strategy: routingStrategy,
       travelMode: data.travelMode as TravelMode,
-      matrix: trip.matrix,
+      matrix: parsedMatrix,
     });
 
-    // Step 5: Delete the stop first, then execute batch updates
+    // Step 6: Delete the stop first, then execute batch updates
     await this.stopService.delete(data.stopId, prismaClient);
 
     let result: BatchResult;
@@ -588,7 +603,7 @@ export class UnifiedBatchingService {
         updates.map(update => ({ stopId: update.id, newOrder: update.order })),
         routingResult.routingData,
         true,
-        undefined,
+        trip.startDate || undefined, // Preserve original trip start time to prevent timeline drift
         prismaClient,
       );
     } else {

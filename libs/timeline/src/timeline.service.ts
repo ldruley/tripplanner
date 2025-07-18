@@ -49,12 +49,11 @@ export class TimelineService {
       // Calculate arrival time
       stop.calculatedArrivalTime = new Date(currentTime);
 
-      // Use user-defined duration or suggest default (never override)
-      const stopDuration =
-        stop.plannedDuration || this.getDefaultStopDuration(stop.stopType || null);
+      // Use user-defined duration or suggest default (both in seconds)
+      const stopDuration = stop.plannedDuration || this.getDefaultStopDuration(stop.stopType || null);
 
-      // Calculate departure time
-      stop.calculatedDepartureTime = new Date(currentTime.getTime() + stopDuration * 60000);
+      // Calculate departure time (stopDuration is now in seconds)
+      stop.calculatedDepartureTime = new Date(currentTime.getTime() + stopDuration * 1000);
 
       updatedStops.push(stop);
       totalDuration += stopDuration;
@@ -66,7 +65,7 @@ export class TimelineService {
         );
 
         const travelDuration = segment?.apiCalculatedDuration || segment?.duration || 0;
-        currentTime = new Date(stop.calculatedDepartureTime.getTime() + travelDuration * 60000);
+        currentTime = new Date(stop.calculatedDepartureTime.getTime() + travelDuration * 1000);
         totalDuration += travelDuration;
       }
     }
@@ -86,14 +85,13 @@ export class TimelineService {
   calculateTripDuration(stops: Stop[], segments: TravelSegment[]): number {
     let totalDuration = 0;
 
-    // Sum stop durations
+    // Sum stop durations (all in seconds)
     for (const stop of stops) {
-      const stopDuration =
-        stop.plannedDuration || this.getDefaultStopDuration(stop.stopType || null);
+      const stopDuration = stop.plannedDuration || this.getDefaultStopDuration(stop.stopType || null);
       totalDuration += stopDuration;
     }
 
-    // Sum travel durations
+    // Sum travel durations (stored in seconds)
     for (const segment of segments) {
       const travelDuration = segment.apiCalculatedDuration || segment.duration || 0;
       totalDuration += travelDuration;
@@ -145,15 +143,13 @@ export class TimelineService {
       if (previousStop.calculatedDepartureTime) {
         const travelDuration = segment?.apiCalculatedDuration || segment?.duration || 0;
         sortedStops[i].calculatedArrivalTime = new Date(
-          previousStop.calculatedDepartureTime.getTime() + travelDuration * 60000,
+          previousStop.calculatedDepartureTime.getTime() + travelDuration * 1000,
         );
 
-        const stopDuration =
-          sortedStops[i].plannedDuration ||
-          this.getDefaultStopDuration(sortedStops[i].stopType || null);
+        const stopDuration = sortedStops[i].plannedDuration || this.getDefaultStopDuration(sortedStops[i].stopType || null);
         if (sortedStops[i].calculatedArrivalTime) {
           sortedStops[i].calculatedDepartureTime = new Date(
-            sortedStops[i].calculatedArrivalTime!.getTime() + stopDuration * 60000,
+            sortedStops[i].calculatedArrivalTime!.getTime() + stopDuration * 1000,
           );
         }
       }

@@ -363,7 +363,7 @@ export class TimelineCoordinationService {
 
         if (originalStop.plannedDuration && update.calculatedArrivalTime) {
           update.calculatedDepartureTime = new Date(
-            update.calculatedArrivalTime.getTime() + originalStop.plannedDuration * 60000,
+            update.calculatedArrivalTime.getTime() + originalStop.plannedDuration * 1000,
           );
         }
       }

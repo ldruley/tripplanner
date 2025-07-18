@@ -22,7 +22,7 @@ export const StopSchema = extendApi(
       .int()
       .nullable()
       .optional()
-      .describe('Planned duration in minutes at this stop'),
+      .describe('Planned duration in seconds at this stop'),
     calculatedArrivalTime: z.coerce
       .date()
       .nullable()

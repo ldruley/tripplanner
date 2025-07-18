@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService, PrismaClientOrTransaction } from '@trip-planner/prisma';
 import { TripService } from '@trip-planner/trip';
 import { LocationService } from '@trip-planner/location';
@@ -20,6 +21,8 @@ import { TravelSegmentService } from '@trip-planner/travel-segment';
 import { StopService } from '@trip-planner/stop';
 import { TripBankedLocationService } from './tripbankedlocation/trip-banked-location.service';
 import { RoutingCoordinationService } from './routing-coordination.service';
+import { RoutingIntegrationService } from './routing-integration.service';
+import { SegmentPlanningService } from './segment-planning.service';
 
 @Injectable()
 export class BatchedTripCreationService {
@@ -30,6 +33,8 @@ export class BatchedTripCreationService {
     private readonly tripService: TripService,
     private readonly locationService: LocationService,
     private readonly routingCoordinationService: RoutingCoordinationService,
+    private readonly routingIntegrationService: RoutingIntegrationService,
+    private readonly segmentPlanningService: SegmentPlanningService,
     private readonly timelineService: TimelineService,
     private readonly bankedLocationService: TripBankedLocationService,
     private readonly stopService: StopService,
@@ -71,31 +76,34 @@ export class BatchedTripCreationService {
         prismaClient,
       );
 
-      // Step 5: Calculate routing if requested
+      // Step 5: Enrich stops with location data for routing calculations
+      const stopsWithLocations = await this.enrichStopsWithLocationData(stops, createdLocations);
+
+      // Step 6: Calculate routing if requested
       const routingUpdates = await this.calculateRoutingIfRequested(
         data,
-        stops,
+        stopsWithLocations,
         createdLocations,
       );
 
-      // Step 6: Create travel segments with routing data
+      // Step 7: Create travel segments with routing data
       await this.createTravelSegmentsWithRouting(
         trip.id as string,
-        stops,
+        stopsWithLocations,
         routingUpdates,
         prismaClient,
       );
 
-      // Step 7: Calculate and apply timeline
+      // Step 8: Calculate and apply timeline
       await this.calculateAndApplyTimelineForStops(
         trip.id as string,
-        stops,
+        stopsWithLocations,
         routingUpdates,
         data.startDate,
         prismaClient,
       );
 
-      // Step 8: Process banked locations
+      // Step 9: Process banked locations
       await this.processBankedLocations(
         userId,
         trip.id as string,
@@ -104,10 +112,10 @@ export class BatchedTripCreationService {
         prismaClient,
       );
 
-      // Step 9: Set appropriate dirty flags
-      await this.setTripDirtyFlags(trip.id as string, data, stops.length, prismaClient);
+      // Step 10: Set appropriate dirty flags
+      await this.setTripDirtyFlags(trip.id as string, data, stopsWithLocations.length, prismaClient);
 
-      // Step 10: Return complete trip
+      // Step 11: Return complete trip
       return await this.loadCompleteTrip(trip.id as string, prismaClient);
     });
   }
@@ -204,7 +212,7 @@ export class BatchedTripCreationService {
   }
 
   /**
-   * Calculate routing data if requested.
+   * Calculate routing data if requested using matrix-first strategy for consistent timing.
    */
   private async calculateRoutingIfRequested(
     data: CreateTripFromOrderedListDto,
@@ -215,17 +223,51 @@ export class BatchedTripCreationService {
       return [];
     }
 
-    const routingUpdates = await this.routingCoordinationService.calculateRoutingForAllSegments(
-      stops,
-      createdLocations,
-      data.travelMode as TravelMode,
+    // Parse matrix if it's a string, otherwise use as-is
+    const parsedMatrix = typeof data.matrix === 'string' 
+      ? JSON.parse(data.matrix) 
+      : data.matrix;
+
+    // Use the new matrix-first routing integration service instead of direct API routing
+    // Create a temporary trip object for routing calculations
+    const tempTrip = {
+      id: 'temp-trip-for-routing',
+      matrix: parsedMatrix,
+    } as Trip;
+
+    // Create segment pairs from consecutive stops for routing calculation
+    const basicSegmentPairs = this.createSegmentPairsFromStops(stops);
+    
+    // Convert to full SegmentPair format with tripId
+    const segmentPairs = basicSegmentPairs.map(pair => ({
+      tripId: tempTrip.id,
+      originStopId: pair.originStopId,
+      destinationStopId: pair.destinationStopId,
+    }));
+
+    // Get matrix-first routing strategy
+    const routingStrategy = this.routingIntegrationService.getOptimalStrategy(
+      segmentPairs.length,
+      !!parsedMatrix,
+      true, // preferSpeed: true for matrix-first timing calculations
+      data.calculateRouting || false, // requireAccuracy only when polylines/detailed routing needed
     );
+
+    // Acquire routing data using matrix-first strategy
+    const routingResult = await this.routingIntegrationService.acquireRoutingData({
+      segmentPairs,
+      stops,
+      trip: tempTrip,
+      strategy: routingStrategy,
+      travelMode: data.travelMode as TravelMode,
+      matrix: parsedMatrix,
+    });
     
     this.logger.debug(
-      `[REFACTORED BATCHING] Pre-calculated routing for ${routingUpdates.length} segments`,
+      `[REFACTORED BATCHING] Pre-calculated routing for ${routingResult.routingData.length} segments using ${routingResult.source} source`,
     );
     
-    return routingUpdates;
+    return routingResult.routingData;
   }
 
   /**
@@ -356,7 +398,7 @@ export class BatchedTripCreationService {
 
     // Create segments data structure needed for timeline calculation
     const segments: TravelSegment[] = routingUpdates.map(routingData => ({
-      id: crypto.randomUUID(), // Generate valid UUID for timeline calculation
+      id: randomUUID(), // Generate valid UUID for timeline calculation
       tripId,
       originStopId: routingData.originStopId,
       destinationStopId: routingData.destinationStopId,
@@ -417,5 +459,69 @@ export class BatchedTripCreationService {
     this.logger.debug(
       `Applied timeline data to ${stopTimeUpdates.length} stops. Trip duration: ${timelineResult.totalTripDuration} minutes`,
     );
+  }
+
+  /**
+   * Enrich stops with location data needed for routing calculations.
+   * This is critical because stops created via batchCreateStops() don't include location relations.
+   */
+  private async enrichStopsWithLocationData(
+    stops: Stop[],
+    createdLocations: Record<string, any>,
+  ): Promise<Stop[]> {
+    return stops.map(stop => {
+      // Find the location data for this stop's locationId
+      const location = Object.values(createdLocations).find(
+        (loc: any) => loc.id === stop.locationId
+      );
+
+      if (!location) {
+        this.logger.error(
+          `Missing location data for stop ${stop.id} with locationId ${stop.locationId}`
+        );
+        throw new Error(`Location data not found for stop ${stop.id}`);
+      }
+
+      // Return stop with location relation populated
+      return {
+        ...stop,
+        location: {
+          id: location.id,
+          name: location.name,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          address: location.address,
+          city: location.city,
+          state: location.state,
+          country: location.country,
+          timezone: location.timezone,
+          createdAt: location.createdAt || new Date(),
+          updatedAt: location.updatedAt || new Date(),
+          // Include other location fields as needed
+        },
+      } as Stop;
+    });
+  }
+
+  /**
+   * Create segment pairs from consecutive stops for routing calculations.
+   * Helper method to generate routing segment pairs from ordered stops.
+   */
+  private createSegmentPairsFromStops(stops: Stop[]): { originStopId: string; destinationStopId: string }[] {
+    if (stops.length < 2) {
+      return [];
+    }
+
+    const sortedStops = [...stops].sort((a, b) => a.order - b.order);
+    const segmentPairs = [];
+
+    for (let i = 0; i < sortedStops.length - 1; i++) {
+      segmentPairs.push({
+        originStopId: sortedStops[i].id as string,
+        destinationStopId: sortedStops[i + 1].id as string,
+      });
+    }
+
+    return segmentPairs;
   }
 }

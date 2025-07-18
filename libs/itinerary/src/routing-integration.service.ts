@@ -99,6 +99,16 @@ export class RoutingIntegrationService {
       return this.createErrorResult(['No segment pairs provided'], startTime);
     }
 
+    // Step 2.5: Validate that stops have location data when using matrix strategy
+    if (request.strategy.preferMatrix && request.stops) {
+      const stopsWithoutLocation = request.stops.filter(stop => !stop.location);
+      if (stopsWithoutLocation.length > 0) {
+        const stopIds = stopsWithoutLocation.map(stop => stop.id).join(', ');
+        this.logger.error(`Stops missing location data for matrix routing: ${stopIds}`);
+        return this.createErrorResult([`Stops missing location data: ${stopIds}`], startTime);
+      }
+    }
+
     // Step 2: Try matrix data first if preferred
     let routingResult: RoutingResult;
     
@@ -545,6 +555,10 @@ export class RoutingIntegrationService {
   /**
    * Get optimal routing strategy based on request characteristics.
    * Provides intelligent strategy selection for different scenarios.
+   * 
+   * Updated to prefer matrix-first for all flows when available for consistent timing calculations.
+   * Matrix routing provides better consistency since it doesn't rely on current traffic conditions
+   * that would be irrelevant for planned future trips.
    */
   getOptimalStrategy(
     segmentCount: number,
@@ -552,19 +566,20 @@ export class RoutingIntegrationService {
     preferSpeed: boolean,
     requireAccuracy: boolean,
   ): RoutingStrategy {
-    // Large segment counts benefit from matrix when available
-    if (segmentCount > 20 && hasMatrix && preferSpeed) {
+    // Matrix-first strategy for all operations when matrix is available (≥2 segments)
+    // This ensures consistent timing calculations across all flows
+    if (segmentCount >= 2 && hasMatrix) {
       return {
         preferMatrix: true,
-        fallbackToAPI: requireAccuracy,
+        fallbackToAPI: requireAccuracy, // Only fallback to API if accuracy is critical (e.g., polyline generation)
         forceRefresh: false,
         useCache: true,
-        timeoutMs: 30000,
+        timeoutMs: preferSpeed ? 15000 : 20000, // Shorter timeout for speed-focused operations
       };
     }
 
-    // Small segment counts can use API directly
-    if (segmentCount <= 5 || requireAccuracy) {
+    // Single segment or no matrix available - use API directly
+    if (segmentCount <= 1 || !hasMatrix) {
       return {
         preferMatrix: false,
         fallbackToAPI: true,
@@ -574,7 +589,7 @@ export class RoutingIntegrationService {
       };
     }
 
-    // Balanced approach for medium segment counts
+    // Fallback for edge cases (shouldn't normally reach here)
     return {
       preferMatrix: hasMatrix,
       fallbackToAPI: true,
