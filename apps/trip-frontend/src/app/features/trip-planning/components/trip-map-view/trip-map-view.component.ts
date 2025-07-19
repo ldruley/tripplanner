@@ -12,8 +12,8 @@ import { PolylineStatus } from '../../services/polyline-generation.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="map-container">
-      <div #mapContainer class="map"></div>
+    <div class="map-container animate-fade-in-fast">
+      <div #mapContainer class="map animate-scale-in"></div>
     </div>
   `,
   styleUrls: ['./trip-map-view.component.css']

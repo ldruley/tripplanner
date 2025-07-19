@@ -171,7 +171,7 @@ export class AuthService {
     this.router.navigate(['/auth/login']);
   }
 
-  private handleSuccessfulAuthentication(token: string, isRefresh: boolean = false): void {
+  private handleSuccessfulAuthentication(token: string, isRefresh = false): void {
     localStorage.setItem(this.TOKEN_KEY, token);
 
     const decodedToken = jwtDecode<JwtPayload>(token);

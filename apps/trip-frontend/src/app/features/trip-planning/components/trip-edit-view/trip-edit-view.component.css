@@ -1,0 +1,43 @@
+/* Trip Edit View Entrance Animation */
+@keyframes tripEditSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.trip-edit-container {
+  opacity: 0;
+  transform: translateX(-30px);
+  animation: tripEditSlideIn 0.5s ease-out forwards;
+}
+
+/* Staggered animations for sub-sections */
+.trip-edit-controls {
+  opacity: 0;
+  transform: translateY(-20px);
+  animation: tripEditSlideIn 0.4s ease-out forwards;
+  animation-delay: 100ms;
+}
+
+.trip-edit-content {
+  opacity: 0;
+  transform: translateX(-20px);
+  animation: tripEditSlideIn 0.4s ease-out forwards;
+  animation-delay: 200ms;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .trip-edit-container,
+  .trip-edit-controls,
+  .trip-edit-content {
+    opacity: 1;
+    transform: translateX(0);
+    animation: none;
+  }
+}

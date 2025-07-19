@@ -40,20 +40,29 @@
     }
 
     <!-- Main Content Pane -->
-    <div class="flex-1 overflow-auto pr-6">
-      @if (currentView() === 'planning') {
-        <app-trip-edit-view />
-      } @else if (currentView() === 'timeline') {
-        <app-trip-timeline-view />
-      } @else {
-        <app-trip-map-view />
-      }
+    <div class="flex-1 overflow-auto pr-6 relative">
+      <!-- View Wrapper with Simple Transitions -->
+      <div class="relative min-h-full">
+        @if (currentView() === 'planning') {
+          <app-trip-edit-view />
+        } @else if (currentView() === 'timeline') {
+          <div class="animate-fade-in-fast">
+            <app-trip-timeline-view />
+          </div>
+        } @else {
+          <div class="animate-fade-in-fast">
+            <app-trip-map-view />
+          </div>
+        }
+      </div>
     </div>
   </div>
 
   <!-- Side Details Pane (extends full height) -->
-  <div class="w-80 border-l border-tp-border-light dark:border-tp-border bg-tp-bg-light-secondary dark:bg-tp-bg-secondary overflow-auto">
-    <app-trip-details-view />
+  <div class="w-80 border-l border-tp-border-light dark:border-tp-border bg-tp-bg-light-secondary dark:bg-tp-bg-secondary overflow-auto sidebar-enter">
+    <div class="sidebar-content-enter">
+      <app-trip-details-view [currentView]="currentView()" />
+    </div>
   </div>
 
 </div>
@@ -98,21 +107,28 @@
   }
 
   <!-- Main Content -->
-  <div class="flex-1 overflow-auto">
-    @if (currentView() === 'planning') {
-      <app-trip-edit-view />
-    } @else if (currentView() === 'timeline') {
-      <app-trip-timeline-view />
-    } @else {
-      <app-trip-map-view />
-    }
+  <div class="flex-1 overflow-auto relative">
+    <!-- Mobile View Wrapper with Simple Transitions -->
+    <div class="relative min-h-full">
+      @if (currentView() === 'planning') {
+        <app-trip-edit-view />
+      } @else if (currentView() === 'timeline') {
+        <div class="mobile-slide-up">
+          <app-trip-timeline-view />
+        </div>
+      } @else {
+        <div class="mobile-slide-up">
+          <app-trip-map-view />
+        </div>
+      }
+    </div>
   </div>
 
   <!-- Mobile Side Pane Toggle Button -->
   <button
     (click)="toggleSidePane()"
     class="fixed top-4 right-4 z-40 p-3 bg-tp-orange text-white rounded-full shadow-lg
-           hover:bg-tp-orange/90 transition-colors duration-200"
+           hover:bg-tp-orange/90 transition-colors duration-200 button-press hover-lift"
     aria-label="Toggle trip details">
     <i class="pi pi-cog text-lg"></i>
   </button>
@@ -128,7 +144,7 @@
     <!-- Side Pane -->
     <div class="fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-tp-bg-light-primary dark:bg-tp-bg-primary
                 border-l border-tp-border-light dark:border-tp-border z-50
-                transform transition-transform duration-300 ease-in-out shadow-xl overflow-auto">
+                transform transition-transform duration-300 ease-in-out shadow-xl overflow-auto animate-slide-in-right">
 
       <!-- Side Pane Header -->
       <div class="flex items-center justify-between p-4 border-b border-tp-border-light dark:border-tp-border bg-tp-bg-light-secondary dark:bg-tp-bg-secondary">
@@ -140,15 +156,15 @@
           class="p-2 text-tp-text-light-secondary dark:text-tp-text-secondary
                  hover:text-tp-text-light-primary dark:hover:text-tp-text-primary
                  hover:bg-tp-bg-light-tertiary dark:hover:bg-tp-bg-tertiary
-                 rounded-lg transition-colors duration-200"
+                 rounded-lg transition-colors duration-200 button-press"
           aria-label="Close trip details">
           <i class="pi pi-times text-lg"></i>
         </button>
       </div>
 
       <!-- Side Pane Content -->
-      <div class="flex-1">
-        <app-trip-details-view />
+      <div class="flex-1 animate-fade-in-fast">
+        <app-trip-details-view [currentView]="currentView()" />
       </div>
 
     </div>

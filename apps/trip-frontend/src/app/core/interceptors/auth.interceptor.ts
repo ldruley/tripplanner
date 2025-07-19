@@ -7,7 +7,7 @@ import { environment } from '../../../environments/environment';
 
 const backendApiBaseUrl = environment.backendApiUrl;
 let isRefreshing = false;
-let refreshTokenSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
+const refreshTokenSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);

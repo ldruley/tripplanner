@@ -9,6 +9,7 @@
 @tailwind utilities;
 
 @import './components.css';
+@import './animations.css';
 /* Global dark mode styles */
 @layer base {
   /* Light mode (default) - using systematic light theme colors */

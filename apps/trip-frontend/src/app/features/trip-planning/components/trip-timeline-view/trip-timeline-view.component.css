@@ -188,6 +188,12 @@ button:focus {
   .segment-card:hover {
     transform: none;
   }
+
+  .timeline-item {
+    opacity: 1;
+    transform: translateX(0);
+    animation: none;
+  }
 }
 
 /* Focus States */
@@ -210,16 +216,18 @@ button:focus {
 }
 
 .timeline-item {
-  animation: timelineSlideIn 0.3s ease-out;
+  opacity: 0;
+  transform: translateX(-20px);
+  animation: timelineSlideIn 0.6s ease-out forwards;
 }
 
 /* Stagger animation delay for multiple items */
-.timeline-item:nth-child(1) { animation-delay: 0ms; }
-.timeline-item:nth-child(2) { animation-delay: 50ms; }
-.timeline-item:nth-child(3) { animation-delay: 100ms; }
-.timeline-item:nth-child(4) { animation-delay: 150ms; }
-.timeline-item:nth-child(5) { animation-delay: 200ms; }
-.timeline-item:nth-child(n+6) { animation-delay: 250ms; }
+.timeline-item:nth-child(1) { animation-delay: 100ms; }
+.timeline-item:nth-child(2) { animation-delay: 200ms; }
+.timeline-item:nth-child(3) { animation-delay: 300ms; }
+.timeline-item:nth-child(4) { animation-delay: 400ms; }
+.timeline-item:nth-child(5) { animation-delay: 500ms; }
+.timeline-item:nth-child(n+6) { animation-delay: 600ms; }
 
 /* Ensure proper alignment */
 .timeline-marker {

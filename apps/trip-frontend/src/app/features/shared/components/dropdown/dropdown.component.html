@@ -3,7 +3,19 @@
     <div
       class="dropdown-menu min-w-48 border bg-tp-bg-light-primary dark:bg-tp-bg-tertiary border-tp-border-light dark:border-tp-border shadow-lg rounded-lg overflow-hidden"
     >
-      @for (item of items; track item.id) {
+      @if (showFilter) {
+        <div class="p-2 border-b border-tp-border-light dark:border-tp-border-subtle">
+          <input
+            type="text"
+            [placeholder]="filterPlaceholder"
+            [value]="filterText()"
+            (input)="onFilterChange($any($event.target).value)"
+            class="w-full px-3 py-2 text-sm border border-tp-border-light dark:border-tp-border bg-white dark:bg-tp-bg-secondary text-tp-text-light-primary dark:text-tp-text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-tp-primary-light dark:focus:ring-tp-primary focus:border-transparent"
+            autocomplete="off"
+          />
+        </div>
+      }
+      @for (item of filteredItems(); track item.id) {
         @if (item.divider) {
           <hr class="my-1 border-t border-tp-border-light dark:border-tp-border-subtle" />
         } @else {
@@ -13,12 +25,14 @@
             [fullWidth]="true"
             [disabled]="item.disabled || false"
             (buttonClick)="onItemClick(item)"
-            class="text-left justify-start"
+            [class]="itemAlignmentClass() + ' ' + itemJustificationClass()"
           >
-            @if (item.icon) {
-              <i [class]="item.icon + ' text-tp-text-light-secondary dark:text-tp-text-secondary mr-3'"></i>
-            }
-            <span>{{ item.label }}</span>
+            <div [class]="'flex items-center w-full ' + itemJustificationClass()">
+              @if (item.icon) {
+                <i [class]="item.icon + ' text-tp-text-light-secondary dark:text-tp-text-secondary mr-3'"></i>
+              }
+              <span [class]="itemAlignmentClass()">{{ item.label }}</span>
+            </div>
           </app-button>
         }
       }

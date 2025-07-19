@@ -85,13 +85,28 @@ export class TripContainerComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('TripContainer: Initializing trip:', tripId);
+    // Check if we're already working with the same trip to avoid unnecessary re-initialization
+    const currentTrip = this.tripDataService.currentTrip();
+    const currentTripId = currentTrip?.id;
+    const currentDataSource = this.tripDataService.dataSource();
+    
+    // For new trips, check if we already have a new trip loaded
+    // For existing trips, check if the ID matches
+    const shouldInitialize = tripId === 'new' 
+      ? currentDataSource !== 'new' || !currentTrip
+      : currentTripId !== tripId || !currentTrip;
+    
+    if (shouldInitialize) {
+      console.log('TripContainer: Initializing trip:', tripId);
+      
+      // Initialize trip through service
+      this.tripDataService.initializeTrip(tripId);
 
-    // Initialize trip through service
-    this.tripDataService.initializeTrip(tripId);
-
-    // Show appropriate toast based on data source after initialization
-    this.showInitializationToast(tripId);
+      // Show appropriate toast based on data source after initialization
+      this.showInitializationToast(tripId);
+    } else {
+      console.log('TripContainer: Same trip already loaded, skipping initialization');
+    }
   }
 
   private showInitializationToast(tripId: string): void {
