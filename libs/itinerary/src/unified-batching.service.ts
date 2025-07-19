@@ -4,7 +4,6 @@ import { TripService } from '@trip-planner/trip';
 import { StopService } from '@trip-planner/stop';
 import { TravelSegmentService } from '@trip-planner/travel-segment';
 import { TimelineService } from '@trip-planner/timeline';
-import { RoutingCoordinationService } from './routing-coordination.service';
 import { SegmentPlanningService } from './segment-planning.service';
 import { RoutingIntegrationService } from './routing-integration.service';
 import { OrderManagementService } from './order-management.service';
@@ -36,15 +35,12 @@ export class UnifiedBatchingService {
     private readonly stopService: StopService,
     private readonly travelSegmentService: TravelSegmentService,
     private readonly timelineService: TimelineService,
-    private readonly routingCoordinationService: RoutingCoordinationService,
-    
+
     // Advanced orchestration services
     private readonly segmentPlanningService: SegmentPlanningService,
     private readonly routingIntegrationService: RoutingIntegrationService,
     private readonly orderManagementService: OrderManagementService,
-    private readonly timelineCoordinationService: TimelineCoordinationService,
     private readonly sharedValidationService: SharedValidationService,
-    private readonly sharedTransactionService: SharedTransactionService,
   ) {}
 
   /**
@@ -157,13 +153,17 @@ export class UnifiedBatchingService {
     this.logger.debug(`[BATCH] Segment creation debug for trip ${trip.id}:`);
     this.logger.debug(`[BATCH] - routingData.length: ${routingData.length}`);
     this.logger.debug(`[BATCH] - segmentCreationData.length: ${segmentCreationData.length}`);
-    
+
     if (routingData.length === 0) {
-      this.logger.warn(`[BATCH] No routing data available for trip ${trip.id} - segments will not be created`);
+      this.logger.warn(
+        `[BATCH] No routing data available for trip ${trip.id} - segments will not be created`,
+      );
     } else {
       this.logger.debug(`[BATCH] Routing data sample for trip ${trip.id}:`);
       routingData.slice(0, 3).forEach((routing, index) => {
-        this.logger.debug(`[BATCH] - Routing ${index}: ${routing.originStopId} -> ${routing.destinationStopId} (${routing.travelMode})`);
+        this.logger.debug(
+          `[BATCH] - Routing ${index}: ${routing.originStopId} -> ${routing.destinationStopId} (${routing.travelMode})`,
+        );
       });
     }
 
@@ -239,7 +239,9 @@ export class UnifiedBatchingService {
       totalOperations += 1;
       this.logger.debug(`[BATCH] Queued segment deletion for trip ${tripId}`);
     } else {
-      this.logger.warn(`[BATCH] No segments to create for trip ${tripId} - skipping segment deletion`);
+      this.logger.warn(
+        `[BATCH] No segments to create for trip ${tripId} - skipping segment deletion`,
+      );
     }
 
     // Execute stop updates and segment deletions in parallel
@@ -254,22 +256,26 @@ export class UnifiedBatchingService {
         this.logger.debug(`[BATCH] Created ${plan.segmentCreationData.length} new segments`);
       } catch (error) {
         this.logger.error(`[BATCH] Failed to create segments for trip ${tripId}:`, error);
-        throw new Error(`Failed to create travel segments: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `Failed to create travel segments: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
       }
     } else {
-      this.logger.warn(`[BATCH] No new segments created for trip ${tripId} - trip may be left without segments`);
+      this.logger.warn(
+        `[BATCH] No new segments created for trip ${tripId} - trip may be left without segments`,
+      );
     }
 
     // Step 4: Update trip dirty flags
     // If routing came from matrix-only, we still need detailed routing for polylines
     const needsDetailedRouting = plan.routingData.some((r: SegmentRoutingData) => !r.polyline);
     const routingDirtyFlag = needsDetailedRouting || !plan.needsRoutingRecalculation;
-    
+
     this.logger.debug(
       `Setting trip dirty flags: needsDetailedRouting=${needsDetailedRouting}, ` +
-      `routingDirtyFlag=${routingDirtyFlag}, timelineDirtyFlag=${!plan.needsTimelineRecalculation}`
+        `routingDirtyFlag=${routingDirtyFlag}, timelineDirtyFlag=${!plan.needsTimelineRecalculation}`,
     );
-    
+
     await this.tripService.updateTripDirtyFlags(
       tripId,
       routingDirtyFlag,
@@ -398,7 +404,7 @@ export class UnifiedBatchingService {
       `[ADVANCED BATCHING] Executing reordering batch for trip ${trip.id} with ${data.stopOrders.length} order changes`,
     );
 
-    // Step 1: Comprehensive validation  
+    // Step 1: Comprehensive validation
     // Note: Trip ownership validation is handled at the controller level before reaching this service
     this.sharedValidationService.validateStopOrders(data.stopOrders);
 
@@ -422,9 +428,7 @@ export class UnifiedBatchingService {
     );
 
     // Step 4: Parse matrix if it's a string (from database) to ensure proper routing
-    const parsedMatrix = typeof trip.matrix === 'string' 
-      ? JSON.parse(trip.matrix) 
-      : trip.matrix;
+    const parsedMatrix = typeof trip.matrix === 'string' ? JSON.parse(trip.matrix) : trip.matrix;
 
     // Step 5: Acquire routing data with matrix-first strategy for consistent timing
     const routingStrategy = this.routingIntegrationService.getOptimalStrategy(
@@ -474,14 +478,10 @@ export class UnifiedBatchingService {
   ): Promise<BatchResult> {
     const startTime = Date.now();
 
-    this.logger.debug(
-      `[ADVANCED BATCHING] Executing stop insertion batch for trip ${trip.id}`,
-    );
+    this.logger.debug(`[ADVANCED BATCHING] Executing stop insertion batch for trip ${trip.id}`);
 
     // Step 1: Parse matrix if it's a string (from database) to ensure proper routing
-    const parsedMatrix = typeof trip.matrix === 'string' 
-      ? JSON.parse(trip.matrix) 
-      : trip.matrix;
+    const parsedMatrix = typeof trip.matrix === 'string' ? JSON.parse(trip.matrix) : trip.matrix;
 
     // Step 2: Validate location exists
     await this.sharedValidationService.validateLocationExists(data.locationId);
@@ -531,7 +531,9 @@ export class UnifiedBatchingService {
 
     // Note: This is a simplified version - actual implementation would need
     // to handle stop creation first, then execute the batch
-    this.logger.warn('[ADVANCED BATCHING] Stop insertion batch - implementation pending full stop creation logic');
+    this.logger.warn(
+      '[ADVANCED BATCHING] Stop insertion batch - implementation pending full stop creation logic',
+    );
 
     const totalTime = Date.now() - startTime;
     return {
@@ -553,14 +555,10 @@ export class UnifiedBatchingService {
   ): Promise<BatchResult> {
     const startTime = Date.now();
 
-    this.logger.debug(
-      `[ADVANCED BATCHING] Executing stop removal batch for trip ${trip.id}`,
-    );
+    this.logger.debug(`[ADVANCED BATCHING] Executing stop removal batch for trip ${trip.id}`);
 
     // Step 1: Parse matrix if it's a string (from database) to ensure proper routing
-    const parsedMatrix = typeof trip.matrix === 'string' 
-      ? JSON.parse(trip.matrix) 
-      : trip.matrix;
+    const parsedMatrix = typeof trip.matrix === 'string' ? JSON.parse(trip.matrix) : trip.matrix;
 
     // Step 2: Validate and prepare stop removal
     const stopToRemove = trip.stops?.find(stop => stop.id === data.stopId);
@@ -586,7 +584,8 @@ export class UnifiedBatchingService {
       includeAllDownstream: true,
     };
 
-    const planningResult = await this.segmentPlanningService.planSegmentsForOperation(planningRequest);
+    const planningResult =
+      await this.segmentPlanningService.planSegmentsForOperation(planningRequest);
 
     // Step 5: Acquire routing data with matrix-first strategy for consistent timing
     const routingStrategy = this.routingIntegrationService.getOptimalStrategy(

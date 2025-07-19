@@ -8,9 +8,7 @@ import { TimelineModule } from '@trip-planner/timeline';
 import { RoutingModule } from '@trip-planner/routing';
 import { ItineraryController } from './itinerary.controller';
 import { ItineraryService } from './itinerary.service';
-import { BatchedTripCreationService } from './batched-trip-creation.service';
 import { StopCoordinationService } from './stop-coordination.service';
-import { RoutingCoordinationService } from './routing-coordination.service';
 import { TripBankedLocationService } from './tripbankedlocation/trip-banked-location.service';
 import { TimelineCoordinationService } from './timeline-coordination.service';
 import { TripBankedLocationRepository } from './tripbankedlocation/trip-banked-location.repository';
@@ -37,9 +35,7 @@ import { SharedTransactionService } from './shared-transaction.service';
   controllers: [ItineraryController],
   providers: [
     ItineraryService,
-    BatchedTripCreationService,
     StopCoordinationService,
-    RoutingCoordinationService,
     TripBankedLocationService,
     TimelineCoordinationService,
     TripBankedLocationRepository,
@@ -56,9 +52,7 @@ import { SharedTransactionService } from './shared-transaction.service';
   ],
   exports: [
     ItineraryService,
-    BatchedTripCreationService,
     StopCoordinationService,
-    RoutingCoordinationService,
     TripBankedLocationService,
     TimelineCoordinationService,
     TripBankedLocationRepository,

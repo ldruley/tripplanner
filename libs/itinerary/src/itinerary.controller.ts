@@ -41,29 +41,14 @@ export class ItineraryController {
   constructor(private readonly itineraryService: ItineraryService) {}
 
   @Post('trips')
-  @ApiOperation({ summary: 'Create a trip from organized list of locations' })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: 'Trip created successfully',
-    type: Object, // Trip type would be defined in OpenAPI
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid input data',
-  })
-  @ApiResponse({
-    status: HttpStatus.UNAUTHORIZED,
-    description: 'Unauthorized',
-  })
-  @Post('trips')
   @ApiOperation({
-    summary: 'Create a trip',
+    summary: 'Create a trip from organized list of locations',
     description: 'Create a trip from an organized list of locations.',
   })
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'Trip created successfully',
-    type: Object,
+    type: Object, // Trip type would be defined in OpenAPI
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,

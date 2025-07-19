@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, UnauthorizedException, Logger } from '@nestjs/common';
+import { CreateTripFromOrderedListDto } from '@trip-planner/shared/dtos';
 import { PrismaClientOrTransaction } from '@trip-planner/prisma';
 import { TripService } from '@trip-planner/trip';
 import { StopService } from '@trip-planner/stop';
@@ -410,5 +411,30 @@ export class SharedValidationService {
     }
 
     this.logger.debug(`Validated ${organizedLocations.length} organized locations for trip creation`);
+  }
+
+  async validateTripAndOwnership(tripId: string, userId: string): Promise<Trip> {
+    const validationResult = await this.validateTripOwnership(tripId, userId);
+    if (!validationResult.isValid) {
+      if (validationResult.errors.some(err => err.includes('not found'))) {
+        throw new NotFoundException(validationResult.errors.join(', '));
+      }
+      if (validationResult.errors.some(err => err.includes('not owned by user'))) {
+        throw new UnauthorizedException(validationResult.errors.join(', '));
+      }
+      throw new BadRequestException(validationResult.errors.join(', '));
+    }
+    return validationResult.trip;
+  }
+  validateTripCreationRequest(data: CreateTripFromOrderedListDto): void {
+    this.validateOrganizedLocations(data.organizedLocations);
+
+    if (!data.name || data.name.trim().length === 0) {
+      throw new BadRequestException('Trip name is required');
+    }
+
+    if (data.organizedLocations.length === 0) {
+      throw new BadRequestException('At least one organized location is required');
+    }
   }
 }

@@ -85,7 +85,7 @@ export class RoutingTransformationService {
         this.logger.debug(`  Matrix constructor: ${matrix.constructor.name}`);
         this.logger.debug(`  Matrix keys sample (first 10): ${Object.keys(matrix).slice(0, 10).join(', ')}`);
         this.logger.debug(`  Matrix has originKey: ${matrix[originKey] ? 'YES' : 'NO'}`);
-        this.logger.debug(`  Matrix direct property access: ${matrix.hasOwnProperty(originKey)}`);
+        this.logger.debug(`  Matrix direct property access: ${Object.prototype.hasOwnProperty.call(matrix, originKey)}`);
         if (matrix[originKey]) {
           this.logger.debug(`  Available destination keys for ${originKey}: ${Object.keys(matrix[originKey]).join(', ')}`);
         }
@@ -249,11 +249,12 @@ export class RoutingTransformationService {
       case 'newest':
         // For simplicity, assume primary is newer in this context
         return primary;
-      case 'best':
+      case 'best': {
         // Choose the entry with the most complete data
         const primaryScore = this.calculateDataCompleteness(primary);
         const secondaryScore = this.calculateDataCompleteness(secondary);
         return primaryScore >= secondaryScore ? primary : secondary;
+      }
       default:
         return primary;
     }

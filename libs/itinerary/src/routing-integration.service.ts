@@ -1,5 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { RoutingCoordinationService } from './routing-coordination.service';
+import type { PrismaClientOrTransaction } from '@trip-planner/prisma';
+import { TripRepository, TripService } from '@trip-planner/trip';
+import { RoutingService } from '@trip-planner/routing';
+import { TravelSegmentService } from '@trip-planner/travel-segment';
 import { RoutingTransformationService } from './routing-transformation.service';
 import { SharedValidationService } from './shared-validation.service';
 import { 
@@ -8,9 +11,13 @@ import {
   CoordinateMatrix, 
   Stop,
   Trip,
-  toCoordinateKey
+  toCoordinateKey,
+  RoutingRequestSchema,
+  RoutingResponse,
+  RouteLeg
 } from '@trip-planner/types';
 import { TravelMode } from '@prisma/client';
+import { UpdateTripRoutingDto } from '@trip-planner/shared/dtos';
 
 export interface RoutingStrategy {
   preferMatrix: boolean;
@@ -67,10 +74,273 @@ export class RoutingIntegrationService {
   private readonly logger = new Logger(RoutingIntegrationService.name);
 
   constructor(
-    private readonly routingCoordinationService: RoutingCoordinationService,
     private readonly routingTransformationService: RoutingTransformationService,
     private readonly sharedValidationService: SharedValidationService,
+    private readonly tripRepository: TripRepository,
+    private readonly tripService: TripService,
+    private readonly routingService: RoutingService,
+    private readonly travelSegmentService: TravelSegmentService,
   ) {}
+
+  /**
+   * Calculate and update routing for an entire trip.
+   * Handles multi-provider routing with quota management and fallback.
+   * @param data - Trip routing update data.
+   * @param prismaClient - Prisma client for transaction.
+   * @return The updated trip with routing information.
+   */
+  async updateTripRouting(
+    data: UpdateTripRoutingDto,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Trip> {
+    this.logger.debug(`Updating routing for trip ${data.tripId} with mode ${data.travelMode}`);
+
+    // Get trip with all stops and travel segments
+    const trip = await this.tripRepository.findTripWithFullDetails(data.tripId, prismaClient);
+
+    if (!trip) {
+      throw new Error(`Trip ${data.tripId} not found`);
+    }
+
+    if (!trip.stops || trip.stops.length < 2) {
+      this.logger.warn(`Trip ${data.tripId} has less than 2 stops, skipping routing`);
+      return trip;
+    }
+
+    // Extract waypoints from stops
+    const waypoints = trip.stops
+      .sort((a, b) => a.order - b.order)
+      .map(stop => ({
+        latitude: stop.location?.latitude,
+        longitude: stop.location?.longitude,
+        name: stop.location?.name,
+      }));
+
+    try {
+      // Calculate routing using the routing service
+      const routingRequest = RoutingRequestSchema.parse({
+        waypoints,
+        options: {
+          travelMode: data.travelMode,
+        },
+      });
+      const routingResult = await this.routingService.getRouting(routingRequest);
+
+      this.logger.debug(`Received routing result from ${routingResult.provider}`);
+
+      // Update travel segments with routing data
+      await this.updateTravelSegmentsWithRouting(
+        data.tripId,
+        routingResult,
+        data.travelMode,
+        prismaClient,
+      );
+
+      // Clear the routing dirty flag after successful routing
+      await this.tripService.updateRoutingRecalculationFlag(data.tripId, false, prismaClient);
+
+      // Get the updated trip with routing data
+      const updatedTrip = await this.tripRepository.findTripWithFullDetails(
+        data.tripId,
+        prismaClient,
+      );
+
+      this.logger.log(`Successfully updated routing for trip ${data.tripId}`);
+      return updatedTrip as Trip;
+    } catch (error) {
+      this.logger.error(`Failed to update routing for trip ${data.tripId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update travel segments with routing data.
+   * @param tripId - Trip ID.
+   * @param routingResult - Routing result from the routing service.
+   * @param travelMode - Travel mode used for routing.
+   * @param prismaClient - Prisma client for transaction.
+   */
+  private async updateTravelSegmentsWithRouting(
+    tripId: string,
+    routingResult: RoutingResponse,
+    travelMode: TravelMode,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<void> {
+    // Get all travel segments for the trip
+    const segments = await this.travelSegmentService.findByTripId(tripId, prismaClient);
+
+    if (!segments || segments.length === 0) {
+      this.logger.warn(`No travel segments found for trip ${tripId}`);
+      return;
+    }
+
+    // The routing result contains a single route with legs that correspond to segments
+    const route = routingResult.route;
+
+    if (!route) {
+      this.logger.warn(`No route found in routing result for trip ${tripId}`);
+      return;
+    }
+
+    const legs = route.legs;
+
+    if (legs.length !== segments.length) {
+      this.logger.warn(
+        `Route legs count (${legs.length}) does not match segments count (${segments.length}) for trip ${tripId}`,
+      );
+      return;
+    }
+
+    // Update each segment with corresponding leg data
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i];
+      const leg: RouteLeg = legs[i];
+
+      try {
+        // Create properly typed routing data
+        const routingData = {
+          travelMode,
+          distanceMeters: leg.distance,
+          durationSeconds: leg.duration,
+          polyline: leg.geometry, // Each leg has its own geometry/polyline
+          provider: routingResult.provider,
+        };
+
+        await this.travelSegmentService.updateWithRoutingData(
+          segment.id,
+          routingData,
+          prismaClient,
+        );
+
+        this.logger.debug(`Updated segment ${segment.id} with routing data`);
+      } catch (error) {
+        this.logger.error(`Failed to update segment ${segment.id} with routing data:`, error);
+        // Continue with other segments even if one fails
+      }
+    }
+  }
+
+  /**
+   * Validate if routing is needed for a trip.
+   * @param tripId - Trip ID to check.
+   * @param forceRecalculate - Whether to force recalculation.
+   * @param prismaClient - Prisma client for transaction.
+   * @return True if routing is needed, false otherwise.
+   */
+  async isRoutingNeeded(
+    tripId: string,
+    forceRecalculate = false,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<boolean> {
+    if (forceRecalculate) {
+      return true;
+    }
+
+    // Get trip with travel segments
+    const trip = await this.tripRepository.findTripForItineraryUpdate(tripId, prismaClient);
+
+    if (!trip || !trip.stops || trip.stops.length < 2) {
+      return false;
+    }
+
+    // Check dirty flag first - if set, routing is needed
+    if (trip.needsRoutingRecalculation) {
+      return true;
+    }
+
+    // Fallback: Check if any travel segments are missing routing data
+    const segments = trip.travelSegments || [];
+
+    for (const segment of segments) {
+      if (!segment.apiCalculatedDistance || !segment.apiCalculatedDuration) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if a trip needs polyline generation for map visualization.
+   * This is more specific than isRoutingNeeded as it focuses on polylines for visualization.
+   * @param tripId - Trip ID to check.
+   * @param prismaClient - Prisma client for transaction.
+   * @return True if polylines are needed, false otherwise.
+   */
+  async needsPolylineGeneration(
+    tripId: string,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<boolean> {
+    // Get trip with travel segments
+    const trip = await this.tripRepository.findTripForItineraryUpdate(tripId, prismaClient);
+
+    if (!trip || !trip.stops || trip.stops.length < 2) {
+      return false;
+    }
+
+    const segments = trip.travelSegments || [];
+
+    // If there are no segments but there should be (stops >= 2), polylines are needed
+    if (segments.length === 0) {
+      return true;
+    }
+
+    // Check if any segments are missing polylines
+    for (const segment of segments) {
+      if (!segment.polyline) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Get routing summary for a trip.
+   * @param tripId - Trip ID.
+   * @param prismaClient - Prisma client for transaction.
+   * @return Routing summary with total distance and duration.
+   */
+  async getTripRoutingSummary(
+    tripId: string,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<{
+    totalDistanceMeters: number;
+    totalDurationSeconds: number;
+    hasCompleteRouting: boolean;
+    segmentCount: number;
+  }> {
+    const trip = await this.tripRepository.findTripForItineraryUpdate(tripId, prismaClient);
+
+    if (!trip || !trip.travelSegments) {
+      return {
+        totalDistanceMeters: 0,
+        totalDurationSeconds: 0,
+        hasCompleteRouting: false,
+        segmentCount: 0,
+      };
+    }
+
+    let totalDistance = 0;
+    let totalDuration = 0;
+    let hasCompleteRouting = true;
+
+    for (const segment of trip.travelSegments) {
+      if (segment.apiCalculatedDistance && segment.apiCalculatedDuration) {
+        totalDistance += segment.apiCalculatedDistance;
+        totalDuration += segment.apiCalculatedDuration; // Duration is already stored in seconds
+      } else {
+        hasCompleteRouting = false;
+      }
+    }
+
+    return {
+      totalDistanceMeters: totalDistance,
+      totalDurationSeconds: totalDuration,
+      hasCompleteRouting,
+      segmentCount: trip.travelSegments.length,
+    };
+  }
 
   /**
    * Comprehensive routing data acquisition with multiple strategies.
@@ -193,7 +463,7 @@ export class RoutingIntegrationService {
 
     try {
       // Use existing routing coordination service for API calls
-      const routingResults = await this.routingCoordinationService.calculateRoutingForSegmentPairs(
+      const routingResults = await this.calculateRoutingForSegmentPairs(
         request.segmentPairs,
         request.trip,
         request.travelMode || 'DRIVING',
@@ -234,6 +504,113 @@ export class RoutingIntegrationService {
   }
 
   /**
+   * Calculate routing updates for specific segment pairs.
+   * Makes actual routing service calls to get distance, duration, and polyline data.
+   * Consolidates routing calculation logic from StopCoordinationService.
+   * @param segmentPairs - Segment pairs that need routing.
+   * @param trip - Full trip with stops and locations.
+   * @param travelMode - Travel mode for routing.
+   * @return Routing data for segments.
+   */
+  private async calculateRoutingForSegmentPairs(
+    segmentPairs: Array<{ originStopId: string; destinationStopId: string; tripId: string }>,
+    trip: Trip,
+    travelMode: TravelMode,
+  ): Promise<
+    Array<{ originStopId: string; destinationStopId: string; routingData: SegmentRoutingData }>
+  > {
+    if (segmentPairs.length === 0) {
+      return [];
+    }
+
+    const routingUpdates: Array<{
+      originStopId: string;
+      destinationStopId: string;
+      routingData: SegmentRoutingData;
+    }> = [];
+
+    for (const segmentPair of segmentPairs) {
+      const originStop = trip.stops?.find(stop => stop.id === segmentPair.originStopId);
+      const destinationStop = trip.stops?.find(stop => stop.id === segmentPair.destinationStopId);
+
+      if (!originStop?.location || !destinationStop?.location) {
+        this.logger.warn(
+          `Missing location data for segment ${segmentPair.originStopId}-${segmentPair.destinationStopId}`,
+        );
+        continue;
+      }
+
+      try {
+        // Create waypoints for routing request
+        const waypoints = [
+          {
+            latitude: originStop.location.latitude,
+            longitude: originStop.location.longitude,
+            name: originStop.location.name,
+          },
+          {
+            latitude: destinationStop.location.latitude,
+            longitude: destinationStop.location.longitude,
+            name: destinationStop.location.name,
+          },
+        ];
+
+        // Make actual routing service call
+        const routingRequest = RoutingRequestSchema.parse({
+          waypoints,
+          options: {
+            travelMode,
+          },
+        });
+
+        const routingResult: RoutingResponse = await this.routingService.getRouting(routingRequest);
+
+        this.logger.debug(
+          `Calculated routing for segment ${segmentPair.originStopId}-${segmentPair.destinationStopId} using ${routingResult.provider}: ${routingResult.route.distance}m, ${routingResult.route.duration}s`,
+        );
+
+        // Map routing result to segment creation format
+        const routingData = {
+          originStopId: segmentPair.originStopId,
+          destinationStopId: segmentPair.destinationStopId,
+          travelMode: travelMode,
+          apiCalculatedDistance: routingResult.route.distance,
+          apiCalculatedDuration: Math.round(routingResult.route.duration), // Store duration in seconds to match timeline service expectations
+          polyline: routingResult.route.geometry,
+        };
+
+        routingUpdates.push({
+          originStopId: segmentPair.originStopId,
+          destinationStopId: segmentPair.destinationStopId,
+          routingData,
+        });
+      } catch (error) {
+        this.logger.error(
+          `Failed to calculate routing for segment ${segmentPair.originStopId}-${segmentPair.destinationStopId}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+
+        // Fallback: create segment without routing data
+        const routingData = {
+          originStopId: segmentPair.originStopId,
+          destinationStopId: segmentPair.destinationStopId,
+          travelMode: travelMode,
+          apiCalculatedDistance: null,
+          apiCalculatedDuration: null,
+          polyline: null,
+        };
+
+        routingUpdates.push({
+          originStopId: segmentPair.originStopId,
+          destinationStopId: segmentPair.destinationStopId,
+          routingData,
+        });
+      }
+    }
+
+    return routingUpdates;
+  }
+
+  /**
    * Supplement matrix data with API calls for missing segments.
    * Hybrid approach that combines matrix speed with API completeness.
    */
@@ -262,7 +639,7 @@ export class RoutingIntegrationService {
     this.logger.debug(`Supplementing ${missingSegments.length} missing segments with API routing`);
 
     try {
-      const apiRoutingResults = await this.routingCoordinationService.calculateRoutingForSegmentPairs(
+      const apiRoutingResults = await this.calculateRoutingForSegmentPairs(
         missingSegments,
         request.trip,
         request.travelMode || 'DRIVING',
@@ -402,7 +779,7 @@ export class RoutingIntegrationService {
     const batches: RoutingResult[] = [];
     const allRoutingData: SegmentRoutingData[] = [];
     let totalErrors: string[] = [];
-    let totalWarnings: string[] = [];
+    const totalWarnings: string[] = [];
     
     // Process segments in batches
     for (let i = 0; i < request.segmentPairs.length; i += batchSize) {
@@ -493,32 +870,6 @@ export class RoutingIntegrationService {
         }
       }
     }
-
-    // TEMPORARILY DISABLED: Matrix validation to bypass coordinate key format issues
-    // TODO: Re-enable once matrix coordinate key format is consistent across all services
-    // if (request.matrix && request.stops && request.segmentPairs.length > 0) {
-    //   // Create a map of required coordinate pairs from segment pairs
-    //   const stopMap = new Map(request.stops.map(stop => [stop.id, stop]));
-    //   const requiredPairs: string[] = [];
-    //   
-    //   for (const pair of request.segmentPairs) {
-    //     const originStop = stopMap.get(pair.originStopId);
-    //     const destinationStop = stopMap.get(pair.destinationStopId);
-    //     
-    //     if (originStop?.location && destinationStop?.location) {
-    //       const originKey = `${originStop.location.latitude},${originStop.location.longitude}`;
-    //       const destinationKey = `${destinationStop.location.latitude},${destinationStop.location.longitude}`;
-    //       
-    //       if (!request.matrix[originKey] || !request.matrix[originKey][destinationKey]) {
-    //         requiredPairs.push(`${originKey} -> ${destinationKey}`);
-    //       }
-    //     }
-    //   }
-    //   
-    //   if (requiredPairs.length > 0) {
-    //     errors.push(`Missing matrix data for required segment pairs: ${requiredPairs.join(', ')}`);
-    //   }
-    // }
 
     return {
       isValid: errors.length === 0,
