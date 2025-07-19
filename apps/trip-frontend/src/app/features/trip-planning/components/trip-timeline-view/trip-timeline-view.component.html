@@ -16,102 +16,141 @@
       <div class="text-center py-12">
         <i class="pi pi-clock text-4xl text-tp-text-light-secondary dark:text-tp-text-secondary mb-4"></i>
         <p class="text-tp-text-light-secondary dark:text-tp-text-secondary">No stops added to your trip yet</p>
-        <p class="text-sm text-tp-text-light-tertiary dark:text-tp-text-tertiary mt-2">
+        <p class="text-sm text-tp-text-light-muted dark:text-tp-text-muted mt-2">
           Add some stops to see your timeline
         </p>
       </div>
     } @else {
-      <p-timeline [value]="timelineEvents()" align="left" class="trip-timeline">
-        <ng-template #marker let-event>
-          <span 
-            class="flex w-10 h-10 items-center justify-center text-white rounded-full z-10 shadow-lg border-2 border-white"
-            [style.background-color]="event.color"
-            [class.opacity-75]="event.type === 'segment'"
-          >
-            <i [class]="event.icon" [class.text-sm]="event.type === 'segment'"></i>
-          </span>
-        </ng-template>
+      <!-- Custom Timeline -->
+      <div class="custom-timeline relative">
 
-        <ng-template #opposite let-event>
-          <span></span>
-        </ng-template>
-        
-        <ng-template #content let-event>
-          @if (event.type === 'stop') {
-            <!-- Stop Card -->
-            <p-card 
-              [header]="event.title" 
-              [subheader]="event.time"
-              class="stop-card border-2 border-tp-border-light dark:border-tp-border shadow-md"
-            >
-              <div class="space-y-3">
-                <div class="flex items-center justify-between">
+        @for (event of timelineEvents(); track event.id; let i = $index) {
+          <div class="timeline-item relative mb-8" [class.last-item]="$last">
+            <!-- Connecting Line to Next Item (not shown for last item) -->
+            @if (!$last) {
+              <div class="absolute w-0.5 bg-tp-border-light dark:bg-tp-border z-0
+                          left-[1.25rem] lg:left-[12.75rem]
+                          top-[1.25rem] h-[calc(100%+2rem)]"></div>
+            }
+            <!-- Timeline Item Container -->
+            <div class="flex items-start gap-4 lg:gap-6">
+              <!-- Time Display (Desktop: Left side, Mobile: Hidden) -->
+              <div class="timeline-time hidden lg:flex flex-shrink-0 w-32 lg:w-40 text-right pr-2">
+                @if (event.time && event.type === 'stop') {
                   <span class="text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary">
-                    Duration: {{ event.subtitle }}
+                    {{ event.time }}
                   </span>
-                  <span class="px-2 py-1 text-xs rounded-full"
-                        [class]="event.data.stopType === 'OVERNIGHT' ? 
-                                'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 
-                                'bg-tp-orange/10 text-tp-orange dark:bg-tp-orange/20 dark:text-tp-orange'">
-                    {{ event.data.stopType || 'PITSTOP' }}
-                  </span>
-                </div>
-                
-                @if (event.description) {
-                  <p class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">
-                    {{ event.description }}
-                  </p>
-                }
-                
-                <div class="flex justify-end">
-                  <p-button 
-                    label="View Details" 
-                    icon="pi pi-info-circle"
-                    [text]="true" 
-                    size="small"
-                    (onClick)="onStopDetailsRequested(event.data)"
-                  />
-                </div>
-              </div>
-            </p-card>
-          } @else {
-            <!-- Travel Segment Card -->
-            <div class="segment-card bg-transparent border-2 border-tp-border-light dark:border-tp-border rounded-lg p-4">
-              <div class="flex items-center justify-between mb-2">
-                <h4 class="text-sm font-medium text-tp-text-light-primary dark:text-tp-text-primary">
-                  {{ event.title }}
-                </h4>
-                @if (event.data.travelMode) {
-                  <span class="px-2 py-1 text-xs rounded-full bg-tp-bg-light-tertiary text-tp-text-light-secondary dark:bg-tp-bg-secondary dark:text-tp-text-secondary">
-                    {{ event.data.travelMode }}
-                  </span>
+                } @else {
+                  <!-- Empty space for segments to maintain alignment -->
+                  <span>&nbsp;</span>
                 }
               </div>
-              
-              <p class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary mb-3">
-                {{ event.subtitle }}
-              </p>
-              
-              @if (event.description) {
-                <p class="text-xs text-tp-text-light-tertiary dark:text-tp-text-tertiary mb-3">
-                  {{ event.description }}
-                </p>
-              }
-              
-              <div class="flex justify-end">
-                <p-button 
-                  label="Add Notes" 
-                  icon="pi pi-pencil"
-                  [outlined]="true" 
-                  size="small"
-                  severity="secondary"
-                  (onClick)="onSegmentNotesRequested(event.data)"
-                />
+
+              <!-- Timeline Marker -->
+              <div class="timeline-marker relative flex-shrink-0 z-10"
+                   [class.ml-1]="event.type === 'segment'">
+                <!-- Marker Circle/Icon -->
+                <div class="timeline-icon flex items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-110"
+                     [class.w-10]="event.type === 'stop'"
+                     [class.h-10]="event.type === 'stop'"
+                     [class.w-8]="event.type === 'segment'"
+                     [class.h-8]="event.type === 'segment'"
+                     [class.bg-tp-orange]="event.type === 'stop'"
+                     [class.bg-emerald-500]="event.type === 'segment'"
+                     [class.dark:bg-tp-bg-quaternary]="event.type === 'segment'">
+
+                  <i [class]="event.icon"
+                     class="text-white text-base"
+                     [class.!text-sm]="event.type === 'segment'"></i>
+                </div>
+              </div>
+
+              <!-- Content Area -->
+              <div class="timeline-content flex-1 min-w-0 -mt-1">
+                @if (event.type === 'stop') {
+                  <!-- Stop Card -->
+                  <div class="stop-card bg-tp-bg-light-primary dark:bg-tp-bg-secondary border border-tp-border-light dark:border-tp-border rounded-lg p-4 shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
+                    <!-- Mobile Time Display -->
+                    @if (event.time) {
+                      <div class="block lg:hidden mb-2">
+                        <span class="text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary">
+                          {{ event.time }}
+                        </span>
+                      </div>
+                    }
+
+                    <div class="space-y-3">
+                      <div class="stop-header">
+                        <h3 class="text-lg font-semibold text-tp-text-light-primary dark:text-tp-text-primary">
+                          {{ event.title }}
+                        </h3>
+                      </div>
+
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-tp-text-light-secondary dark:text-tp-text-secondary">
+                          Duration: {{ event.subtitle }}
+                        </span>
+                        <span class="px-2 py-1 text-xs rounded-full"
+                              [class]="getStopTypeClass(event.data)">
+                          {{ getStopTypeDisplay(event.data) }}
+                        </span>
+                      </div>
+
+                      @if (event.description) {
+                        <p class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">
+                          {{ event.description }}
+                        </p>
+                      }
+
+                      <div class="flex justify-end">
+                        <button
+                          class="text-sm text-tp-orange hover:text-tp-orange-hover transition-colors duration-200 font-medium"
+                          (click)="onStopDetailsRequested(event.data)">
+                          <i class="pi pi-info-circle mr-1"></i>
+                          View Details
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                } @else {
+                  <!-- Travel Segment Card -->
+                  <div class="segment-card bg-tp-bg-light-secondary/50 dark:bg-tp-bg-tertiary/50 border border-tp-border-light dark:border-tp-border rounded-lg p-3 opacity-90 hover:opacity-100 transition-all duration-200 hover:-translate-y-0.5">
+                    <div class="flex items-center justify-between mb-2">
+                      <h4 class="text-sm font-medium text-tp-text-light-primary dark:text-tp-text-primary">
+                        {{ event.title }}
+                      </h4>
+                      @if (getTravelMode(event.data)) {
+                        <span class="px-2 py-1 text-xs rounded-full bg-tp-bg-light-tertiary text-tp-text-light-secondary dark:bg-tp-bg-tertiary dark:text-tp-text-secondary">
+                          {{ getTravelMode(event.data) }}
+                        </span>
+                      }
+                    </div>
+
+                    <p class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary mb-3">
+                      {{ event.subtitle }}
+                    </p>
+
+                    @if (event.description) {
+                      <p class="text-xs text-tp-text-light-muted dark:text-tp-text-muted mb-3">
+                        {{ event.description }}
+                      </p>
+                    }
+
+                    <div class="flex justify-end">
+                      <button
+                        class="text-xs text-tp-text-light-secondary hover:text-tp-text-light-primary dark:text-tp-text-secondary dark:hover:text-tp-text-primary transition-colors duration-200 border border-tp-border-light dark:border-tp-border rounded px-2 py-1"
+                        (click)="onSegmentNotesRequested(event.data)">
+                        <i class="pi pi-pencil mr-1"></i>
+                        Add Notes
+                      </button>
+                    </div>
+                  </div>
+                }
               </div>
             </div>
-          }
-        </ng-template>
-      </p-timeline>
+          </div>
+        }
+      </div>
     }
   </div>
 </div>

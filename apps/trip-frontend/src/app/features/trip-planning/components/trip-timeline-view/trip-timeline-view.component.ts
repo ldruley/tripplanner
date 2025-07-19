@@ -1,8 +1,5 @@
 import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TimelineModule } from 'primeng/timeline';
-import { CardModule } from 'primeng/card';
-import { ButtonModule } from 'primeng/button';
 import { TripDataService } from '../../services/trip-data.service';
 import { TripTimezoneService } from '../../services/trip-timezone.service';
 import { Stop, TravelSegment } from '@trip-planner/types';
@@ -24,9 +21,9 @@ interface TimelineEvent {
 @Component({
   selector: 'app-trip-timeline-view',
   standalone: true,
-  imports: [CommonModule, TimelineModule, CardModule, ButtonModule],
+  imports: [CommonModule],
   templateUrl: './trip-timeline-view.component.html',
-  styleUrl: './trip-timeline-view.component.css'
+  styleUrl: './trip-timeline-view.component.css',
 })
 export class TripTimelineViewComponent {
   private tripDataService = inject(TripDataService);
@@ -59,15 +56,15 @@ export class TripTimelineViewComponent {
         title: stop.location?.name || 'Unknown Location',
         subtitle: this.formatStopTiming(stop),
         description: stop.notes || '',
-        time: this.formatStopTime(stop)
+        time: this.formatStopTime(stop),
       };
       events.push(stopEvent);
 
       // Add travel segment event if there's a next stop
       if (index < sortedStops.length - 1) {
         const nextStop = sortedStops[index + 1];
-        const segment = segments.find(s =>
-          s.originStopId === stop.id && s.destinationStopId === nextStop.id
+        const segment = segments.find(
+          s => s.originStopId === stop.id && s.destinationStopId === nextStop.id,
         );
 
         if (segment) {
@@ -77,10 +74,10 @@ export class TripTimelineViewComponent {
             order: stop.order * 2 + 1, // Odd numbers for segments
             data: segment,
             icon: this.getSegmentIcon(segment),
-            color: '#6b7280', // Muted gray
+            color: 'text-tp-text-light-secondary', // Muted gray from theme
             title: 'Travel',
             subtitle: this.formatSegmentInfo(segment),
-            description: segment.notes || ''
+            description: segment.notes || '',
           };
           events.push(segmentEvent);
         }
@@ -90,25 +87,49 @@ export class TripTimelineViewComponent {
     return events.sort((a, b) => a.order - b.order);
   });
 
+  // Helper methods for template type checking (public for template access)
+  getStopTypeClass(data: Stop | TravelSegment): string {
+    if ('stopType' in data) {
+      return data.stopType === 'OVERNIGHT'
+        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+        : 'bg-tp-orange/10 text-tp-orange dark:bg-tp-orange/20 dark:text-tp-orange';
+    }
+    return '';
+  }
+
+  getStopTypeDisplay(data: Stop | TravelSegment): string {
+    if ('stopType' in data) {
+      return data.stopType || 'PITSTOP';
+    }
+    return '';
+  }
+
+  getTravelMode(data: Stop | TravelSegment): string | undefined {
+    if ('travelMode' in data) {
+      return data.travelMode || undefined;
+    }
+    return undefined;
+  }
+
   private getStopIcon(stop: Stop): string {
     switch (stop.stopType) {
       case 'OVERNIGHT':
-        return 'pi pi-moon';
+        return 'pi pi-home'; // Hotel/accommodation icon
       case 'PITSTOP':
-        return 'pi pi-map-marker';
+        return 'pi pi-map-marker'; // Location pin icon
       default:
-        return 'pi pi-circle';
+        return 'pi pi-circle'; // Simple circle
     }
   }
 
   private getStopColor(stop: Stop): string {
     switch (stop.stopType) {
       case 'OVERNIGHT':
-        return '#3b82f6'; // Blue
+        return 'bg-blue-500'; // Blue
       case 'PITSTOP':
-        return '#10b981'; // Green
+        return 'bg-emerald-500'; // Green
       default:
-        return '#8b5cf6'; // Purple
+        return 'bg-tp-orange'; // Orange from theme
     }
   }
 
@@ -119,10 +140,10 @@ export class TripTimelineViewComponent {
       case 'WALKING':
         return 'pi pi-user';
       case 'BICYCLING':
-        return 'pi pi-send';
+        return 'pi pi-circle';
       case 'TRANSIT':
       case 'PUBLIC_TRANSPORT':
-        return 'pi pi-truck';
+        return 'pi pi-send';
       default:
         return 'pi pi-arrow-right';
     }
@@ -149,7 +170,7 @@ export class TripTimelineViewComponent {
         stop.plannedArrivalTime,
         stop.location,
         'MMM d, h:mm a',
-        false
+        false,
       );
     }
     if (stop.calculatedArrivalTime && stop.location) {
@@ -157,7 +178,7 @@ export class TripTimelineViewComponent {
         stop.calculatedArrivalTime,
         stop.location,
         'MMM d, h:mm a',
-        false
+        false,
       );
     }
     return undefined;
@@ -189,13 +210,17 @@ export class TripTimelineViewComponent {
     return parts.length > 0 ? parts.join(' • ') : 'No travel info';
   }
 
-  onStopDetailsRequested(stop: Stop): void {
-    // TODO: Open stop details modal
-    console.log('Stop details requested for:', stop);
+  onStopDetailsRequested(data: Stop | TravelSegment): void {
+    if ('stopType' in data) {
+      // TODO: Open stop details modal
+      console.log('Stop details requested for:', data);
+    }
   }
 
-  onSegmentNotesRequested(segment: TravelSegment): void {
-    // TODO: Open segment notes modal
-    console.log('Segment notes requested for:', segment);
+  onSegmentNotesRequested(data: Stop | TravelSegment): void {
+    if ('travelMode' in data) {
+      // TODO: Open segment notes modal
+      console.log('Segment notes requested for:', data);
+    }
   }
 }

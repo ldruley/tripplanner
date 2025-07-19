@@ -414,4 +414,65 @@ export class ItineraryController {
       data.position,
     );
   }
+
+  @Post('trips/:tripId/generate-polylines')
+  @ApiOperation({ 
+    summary: 'Generate polylines for trip visualization',
+    description: 'Generate detailed routing with polylines for map visualization. Used when trips have matrix routing data but need visual route paths.'
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Polylines generated successfully',
+    type: Object, // Trip type would be defined in OpenAPI
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Trip not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized',
+  })
+  async generatePolylines(
+    @CurrentUser() user: SafeUser,
+    @Param('tripId') tripId: string,
+    @Body() data: { travelMode?: TravelMode; forceRecalculate?: boolean } = {},
+  ): Promise<Trip> {
+    this.logger.log(`Generating polylines for trip ${tripId} for user ${user.id}`);
+    return await this.itineraryService.generatePolylines(user.id, tripId, data);
+  }
+
+  @Get('trips/:tripId/polyline-status')
+  @ApiOperation({ 
+    summary: 'Check polyline status for a trip',
+    description: 'Check if a trip needs polyline generation for map visualization'
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Polyline status retrieved successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Trip not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized',
+  })
+  async getPolylineStatus(
+    @CurrentUser() user: SafeUser,
+    @Param('tripId') tripId: string,
+  ): Promise<{
+    needsPolylines: boolean;
+    hasCompleteRouting: boolean;
+    segmentCount: number;
+    segmentsWithPolylines: number;
+  }> {
+    this.logger.log(`Getting polyline status for trip ${tripId} for user ${user.id}`);
+    return await this.itineraryService.getPolylineStatus(user.id, tripId);
+  }
 }

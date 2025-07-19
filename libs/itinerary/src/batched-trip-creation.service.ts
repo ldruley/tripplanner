@@ -356,7 +356,18 @@ export class BatchedTripCreationService {
     stopCount: number,
     prismaClient: PrismaClientOrTransaction,
   ): Promise<void> {
-    const needsRouting = !data.calculateRouting && stopCount >= 2;
+    // Set needsRoutingRecalculation in these cases:
+    // 1. Routing was not calculated at all (!data.calculateRouting)
+    // 2. Matrix routing was used (data.matrix exists) which doesn't generate polylines for visualization
+    const hasMatrix = data.matrix && (typeof data.matrix === 'string' ? JSON.parse(data.matrix) : data.matrix);
+    const usedMatrixRouting = data.calculateRouting && hasMatrix;
+    const needsRouting = (!data.calculateRouting || usedMatrixRouting) && stopCount >= 2;
+    
+    this.logger.debug(
+      `Setting trip dirty flags: calculateRouting=${data.calculateRouting}, hasMatrix=${!!hasMatrix}, ` +
+      `usedMatrixRouting=${usedMatrixRouting}, needsRouting=${needsRouting}`
+    );
+    
     await this.tripService.updateTripDirtyFlags(tripId, needsRouting, false, prismaClient);
   }
 

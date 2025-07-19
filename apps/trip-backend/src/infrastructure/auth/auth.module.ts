@@ -8,6 +8,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthModule as SharedAuthModule } from '@trip-planner/auth';
 import { EmailModule } from '@trip-planner/email';
 import { LocalStrategy } from './strategies/local.strategy';
+import { RefreshStrategy } from './strategies/refresh.strategy';
 
 @Module({
   imports: [
@@ -28,7 +29,7 @@ import { LocalStrategy } from './strategies/local.strategy';
     EmailModule, // Import email module for sending emails
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy], // JwtStrategy now comes from SharedAuthModule
+  providers: [AuthService, LocalStrategy, RefreshStrategy], // JwtStrategy now comes from SharedAuthModule
   exports: [AuthService, PassportModule, JwtModule],
 })
 export class AuthModule {}

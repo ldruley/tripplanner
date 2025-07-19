@@ -16,6 +16,10 @@ export const TRIP_PLANNING_ROUTES: Routes = [
     component: TripContainerComponent,
   },
   {
+    path: ':tripId/map',
+    component: TripContainerComponent,
+  },
+  {
     path: ':tripId',
     component: TripContainerComponent,
   },

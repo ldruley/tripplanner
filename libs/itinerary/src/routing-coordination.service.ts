@@ -372,6 +372,41 @@ export class RoutingCoordinationService {
   }
 
   /**
+   * Check if a trip needs polyline generation for map visualization.
+   * This is more specific than isRoutingNeeded as it focuses on polylines for visualization.
+   * @param tripId - Trip ID to check.
+   * @param prismaClient - Prisma client for transaction.
+   * @return True if polylines are needed, false otherwise.
+   */
+  async needsPolylineGeneration(
+    tripId: string,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<boolean> {
+    // Get trip with travel segments
+    const trip = await this.tripRepository.findTripForItineraryUpdate(tripId, prismaClient);
+
+    if (!trip || !trip.stops || trip.stops.length < 2) {
+      return false;
+    }
+
+    const segments = trip.travelSegments || [];
+
+    // If there are no segments but there should be (stops >= 2), polylines are needed
+    if (segments.length === 0) {
+      return true;
+    }
+
+    // Check if any segments are missing polylines
+    for (const segment of segments) {
+      if (!segment.polyline) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
    * Get routing summary for a trip.
    * @param tripId - Trip ID.
    * @param prismaClient - Prisma client for transaction.

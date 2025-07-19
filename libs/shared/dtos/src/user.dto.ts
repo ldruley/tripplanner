@@ -10,6 +10,8 @@ import {
   ResetPasswordSchema,
   VerifyEmailSchema,
   ResendVerificationSchema,
+  RefreshTokenSchema,
+  AuthResponseSchema,
 } from '@trip-planner/types';
 
 export class UserDto extends createZodDto(UserSchema) {}
@@ -21,3 +23,5 @@ export class RequestPasswordResetDto extends createZodDto(RequestPasswordResetSc
 export class ResetPasswordDto extends createZodDto(ResetPasswordSchema) {}
 export class VerifyEmailDto extends createZodDto(VerifyEmailSchema) {}
 export class ResendVerificationDto extends createZodDto(ResendVerificationSchema) {}
+export class RefreshTokenDto extends createZodDto(RefreshTokenSchema) {}
+export class AuthResponseDto extends createZodDto(AuthResponseSchema) {}

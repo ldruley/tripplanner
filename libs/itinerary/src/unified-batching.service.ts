@@ -61,6 +61,7 @@ export class UnifiedBatchingService {
    * @param startTime - Optional trip start time for timeline calculation
    * @param prismaClient - Prisma client for transaction
    * @param tripData - Optional pre-loaded trip data to avoid additional database query
+   * @param routingSource - Source of routing data ('matrix', 'api', 'hybrid', 'cache') for dirty flag logic
    * @return Batch execution result
    */
   async executeCompleteBatch(
@@ -71,6 +72,7 @@ export class UnifiedBatchingService {
     startTime?: Date,
     prismaClient?: PrismaClientOrTransaction,
     tripData?: Trip,
+    routingSource?: 'matrix' | 'api' | 'hybrid' | 'cache',
   ): Promise<BatchResult> {
     const planningStartTime = Date.now();
 
@@ -259,9 +261,18 @@ export class UnifiedBatchingService {
     }
 
     // Step 4: Update trip dirty flags
+    // If routing came from matrix-only, we still need detailed routing for polylines
+    const needsDetailedRouting = plan.routingData.some((r: SegmentRoutingData) => !r.polyline);
+    const routingDirtyFlag = needsDetailedRouting || !plan.needsRoutingRecalculation;
+    
+    this.logger.debug(
+      `Setting trip dirty flags: needsDetailedRouting=${needsDetailedRouting}, ` +
+      `routingDirtyFlag=${routingDirtyFlag}, timelineDirtyFlag=${!plan.needsTimelineRecalculation}`
+    );
+    
     await this.tripService.updateTripDirtyFlags(
       tripId,
-      !plan.needsRoutingRecalculation, // routing dirty = false if we just calculated it
+      routingDirtyFlag,
       !plan.needsTimelineRecalculation, // timeline dirty = false if we just calculated it
       prismaClient,
     );
@@ -441,6 +452,7 @@ export class UnifiedBatchingService {
       trip.startDate || undefined, // Preserve original trip start time to prevent timeline drift
       prismaClient,
       trip,
+      routingResult.source, // Pass routing source for dirty flag logic
     );
 
     const totalTime = Date.now() - startTime;
@@ -605,6 +617,8 @@ export class UnifiedBatchingService {
         true,
         trip.startDate || undefined, // Preserve original trip start time to prevent timeline drift
         prismaClient,
+        trip,
+        routingResult.source, // Pass routing source for dirty flag logic
       );
     } else {
       // If no remaining stops, just update dirty flags

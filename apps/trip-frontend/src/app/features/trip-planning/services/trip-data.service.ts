@@ -19,6 +19,7 @@ import { TripTimezoneService } from './trip-timezone.service';
 import { ItineraryApiService } from './itinerary-api.service';
 import { TripDraftStore } from './trip-draft-store.service';
 import { TripStateService, DataSource } from './trip-state.service';
+import { PolylineGenerationService, PolylineGenerationOptions } from './polyline-generation.service';
 
 // Re-export types for backward compatibility
 export type { DataSource } from './trip-state.service';
@@ -33,6 +34,7 @@ export class TripDataService {
   private readonly itineraryApiService = inject(ItineraryApiService);
   private readonly tripDraftStore = inject(TripDraftStore);
   private readonly tripStateService = inject(TripStateService);
+  private readonly polylineGenerationService = inject(PolylineGenerationService);
   private readonly apiUrl = environment.backendApiUrl;
 
   // Delegate all reactive state to TripStateService
@@ -586,6 +588,39 @@ export class TripDataService {
   }
 
   /**
+   * Check if the current trip matches the given trip ID
+   * Used to prevent unnecessary re-initialization during route changes
+   */
+  currentTripMatchesId(tripId: string): boolean {
+    const currentTrip = this.currentTrip();
+    const currentDataSource = this.dataSource();
+    
+    console.log('TripDataService: currentTripMatchesId check:', {
+      tripId,
+      currentTripId: currentTrip?.id,
+      currentDataSource,
+      hasCurrentTrip: !!currentTrip
+    });
+    
+    if (!currentTrip) {
+      console.log('TripDataService: No current trip, returning false');
+      return false;
+    }
+    
+    // Handle 'new' route case
+    if (tripId === 'new') {
+      const matches = currentDataSource === 'new';
+      console.log('TripDataService: Checking new route, dataSource matches:', matches);
+      return matches;
+    }
+    
+    // Handle existing trip ID case
+    const matches = currentTrip.id === tripId;
+    console.log('TripDataService: Checking existing trip ID, IDs match:', matches);
+    return matches;
+  }
+
+  /**
    * Timeline-specific methods for future timeline view
    */
 
@@ -765,6 +800,73 @@ export class TripDataService {
     return this.http
       .put<Trip>(`${this.apiUrl}/itinerary/trips/${trip.id}`, updateRequest)
       .pipe(map(response => TripSchema.parse(response)));
+  }
+
+  /**
+   * Generate polylines for trip visualization
+   * @param options - Generation options including travel mode and force recalculate
+   * @returns Observable of updated trip with polylines
+   */
+  generatePolylines(options: PolylineGenerationOptions = {}): Observable<Trip> {
+    const currentTrip = this.currentTrip();
+    if (!currentTrip) {
+      throw new Error('No current trip to generate polylines for');
+    }
+
+    return this.polylineGenerationService.generatePolylines(currentTrip.id, options).pipe(
+      tap(updatedTrip => {
+        // Use Zod to parse and coerce dates
+        const parsedTrip = TripSchema.parse(updatedTrip);
+        this.tripStateService.updateState({
+          trip: parsedTrip,
+          isDirty: false,
+        });
+      }),
+      catchError((error: unknown) => {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        this.tripStateService.setError(`Failed to generate polylines: ${errorMessage}`);
+        throw error;
+      }),
+    );
+  }
+
+  /**
+   * Check polyline status for current trip
+   * @returns Observable of polyline status
+   */
+  getPolylineStatus(): Observable<{
+    needsPolylines: boolean;
+    hasCompleteRouting: boolean;
+    segmentCount: number;
+    segmentsWithPolylines: number;
+  }> {
+    const currentTrip = this.currentTrip();
+    if (!currentTrip) {
+      throw new Error('No current trip to check polyline status for');
+    }
+
+    return this.polylineGenerationService.getPolylineStatus(currentTrip.id);
+  }
+
+  /**
+   * Get polyline generation loading state
+   */
+  get isGeneratingPolylines() {
+    return this.polylineGenerationService.isGenerating;
+  }
+
+  /**
+   * Get polyline generation error state
+   */
+  get polylineError() {
+    return this.polylineGenerationService.error;
+  }
+
+  /**
+   * Clear polyline generation error
+   */
+  clearPolylineError(): void {
+    this.polylineGenerationService.clearError();
   }
 
   /**

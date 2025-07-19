@@ -27,6 +27,8 @@ export const UserSchema = extendApi(
       .describe('Expiration date for verification token'),
     resetToken: z.string().nullable().optional().describe('Token used for password reset'),
     resetTokenExpiry: z.date().nullable().optional().describe('Expiration date for reset token'),
+    refreshToken: z.string().nullable().optional().describe('Refresh token for JWT authentication'),
+    refreshTokenExpiry: z.date().nullable().optional().describe('Expiration date for refresh token'),
     createdAt: z.date().describe('Timestamp when the user account was created'),
     updatedAt: z.date().describe('Timestamp when the user account was last updated'),
   }),
@@ -56,6 +58,8 @@ export const SafeUserSchema = extendApi(
     verificationTokenExpiry: true,
     resetToken: true,
     resetTokenExpiry: true,
+    refreshToken: true,
+    refreshTokenExpiry: true,
   }),
   {
     title: 'Safe User',
@@ -191,6 +195,41 @@ export const ResendVerificationSchema = extendApi(
   },
 );
 
+export const RefreshTokenSchema = extendApi(
+  z.object({
+    refreshToken: z
+      .string()
+      .min(1, 'Refresh token is required')
+      .describe('Refresh token for obtaining new access token'),
+  }),
+  {
+    title: 'Refresh Token',
+    description: 'Schema for refresh token requests',
+    example: {
+      refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+    },
+  },
+);
+
+export const AuthResponseSchema = extendApi(
+  z.object({
+    access_token: z.string().describe('JWT access token for API authentication'),
+    refresh_token: z.string().describe('JWT refresh token for obtaining new access tokens'),
+    expires_in: z.number().describe('Access token expiration time in seconds'),
+    token_type: z.string().default('Bearer').describe('Token type for authorization header'),
+  }),
+  {
+    title: 'Auth Response',
+    description: 'Response schema for authentication operations',
+    example: {
+      access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+      refresh_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+      expires_in: 900,
+      token_type: 'Bearer',
+    },
+  },
+);
+
 export const UserResponseSchema = extendApi(
   createSuccessResponseSchema(SafeUserSchema),
   {
@@ -220,6 +259,8 @@ export type RequestPasswordReset = z.infer<typeof RequestPasswordResetSchema>;
 export type ResetPassword = z.infer<typeof ResetPasswordSchema>;
 export type VerifyEmail = z.infer<typeof VerifyEmailSchema>;
 export type ResendVerification = z.infer<typeof ResendVerificationSchema>;
+export type RefreshToken = z.infer<typeof RefreshTokenSchema>;
+export type AuthResponse = z.infer<typeof AuthResponseSchema>;
 
 export interface AuthenticatedRequest extends Request {
   user: SafeUser;

@@ -513,4 +513,95 @@ export class ItineraryService {
       throw error;
     }
   }
+
+  /**
+   * Generate polylines for trip visualization.
+   * Creates detailed routing with polylines for trips that have matrix routing data.
+   * @param userId - User ID who owns the trip.
+   * @param tripId - Trip ID to generate polylines for.
+   * @param options - Generation options including travel mode and force recalculate.
+   * @return The updated trip with polylines.
+   */
+  async generatePolylines(
+    userId: string,
+    tripId: string,
+    options: { travelMode?: TravelMode; forceRecalculate?: boolean } = {},
+  ): Promise<Trip> {
+    this.logger.log(`Generating polylines for trip ${tripId} for user ${userId}`);
+
+    try {
+      // Validate trip ownership
+      const trip = await this.validateTrip(tripId, userId);
+
+      // Check if polylines are needed
+      const needsPolylines = await this.routingCoordinationService.needsPolylineGeneration(tripId);
+
+      if (!needsPolylines && !options.forceRecalculate) {
+        this.logger.log(`Trip ${tripId} already has polylines, skipping generation`);
+        return trip;
+      }
+
+      // Use routing coordination service to generate detailed routing with polylines
+      const routingData: UpdateTripRoutingDto = {
+        tripId,
+        travelMode: options.travelMode || 'DRIVING',
+        forceRecalculate: options.forceRecalculate || false,
+      };
+
+      const updatedTrip = await this.routingCoordinationService.updateTripRouting(routingData);
+
+      this.logger.log(`Successfully generated polylines for trip ${tripId}`);
+      return updatedTrip;
+    } catch (error) {
+      this.logger.error(`Failed to generate polylines for trip ${tripId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get polyline status for a trip.
+   * Checks if a trip needs polyline generation for map visualization.
+   * @param userId - User ID who owns the trip.
+   * @param tripId - Trip ID to check status for.
+   * @return Polyline status information.
+   */
+  async getPolylineStatus(
+    userId: string,
+    tripId: string,
+  ): Promise<{
+    needsPolylines: boolean;
+    hasCompleteRouting: boolean;
+    segmentCount: number;
+    segmentsWithPolylines: number;
+  }> {
+    this.logger.log(`Getting polyline status for trip ${tripId} for user ${userId}`);
+
+    try {
+      // Validate trip ownership
+      await this.validateTrip(tripId, userId);
+
+      // Get routing summary
+      const routingSummary = await this.routingCoordinationService.getTripRoutingSummary(tripId);
+      
+      // Check if polylines are specifically needed
+      const needsPolylines = await this.routingCoordinationService.needsPolylineGeneration(tripId);
+      
+      // Get trip with segments to count polylines
+      const trip = await this.tripService.findById(tripId, false, false, true);
+      const segmentsWithPolylines = trip?.travelSegments?.filter(segment => !!segment.polyline).length || 0;
+
+      const status = {
+        needsPolylines: needsPolylines,
+        hasCompleteRouting: routingSummary.hasCompleteRouting,
+        segmentCount: routingSummary.segmentCount,
+        segmentsWithPolylines,
+      };
+
+      this.logger.log(`Polyline status for trip ${tripId}:`, status);
+      return status;
+    } catch (error) {
+      this.logger.error(`Failed to get polyline status for trip ${tripId}:`, error);
+      throw error;
+    }
+  }
 }

@@ -1,6 +1,9 @@
 /* PrimeIcons CSS */
 @import 'primeicons/primeicons.css';
 
+/* Mapbox GL CSS */
+@import 'mapbox-gl/dist/mapbox-gl.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

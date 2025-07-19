@@ -1,11 +1,13 @@
-import { Component, inject, OnInit, computed, signal } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { TripDataService } from '../../services/trip-data.service';
 import { ToastService } from '../../../shared/services';
 import { TripEditViewComponent } from '../../components/trip-edit-view/trip-edit-view.component';
 import { TripDetailsViewComponent } from '../../components/trip-details-view/trip-details-view.component';
 import { TripTimelineViewComponent } from '../../components/trip-timeline-view/trip-timeline-view.component';
+import { TripMapViewComponent } from '../../components/trip-map-view/trip-map-view.component';
 
 @Component({
   selector: 'app-trip-container',
@@ -15,69 +17,79 @@ import { TripTimelineViewComponent } from '../../components/trip-timeline-view/t
     TripEditViewComponent,
     TripDetailsViewComponent,
     TripTimelineViewComponent,
+    TripMapViewComponent,
   ],
   templateUrl: './trip-container.component.html',
   styleUrl: './trip-container.component.css',
 })
-export class TripContainerComponent implements OnInit {
+export class TripContainerComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private tripDataService = inject(TripDataService);
   private toastService = inject(ToastService);
 
+  // Subscriptions
+  private routeSubscription?: Subscription;
+
   // View state management
-  currentView = signal<'planning' | 'timeline'>('planning');
-  
+  currentView = signal<'planning' | 'timeline' | 'map'>('planning');
+
   // Mobile side pane state
   isSidePaneOpen = signal<boolean>(false);
-  
+
   // Access trip data for navigation logic
   trip = this.tripDataService.currentTrip;
-  
-  // Computed properties
-  tripId = computed(() => this.route.snapshot.paramMap.get('tripId'));
+
+  // Current trip ID from route
+  currentTripId = signal<string | null>(null);
 
   ngOnInit(): void {
-    // Check if this is a new trip route - redirect timeline to planning
+    console.log('TripContainer: ngOnInit called');
+    // Subscribe to route parameter changes to handle navigation between trip IDs
+    this.routeSubscription = this.route.paramMap.subscribe(params => {
+      const tripId = params.get('tripId') || 'new';
+      console.log('TripContainer: Route params changed, tripId:', tripId);
+      
+      this.currentTripId.set(tripId);
+      this.updateCurrentView();
+      this.initializeTripData(tripId);
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.routeSubscription) {
+      this.routeSubscription.unsubscribe();
+    }
+  }
+
+  private updateCurrentView(): void {
+    const urlPath = this.route.snapshot.url.map(segment => segment.path).join('/');
+    if (urlPath.endsWith('timeline')) {
+      this.currentView.set('timeline');
+    } else if (urlPath.endsWith('map')) {
+      this.currentView.set('map');
+    } else {
+      this.currentView.set('planning');
+    }
+  }
+
+  private initializeTripData(tripId: string): void {
+    // Check if this is a new trip route with timeline - redirect to planning
     const urlSegments = this.route.snapshot.url.map(segment => segment.path);
-    const isNewTrip = urlSegments.includes('new');
+    const isNewTrip = tripId === 'new';
     const isTimelineRoute = urlSegments.includes('timeline');
-    
+
     if (isNewTrip && isTimelineRoute) {
       // Redirect new trips from timeline to planning view
       this.router.navigate(['/trip-planning', 'new']);
       return;
     }
 
-    // Detect current view based on route
-    const urlPath = this.route.snapshot.url.map(segment => segment.path).join('/');
-    if (urlPath.endsWith('timeline')) {
-      this.currentView.set('timeline');
-    } else {
-      this.currentView.set('planning');
-    }
-
-    // Initialize trip data
-    let tripId: string;
-
-    if (isNewTrip) {
-      tripId = 'new';
-    } else {
-      // Try to get the tripId parameter for existing trips
-      const id = this.route.snapshot.paramMap.get('tripId');
-      if (id) {
-        tripId = id;
-      } else {
-        console.error('TripContainer: No trip ID found and not a new trip');
-        return;
-      }
-    }
-
     console.log('TripContainer: Initializing trip:', tripId);
 
     // Initialize trip through service
     this.tripDataService.initializeTrip(tripId);
-    
+
     // Show appropriate toast based on data source after initialization
     this.showInitializationToast(tripId);
   }
@@ -117,16 +129,23 @@ export class TripContainerComponent implements OnInit {
 
   // View navigation methods
   navigateToTimeline(): void {
-    const currentTripId = this.tripId();
-    if (currentTripId && currentTripId !== 'new') {
-      this.router.navigate(['/trip-planning', currentTripId, 'timeline']);
+    const tripId = this.currentTripId();
+    if (tripId && tripId !== 'new') {
+      this.router.navigate(['/trip-planning', tripId, 'timeline']);
     }
   }
 
   navigateToPlanningView(): void {
-    const currentTripId = this.tripId();
-    if (currentTripId && currentTripId !== 'new') {
-      this.router.navigate(['/trip-planning', currentTripId]);
+    const tripId = this.currentTripId();
+    if (tripId && tripId !== 'new') {
+      this.router.navigate(['/trip-planning', tripId]);
+    }
+  }
+
+  navigateToMapView(): void {
+    const tripId = this.currentTripId();
+    if (tripId && tripId !== 'new') {
+      this.router.navigate(['/trip-planning', tripId, 'map']);
     }
   }
 }

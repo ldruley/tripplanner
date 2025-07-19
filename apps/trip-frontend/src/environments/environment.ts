@@ -3,4 +3,5 @@ export const environment = {
   supabaseUrl: 'https://your-project.supabase.co',
   supabaseAnonKey: 'your-production-anon-key',
   backendApiUrl: 'https://api.your-project.com',
+  mapboxAccessToken: 'pk.your-production-mapbox-token-here', // Add your Mapbox access token
 };

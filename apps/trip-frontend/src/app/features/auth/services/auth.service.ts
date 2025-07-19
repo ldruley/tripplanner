@@ -12,6 +12,7 @@ import {
   ChangePassword,
   VerifyEmail,
   ResendVerification,
+  AuthResponse,
 } from '@trip-planner/types';
 
 import { environment } from '../../../../environments/environment';
@@ -48,6 +49,7 @@ export interface AuthState {
   user: SafeUser | null;
   loading: boolean;
   error: string | null;
+  isRefreshing: boolean;
 }
 
 @Injectable({
@@ -60,54 +62,73 @@ export class AuthService {
   private readonly themeService = inject(ThemeService);
   private readonly apiUrl = `${environment.backendApiUrl}/auth`;
   private readonly TOKEN_KEY = 'auth_token';
+  private refreshInProgress$ = new BehaviorSubject<boolean>(false);
 
   private authStateSubject = new BehaviorSubject<AuthState>({
     user: null,
     loading: true,
     error: null,
+    isRefreshing: false,
   });
 
   public authState$ = this.authStateSubject.asObservable();
 
   constructor() {
     this.initializeAuth();
+    this.startTokenRefreshTimer();
   }
 
   private async initializeAuth(): Promise<void> {
     const token = localStorage.getItem(this.TOKEN_KEY);
+
     if (token) {
       try {
         const decodedToken = jwtDecode<JwtPayload>(token);
         // Check if token is expired
         if (decodedToken.exp * 1000 > Date.now()) {
           const user = this.mapPayloadToSafeUser(decodedToken);
-          this.authStateSubject.next({ user, loading: false, error: null });
+          this.authStateSubject.next({ user, loading: false, error: null, isRefreshing: false });
         } else {
-          // Token is expired, clear it
-          this.signOut();
+          // Token is expired, try to refresh using cookie
+          await this.attemptTokenRefresh();
         }
       } catch (error) {
-        // Invalid token, clear it
-        this.signOut();
+        // Invalid token, try refresh using cookie
+        await this.attemptTokenRefresh();
       }
     } else {
-      this.authStateSubject.next({ user: null, loading: false, error: null });
+      // No access token, try to refresh using cookie (silent attempt)
+      try {
+        await this.attemptTokenRefresh();
+      } catch (error) {
+        // If refresh fails, user is not logged in
+        this.authStateSubject.next({
+          user: null,
+          loading: false,
+          error: null,
+          isRefreshing: false,
+        });
+      }
     }
   }
 
   signIn(credentials: LoginUser): Observable<{ success: boolean; error?: string }> {
     this.setLoading(true);
-    return this.http.post<{ access_token: string }>(`${this.apiUrl}/login`, credentials).pipe(
-      tap(response => {
-        this.handleSuccessfulAuthentication(response.access_token);
-      }),
-      map(() => ({ success: true })),
-      catchError((err: HttpErrorResponse) => {
-        const message = err.error?.message || 'Invalid email or password';
-        this.setError(message);
-        return of({ success: false, error: message });
-      }),
-    );
+    return this.http
+      .post<Omit<AuthResponse, 'refresh_token'>>(`${this.apiUrl}/login`, credentials, {
+        withCredentials: true, // Ensure cookies are sent/received
+      })
+      .pipe(
+        tap(response => {
+          this.handleSuccessfulAuthentication(response.access_token);
+        }),
+        map(() => ({ success: true })),
+        catchError((err: HttpErrorResponse) => {
+          const message = err.error?.message || 'Invalid email or password';
+          this.setError(message);
+          return of({ success: false, error: message });
+        }),
+      );
   }
 
   signUp(
@@ -137,23 +158,33 @@ export class AuthService {
   }
 
   signOut(): void {
+    // Call the backend to revoke refresh token and clear cookie
+    this.http
+      .post(`${this.apiUrl}/logout`, {}, { withCredentials: true })
+      .pipe(catchError(() => of(null)))
+      .subscribe();
+
     localStorage.removeItem(this.TOKEN_KEY);
     // Clear settings cache on logout
     this.settingsService.clearSettingsCache();
-    this.authStateSubject.next({ user: null, loading: false, error: null });
+    this.authStateSubject.next({ user: null, loading: false, error: null, isRefreshing: false });
     this.router.navigate(['/auth/login']);
   }
 
-  private handleSuccessfulAuthentication(token: string): void {
+  private handleSuccessfulAuthentication(token: string, isRefresh: boolean = false): void {
     localStorage.setItem(this.TOKEN_KEY, token);
+
     const decodedToken = jwtDecode<JwtPayload>(token);
     const user = this.mapPayloadToSafeUser(decodedToken);
-    this.authStateSubject.next({ user, loading: false, error: null });
+    this.authStateSubject.next({ user, loading: false, error: null, isRefreshing: false });
 
     // Load settings from database and cache them
     this.settingsService.loadSettings();
 
-    this.handleRedirect();
+    // Only handle redirect if this isn't a token refresh
+    if (!isRefresh) {
+      this.handleRedirect();
+    }
   }
 
   private handleRedirect(): void {
@@ -237,6 +268,15 @@ export class AuthService {
     });
   }
 
+  private setRefreshing(isRefreshing: boolean): void {
+    const currentState = this.authStateSubject.value;
+    this.authStateSubject.next({
+      ...currentState,
+      isRefreshing,
+    });
+    this.refreshInProgress$.next(isRefreshing);
+  }
+
   private setError(error: string): void {
     const currentState = this.authStateSubject.value;
     this.authStateSubject.next({
@@ -244,6 +284,100 @@ export class AuthService {
       loading: false,
       error,
     });
+  }
+
+  /**
+   * Refresh the access token using the HTTP-only cookie
+   */
+  refreshTokens(): Observable<Omit<AuthResponse, 'refresh_token'>> {
+    this.setRefreshing(true);
+    return this.http
+      .post<Omit<AuthResponse, 'refresh_token'>>(
+        `${this.apiUrl}/refresh`,
+        {},
+        {
+          withCredentials: true, // Ensure refresh token cookie is sent
+        },
+      )
+      .pipe(
+        tap(response => {
+          this.handleSuccessfulAuthentication(response.access_token, true);
+          this.setRefreshing(false);
+        }),
+        catchError(err => {
+          this.setRefreshing(false);
+          this.signOut(); // Refresh failed, sign out user
+          throw err;
+        }),
+      );
+  }
+
+  /**
+   * Check if the current token is expired
+   */
+  isTokenExpired(): boolean {
+    const token = this.getToken();
+    if (!token) return true;
+
+    try {
+      const decodedToken = jwtDecode<JwtPayload>(token);
+      return decodedToken.exp * 1000 <= Date.now();
+    } catch {
+      return true;
+    }
+  }
+
+  /**
+   * Check if the current token is expiring soon (within 5 minutes)
+   */
+  isTokenExpiringSoon(): boolean {
+    const token = this.getToken();
+    if (!token) return true;
+
+    try {
+      const decodedToken = jwtDecode<JwtPayload>(token);
+      const fiveMinutesFromNow = Date.now() + 5 * 60 * 1000;
+      return decodedToken.exp * 1000 <= fiveMinutesFromNow;
+    } catch {
+      return true;
+    }
+  }
+
+  /**
+   * Get observable for refresh in progress state
+   */
+  getRefreshInProgress$(): Observable<boolean> {
+    return this.refreshInProgress$.asObservable();
+  }
+
+  /**
+   * Attempt to refresh token during initialization
+   */
+  private async attemptTokenRefresh(): Promise<void> {
+    try {
+      await this.refreshTokens().toPromise();
+    } catch (error) {
+      // Silently fail during initialization - user is not logged in
+      this.authStateSubject.next({ user: null, loading: false, error: null, isRefreshing: false });
+    }
+  }
+
+  /**
+   * Start a timer to proactively refresh tokens before they expire
+   */
+  private startTokenRefreshTimer(): void {
+    // Check every minute if token needs refresh
+    setInterval(() => {
+      if (this.isAuthenticated() && !this.refreshInProgress$.value) {
+        if (this.isTokenExpiringSoon() && !this.isTokenExpired()) {
+          this.refreshTokens().subscribe({
+            error: () => {
+              // If refresh fails, the error handling in refreshTokens() will sign out the user
+            },
+          });
+        }
+      }
+    }, 60000); // Check every minute
   }
 
   /**

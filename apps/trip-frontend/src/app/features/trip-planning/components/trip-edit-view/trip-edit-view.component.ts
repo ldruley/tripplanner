@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ToastService, LocationService } from '../../../shared/services';
 import { TripDataService } from '../../services/trip-data.service';
 import { MatrixCalculationService } from '../../services/matrix-calculation.service';
@@ -33,6 +33,7 @@ import { Location, Stop } from '@trip-planner/types';
 })
 export class TripEditViewComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private toastService = inject(ToastService);
   private locationService = inject(LocationService);
   private tripDataService = inject(TripDataService);
@@ -62,8 +63,13 @@ export class TripEditViewComponent implements OnInit {
   isStopEditModalOpen = signal<boolean>(false);
   editingStop = signal<Stop | null>(null);
 
-  // Computed properties
-  tripId = computed(() => this.route.snapshot.paramMap.get('tripId'));
+  // Computed properties - get current trip ID from URL
+  tripId = computed(() => {
+    // Extract trip ID from current URL path
+    const url = this.router.url;
+    const match = url.match(/\/trip-planning\/([^\/]+)/);
+    return match ? match[1] : 'new';
+  });
 
   ngOnInit(): void {
     // Trip initialization is handled by TripContainerComponent
@@ -167,7 +173,8 @@ export class TripEditViewComponent implements OnInit {
     const currentTrip = this.tripDataService.currentTrip();
     if (!currentTrip) return;
 
-    console.log('TripContainer: Saving trip to backend:', currentTrip);
+    const currentTripId = this.tripId();
+    console.log('TripEditView: Saving trip to backend:', currentTrip);
     const loadingKey = 'trip-save-loading';
     this.toastService.showLoading(
       'Saving trip',
@@ -182,12 +189,42 @@ export class TripEditViewComponent implements OnInit {
           'Trip saved!',
           `"${savedTrip.name}" has been successfully saved.`,
         );
-        console.log('TripContainer: Trip saved successfully');
+        console.log('TripEditView: Trip saved successfully');
+
+        // Navigate to the actual trip ID if we were on the 'new' route
+        // The TripContainer will detect this navigation and skip re-initialization
+        // since the current trip already matches the new route
+        console.log('TripEditView: Checking navigation condition:', {
+          currentTripId,
+          savedTripId: savedTrip.id,
+          shouldNavigate: currentTripId === 'new' && savedTrip.id
+        });
+        
+        if (currentTripId === 'new' && savedTrip.id) {
+          console.log('TripEditView: Navigating from /new to trip ID:', savedTrip.id);
+          
+          // Preserve current view context by checking current URL
+          const currentPath = this.router.url;
+          const targetPath = currentPath.replace('/new', `/${savedTrip.id}`);
+          
+          console.log('TripEditView: Current URL:', currentPath);
+          console.log('TripEditView: Target URL:', targetPath);
+          console.log('TripEditView: About to navigate...');
+          
+          this.router.navigateByUrl(targetPath).then(
+            (success) => {
+              console.log('TripEditView: Navigation success:', success);
+            },
+            (error) => {
+              console.log('TripEditView: Navigation error:', error);
+            }
+          );
+        }
       },
       error: error => {
         this.toastService.clear(loadingKey);
         this.toastService.showError('Save failed', `Failed to save trip: ${error.message}`);
-        console.error('TripContainer: Save failed:', error);
+        console.error('TripEditView: Save failed:', error);
       },
     });
   }

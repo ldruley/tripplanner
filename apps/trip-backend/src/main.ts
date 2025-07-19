@@ -6,14 +6,26 @@ import type { Request, Response, NextFunction } from 'express';
 import { patchNestjsSwagger, ZodValidationPipe } from '@anatine/zod-nestjs';
 import { GlobalExceptionsFilter } from './infrastructure/exceptions/global-exceptions.filter';
 import { RequestContextInterceptor } from '@trip-planner/auth';
+const cookieParser = require('cookie-parser');
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const isDevelopment = process.env.NODE_ENV !== 'production';
 
+  // Enable cookie parsing
+  app.use(cookieParser());
+
   app.enableCors({
-    origin: '*', // Allow any origin
+    origin: isDevelopment
+      ? ['http://localhost:4200', 'http://127.0.0.1:4200'] // Development origins
+      : [
+          'http://localhost:4200',
+          'http://127.0.0.1:4200',
+          'http://138.68.5.168:4200',
+          'http://138.68.5.168',
+          'http://localhost',
+        ], // Production origins
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });

@@ -36,7 +36,7 @@ export class ProfileService {
   private readonly isEditing = signal(false);
   private readonly cacheTimestamp = signal(0);
   private readonly authState = toSignal(this.authService.authState$, {
-    initialValue: { user: null, loading: true, error: null },
+    initialValue: { user: null, loading: true, error: null, isRefreshing: false },
   });
 
   // Subjects for Async tasks

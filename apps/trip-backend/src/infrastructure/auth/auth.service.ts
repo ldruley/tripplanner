@@ -5,6 +5,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
@@ -16,6 +17,8 @@ import {
   ResetPassword,
   VerifyEmail,
   ResendVerification,
+  RefreshToken,
+  AuthResponse,
 } from '@trip-planner/types';
 import { DistanceUnit } from '@prisma/client';
 import { EmailService } from '@trip-planner/email';
@@ -26,6 +29,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
+    private readonly configService: ConfigService,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<SafeUser | null> {
@@ -40,11 +44,133 @@ export class AuthService {
     return null;
   }
 
-  async login(user: SafeUser): Promise<{ access_token: string }> {
-    const payload = { sub: user.id, email: user.email, roles: user.role };
-    return {
-      access_token: this.jwtService.sign(payload),
+  async login(user: SafeUser): Promise<AuthResponse> {
+    const accessTokenPayload = { sub: user.id, email: user.email, roles: user.role };
+    const refreshTokenId = crypto.randomUUID();
+    const refreshTokenPayload = {
+      sub: user.id,
+      email: user.email,
+      tokenId: refreshTokenId,
+      type: 'refresh' as const
     };
+
+    const accessToken = this.jwtService.sign(accessTokenPayload, {
+      secret: this.configService.get<string>('JWT_SECRET'),
+      expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') || '15m',
+    });
+
+    const refreshToken = this.jwtService.sign(refreshTokenPayload, {
+      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') || '7d',
+    });
+
+    // Store refresh token in database
+    const refreshTokenExpiry = new Date();
+    refreshTokenExpiry.setDate(refreshTokenExpiry.getDate() + 7); // 7 days default
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        refreshToken,
+        refreshTokenExpiry,
+      },
+    });
+
+    return {
+      access_token: accessToken,
+      refresh_token: refreshToken, // Still return for controller to set as cookie
+      expires_in: parseInt(this.configService.get<string>('JWT_EXPIRES_IN')?.replace(/\D/g, '') || '900'), // 15m = 900s
+      token_type: 'Bearer',
+    };
+  }
+
+  async refreshTokens(refreshTokenData: RefreshToken): Promise<AuthResponse> {
+    const { refreshToken } = refreshTokenData;
+
+    try {
+      // Verify the refresh token
+      const payload = this.jwtService.verify(refreshToken, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      });
+
+      if (payload.type !== 'refresh') {
+        throw new UnauthorizedException('Invalid token type');
+      }
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      // Verify refresh token is still valid and matches stored token
+      if (!user.refreshToken || !user.refreshTokenExpiry) {
+        throw new UnauthorizedException('No refresh token found for user');
+      }
+
+      if (new Date() > user.refreshTokenExpiry) {
+        throw new UnauthorizedException('Refresh token expired');
+      }
+
+      if (user.refreshToken !== refreshToken) {
+        throw new UnauthorizedException('Refresh token does not match');
+      }
+
+      // Generate new tokens (refresh token rotation)
+      const accessTokenPayload = { sub: user.id, email: user.email, roles: user.role };
+      const newRefreshTokenId = crypto.randomUUID();
+      const newRefreshTokenPayload = {
+        sub: user.id,
+        email: user.email,
+        tokenId: newRefreshTokenId,
+        type: 'refresh' as const
+      };
+
+      const newAccessToken = this.jwtService.sign(accessTokenPayload, {
+        secret: this.configService.get<string>('JWT_SECRET'),
+        expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') || '15m',
+      });
+
+      const newRefreshToken = this.jwtService.sign(newRefreshTokenPayload, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+        expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') || '7d',
+      });
+
+      // Update stored refresh token
+      const newRefreshTokenExpiry = new Date();
+      newRefreshTokenExpiry.setDate(newRefreshTokenExpiry.getDate() + 7); // 7 days default
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          refreshToken: newRefreshToken,
+          refreshTokenExpiry: newRefreshTokenExpiry,
+        },
+      });
+
+      return {
+        access_token: newAccessToken,
+        refresh_token: newRefreshToken, // Still return for controller to set as cookie
+        expires_in: parseInt(this.configService.get<string>('JWT_EXPIRES_IN')?.replace(/\D/g, '') || '900'),
+        token_type: 'Bearer',
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+  }
+
+  async revokeRefreshToken(userId: string): Promise<{ message: string }> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        refreshToken: null,
+        refreshTokenExpiry: null,
+      },
+    });
+
+    return { message: 'Refresh token revoked successfully' };
   }
 
   async register(createUser: CreateUser): Promise<SafeUser> {
@@ -288,18 +414,23 @@ export class AuthService {
 
   private async clearUserTokens(
     userId: string,
-    tokenType: 'reset' | 'verification' | 'both' = 'both',
+    tokenType: 'reset' | 'verification' | 'refresh' | 'all' = 'all',
   ): Promise<void> {
     const updateData: any = {};
 
-    if (tokenType === 'reset' || tokenType === 'both') {
+    if (tokenType === 'reset' || tokenType === 'all') {
       updateData.resetToken = null;
       updateData.resetTokenExpiry = null;
     }
 
-    if (tokenType === 'verification' || tokenType === 'both') {
+    if (tokenType === 'verification' || tokenType === 'all') {
       updateData.verificationToken = null;
       updateData.verificationTokenExpiry = null;
+    }
+
+    if (tokenType === 'refresh' || tokenType === 'all') {
+      updateData.refreshToken = null;
+      updateData.refreshTokenExpiry = null;
     }
 
     await this.prisma.user.update({

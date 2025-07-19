@@ -7,82 +7,140 @@
   min-height: auto;
 }
 
-.summary-column {
-  background-color: var(--tp-bg-light-secondary);
-  min-height: auto;
+/* Custom Timeline Styling */
+.custom-timeline {
+  position: relative;
+  padding: 1rem 0;
 }
 
-:host-context(.dark) .summary-column {
-  background-color: var(--tp-bg-secondary);
+.timeline-item {
+  position: relative;
 }
 
-/* Timeline-specific styling */
-::ng-deep .trip-timeline {
-  width: 100%;
+.timeline-item:last-child {
+  margin-bottom: 0;
 }
 
-/* Keep essential content spacing but remove conflicting theme overrides */
-::ng-deep .trip-timeline .p-timeline-event-content {
-  margin-left: 0.5rem;
-  flex: 1;
+/* Main Timeline Line */
+.timeline-line {
+  z-index: 5;
 }
 
-/* Stop card emphasis */
+/* Timeline Marker */
+.timeline-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 10;
+}
+
+.timeline-icon {
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  z-index: 20;
+}
+
+.timeline-icon:hover {
+  transform: scale(1.1);
+}
+
+/* Stop Card Styling */
 .stop-card {
   transition: all 0.2s ease;
+  background: var(--tp-bg-light-primary);
+}
+
+:host-context(.dark) .stop-card {
+  background: var(--tp-bg-secondary);
 }
 
 .stop-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 25px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px -3px rgb(0 0 0 / 0.15), 0 6px 10px -4px rgb(0 0 0 / 0.1);
 }
 
-
-/* Segment card muted styling */
+/* Segment Card Styling */
 .segment-card {
-  opacity: 0.9;
   transition: all 0.2s ease;
 }
 
 .segment-card:hover {
-  opacity: 1;
+  opacity: 1 !important;
   transform: translateY(-1px);
 }
 
-/* Timeline marker animations */
-::ng-deep .trip-timeline .p-timeline-event-marker {
-  transition: all 0.3s ease;
+/* Timeline Time Display */
+.timeline-time {
+  padding-top: 0.125rem; /* Align with marker center */
 }
 
-::ng-deep .trip-timeline .p-timeline-event-marker:hover {
-  transform: scale(1.1);
+/* Button Styling */
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  outline: none;
 }
 
-/* Responsive adjustments */
+button:focus {
+  outline: 2px solid var(--tp-orange);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Responsive Design */
 @media (max-width: 1024px) {
   .timeline-container {
     flex-direction: column;
   }
-  
+
   .timeline-column {
     width: 100%;
-    padding-right: 0;
-    margin-bottom: 2rem;
+    padding: 1rem;
   }
-  
-  .summary-column {
-    width: 100%;
-    padding-left: 0;
-    border-left: none;
-    border-top: 1px solid var(--tp-border-light);
+
+  .timeline-item {
+    margin-bottom: 1.5rem;
   }
-  
-  :host-context(.dark) .summary-column {
-    border-top-color: var(--tp-border);
+
+  /* Timeline line positioning handled by Tailwind classes */
+
+  /* Adjust timeline spacing for mobile */
+  .custom-timeline {
+    padding: 0.5rem 0;
+  }
+
+  /* Smaller markers on mobile */
+  .timeline-icon {
+    width: 2rem !important;
+    height: 2rem !important;
+  }
+
+  .timeline-icon i {
+    font-size: 0.75rem !important;
   }
 }
 
-/* Custom scrollbar */
+@media (max-width: 640px) {
+  .timeline-column {
+    padding: 0.75rem;
+  }
+
+  .stop-card,
+  .segment-card {
+    padding: 0.75rem;
+  }
+
+  .timeline-item {
+    margin-bottom: 1rem;
+  }
+
+  /* Timeline line positioning handled by Tailwind classes */
+}
+
+/* Custom Scrollbar */
 .timeline-container::-webkit-scrollbar {
   width: 6px;
 }
@@ -111,4 +169,69 @@
 
 :host-context(.dark) .timeline-container::-webkit-scrollbar-thumb:hover {
   background: var(--tp-text-secondary);
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  .timeline-icon,
+  .stop-card,
+  .segment-card,
+  button {
+    transition: none;
+  }
+
+  .timeline-icon:hover {
+    transform: none;
+  }
+
+  .stop-card:hover,
+  .segment-card:hover {
+    transform: none;
+  }
+}
+
+/* Focus States */
+.stop-card:focus-within,
+.segment-card:focus-within {
+  outline: 2px solid var(--tp-orange);
+  outline-offset: 2px;
+}
+
+/* Animation for timeline entry */
+@keyframes timelineSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.timeline-item {
+  animation: timelineSlideIn 0.3s ease-out;
+}
+
+/* Stagger animation delay for multiple items */
+.timeline-item:nth-child(1) { animation-delay: 0ms; }
+.timeline-item:nth-child(2) { animation-delay: 50ms; }
+.timeline-item:nth-child(3) { animation-delay: 100ms; }
+.timeline-item:nth-child(4) { animation-delay: 150ms; }
+.timeline-item:nth-child(5) { animation-delay: 200ms; }
+.timeline-item:nth-child(n+6) { animation-delay: 250ms; }
+
+/* Ensure proper alignment */
+.timeline-marker {
+  width: 2.5rem; /* w-10 */
+  height: 2.5rem; /* h-10 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Segment markers are smaller */
+.timeline-item .timeline-marker:has(.timeline-icon.w-8) {
+  width: 2rem; /* w-8 */
+  height: 2rem; /* h-8 */
 }
