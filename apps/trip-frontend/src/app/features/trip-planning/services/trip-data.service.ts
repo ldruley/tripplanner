@@ -1,6 +1,6 @@
 import { Injectable, inject, computed } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, tap, catchError, of, map } from 'rxjs';
+import { Observable, tap, catchError, of, map, switchMap } from 'rxjs';
 import {
   Trip,
   Location,
@@ -17,12 +17,11 @@ import { MatrixCalculationService } from './matrix-calculation.service';
 import { UpdateTripWithRoutingRequest } from '../../../../../../../libs/shared/types/src/schemas/itinerary.schema';
 import { TripTimezoneService } from './trip-timezone.service';
 import { ItineraryApiService } from './itinerary-api.service';
-import { TripDraftStore } from './trip-draft-store.service';
-import { TripStateService, DataSource } from './trip-state.service';
+import { TripFacade, DataSource } from '../../../domains/trips';
 import { PolylineGenerationService, PolylineGenerationOptions } from './polyline-generation.service';
 
 // Re-export types for backward compatibility
-export type { DataSource } from './trip-state.service';
+export type { DataSource } from '../../../domains/trips';
 
 @Injectable({
   providedIn: 'root',
@@ -32,99 +31,66 @@ export class TripDataService {
   private readonly matrixCalculationService = inject(MatrixCalculationService);
   private readonly tripTimezoneService = inject(TripTimezoneService);
   private readonly itineraryApiService = inject(ItineraryApiService);
-  private readonly tripDraftStore = inject(TripDraftStore);
-  private readonly tripStateService = inject(TripStateService);
+  private readonly tripFacade = inject(TripFacade);
   private readonly polylineGenerationService = inject(PolylineGenerationService);
   private readonly apiUrl = environment.backendApiUrl;
 
-  // Delegate all reactive state to TripStateService
-  readonly currentTrip = this.tripStateService.currentTrip;
-  readonly isLoading = this.tripStateService.isLoading;
-  readonly isDirty = this.tripStateService.isDirty;
-  readonly dataSource = this.tripStateService.dataSource;
-  readonly error = this.tripStateService.error;
-  readonly isOperationInProgress = this.tripStateService.isOperationInProgress;
+  // Delegate all reactive state to TripFacade (which wraps TripStateService)
+  readonly currentTrip = this.tripFacade.currentTrip;
+  readonly isLoading = this.tripFacade.isLoading;
+  readonly isDirty = this.tripFacade.isDirty;
+  readonly dataSource = this.tripFacade.dataSource;
+  readonly error = this.tripFacade.error;
+  readonly isOperationInProgress = this.tripFacade.isOperationInProgress;
 
   // Convenience computed properties
-  readonly hasTrip = this.tripStateService.hasTrip;
-  readonly tripId = this.tripStateService.tripId;
-  readonly tripName = this.tripStateService.tripName;
-  readonly tripDescription = this.tripStateService.tripDescription;
-  readonly itineraryStops = this.tripStateService.itineraryStops;
-  readonly bankedLocations = this.tripStateService.bankedLocations;
-  readonly travelSegments = this.tripStateService.travelSegments;
+  readonly hasTrip = this.tripFacade.hasTrip;
+  readonly tripId = this.tripFacade.tripId;
+  readonly tripName = this.tripFacade.tripName;
+  readonly tripDescription = this.tripFacade.tripDescription;
+  readonly itineraryStops = this.tripFacade.itineraryStops;
+  readonly bankedLocations = this.tripFacade.bankedLocations;
+  readonly travelSegments = this.tripFacade.travelSegments;
 
   // Timeline-specific computed properties
-  readonly sortedStops = this.tripStateService.sortedStops;
-  readonly tripDuration = this.tripStateService.tripDuration;
-  readonly hasScheduledStops = this.tripStateService.hasScheduledStops;
-  readonly tripStartDate = this.tripStateService.tripStartDate;
-  readonly tripEndDate = this.tripStateService.tripEndDate;
+  readonly sortedStops = this.tripFacade.sortedStops;
+  readonly tripDuration = this.tripFacade.tripDuration;
+  readonly hasScheduledStops = this.tripFacade.hasScheduledStops;
+  readonly tripStartDate = this.tripFacade.tripStartDate;
+  readonly tripEndDate = this.tripFacade.tripEndDate;
 
   // Timezone-aware computed properties
-  readonly tripPrimaryTimezone = this.tripStateService.tripPrimaryTimezone;
-  readonly tripPrimaryTimezoneDisplayName = this.tripStateService.tripPrimaryTimezoneDisplayName;
-  readonly stopsWithTimezoneInfo = this.tripStateService.stopsWithTimezoneInfo;
-  readonly formattedTripStartDate = this.tripStateService.formattedTripStartDate;
-  readonly formattedTripEndDate = this.tripStateService.formattedTripEndDate;
-  readonly tripDurationInTimezone = this.tripStateService.tripDurationInTimezone;
+  readonly tripPrimaryTimezone = this.tripFacade.tripPrimaryTimezone;
+  readonly tripPrimaryTimezoneDisplayName = this.tripFacade.tripPrimaryTimezoneDisplayName;
+  readonly stopsWithTimezoneInfo = this.tripFacade.stopsWithTimezoneInfo;
+  readonly formattedTripStartDate = this.tripFacade.formattedTripStartDate;
+  readonly formattedTripEndDate = this.tripFacade.formattedTripEndDate;
+  readonly tripDurationInTimezone = this.tripFacade.tripDurationInTimezone;
 
   /**
    * Initialize a trip based on ID ('new' for new trip, UUID for existing)
    */
   initializeTrip(tripId: string | 'new'): void {
-    this.tripStateService.setLoading(true);
-    this.tripStateService.setError(null);
-
     if (tripId === 'new') {
-      // Create new trip
-      const newTrip: Trip = {
-        id: crypto.randomUUID(),
-        userId: '', // Will be set when saved to backend
-        name: 'New Untitled Trip',
-        description: null,
-        startDate: null,
-        endDate: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        needsRoutingRecalculation: false,
-        needsTimelineRecalculation: false,
-        stops: [],
-        bankedLocations: [],
-        travelSegments: [],
-      };
-
-      this.tripStateService.setTrip(newTrip, 'new', false);
-      this.tripStateService.setLoading(false);
+      // Create new draft trip using facade
+      this.tripFacade.startNewDraftTrip('New Untitled Trip');
       // Clear matrix for new trips - use local calculation
       this.matrixCalculationService.clearPersistedMatrix();
     } else {
-      // Try to load from localStorage first (draft)
-      const draftTrip = this.tripDraftStore.loadDraft(tripId);
-      if (draftTrip) {
-        this.tripStateService.setTrip(draftTrip, 'draft', true);
-        this.tripStateService.setLoading(false);
-        // Clear matrix for draft trips - use local calculation
-        this.matrixCalculationService.clearPersistedMatrix();
-      } else {
-        // Load from backend
-        this.itineraryApiService.loadTripWithRelations(tripId).subscribe({
-          next: trip => {
-            // Use Zod to parse and coerce dates
-            const parsedTrip = TripSchema.parse(trip);
-
-            this.tripStateService.setTrip(parsedTrip, 'persisted', false);
-            this.tripStateService.setLoading(false);
+      // Load existing trip using facade
+      this.tripFacade.loadTrip(tripId).subscribe({
+        next: trip => {
+          if (trip) {
             // Load persisted matrix for persisted trips
-            this.loadPersistedMatrix(parsedTrip);
-          },
-          error: error => {
-            console.error('TripDataService: Failed to load trip from backend:', error);
-            this.tripStateService.setLoading(false);
-            this.tripStateService.setError(`Failed to load trip: ${error.message}`);
-          },
-        });
-      }
+            this.loadPersistedMatrix(trip);
+          } else {
+            console.warn('TripDataService: Trip not found:', tripId);
+          }
+        },
+        error: error => {
+          console.error('TripDataService: Failed to load trip:', error);
+        }
+      });
     }
   }
 
@@ -135,26 +101,25 @@ export class TripDataService {
     const currentTrip = this.currentTrip();
     if (!currentTrip) return;
 
-    const updatedTrip: Trip = {
-      ...currentTrip,
-      ...updates,
-      updatedAt: new Date(),
-    };
-
-    this.tripStateService.updateState({
-      trip: updatedTrip,
-      isDirty: true,
-    });
-
-    // Trigger auto-save for non-persisted trips
-    if (this.dataSource() !== 'persisted') {
-      this.tripDraftStore.scheduleAutoSave(updatedTrip);
+    // For persisted trips, use the facade's update method
+    if (this.dataSource() === 'persisted') {
+      this.tripFacade.updateTripDetails(currentTrip.id, updates).subscribe({
+        error: error => {
+          console.error('TripDataService: Failed to update persisted trip:', error);
+        }
+      });
+    } else {
+      // For draft/new trips, use the facade's local update method
+      this.tripFacade.updateTripLocally({
+        ...updates,
+        updatedAt: new Date(),
+      });
     }
   }
 
   /**
-   * Add a location to the trip's banked locations
-   * TODO: this is messy, matrix calculation needs refactoring
+   * Add a location to the trip's banked locations using facade
+   * TODO: matrix calculation needs refactoring
    */
   addLocationToBank(location: Location): void {
     const currentTrip = this.currentTrip();
@@ -166,6 +131,7 @@ export class TripDataService {
 
     // Check if this is a persisted trip that needs backend API calls
     if (this.dataSource() === 'persisted') {
+      // For persisted trips, still use the itinerary API for complex operations
       this.itineraryApiService.addBankedLocationToTrip(currentTrip.id, location).subscribe({
         next: bankedLocation => {
           // Ensure the banked location includes the full location object
@@ -174,78 +140,34 @@ export class TripDataService {
             location: location, // Use the original location object to ensure all data is available
           };
 
-          // Update local state with the response
-          const updatedTrip = {
-            ...currentTrip,
+          // Update local state with the response using local update
+          this.updateTripLocal({
             bankedLocations: [...currentTrip.bankedLocations, bankedLocationWithFullLocation],
-          };
-          this.tripStateService.updateState({
-            trip: updatedTrip,
-            isDirty: false,
           });
 
           // Trigger matrix calculation for enhanced reordering without additional API calls
-          this.matrixCalculationService
-            .calculateMatrix([
-              ...updatedTrip.stops.map(s => s.location).filter((loc): loc is Location => !!loc),
-              ...updatedTrip.bankedLocations
-                .map(bl => bl.location)
-                .filter((loc): loc is Location => !!loc),
-            ])
-            .subscribe({
-              next: (matrix: CoordinateMatrix) => {
-                this.updateTripLocal({ matrix: JSON.stringify(matrix) });
-              },
-              error: (error: any) => {
-                console.warn('Failed to update matrix after banking location:', error);
-                // Don't show error to user as banking still succeeded
-              },
-            });
+          this.updateMatrixForTrip();
         },
         error: (error: any) => {
           console.error('Failed to add location to bank:', error);
-          this.tripStateService.setError('Failed to add location to bank');
         },
       });
     } else {
-      // For local/draft trips, add location directly to local state
-      const bankedLocation: TripBankedLocation = {
-        id: crypto.randomUUID(),
-        tripId: currentTrip.id,
-        locationId: location.id,
-        createdAt: new Date(),
-        location,
-      };
-
-      const updatedTrip = {
-        ...currentTrip,
-        bankedLocations: [...currentTrip.bankedLocations, bankedLocation],
-      };
-      this.updateTripLocal({
-        bankedLocations: updatedTrip.bankedLocations,
+      // For local/draft trips, use facade
+      this.tripFacade.addBankedLocation(currentTrip.id, location).subscribe({
+        next: () => {
+          // Trigger matrix calculation for enhanced reordering without additional API calls
+          this.updateMatrixForTrip();
+        },
+        error: error => {
+          console.error('TripDataService: Failed to add banked location via facade:', error);
+        }
       });
-
-      // Trigger matrix calculation for enhanced reordering without additional API calls
-      this.matrixCalculationService
-        .calculateMatrix([
-          ...updatedTrip.stops.map(s => s.location).filter((loc): loc is Location => !!loc),
-          ...updatedTrip.bankedLocations
-            .map(bl => bl.location)
-            .filter((loc): loc is Location => !!loc),
-        ])
-        .subscribe({
-          next: (matrix: CoordinateMatrix) => {
-            this.updateTripLocal({ matrix: JSON.stringify(matrix) });
-          },
-          error: (error: any) => {
-            console.warn('Failed to update matrix after banking location:', error);
-          },
-        });
     }
   }
 
   /**
-   * Remove a location from the trip's banked locations
+   * Remove a location from the trip's banked locations using facade
    */
   removeLocationFromBank(locationId: string): void {
     const currentTrip = this.currentTrip();
@@ -253,36 +175,54 @@ export class TripDataService {
 
     // Check if this is a persisted trip that needs backend API calls
     if (this.dataSource() === 'persisted') {
+      // For persisted trips, still use the itinerary API for complex operations
       this.itineraryApiService.removeBankedLocationFromTrip(currentTrip.id, locationId).subscribe({
         next: () => {
           // Update local state by removing the location
-          const updatedTrip = {
-            ...currentTrip,
-            bankedLocations: currentTrip.bankedLocations.filter(bl => bl.locationId !== locationId),
-          };
           this.updateTripLocal({
-            bankedLocations: updatedTrip.bankedLocations,
+            bankedLocations: currentTrip.bankedLocations.filter(bl => bl.locationId !== locationId),
           });
         },
         error: (error: any) => {
           console.error('Failed to remove location from bank:', error);
-          this.tripStateService.setError('Failed to remove location from bank');
         },
       });
     } else {
-      // For local/draft trips, remove location directly from local state
-      const updatedTrip = {
-        ...currentTrip,
-        bankedLocations: currentTrip.bankedLocations.filter(bl => bl.locationId !== locationId),
-      };
-      this.updateTripLocal({
-        bankedLocations: updatedTrip.bankedLocations,
+      // For local/draft trips, use facade
+      this.tripFacade.removeBankedLocation(currentTrip.id, locationId).subscribe({
+        error: error => {
+          console.error('TripDataService: Failed to remove banked location via facade:', error);
+        }
       });
     }
   }
 
   /**
-   * Add a stop to the trip's itinerary
+   * Helper method to update matrix for current trip
+   */
+  private updateMatrixForTrip(): void {
+    const currentTrip = this.currentTrip();
+    if (!currentTrip) return;
+
+    this.matrixCalculationService
+      .calculateMatrix([
+        ...currentTrip.stops.map(s => s.location).filter((loc): loc is Location => !!loc),
+        ...currentTrip.bankedLocations
+          .map(bl => bl.location)
+          .filter((loc): loc is Location => !!loc),
+      ])
+      .subscribe({
+        next: (matrix: CoordinateMatrix) => {
+          this.updateTripLocal({ matrix: JSON.stringify(matrix) });
+        },
+        error: (error: any) => {
+          console.warn('Failed to update matrix:', error);
+        },
+      });
+  }
+
+  /**
+   * Add a stop to the trip's itinerary using facade
    */
   addStopToItinerary(location: Location, insertAtIndex?: number): void {
     const currentTrip = this.currentTrip();
@@ -290,6 +230,9 @@ export class TripDataService {
 
     // Check if this is a persisted trip that needs backend API calls
     if (this.dataSource() === 'persisted') {
+      // For persisted trips, still use the itinerary API for complex operations
+      // This maintains the existing behavior for backend integration
+
       // Optimistic update - apply change locally first
       const targetOrder = insertAtIndex !== undefined ? insertAtIndex : currentTrip.stops.length;
 
@@ -319,10 +262,9 @@ export class TripDataService {
       optimisticStops.push(optimisticStop);
       optimisticStops.sort((a, b) => a.order - b.order);
 
-      this.tripStateService.updateState({
-        trip: { ...currentTrip, stops: optimisticStops },
-        isOperationInProgress: true,
-        error: null,
+      // Use local update with operation in progress
+      this.updateTripLocal({ 
+        stops: optimisticStops
       });
 
       // Make backend call
@@ -330,69 +272,29 @@ export class TripDataService {
         next: updatedTrip => {
           // Use Zod to parse and coerce dates
           const parsedTrip = TripSchema.parse(updatedTrip);
-          this.tripStateService.updateState({
-            trip: parsedTrip,
-            isDirty: false,
-            isOperationInProgress: false,
-          });
+          this.updateTripLocal(parsedTrip);
           // Load updated matrix for persisted trips after stop addition
           this.loadPersistedMatrix(parsedTrip);
         },
         error: error => {
           console.error('TripDataService: Failed to add stop to backend trip:', error);
           // Rollback optimistic update
-          this.tripStateService.updateState({
-            trip: currentTrip,
-            isOperationInProgress: false,
-            error: `Failed to add stop: ${error.message}`,
-          });
+          this.updateTripLocal(currentTrip);
         },
       });
       return;
     }
 
-    // Handle local trip (new/draft)
-    // Determine the order for the new stop
-    const targetOrder = insertAtIndex !== undefined ? insertAtIndex : currentTrip.stops.length;
-
-    // Create new stop
-    const newStop: Stop = {
-      id: crypto.randomUUID(),
-      tripId: currentTrip.id,
-      locationId: location.id,
-      order: targetOrder,
-      plannedArrivalTime: null,
-      plannedDuration: null,
-      calculatedArrivalTime: null,
-      calculatedDepartureTime: null,
-      stopType: null,
-      notes: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      location,
-    };
-
-    // Update orders for existing stops if inserting
-    let updatedStops = [...currentTrip.stops];
-    if (insertAtIndex !== undefined) {
-      updatedStops = updatedStops.map(stop =>
-        stop.order >= insertAtIndex ? { ...stop, order: stop.order + 1 } : stop,
-      );
-    }
-
-    // Add new stop
-    updatedStops.push(newStop);
-
-    // Sort by order
-    updatedStops.sort((a, b) => a.order - b.order);
-
-    this.updateTripLocal({
-      stops: updatedStops,
+    // For local trips (new/draft), use facade
+    this.tripFacade.addStop(currentTrip.id, location, insertAtIndex).subscribe({
+      error: error => {
+        console.error('TripDataService: Failed to add stop via facade:', error);
+      }
     });
   }
 
   /**
-   * Remove a stop from the trip's itinerary
+   * Remove a stop from the trip's itinerary using facade
    */
   removeStopFromItinerary(stopId: string): void {
     const currentTrip = this.currentTrip();
@@ -400,37 +302,25 @@ export class TripDataService {
 
     // Check if this is a persisted trip that needs backend API calls
     if (this.dataSource() === 'persisted') {
+      // For persisted trips, still use the itinerary API for complex operations
       this.itineraryApiService.removeStopFromTrip(currentTrip.id, stopId).subscribe({
         next: updatedTrip => {
           // Use Zod to parse and coerce dates
           const parsedTrip = TripSchema.parse(updatedTrip);
-          this.tripStateService.updateState({
-            trip: parsedTrip,
-            isDirty: false,
-          });
+          this.updateTripLocal(parsedTrip);
         },
         error: error => {
           console.error('TripDataService: Failed to remove stop from backend trip:', error);
-          this.tripStateService.updateState({
-            error: `Failed to remove stop: ${error.message}`,
-          });
         },
       });
       return;
     }
 
-    // Handle local trip (new/draft)
-    const stopToRemove = currentTrip.stops.find(s => s.id === stopId);
-    if (!stopToRemove) return;
-
-    // Remove stop and update orders
-    const updatedStops = currentTrip.stops
-      .filter(s => s.id !== stopId)
-      .map(stop => (stop.order > stopToRemove.order ? { ...stop, order: stop.order - 1 } : stop))
-      .sort((a, b) => a.order - b.order);
-
-    this.updateTripLocal({
-      stops: updatedStops,
+    // For local trips (new/draft), use facade
+    this.tripFacade.removeStop(currentTrip.id, stopId).subscribe({
+      error: error => {
+        console.error('TripDataService: Failed to remove stop via facade:', error);
+      }
     });
   }
 
@@ -452,16 +342,11 @@ export class TripDataService {
         next: updatedTrip => {
           // Use Zod to parse and coerce dates
           const parsedTrip = TripSchema.parse(updatedTrip);
-          this.tripStateService.updateState({
-            trip: parsedTrip,
-            isDirty: false,
-          });
+          this.updateTripLocal(parsedTrip);
         },
         error: error => {
           console.error('TripDataService: Failed to reorder stops in backend trip:', error);
-          this.tripStateService.updateState({
-            error: `Failed to reorder stops: ${error.message}`,
-          });
+          console.error('Failed to reorder stops:', error.message);
         },
       });
       return;
@@ -480,18 +365,16 @@ export class TripDataService {
   }
 
   /**
-   * Update a specific stop
+   * Update a specific stop using facade
    */
   updateStop(stopId: string, updates: Partial<Stop>): void {
     const currentTrip = this.currentTrip();
     if (!currentTrip) return;
 
-    const updatedStops = currentTrip.stops.map(stop =>
-      stop.id === stopId ? { ...stop, ...updates, updatedAt: new Date() } : stop,
-    );
-
-    this.updateTripLocal({
-      stops: updatedStops,
+    this.tripFacade.updateStop(currentTrip.id, stopId, updates).subscribe({
+      error: error => {
+        console.error('TripDataService: Failed to update stop via facade:', error);
+      }
     });
   }
 
@@ -504,10 +387,7 @@ export class TripDataService {
       return of(null as any);
     }
 
-    this.tripStateService.setLoading(true);
-    this.tripStateService.setError(null);
-
-    const isNewTrip = this.dataSource() === 'new';
+    const isNewTrip = this.dataSource() === 'new' || this.dataSource() === 'draft';
 
     // For new trips with stops, use the itinerary endpoint for rich data persistence
     if (isNewTrip && currentTrip.stops.length > 0) {
@@ -526,65 +406,54 @@ export class TripDataService {
 
       return apiCall.pipe(
         tap(savedTrip => {
-          // Clear draft from localStorage
-          this.tripDraftStore.clearDraft(currentTrip.id);
-
-          // Update state to reflect persisted trip
-          this.tripStateService.updateState({
-            trip: savedTrip,
-            isLoading: false,
-            isDirty: false,
-            dataSource: 'persisted',
-          });
+          // Update state to reflect persisted trip using facade
+          this.tripFacade.loadTrip(savedTrip.id).subscribe();
         }),
         catchError((error: unknown) => {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          this.tripStateService.updateState({
-            isLoading: false,
-            error: `Failed to save trip: ${errorMessage}`,
-          });
+          console.error('Failed to save trip:', errorMessage);
           throw error;
         }),
       );
     }
 
-    // For trips without stops or existing trips, use basic trip endpoints
-    const apiCall = isNewTrip
-      ? this.createTripInBackend(currentTrip)
-      : this.updateTripInBackend(currentTrip);
-
-    return apiCall.pipe(
-      tap(savedTrip => {
-        // Clear draft from localStorage
-        this.tripDraftStore.clearDraft(currentTrip.id);
-
-        // Use Zod to parse and coerce dates
-        const parsedTrip = TripSchema.parse(savedTrip);
-
-        // Update state to reflect persisted trip
-        this.tripStateService.updateState({
-          trip: parsedTrip,
-          isLoading: false,
-          isDirty: false,
-          dataSource: 'persisted',
-        });
-      }),
-      catchError((error: unknown) => {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        this.tripStateService.updateState({
-          isLoading: false,
-          error: `Failed to save trip: ${errorMessage}`,
-        });
-        throw error;
-      }),
-    );
+    // For trips without stops or existing trips, use facade methods
+    if (isNewTrip) {
+      return this.tripFacade.createTrip(currentTrip.name, currentTrip.description || undefined).pipe(
+        switchMap(result => {
+          // Load the newly created trip
+          return this.tripFacade.loadTrip(result.tripId);
+        }),
+        map(trip => trip!), // We know trip exists at this point
+        catchError((error: unknown) => {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.error('Failed to save trip:', errorMessage);
+          throw error;
+        })
+      );
+    } else {
+      return this.tripFacade.updateTripDetails(currentTrip.id, {
+        name: currentTrip.name,
+        description: currentTrip.description,
+        startDate: currentTrip.startDate,
+        endDate: currentTrip.endDate,
+        matrix: currentTrip.matrix
+      }).pipe(
+        map(() => this.currentTrip()!), // Return current trip after update
+        catchError((error: unknown) => {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.error('Failed to save trip:', errorMessage);
+          throw error;
+        })
+      );
+    }
   }
 
   /**
    * Clear current trip state
    */
   clearTrip(): void {
-    this.tripStateService.clearState();
+    this.tripFacade.clearCurrentTrip();
   }
 
   /**
@@ -594,26 +463,26 @@ export class TripDataService {
   currentTripMatchesId(tripId: string): boolean {
     const currentTrip = this.currentTrip();
     const currentDataSource = this.dataSource();
-    
+
     console.log('TripDataService: currentTripMatchesId check:', {
       tripId,
       currentTripId: currentTrip?.id,
       currentDataSource,
       hasCurrentTrip: !!currentTrip
     });
-    
+
     if (!currentTrip) {
       console.log('TripDataService: No current trip, returning false');
       return false;
     }
-    
+
     // Handle 'new' route case
     if (tripId === 'new') {
       const matches = currentDataSource === 'new';
       console.log('TripDataService: Checking new route, dataSource matches:', matches);
       return matches;
     }
-    
+
     // Handle existing trip ID case
     const matches = currentTrip.id === tripId;
     console.log('TripDataService: Checking existing trip ID, IDs match:', matches);
@@ -681,28 +550,28 @@ export class TripDataService {
    * Get stops with timing information for timeline views
    */
   getStopsWithTiming(): Stop[] {
-    return this.tripStateService.getStopsWithTiming();
+    return this.tripFacade.getStopsWithTiming();
   }
 
   /**
    * Calculate total planned duration for the trip
    */
   getTotalPlannedDuration(): number {
-    return this.tripStateService.getTotalPlannedDuration();
+    return this.tripFacade.getTotalPlannedDuration();
   }
 
   /**
    * Get the next stop in the timeline
    */
   getNextStop(currentStopId: string): Stop | null {
-    return this.tripStateService.getNextStop(currentStopId);
+    return this.tripFacade.getNextStop(currentStopId);
   }
 
   /**
    * Get the previous stop in the timeline
    */
   getPreviousStop(currentStopId: string): Stop | null {
-    return this.tripStateService.getPreviousStop(currentStopId);
+    return this.tripFacade.getPreviousStop(currentStopId);
   }
 
   /**
@@ -723,14 +592,11 @@ export class TripDataService {
         tap(updatedTrip => {
           // Use Zod to parse and coerce dates
           const parsedTrip = TripSchema.parse(updatedTrip);
-          this.tripStateService.updateState({
-            trip: parsedTrip,
-            isDirty: false,
-          });
+          this.updateTripLocal(parsedTrip);
         }),
         catchError((error: unknown) => {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          this.tripStateService.setError(`Failed to promote banked location: ${errorMessage}`);
+          console.error('Failed to promote banked location:', errorMessage);
           throw error;
         }),
       );
@@ -751,56 +617,17 @@ export class TripDataService {
       tap(updatedTrip => {
         // Use Zod to parse and coerce dates
         const parsedTrip = TripSchema.parse(updatedTrip);
-        this.tripStateService.updateState({
-          trip: parsedTrip,
-          isDirty: false,
-        });
+        this.updateTripLocal(parsedTrip);
       }),
       catchError((error: unknown) => {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        this.tripStateService.setError(`Failed to update trip with routing: ${errorMessage}`);
+        console.error('Failed to update trip with routing:', errorMessage);
         throw error;
       }),
     );
   }
 
-  // Private helper methods for basic trip operations
-
-  /**
-   * Create trip in backend
-   */
-  private createTripInBackend(trip: Trip): Observable<Trip> {
-    const createRequest: CreateTripRequest = {
-      name: trip.name,
-      description: trip.description,
-      startDate: trip.startDate,
-      endDate: trip.endDate,
-      matrix: trip.matrix,
-    };
-
-    return this.http
-      .post<Trip>(`${this.apiUrl}/trips`, createRequest)
-      .pipe(map(response => TripSchema.parse(response)));
-  }
-
-  /**
-   * Update trip in backend
-   */
-  private updateTripInBackend(trip: Trip): Observable<Trip> {
-    const updateRequest: UpdateTripWithRoutingRequest = {
-      name: trip.name,
-      description: trip.description,
-      startDate: trip.startDate,
-      endDate: trip.endDate,
-      calculateRouting: false,
-      travelMode: 'DRIVING',
-      forceRecalculate: false,
-    };
-
-    return this.http
-      .put<Trip>(`${this.apiUrl}/itinerary/trips/${trip.id}`, updateRequest)
-      .pipe(map(response => TripSchema.parse(response)));
-  }
+  // Private helper methods
 
   /**
    * Generate polylines for trip visualization
@@ -817,14 +644,11 @@ export class TripDataService {
       tap(updatedTrip => {
         // Use Zod to parse and coerce dates
         const parsedTrip = TripSchema.parse(updatedTrip);
-        this.tripStateService.updateState({
-          trip: parsedTrip,
-          isDirty: false,
-        });
+        this.updateTripLocal(parsedTrip);
       }),
       catchError((error: unknown) => {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        this.tripStateService.setError(`Failed to generate polylines: ${errorMessage}`);
+        console.error('Failed to generate polylines:', errorMessage);
         throw error;
       }),
     );

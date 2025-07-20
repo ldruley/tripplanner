@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Trip } from '@trip-planner/types';
-import { TripsService } from '../../../shared/services/trips.service';
+import { TripQueryService, TripCommandService, DeleteTripCommand, GetAllTripsQuery, TripStateService } from '../../../../domains/trips';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { ToastService } from '../../../shared/services/toast.service';
@@ -17,7 +17,9 @@ import { catchError, finalize, of } from 'rxjs';
 })
 export class MyTripsComponent implements OnInit {
   private readonly router = inject(Router);
-  private readonly tripsService = inject(TripsService);
+  private readonly tripQueryService = inject(TripQueryService);
+  private readonly tripCommandService = inject(TripCommandService);
+  private readonly tripStateService = inject(TripStateService);
   private readonly toastService = inject(ToastService);
 
   // State management
@@ -34,6 +36,11 @@ export class MyTripsComponent implements OnInit {
   readonly hasTrips = computed(() => this.trips().length > 0);
   readonly isEmpty = computed(() => !this.loading() && !this.hasTrips());
 
+  // State machine properties
+  readonly currentTripStatus = this.tripStateService.tripStatus;
+  readonly isDraftTrip = this.tripStateService.isDraftTrip;
+  readonly isPersistedTrip = this.tripStateService.isPersistedTrip;
+
   ngOnInit(): void {
     this.loadTrips();
   }
@@ -42,14 +49,18 @@ export class MyTripsComponent implements OnInit {
     this._loading.set(true);
     this._error.set(null);
 
-    this.tripsService
-      .getTrips()
+    const getAllTripsQuery: GetAllTripsQuery = {
+      type: '[Trip] Get All Trips'
+    };
+
+    this.tripQueryService
+      .execute<Trip[]>(getAllTripsQuery)
       .pipe(
         catchError(error => {
           console.error('Failed to load trips:', error);
           this._error.set('Failed to load trips. Please try again.');
           this.toastService.showError('Error', 'Failed to load trips. Please try again.');
-          return of([]);
+          return of([] as Trip[]);
         }),
         finalize(() => this._loading.set(false)),
       )
@@ -73,8 +84,13 @@ export class MyTripsComponent implements OnInit {
       return;
     }
 
-    this.tripsService
-      .deleteTrip(tripId)
+    const deleteCommand: DeleteTripCommand = {
+      type: '[Trip] Delete Trip',
+      payload: { tripId }
+    };
+
+    this.tripCommandService
+      .dispatch(deleteCommand)
       .pipe(
         catchError(error => {
           console.error('Failed to delete trip:', error);
@@ -83,7 +99,7 @@ export class MyTripsComponent implements OnInit {
         }),
       )
       .subscribe(result => {
-        if (result) {
+        if (result !== null) {
           this.toastService.showSuccess('Success', 'Trip deleted successfully.');
           this.loadTrips(); // Refresh the list
         }
@@ -124,5 +140,25 @@ export class MyTripsComponent implements OnInit {
 
   getStopCount(trip: Trip): number {
     return trip.stops?.length || 0;
+  }
+
+  /**
+   * Get the status badge info for a trip
+   * All trips in this list are persisted since they come from the server
+   */
+  getTripStatusInfo(): { text: string; class: string; icon: string } {
+    return {
+      text: 'Saved',
+      class: 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400 border border-green-200 dark:border-green-800',
+      icon: 'M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
+    };
+  }
+
+  /**
+   * Check if the current active trip is the same as a trip in the list
+   */
+  isCurrentTrip(tripId: string): boolean {
+    const currentTrip = this.tripStateService.currentTrip();
+    return currentTrip?.id === tripId;
   }
 }

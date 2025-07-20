@@ -1,6 +1,10 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Trip, Stop } from '@trip-planner/types';
-import { TripTimezoneService } from './trip-timezone.service';
+import { TripTimezoneService } from '../../../features/trip-planning/services/trip-timezone.service';
+import { TripEventBus } from '../events/trip-event.bus';
+import { TripUpdatedEvent } from '../events/trip-events';
+import { TripStateMachine } from '../state-machine/trip-state.machine';
+import { TripStatus } from '../state-machine/trip-states';
 
 export type DataSource = 'new' | 'draft' | 'persisted';
 
@@ -24,6 +28,8 @@ export interface TripState {
 })
 export class TripStateService {
   private readonly tripTimezoneService = inject(TripTimezoneService);
+  private readonly tripEventBus = inject(TripEventBus);
+  private readonly tripStateMachine = inject(TripStateMachine);
 
   // Internal state signal
   private readonly _state = signal<TripState>({
@@ -51,6 +57,13 @@ export class TripStateService {
   readonly itineraryStops = computed(() => this.currentTrip()?.stops || []);
   readonly bankedLocations = computed(() => this.currentTrip()?.bankedLocations || []);
   readonly travelSegments = computed(() => this.currentTrip()?.travelSegments || []);
+
+  // State machine computed properties
+  readonly tripStatus = computed(() => this.tripStateMachine.currentState());
+  readonly isStateMachineTransitioning = computed(() => this.tripStateMachine.isTransitioning());
+  readonly isDraftTrip = computed(() => this.tripStateMachine.isDraft());
+  readonly isPersistedTrip = computed(() => this.tripStateMachine.isPersisted());
+  readonly availableStateTransitions = computed(() => this.tripStateMachine.validTransitions());
 
   // Timeline-specific computed properties
   readonly sortedStops = computed(() =>
@@ -147,6 +160,12 @@ export class TripStateService {
 
     // Update timezone service with the new trip
     this.tripTimezoneService.setCurrentTrip(trip);
+
+    // Initialize state machine based on data source if trip exists
+    if (trip) {
+      const stateMachineStatus: TripStatus = dataSource === 'draft' ? 'draft' : 'persisted';
+      this.tripStateMachine.initializeState(stateMachineStatus, trip.id);
+    }
   }
 
   /**
@@ -166,6 +185,15 @@ export class TripStateService {
     this.updateState({
       trip: updatedTrip,
       isDirty: true,
+    });
+
+    // Publish event for the update (triggers auto-save and other event listeners)
+    this.tripEventBus.publish<TripUpdatedEvent>({
+      type: '[Trip] Updated',
+      payload: { 
+        tripId: updatedTrip.id, 
+        updates: updates 
+      }
     });
   }
 
@@ -208,6 +236,9 @@ export class TripStateService {
     
     // Clear timezone service
     this.tripTimezoneService.setCurrentTrip(null);
+
+    // Reset state machine
+    this.tripStateMachine.reset();
   }
 
   /**

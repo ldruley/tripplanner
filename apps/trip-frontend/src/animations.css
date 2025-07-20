@@ -1,0 +1,261 @@
+/* Reusable Animation Classes for Trip Planner */
+
+/* View Transition Animations */
+@keyframes crossfade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes crossfade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-in-from-left {
+  from { 
+    opacity: 0;
+    transform: translateX(-30px); 
+  }
+  to { 
+    opacity: 1;
+    transform: translateX(0); 
+  }
+}
+
+@keyframes slide-in-right {
+  from { 
+    transform: translateX(20px); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateX(0); 
+    opacity: 1; 
+  }
+}
+
+@keyframes slide-in-left {
+  from { 
+    transform: translateX(-20px); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateX(0); 
+    opacity: 1; 
+  }
+}
+
+@keyframes slide-in-up {
+  from { 
+    transform: translateY(20px); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateY(0); 
+    opacity: 1; 
+  }
+}
+
+@keyframes slide-in-down {
+  from { 
+    transform: translateY(-20px); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateY(0); 
+    opacity: 1; 
+  }
+}
+
+@keyframes fade-in-fast {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-in-slow {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from { 
+    transform: scale(0.95); 
+    opacity: 0; 
+  }
+  to { 
+    transform: scale(1); 
+    opacity: 1; 
+  }
+}
+
+/* Animation Classes */
+.animate-crossfade-in {
+  animation: crossfade-in 0.3s ease-in-out;
+}
+
+.animate-crossfade-out {
+  animation: crossfade-out 0.2s ease-in-out;
+}
+
+.animate-slide-in-from-left {
+  opacity: 0;
+  transform: translateX(-30px);
+  animation: slide-in-from-left 0.5s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.3s ease-out;
+}
+
+.animate-slide-in-up {
+  animation: slide-in-up 0.3s ease-out;
+}
+
+.animate-slide-in-down {
+  animation: slide-in-down 0.3s ease-out;
+}
+
+.animate-fade-in-fast {
+  animation: fade-in-fast 0.2s ease-in-out;
+}
+
+.animate-fade-in-slow {
+  animation: fade-in-slow 0.5s ease-in-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.25s ease-out;
+}
+
+/* View Transition States */
+.view-transition-enter {
+  animation: crossfade-in 0.3s ease-in-out;
+}
+
+.view-transition-exit {
+  animation: crossfade-out 0.2s ease-in-out;
+}
+
+/* Sidebar Animations */
+.sidebar-enter {
+  animation: slide-in-right 0.4s ease-out;
+}
+
+.sidebar-content-enter {
+  animation: fade-in-fast 0.3s ease-in-out 0.1s both;
+}
+
+/* Loading State Animations */
+.loading-shimmer {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.1) 50%, 
+    transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Dark mode shimmer */
+.dark .loading-shimmer {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.05) 50%, 
+    transparent 100%);
+  background-size: 200% 100%;
+}
+
+/* Stagger animations for lists */
+.stagger-item {
+  opacity: 0;
+  animation: fade-in-fast 0.3s ease-out forwards;
+}
+
+.stagger-item:nth-child(1) { animation-delay: 0ms; }
+.stagger-item:nth-child(2) { animation-delay: 50ms; }
+.stagger-item:nth-child(3) { animation-delay: 100ms; }
+.stagger-item:nth-child(4) { animation-delay: 150ms; }
+.stagger-item:nth-child(5) { animation-delay: 200ms; }
+.stagger-item:nth-child(6) { animation-delay: 250ms; }
+.stagger-item:nth-child(7) { animation-delay: 300ms; }
+.stagger-item:nth-child(8) { animation-delay: 350ms; }
+
+/* Mobile specific animations */
+.mobile-slide-up {
+  animation: slide-in-up 0.25s ease-out;
+}
+
+.mobile-slide-down {
+  animation: slide-in-down 0.25s ease-out;
+}
+
+/* Hover animations */
+.hover-lift {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dark .hover-lift:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Button press animation */
+.button-press {
+  transition: transform 0.1s ease-in-out;
+}
+
+.button-press:active {
+  transform: scale(0.98);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-crossfade-in,
+  .animate-crossfade-out,
+  .animate-slide-in-right,
+  .animate-slide-in-left,
+  .animate-slide-in-up,
+  .animate-slide-in-down,
+  .animate-slide-in-from-left,
+  .animate-fade-in-fast,
+  .animate-fade-in-slow,
+  .animate-scale-in,
+  .view-transition-enter,
+  .view-transition-exit,
+  .sidebar-enter,
+  .sidebar-content-enter,
+  .mobile-slide-up,
+  .mobile-slide-down,
+  .stagger-item {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  
+  .hover-lift,
+  .button-press {
+    transition: none;
+  }
+  
+  .hover-lift:hover,
+  .button-press:active {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  .loading-shimmer {
+    animation: none;
+    background: transparent;
+  }
+}

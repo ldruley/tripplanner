@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
-import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { Trip, TripSchema } from '@trip-planner/types';
 import { LocalStorageService } from '../../../core/services/local-storage.service';
+import { ITripDraftRepository } from './interfaces/trip-draft-repository.interface';
 
 /**
- * TripDraftStore
+ * TripDraftRepository
  * 
  * Encapsulates draft storage and loading logic for trips.
  * Handles auto-save functionality with debouncing and localStorage operations.
@@ -12,16 +12,8 @@ import { LocalStorageService } from '../../../core/services/local-storage.servic
 @Injectable({
   providedIn: 'root',
 })
-export class TripDraftStore {
+export class TripDraftRepository implements ITripDraftRepository {
   private readonly localStorage = inject(LocalStorageService);
-  
-  // Auto-save configuration
-  private readonly autoSaveSubject = new Subject<Trip>();
-  private readonly AUTO_SAVE_DEBOUNCE_TIME = 5000; // 5 seconds
-
-  constructor() {
-    this.initializeAutoSave();
-  }
 
   /**
    * Load draft trip from localStorage
@@ -55,10 +47,13 @@ export class TripDraftStore {
 
   /**
    * Schedule auto-save for a trip (debounced)
+   * @deprecated Use TripAutoSaveService instead - this method is kept for backward compatibility during migration
    * @param trip - Trip to auto-save
    */
   scheduleAutoSave(trip: Trip): void {
-    this.autoSaveSubject.next(trip);
+    // Legacy method kept for backward compatibility
+    // Auto-save is now handled by TripAutoSaveService through events
+    console.warn('TripDraftRepository.scheduleAutoSave is deprecated. Use TripAutoSaveService instead.');
   }
 
   /**
@@ -108,17 +103,4 @@ export class TripDraftStore {
     return `trip-draft-${tripId}`;
   }
 
-  /**
-   * Initialize auto-save functionality with debouncing
-   */
-  private initializeAutoSave(): void {
-    this.autoSaveSubject
-      .pipe(
-        debounceTime(this.AUTO_SAVE_DEBOUNCE_TIME),
-        distinctUntilChanged((a, b) => a.updatedAt.getTime() === b.updatedAt.getTime()),
-      )
-      .subscribe(trip => {
-        this.saveDraft(trip);
-      });
-  }
 }
