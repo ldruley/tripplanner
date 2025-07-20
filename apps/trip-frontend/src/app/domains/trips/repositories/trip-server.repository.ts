@@ -1,8 +1,22 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Trip, TripSchema, CreateTripRequest } from '@trip-planner/types';
+import {
+  Trip,
+  TripSchema,
+  CreateTripRequest,
+  Location,
+  TripBankedLocation,
+  LocationForItinerary,
+} from '@trip-planner/types';
+import {
+  CreateTripFromOrderedListDto,
+  AddStopToTripDto,
+  RemoveStopFromTripDto,
+  ItineraryReorderStopsDto,
+} from '@trip-planner/shared/dtos';
+import { UpdateTripWithRoutingRequest } from '@trip-planner/types';
 import { environment } from '../../../../environments/environment';
 import { ITripServerRepository } from './interfaces/trip-server-repository.interface';
 
@@ -54,6 +68,150 @@ export class TripServerRepository implements ITripServerRepository {
     return this.http
       .put<Trip>(`${this.apiUrl}/trips/${tripId}`, updateRequest)
       .pipe(map(response => TripSchema.parse(response)));
+  }
+
+  // Itinerary-specific operations
+
+  /**
+   * Create a trip with full itinerary data
+   */
+  createTripWithItinerary(
+    tripData: {
+      name: string;
+      description?: string;
+      startDate?: Date;
+      endDate?: Date;
+      matrix?: string;
+    },
+    organizedLocations: LocationForItinerary[],
+  ): Observable<Trip> {
+    const createRequest: CreateTripFromOrderedListDto = {
+      name: tripData.name,
+      description: tripData.description || undefined,
+      startDate: tripData.startDate?.toISOString(),
+      endDate: tripData.endDate?.toISOString(),
+      matrix: tripData.matrix || undefined,
+      organizedLocations: organizedLocations,
+      bankedLocations: [],
+      calculateRouting: true,
+      travelMode: 'DRIVING',
+    };
+
+    return this.http
+      .post<Trip>(`${this.apiUrl}/itinerary/trips`, createRequest)
+      .pipe(map(response => TripSchema.parse(response)));
+  }
+
+  /**
+   * Add a stop to a persisted trip
+   */
+  addStopToTrip(tripId: string, location: Location, insertAtOrder?: number): Observable<Trip> {
+    const addStopRequest: Omit<AddStopToTripDto, 'tripId'> = {
+      locationId: location.id,
+      insertAtOrder: insertAtOrder,
+      calculateRouting: false,
+      travelMode: 'DRIVING',
+    };
+
+    return this.http
+      .post<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/stops`, addStopRequest)
+      .pipe(map(response => TripSchema.parse(response)));
+  }
+
+  /**
+   * Remove a stop from a persisted trip
+   */
+  removeStopFromTrip(tripId: string, stopId: string): Observable<Trip> {
+    const params = new HttpParams().set('calculateRouting', 'true').set('travelMode', 'DRIVING');
+
+    return this.http
+      .delete<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/stops/${stopId}`, { params })
+      .pipe(map(response => TripSchema.parse(response)));
+  }
+
+  /**
+   * Reorder stops in a persisted trip
+   */
+  reorderStopsInTrip(
+    tripId: string,
+    stopOrders: Array<{ stopId: string; newOrder: number }>,
+  ): Observable<Trip> {
+    const reorderRequest: Omit<ItineraryReorderStopsDto, 'tripId'> = {
+      stopOrders: stopOrders,
+      calculateRouting: false,
+      travelMode: 'DRIVING',
+    };
+
+    return this.http
+      .put<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/stops/reorder`, reorderRequest)
+      .pipe(map(response => TripSchema.parse(response)));
+  }
+
+  /**
+   * Add a location to bank
+   */
+  addBankedLocationToTrip(tripId: string, location: Location): Observable<TripBankedLocation> {
+    return this.http.post<TripBankedLocation>(`${this.apiUrl}/itinerary/trips/${tripId}/bank`, {
+      locationId: location.id,
+    });
+  }
+
+  /**
+   * Remove a location from bank
+   */
+  removeBankedLocationFromTrip(tripId: string, locationId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/itinerary/trips/${tripId}/bank/${locationId}`);
+  }
+
+  /**
+   * Promote a banked location to a stop
+   */
+  promoteBankedLocationToStop(
+    tripId: string,
+    locationId: string,
+    position?: number,
+  ): Observable<Trip> {
+    return this.http
+      .post<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/bank/${locationId}/promote`, {
+        locationId,
+        position,
+      })
+      .pipe(map(response => TripSchema.parse(response)));
+  }
+
+  /**
+   * Update trip with routing calculations
+   */
+  updateTripWithRouting(
+    tripId: string,
+    updateData: UpdateTripWithRoutingRequest,
+  ): Observable<Trip> {
+    return this.http
+      .put<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}`, updateData)
+      .pipe(map(response => TripSchema.parse(response)));
+  }
+
+  // Read operations (queries)
+
+  /**
+   * Load trip with all relations from backend
+   */
+  loadTripWithRelations(tripId: string): Observable<Trip> {
+    const params = new HttpParams()
+      .set('includeStops', 'true')
+      .set('includeBankedLocations', 'true')
+      .set('includeTravelSegments', 'true');
+
+    return this.http
+      .get<Trip>(`${this.apiUrl}/trips/${tripId}`, { params })
+      .pipe(map(response => TripSchema.parse(response)));
+  }
+
+  /**
+   * Get banked locations for a trip
+   */
+  getBankedLocations(tripId: string): Observable<TripBankedLocation[]> {
+    return this.http.get<TripBankedLocation[]>(`${this.apiUrl}/itinerary/trips/${tripId}/bank`);
   }
 
 }

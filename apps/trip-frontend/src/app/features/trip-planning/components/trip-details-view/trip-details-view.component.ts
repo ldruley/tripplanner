@@ -4,7 +4,6 @@ import { ConfirmPopupModule } from 'primeng/confirmpopup';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { TripDataService } from '../../services/trip-data.service';
 import { LocationService } from '../../../shared/services/location.service';
-import { ItineraryApiService } from '../../services/itinerary-api.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { DropdownComponent, DropdownItem } from '../../../shared/components/dropdown/dropdown.component';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
@@ -27,7 +26,6 @@ export class TripDetailsViewComponent implements OnInit {
   @Input() currentView: 'planning' | 'timeline' | 'map' = 'planning';
   private tripDataService = inject(TripDataService);
   private locationService = inject(LocationService);
-  private itineraryService = inject(ItineraryApiService);
   private toastService = inject(ToastService);
   private confirmationService = inject(ConfirmationService);
   private elementRef = inject(ElementRef);

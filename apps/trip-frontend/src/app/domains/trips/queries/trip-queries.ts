@@ -1,4 +1,4 @@
-import { Trip } from '@trip-planner/types';
+import { Trip, TripBankedLocation } from '@trip-planner/types';
 
 /**
  * Base interface for all queries
@@ -27,6 +27,26 @@ export interface GetTripByIdQuery extends Query<Trip | null> {
 }
 
 /**
+ * Query to get a trip with all relations (stops, banked locations, travel segments)
+ */
+export interface GetTripWithRelationsQuery extends Query<Trip | null> {
+  readonly type: '[Trip] Get Trip With Relations';
+  readonly payload: { 
+    tripId: string;
+  };
+}
+
+/**
+ * Query to get banked locations for a specific trip
+ */
+export interface GetBankedLocationsQuery extends Query<TripBankedLocation[]> {
+  readonly type: '[Trip] Get Banked Locations';
+  readonly payload: { 
+    tripId: string;
+  };
+}
+
+/**
  * Query to get trip count for the current user
  */
 export interface GetTripCountQuery extends Query<{ count: number }> {
@@ -39,4 +59,6 @@ export interface GetTripCountQuery extends Query<{ count: number }> {
 export type TripQuery = 
   | GetAllTripsQuery 
   | GetTripByIdQuery 
-  | GetTripCountQuery;
+  | GetTripCountQuery
+  | GetTripWithRelationsQuery
+  | GetBankedLocationsQuery;

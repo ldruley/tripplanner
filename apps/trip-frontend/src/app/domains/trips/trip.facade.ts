@@ -1,6 +1,6 @@
 import { Injectable, inject, computed } from '@angular/core';
 import { Observable, switchMap, tap, of, catchError } from 'rxjs';
-import { Trip, Stop, Location } from '@trip-planner/types';
+import { Trip, Stop, Location, LocationForItinerary, TripBankedLocation, UpdateTripWithRoutingRequest } from '@trip-planner/types';
 
 // Command and Query imports
 import { TripCommandService } from './services/trip-command.service';
@@ -17,14 +17,20 @@ import {
   RemoveStopCommand,
   UpdateStopCommand,
   AddBankedLocationCommand,
-  RemoveBankedLocationCommand
+  RemoveBankedLocationCommand,
+  CreateTripWithItineraryCommand,
+  ReorderStopsCommand,
+  PromoteBankedLocationToStopCommand,
+  UpdateTripWithRoutingCommand
 } from './commands/trip-commands';
 
 // Query types
 import {
   GetAllTripsQuery,
   GetTripByIdQuery,
-  GetTripCountQuery
+  GetTripCountQuery,
+  GetTripWithRelationsQuery,
+  GetBankedLocationsQuery
 } from './queries/trip-queries';
 
 // State machine types
@@ -188,6 +194,69 @@ export class TripFacade {
     return this.commandService.dispatch(command);
   }
 
+  /**
+   * Create a trip with full itinerary data
+   */
+  createTripWithItinerary(
+    tripData: {
+      name: string;
+      description?: string;
+      startDate?: Date;
+      endDate?: Date;
+      matrix?: string;
+    },
+    organizedLocations: LocationForItinerary[]
+  ): Observable<{ tripId: string }> {
+    const command: CreateTripWithItineraryCommand = {
+      type: '[Trip] Create Trip With Itinerary',
+      payload: { tripData, organizedLocations }
+    };
+    return this.commandService.dispatch(command);
+  }
+
+  /**
+   * Reorder stops in a trip's itinerary
+   */
+  reorderStops(
+    tripId: string,
+    stopOrders: Array<{ stopId: string; newOrder: number }>
+  ): Observable<void> {
+    const command: ReorderStopsCommand = {
+      type: '[Stop] Reorder Stops',
+      payload: { tripId, stopOrders }
+    };
+    return this.commandService.dispatch(command);
+  }
+
+  /**
+   * Promote a banked location to a stop
+   */
+  promoteBankedLocationToStop(
+    tripId: string,
+    locationId: string,
+    position?: number
+  ): Observable<void> {
+    const command: PromoteBankedLocationToStopCommand = {
+      type: '[BankedLocation] Promote To Stop',
+      payload: { tripId, locationId, position }
+    };
+    return this.commandService.dispatch(command);
+  }
+
+  /**
+   * Update trip with routing calculations
+   */
+  updateTripWithRouting(
+    tripId: string,
+    updateData: UpdateTripWithRoutingRequest
+  ): Observable<void> {
+    const command: UpdateTripWithRoutingCommand = {
+      type: '[Trip] Update Trip With Routing',
+      payload: { tripId, updateData }
+    };
+    return this.commandService.dispatch(command);
+  }
+
   // =============================================================================
   // QUERY OPERATIONS (Read Operations)
   // =============================================================================
@@ -223,6 +292,28 @@ export class TripFacade {
   getTripCount(): Observable<{ count: number }> {
     const query: GetTripCountQuery = {
       type: '[Trip] Get Trip Count'
+    };
+    return this.queryService.execute(query);
+  }
+
+  /**
+   * Get a trip with all relations (stops, banked locations, travel segments)
+   */
+  getTripWithRelations(tripId: string): Observable<Trip | null> {
+    const query: GetTripWithRelationsQuery = {
+      type: '[Trip] Get Trip With Relations',
+      payload: { tripId }
+    };
+    return this.queryService.execute(query);
+  }
+
+  /**
+   * Get banked locations for a specific trip
+   */
+  getBankedLocations(tripId: string): Observable<TripBankedLocation[]> {
+    const query: GetBankedLocationsQuery = {
+      type: '[Trip] Get Banked Locations',
+      payload: { tripId }
     };
     return this.queryService.execute(query);
   }

@@ -5,10 +5,18 @@ import { HttpClient } from '@angular/common/http';
 import { TripStateService } from '../state/trip-state.service';
 import { TripEventBus } from '../events/trip-event.bus';
 import { TripStateMachine } from '../state-machine/trip-state.machine';
-import { Query, GetAllTripsQuery, GetTripByIdQuery, GetTripCountQuery } from '../queries/trip-queries';
+import {
+  Query,
+  GetAllTripsQuery,
+  GetTripByIdQuery,
+  GetTripCountQuery,
+  GetTripWithRelationsQuery,
+  GetBankedLocationsQuery,
+} from '../queries/trip-queries';
 import { TripCreatedEvent, TripUpdatedEvent, TripDeletedEvent } from '../events/trip-events';
-import { Trip, TripSchema } from '@trip-planner/types';
+import { Trip, TripSchema, TripBankedLocation } from '@trip-planner/types';
 import { environment } from '../../../../environments/environment';
+import { TripServerRepository } from '../repositories/trip-server.repository';
 
 @Injectable({ providedIn: 'root' })
 export class TripQueryService {
@@ -16,6 +24,7 @@ export class TripQueryService {
   private readonly tripStateService = inject(TripStateService);
   private readonly tripEventBus = inject(TripEventBus);
   private readonly tripStateMachine = inject(TripStateMachine);
+  private readonly tripServerRepository = inject(TripServerRepository);
   private readonly apiUrl = environment.backendApiUrl;
 
   // Simple in-memory cache for trips
@@ -36,16 +45,29 @@ export class TripQueryService {
       case '[Trip] Get All Trips':
         return this.executeGetAllTrips() as Observable<TResult>;
 
-      case '[Trip] Get Trip By Id':
+      case '[Trip] Get Trip By Id': {
         const getByIdQuery = query as GetTripByIdQuery;
         return this.executeGetTripById(
           getByIdQuery.payload.tripId,
           getByIdQuery.payload.includeStops,
-          getByIdQuery.payload.includeBankedLocations
+          getByIdQuery.payload.includeBankedLocations,
         ) as Observable<TResult>;
+      }
 
       case '[Trip] Get Trip Count':
         return this.executeGetTripCount() as Observable<TResult>;
+
+      case '[Trip] Get Trip With Relations': {
+        const getWithRelationsQuery = query as GetTripWithRelationsQuery;
+        return this.executeGetTripWithRelations(
+          getWithRelationsQuery.payload.tripId,
+        ) as Observable<TResult>;
+      }
+
+      case '[Trip] Get Banked Locations': {
+        const getBankedQuery = query as GetBankedLocationsQuery;
+        return this.executeGetBankedLocations(getBankedQuery.payload.tripId) as Observable<TResult>;
+      }
 
       default:
         return throwError(() => new Error(`Unknown query type: ${query.type}`));
@@ -67,7 +89,7 @@ export class TripQueryService {
       // Invalidate all caches
       this.tripCache.clear();
     }
-    
+
     // Always invalidate aggregate caches when any trip changes
     this.allTripsCache$ = null;
     this.tripCountCache$ = null;
@@ -78,17 +100,15 @@ export class TripQueryService {
    */
   private executeGetAllTrips(): Observable<Trip[]> {
     if (!this.allTripsCache$) {
-      this.allTripsCache$ = this.http
-        .get<Trip[]>(`${this.apiUrl}/trips`)
-        .pipe(
-          map(response => response.map(trip => TripSchema.parse(trip))),
-          shareReplay(1),
-          catchError(error => {
-            console.error('Error fetching all trips:', error);
-            this.allTripsCache$ = null; // Reset cache on error
-            return of([]); // Return empty array on error
-          })
-        );
+      this.allTripsCache$ = this.http.get<Trip[]>(`${this.apiUrl}/trips`).pipe(
+        map(response => response.map(trip => TripSchema.parse(trip))),
+        shareReplay(1),
+        catchError(error => {
+          console.error('Error fetching all trips:', error);
+          this.allTripsCache$ = null; // Reset cache on error
+          return of([]); // Return empty array on error
+        }),
+      );
     }
     return this.allTripsCache$;
   }
@@ -97,14 +117,14 @@ export class TripQueryService {
    * Execute get trip by ID query with caching
    */
   private executeGetTripById(
-    tripId: string, 
-    includeStops = false, 
-    includeBankedLocations = false
+    tripId: string,
+    includeStops = false,
+    includeBankedLocations = false,
   ): Observable<Trip | null> {
     // Check if the requested trip is the current in-memory trip
     const currentTrip = this.tripStateService.currentTrip();
     const currentState = this.tripStateMachine.currentState();
-    
+
     // If we have a current trip and it matches the requested ID
     if (currentTrip && currentTrip.id === tripId) {
       // For draft trips, always return from memory
@@ -149,7 +169,7 @@ export class TripQueryService {
         console.error(`Error fetching trip ${tripId}:`, error);
         this.tripCache.delete(cacheKey); // Remove from cache on error
         return of(null); // Return null on error
-      })
+      }),
     );
 
     this.tripCache.set(cacheKey, tripObservable);
@@ -161,16 +181,73 @@ export class TripQueryService {
    */
   private executeGetTripCount(): Observable<{ count: number }> {
     if (!this.tripCountCache$) {
-      this.tripCountCache$ = this.http.get<{ count: number }>(`${this.apiUrl}/trips/user/count`).pipe(
-        shareReplay(1),
-        catchError(error => {
-          console.error('Error fetching trip count:', error);
-          this.tripCountCache$ = null; // Reset cache on error
-          return of({ count: 0 }); // Return zero count on error
-        })
-      );
+      this.tripCountCache$ = this.http
+        .get<{ count: number }>(`${this.apiUrl}/trips/user/count`)
+        .pipe(
+          shareReplay(1),
+          catchError(error => {
+            console.error('Error fetching trip count:', error);
+            this.tripCountCache$ = null; // Reset cache on error
+            return of({ count: 0 }); // Return zero count on error
+          }),
+        );
     }
     return this.tripCountCache$;
+  }
+
+  /**
+   * Execute get trip with relations query
+   */
+  private executeGetTripWithRelations(tripId: string): Observable<Trip | null> {
+    // Check if the requested trip is the current in-memory trip
+    const currentTrip = this.tripStateService.currentTrip();
+    const currentState = this.tripStateMachine.currentState();
+
+    // If we have a current trip and it matches the requested ID
+    if (currentTrip && currentTrip.id === tripId) {
+      // For draft trips, always return from memory
+      if (currentState === 'draft') {
+        return of(currentTrip);
+      }
+    }
+
+    // Use repository method for loading with all relations
+    return from(this.tripServerRepository.loadTripWithRelations(tripId)).pipe(
+      tap(trip => {
+        if (trip) {
+          // Update current trip in state if this is the active trip
+          const currentTripId = this.tripStateService.currentTrip()?.id;
+          if (currentTripId === tripId) {
+            this.tripStateService.setTrip(trip, 'persisted', false);
+            // Initialize state machine for loaded persisted trip
+            this.tripStateMachine.initializeState('persisted', trip.id);
+          }
+        }
+      }),
+      catchError(error => {
+        console.error(`Error fetching trip with relations ${tripId}:`, error);
+        return of(null); // Return null on error
+      }),
+    );
+  }
+
+  /**
+   * Execute get banked locations query
+   */
+  private executeGetBankedLocations(tripId: string): Observable<TripBankedLocation[]> {
+    // Check if we have banked locations in current trip state
+    const currentTrip = this.tripStateService.currentTrip();
+    if (currentTrip && currentTrip.id === tripId && currentTrip.bankedLocations) {
+      return of(currentTrip.bankedLocations);
+    }
+
+    // Use repository method for loading banked locations
+    return from(this.tripServerRepository.getBankedLocations(tripId)).pipe(
+      catchError(error => {
+        console.error(`Error fetching banked locations for trip ${tripId}:`, error);
+        return of([]); // Return empty array on error
+      }),
+    );
   }
 
   /**

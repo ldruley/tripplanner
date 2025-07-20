@@ -1,4 +1,5 @@
-import { Trip, Stop, Location } from '@trip-planner/types';
+import { Trip, Stop, Location, LocationForItinerary } from '@trip-planner/types';
+import { UpdateTripWithRoutingRequest } from '@trip-planner/types';
 
 /**
  * Base Command interface for all trip domain commands
@@ -107,6 +108,61 @@ export interface RemoveBankedLocationCommand extends Command<void> {
 }
 
 /**
+ * Create Trip With Itinerary Command
+ * Used to create a new trip with full itinerary data
+ */
+export interface CreateTripWithItineraryCommand extends Command<{ tripId: string }> {
+  readonly type: '[Trip] Create Trip With Itinerary';
+  readonly payload: { 
+    tripData: {
+      name: string;
+      description?: string;
+      startDate?: Date;
+      endDate?: Date;
+      matrix?: string;
+    };
+    organizedLocations: LocationForItinerary[];
+  };
+}
+
+/**
+ * Reorder Stops Command
+ * Used to reorder stops in a trip's itinerary
+ */
+export interface ReorderStopsCommand extends Command<void> {
+  readonly type: '[Stop] Reorder Stops';
+  readonly payload: { 
+    tripId: string; 
+    stopOrders: Array<{ stopId: string; newOrder: number }>;
+  };
+}
+
+/**
+ * Promote Banked Location To Stop Command
+ * Used to promote a banked location to a stop
+ */
+export interface PromoteBankedLocationToStopCommand extends Command<void> {
+  readonly type: '[BankedLocation] Promote To Stop';
+  readonly payload: { 
+    tripId: string; 
+    locationId: string;
+    position?: number;
+  };
+}
+
+/**
+ * Update Trip With Routing Command
+ * Used to update trip with routing calculations
+ */
+export interface UpdateTripWithRoutingCommand extends Command<void> {
+  readonly type: '[Trip] Update Trip With Routing';
+  readonly payload: { 
+    tripId: string; 
+    updateData: UpdateTripWithRoutingRequest;
+  };
+}
+
+/**
  * Union type for all trip-related commands
  */
 export type TripCommand = 
@@ -117,4 +173,8 @@ export type TripCommand =
   | RemoveStopCommand
   | UpdateStopCommand
   | AddBankedLocationCommand
-  | RemoveBankedLocationCommand;
+  | RemoveBankedLocationCommand
+  | CreateTripWithItineraryCommand
+  | ReorderStopsCommand
+  | PromoteBankedLocationToStopCommand
+  | UpdateTripWithRoutingCommand;
