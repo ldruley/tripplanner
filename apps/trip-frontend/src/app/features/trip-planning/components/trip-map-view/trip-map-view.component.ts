@@ -2,10 +2,10 @@ import { Component, OnInit, OnDestroy, ElementRef, ViewChild, inject, effect, si
 import { CommonModule } from '@angular/common';
 import { Map, NavigationControl, Marker, LngLatLike, Popup, LngLatBounds } from 'mapbox-gl';
 import * as mapboxgl from 'mapbox-gl';
-import { TripDataService } from '../../services/trip-data.service';
+import { TripFacade } from '../../../../domains/trips';
+import { PolylineGenerationService, PolylineStatus } from '../../services/polyline-generation.service';
 import { environment } from '../../../../../environments/environment';
 import { Trip } from '@trip-planner/types';
-import { PolylineStatus } from '../../services/polyline-generation.service';
 
 @Component({
   selector: 'app-trip-map-view',
@@ -21,7 +21,8 @@ import { PolylineStatus } from '../../services/polyline-generation.service';
 export class TripMapViewComponent implements OnInit, OnDestroy {
   @ViewChild('mapContainer', { static: true }) mapContainer!: ElementRef;
 
-  private readonly tripDataService = inject(TripDataService);
+  private readonly tripFacade = inject(TripFacade);
+  private readonly polylineGenerationService = inject(PolylineGenerationService);
   private map!: Map;
   private markers: Marker[] = [];
   private mapStyleLoaded = false;
@@ -33,7 +34,7 @@ export class TripMapViewComponent implements OnInit, OnDestroy {
   constructor() {
     // Use effect to watch for trip changes
     effect(() => {
-      const trip = this.tripDataService.currentTrip();
+      const trip = this.tripFacade.currentTrip();
       if (trip) {
         if (this.mapStyleLoaded) {
           this.updateMapWithTripData(trip);
@@ -333,13 +334,16 @@ export class TripMapViewComponent implements OnInit, OnDestroy {
    * Check polyline status for the current trip and automatically generate if needed
    */
   private checkPolylineStatus(): void {
-    this.tripDataService.getPolylineStatus().subscribe({
+    const currentTrip = this.tripFacade.currentTrip();
+    if (!currentTrip) return;
+
+    this.polylineGenerationService.getPolylineStatus(currentTrip.id).subscribe({
       next: (status) => {
         this.polylineStatus.set(status);
         console.log('TripMapView: Polyline status:', status);
         
         // Automatically generate polylines if needed
-        if (status.needsPolylines && !this.tripDataService.isGeneratingPolylines()) {
+        if (status.needsPolylines && !this.polylineGenerationService.isGenerating()) {
           console.log('TripMapView: Auto-generating polylines for map visualization');
           this.generatePolylines();
         }
@@ -354,20 +358,22 @@ export class TripMapViewComponent implements OnInit, OnDestroy {
    * Generate polylines for the current trip
    */
   generatePolylines(): void {
+    const currentTrip = this.tripFacade.currentTrip();
+    if (!currentTrip) return;
+
     console.log('TripMapView: Generating polylines for current trip');
     
-    this.tripDataService.generatePolylines().subscribe({
+    this.polylineGenerationService.generatePolylines(currentTrip.id).subscribe({
       next: (updatedTrip) => {
         console.log('TripMapView: Polylines generated successfully');
-        // Trip state is automatically updated by TripDataService
-        // Map will update automatically via the effect
+        // Update trip state through facade
+        this.tripFacade.updateTripLocally(updatedTrip);
         
         // Refresh polyline status
         this.checkPolylineStatus();
       },
       error: (error) => {
         console.error('TripMapView: Error generating polylines:', error);
-        // Error is handled by TripDataService and exposed via signals
       }
     });
   }
@@ -376,6 +382,6 @@ export class TripMapViewComponent implements OnInit, OnDestroy {
    * Clear polyline generation error
    */
   clearPolylineError(): void {
-    this.tripDataService.clearPolylineError();
+    this.polylineGenerationService.clearError();
   }
 }

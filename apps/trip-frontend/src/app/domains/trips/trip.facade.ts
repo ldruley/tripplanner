@@ -7,6 +7,7 @@ import { TripCommandService } from './services/trip-command.service';
 import { TripQueryService } from './services/trip-query.service';
 import { TripStateService } from './state/trip-state.service';
 import { TripStateMachine } from './state-machine/trip-state.machine';
+import { MatrixEventService } from './services/matrix-event.service';
 
 // Command types
 import {
@@ -55,6 +56,7 @@ export class TripFacade {
   private readonly queryService = inject(TripQueryService);
   private readonly stateService = inject(TripStateService);
   private readonly stateMachine = inject(TripStateMachine);
+  private readonly matrixEventService = inject(MatrixEventService); // Initialize matrix event service
 
   // Expose reactive state for UI binding
   readonly currentTrip = this.stateService.currentTrip;

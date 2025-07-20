@@ -27,7 +27,9 @@ import {
   TripDeletedEvent,
   StopAddedEvent,
   StopUpdatedEvent,
-  StopRemovedEvent
+  StopRemovedEvent,
+  BankedLocationAddedEvent,
+  BankedLocationRemovedEvent
 } from '../events/trip-events';
 import { Trip, Stop, TripBankedLocation } from '@trip-planner/types';
 
@@ -368,6 +370,12 @@ export class TripCommandService {
           
           const updatedBankedLocations = [...currentTrip.bankedLocations, bankedLocationWithFullLocation];
           this.tripStateService.updateTrip({ bankedLocations: updatedBankedLocations });
+          
+          // Publish event
+          this.tripEventBus.publish<BankedLocationAddedEvent>({
+            type: '[BankedLocation] Added',
+            payload: { tripId: currentTrip.id, bankedLocation: bankedLocationWithFullLocation }
+          });
         }),
         map(() => void 0)
       );
@@ -385,6 +393,12 @@ export class TripCommandService {
     // Update state
     const updatedBankedLocations = [...currentTrip.bankedLocations, bankedLocation];
     this.tripStateService.updateTrip({ bankedLocations: updatedBankedLocations });
+
+    // Publish event
+    this.tripEventBus.publish<BankedLocationAddedEvent>({
+      type: '[BankedLocation] Added',
+      payload: { tripId: currentTrip.id, bankedLocation }
+    });
 
     return from([void 0]);
   }
@@ -408,6 +422,12 @@ export class TripCommandService {
             bl => bl.locationId !== command.payload.locationId
           );
           this.tripStateService.updateTrip({ bankedLocations: updatedBankedLocations });
+          
+          // Publish event
+          this.tripEventBus.publish<BankedLocationRemovedEvent>({
+            type: '[BankedLocation] Removed',
+            payload: { tripId: currentTrip.id, locationId: command.payload.locationId }
+          });
         }),
         map(() => void 0)
       );
@@ -420,6 +440,12 @@ export class TripCommandService {
 
     // Update state
     this.tripStateService.updateTrip({ bankedLocations: updatedBankedLocations });
+
+    // Publish event
+    this.tripEventBus.publish<BankedLocationRemovedEvent>({
+      type: '[BankedLocation] Removed',
+      payload: { tripId: currentTrip.id, locationId: command.payload.locationId }
+    });
 
     return from([void 0]);
   }

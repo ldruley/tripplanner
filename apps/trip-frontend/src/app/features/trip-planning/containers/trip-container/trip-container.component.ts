@@ -2,7 +2,7 @@ import { Component, inject, OnInit, OnDestroy, computed, signal } from '@angular
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { TripDataService } from '../../services/trip-data.service';
+import { TripFacade } from '../../../../domains/trips';
 import { ToastService } from '../../../shared/services';
 import { TripEditViewComponent } from '../../components/trip-edit-view/trip-edit-view.component';
 import { TripDetailsViewComponent } from '../../components/trip-details-view/trip-details-view.component';
@@ -25,7 +25,7 @@ import { TripMapViewComponent } from '../../components/trip-map-view/trip-map-vi
 export class TripContainerComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private tripDataService = inject(TripDataService);
+  private tripFacade = inject(TripFacade);
   private toastService = inject(ToastService);
 
   // Subscriptions
@@ -38,7 +38,7 @@ export class TripContainerComponent implements OnInit, OnDestroy {
   isSidePaneOpen = signal<boolean>(false);
 
   // Access trip data for navigation logic
-  trip = this.tripDataService.currentTrip;
+  trip = this.tripFacade.currentTrip;
 
   // Current trip ID from route
   currentTripId = signal<string | null>(null);
@@ -86,24 +86,41 @@ export class TripContainerComponent implements OnInit, OnDestroy {
     }
 
     // Check if we're already working with the same trip to avoid unnecessary re-initialization
-    const currentTrip = this.tripDataService.currentTrip();
+    const currentTrip = this.tripFacade.currentTrip();
     const currentTripId = currentTrip?.id;
-    const currentDataSource = this.tripDataService.dataSource();
+    const currentDataSource = this.tripFacade.dataSource();
     
     // For new trips, check if we already have a new trip loaded
     // For existing trips, check if the ID matches
     const shouldInitialize = tripId === 'new' 
-      ? currentDataSource !== 'new' || !currentTrip
+      ? currentDataSource !== 'draft' || !currentTrip
       : currentTripId !== tripId || !currentTrip;
     
     if (shouldInitialize) {
       console.log('TripContainer: Initializing trip:', tripId);
       
-      // Initialize trip through service
-      this.tripDataService.initializeTrip(tripId);
-
-      // Show appropriate toast based on data source after initialization
-      this.showInitializationToast(tripId);
+      if (tripId === 'new') {
+        // Start a new draft trip
+        this.tripFacade.startNewDraftTrip('New Trip', 'Plan your perfect trip');
+        this.showInitializationToast(tripId);
+      } else {
+        // Load existing trip
+        this.tripFacade.loadTrip(tripId).subscribe({
+          next: (trip) => {
+            if (trip) {
+              this.showInitializationToast(tripId);
+            } else {
+              this.toastService.showError('Trip not found', 'The requested trip could not be loaded');
+              this.router.navigate(['/trip-planning', 'new']);
+            }
+          },
+          error: (error) => {
+            console.error('TripContainer: Failed to load trip:', error);
+            this.toastService.showError('Load failed', 'Failed to load trip');
+            this.router.navigate(['/trip-planning', 'new']);
+          }
+        });
+      }
     } else {
       console.log('TripContainer: Same trip already loaded, skipping initialization');
     }
@@ -112,15 +129,16 @@ export class TripContainerComponent implements OnInit, OnDestroy {
   private showInitializationToast(tripId: string): void {
     // Wait for initialization to complete before showing toast
     setTimeout(() => {
-      const dataSource = this.tripDataService.dataSource();
-      const tripName = this.tripDataService.tripName();
+      const dataSource = this.tripFacade.dataSource();
+      const tripName = this.tripFacade.tripName();
 
       switch (dataSource) {
-        case 'new':
-          this.toastService.showInfo('New trip', 'Started creating a new trip');
-          break;
         case 'draft':
-          this.toastService.showInfo('Draft loaded', `Loaded draft: ${tripName}`);
+          if (tripId === 'new') {
+            this.toastService.showInfo('New trip', 'Started creating a new trip');
+          } else {
+            this.toastService.showInfo('Draft loaded', `Loaded draft: ${tripName}`);
+          }
           break;
         case 'persisted':
           this.toastService.showInfo('Trip loaded', `Loaded trip: ${tripName}`);

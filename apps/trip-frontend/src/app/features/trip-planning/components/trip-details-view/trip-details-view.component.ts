@@ -1,8 +1,10 @@
 import { Component, inject, computed, Input, OnInit, signal, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ConfirmPopupModule } from 'primeng/confirmpopup';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { TripDataService } from '../../services/trip-data.service';
+import { TripFacade } from '../../../../domains/trips';
+import { LocationFacade } from '../../../../domains/locations';
 import { LocationService } from '../../../shared/services/location.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { DropdownComponent, DropdownItem } from '../../../shared/components/dropdown/dropdown.component';
@@ -24,16 +26,17 @@ import { UserFavoriteLocation } from '@trip-planner/types';
 })
 export class TripDetailsViewComponent implements OnInit {
   @Input() currentView: 'planning' | 'timeline' | 'map' = 'planning';
-  private tripDataService = inject(TripDataService);
+  private tripFacade = inject(TripFacade);
+  private locationFacade = inject(LocationFacade);
   private locationService = inject(LocationService);
   private toastService = inject(ToastService);
   private confirmationService = inject(ConfirmationService);
   private elementRef = inject(ElementRef);
 
-  // Access trip data through service signals
-  trip = this.tripDataService.currentTrip;
-  isLoading = this.tripDataService.isLoading;
-  error = this.tripDataService.error;
+  // Access trip data through facade signals
+  trip = this.tripFacade.currentTrip;
+  isLoading = this.tripFacade.isLoading;
+  error = this.tripFacade.error;
   
   // Computed properties for trip details
   tripName = computed(() => this.trip()?.name || 'Untitled Trip');
@@ -114,14 +117,24 @@ export class TripDetailsViewComponent implements OnInit {
       return;
     }
 
-    try {
-      // Use trip data service to add location to bank - this updates local state
-      this.tripDataService.addLocationToBank(favorite.location);
-      this.toastService.showSuccess(`Added "${favorite.alias || favorite.location.name}" to location bank`);
-    } catch (error) {
-      console.error('Failed to add location to bank:', error);
-      this.toastService.showError('Failed to add location to trip');
+    const tripId = this.tripFacade.tripId();
+    if (!tripId || tripId === 'new') {
+      this.toastService.showError('Trip must be saved before adding locations');
+      return;
     }
+
+    // Use trip facade to add location to bank through command pattern
+    this.tripFacade.addBankedLocation(tripId, favorite.location)
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: () => {
+          this.toastService.showSuccess(`Added "${favorite.alias || favorite.location.name}" to location bank`);
+        },
+        error: (error) => {
+          console.error('Failed to add location to bank:', error);
+          this.toastService.showError('Failed to add location to trip');
+        }
+      });
   }
   
   // Placeholder methods for future functionality

@@ -1,12 +1,12 @@
 import { Component, input, output, computed, inject, signal, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { ToastService } from '../../../shared/services';
-import { StopService } from '../../../shared/services/stop.service';
-import { TripDataService } from '../../services/trip-data.service';
+import { TripFacade } from '../../../../domains/trips';
 import { Stop, UpdateStopRequest } from '@trip-planner/types';
 import { StopType } from '@prisma/client';
 import { TripTimezoneService } from '../../services/trip-timezone.service';
@@ -35,8 +35,7 @@ export class StopEditModalComponent implements OnInit {
 
   // Injected services
   private readonly formBuilder = inject(FormBuilder);
-  private readonly stopService = inject(StopService);
-  private readonly tripDataService = inject(TripDataService);
+  private readonly tripFacade = inject(TripFacade);
   private toastService = inject(ToastService);
   private readonly tripTimezoneService = inject(TripTimezoneService);
 
@@ -206,7 +205,7 @@ export class StopEditModalComponent implements OnInit {
     }
 
     // Prepare update request
-    const updateRequest: UpdateStopRequest = {
+    const updateRequest: Partial<Stop> = {
       plannedArrivalTime: utcArrivalTime,
       plannedDuration: calculatedDuration,
       stopType: formValue.stopType || null,
@@ -216,34 +215,47 @@ export class StopEditModalComponent implements OnInit {
     // Remove null/undefined values
     Object.keys(updateRequest).forEach(key => {
       if (
-        updateRequest[key as keyof UpdateStopRequest] === null ||
-        updateRequest[key as keyof UpdateStopRequest] === undefined
+        updateRequest[key as keyof Partial<Stop>] === null ||
+        updateRequest[key as keyof Partial<Stop>] === undefined
       ) {
-        delete updateRequest[key as keyof UpdateStopRequest];
+        delete updateRequest[key as keyof Partial<Stop>];
       }
     });
 
-    this.stopService.updateStop(this.stop().id, updateRequest).subscribe({
-      next: updatedStop => {
-        // Update local state
-        this.tripDataService.updateStop(updatedStop.id, updatedStop);
+    // Get current trip ID for the facade call
+    const currentTrip = this.tripFacade.currentTrip();
+    if (!currentTrip) {
+      this.toastService.showError('Update Failed', 'No active trip found.');
+      this.isLoading.set(false);
+      return;
+    }
 
-        // Emit success
-        this.stopUpdated.emit(updatedStop);
-        this.toastService.showSuccess('Stop Updated', 'Stop details have been saved successfully.');
-        this.onClose();
-      },
-      error: error => {
-        console.error('Failed to update stop:', error);
-        this.toastService.showError(
-          'Update Failed',
-          'Failed to update stop details. Please try again.',
-        );
-      },
-      complete: () => {
-        this.isLoading.set(false);
-      },
-    });
+    this.tripFacade.updateStop(currentTrip.id, this.stop().id, updateRequest)
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: () => {
+          // Get the updated stop from the current trip state
+          const updatedTrip = this.tripFacade.currentTrip();
+          const updatedStop = updatedTrip?.stops.find(s => s.id === this.stop().id);
+          
+          if (updatedStop) {
+            this.stopUpdated.emit(updatedStop);
+          }
+          
+          this.toastService.showSuccess('Stop Updated', 'Stop details have been saved successfully.');
+          this.onClose();
+        },
+        error: error => {
+          console.error('Failed to update stop:', error);
+          this.toastService.showError(
+            'Update Failed',
+            'Failed to update stop details. Please try again.',
+          );
+        },
+        complete: () => {
+          this.isLoading.set(false);
+        },
+      });
   }
 
   isFieldInvalid(fieldName: string): boolean {

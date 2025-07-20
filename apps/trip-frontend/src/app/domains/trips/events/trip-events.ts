@@ -1,5 +1,6 @@
-import { Trip, Stop } from '@trip-planner/types';
+import { Trip, Stop, Location, TripBankedLocation } from '@trip-planner/types';
 import { TripStatus, TripStateMachineEvent } from '../state-machine/trip-states';
+import { CoordinateMatrix } from '../../../../../../../libs/shared/types/src/schemas/matrix.schema';
 
 /**
  * Trip Created Event
@@ -100,6 +101,54 @@ export interface TripStateChangedEvent {
 }
 
 /**
+ * Banked Location Added Event
+ * Dispatched when a location is added to a trip's bank
+ */
+export interface BankedLocationAddedEvent {
+  type: '[BankedLocation] Added';
+  payload: { 
+    tripId: string; 
+    bankedLocation: TripBankedLocation 
+  };
+}
+
+/**
+ * Banked Location Removed Event
+ * Dispatched when a location is removed from a trip's bank
+ */
+export interface BankedLocationRemovedEvent {
+  type: '[BankedLocation] Removed';
+  payload: { 
+    tripId: string; 
+    locationId: string 
+  };
+}
+
+/**
+ * Matrix Update Requested Event
+ * Dispatched when a matrix update is requested due to location changes
+ */
+export interface MatrixUpdateRequestedEvent {
+  type: '[Trip] Matrix Update Requested';
+  payload: { 
+    tripId: string; 
+    locations: Location[] 
+  };
+}
+
+/**
+ * Matrix Updated Event
+ * Dispatched when a trip's travel matrix has been successfully calculated
+ */
+export interface MatrixUpdatedEvent {
+  type: '[Trip] Matrix Updated';
+  payload: { 
+    tripId: string; 
+    matrix: CoordinateMatrix 
+  };
+}
+
+/**
  * Union type for all trip-related domain events
  */
 export type TripDomainEvent = 
@@ -110,4 +159,8 @@ export type TripDomainEvent =
   | StopUpdatedEvent 
   | StopRemovedEvent
   | TripSavedEvent
-  | TripStateChangedEvent;
+  | TripStateChangedEvent
+  | BankedLocationAddedEvent
+  | BankedLocationRemovedEvent
+  | MatrixUpdateRequestedEvent
+  | MatrixUpdatedEvent;

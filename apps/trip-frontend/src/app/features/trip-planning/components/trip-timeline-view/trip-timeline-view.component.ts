@@ -1,6 +1,6 @@
 import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TripDataService } from '../../services/trip-data.service';
+import { TripFacade } from '../../../../domains/trips';
 import { TripTimezoneService } from '../../services/trip-timezone.service';
 import { Stop, TravelSegment } from '@trip-planner/types';
 import { formatDateInLocationTimezone } from '@trip-planner/date-utils';
@@ -26,14 +26,14 @@ interface TimelineEvent {
   styleUrl: './trip-timeline-view.component.css',
 })
 export class TripTimelineViewComponent {
-  private tripDataService = inject(TripDataService);
+  private tripFacade = inject(TripFacade);
   private tripTimezoneService = inject(TripTimezoneService);
 
   // Trip data
-  trip = this.tripDataService.currentTrip;
-  stops = this.tripDataService.sortedStops;
-  segments = this.tripDataService.travelSegments;
-  isLoading = this.tripDataService.isLoading;
+  trip = this.tripFacade.currentTrip;
+  stops = this.tripFacade.sortedStops;
+  segments = this.tripFacade.travelSegments;
+  isLoading = this.tripFacade.isLoading;
 
   // Timeline events computed from stops and segments
   timelineEvents = computed(() => {

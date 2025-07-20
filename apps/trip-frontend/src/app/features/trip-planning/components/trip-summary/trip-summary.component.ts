@@ -1,6 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TripDataService } from '../../services/trip-data.service';
+import { TripFacade } from '../../../../domains/trips';
 import { TripTimezoneService } from '../../services/trip-timezone.service';
 import { TimezoneIndicatorComponent } from '../../../shared/components/timezone-indicator/timezone-indicator.component';
 
@@ -9,7 +9,7 @@ import { TimezoneIndicatorComponent } from '../../../shared/components/timezone-
   standalone: true,
   imports: [CommonModule, TimezoneIndicatorComponent],
   template: `
-    @if (tripDataService.hasTrip()) {
+    @if (tripFacade.hasTrip()) {
       <div class="bg-tp-bg-light-primary dark:bg-tp-bg-secondary rounded-lg border border-tp-border-light dark:border-tp-border p-4 space-y-3">
         <h3 class="text-lg font-semibold text-tp-text-light-primary dark:text-tp-text-primary">
           Trip Summary
@@ -28,34 +28,34 @@ import { TimezoneIndicatorComponent } from '../../../shared/components/timezone-
         }
         
         <!-- Trip Dates -->
-        @if (tripDataService.formattedTripStartDate()) {
+        @if (tripFacade.formattedTripStartDate()) {
           <div class="flex items-center justify-between">
             <span class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">
               Start Date:
             </span>
             <div class="flex items-center gap-2">
               <span class="text-sm font-medium text-tp-text-light-primary dark:text-tp-text-primary">
-                {{ formatTripDate(tripDataService.formattedTripStartDate()!) }}
+                {{ formatTripDate(tripFacade.formattedTripStartDate()!) }}
               </span>
               <app-timezone-indicator 
-                [timezone]="tripDataService.tripPrimaryTimezone()" 
+                [timezone]="tripFacade.tripPrimaryTimezone()" 
                 variant="subtle" 
                 size="sm" />
             </div>
           </div>
         }
         
-        @if (tripDataService.formattedTripEndDate()) {
+        @if (tripFacade.formattedTripEndDate()) {
           <div class="flex items-center justify-between">
             <span class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">
               End Date:
             </span>
             <div class="flex items-center gap-2">
               <span class="text-sm font-medium text-tp-text-light-primary dark:text-tp-text-primary">
-                {{ formatTripDate(tripDataService.formattedTripEndDate()!) }}
+                {{ formatTripDate(tripFacade.formattedTripEndDate()!) }}
               </span>
               <app-timezone-indicator 
-                [timezone]="tripDataService.tripPrimaryTimezone()" 
+                [timezone]="tripFacade.tripPrimaryTimezone()" 
                 variant="subtle" 
                 size="sm" />
             </div>
@@ -68,12 +68,12 @@ import { TimezoneIndicatorComponent } from '../../../shared/components/timezone-
             Total Stops:
           </span>
           <span class="text-sm font-medium text-tp-text-light-primary dark:text-tp-text-primary">
-            {{ tripDataService.itineraryStops().length }}
+            {{ tripFacade.itineraryStops().length }}
           </span>
         </div>
         
         <!-- Scheduled Stops -->
-        @if (tripDataService.hasScheduledStops()) {
+        @if (tripFacade.hasScheduledStops()) {
           <div class="flex items-center justify-between">
             <span class="text-sm text-tp-text-light-secondary dark:text-tp-text-secondary">
               Scheduled Stops:
@@ -101,12 +101,12 @@ import { TimezoneIndicatorComponent } from '../../../shared/components/timezone-
   `,
 })
 export class TripSummaryComponent {
-  tripDataService = inject(TripDataService);
+  tripFacade = inject(TripFacade);
   private readonly tripTimezoneService = inject(TripTimezoneService);
 
   // Computed properties
   readonly formattedTripDuration = computed(() => {
-    const duration = this.tripDataService.tripDurationInTimezone();
+    const duration = this.tripFacade.tripDurationInTimezone();
     if (!duration) return null;
     
     const hours = Math.floor(duration.duration / (1000 * 60 * 60));
@@ -124,11 +124,11 @@ export class TripSummaryComponent {
   });
 
   readonly scheduledStopsCount = computed(() => {
-    return this.tripDataService.sortedStops().filter(stop => stop.plannedArrivalTime).length;
+    return this.tripFacade.sortedStops().filter(stop => stop.plannedArrivalTime).length;
   });
 
   readonly isMultiTimezoneTrip = computed(() => {
-    const trip = this.tripDataService.currentTrip();
+    const trip = this.tripFacade.currentTrip();
     return this.tripTimezoneService.isMultiTimezoneTrip(trip);
   });
 
@@ -141,7 +141,7 @@ export class TripSummaryComponent {
     }
     
     // If it's a Date object, convert it
-    const trip = this.tripDataService.currentTrip();
+    const trip = this.tripFacade.currentTrip();
     const primaryTimezone = this.tripTimezoneService.getTripPrimaryTimezone(trip);
     const luxonDate = this.tripTimezoneService.convertDateToLocationTimezone(dateTime, { timezone: primaryTimezone });
     return luxonDate.toFormat('MMM dd, yyyy');

@@ -5,7 +5,6 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { ButtonModule } from 'primeng/button';
 
 import { Trip } from '@trip-planner/types';
-import { TripDataService } from '../../services/trip-data.service';
 import { TripTimezoneService } from '../../services/trip-timezone.service';
 
 export interface TripEditControlsData {
@@ -29,7 +28,6 @@ export interface TripEditControlsData {
 })
 export class TripEditControlsComponent implements OnInit {
   private fb = inject(FormBuilder);
-  private tripDataService = inject(TripDataService);
   private readonly tripTimezoneService = inject(TripTimezoneService);
 
   // Input properties
