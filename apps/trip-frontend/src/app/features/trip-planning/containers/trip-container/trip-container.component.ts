@@ -49,7 +49,7 @@ export class TripContainerComponent implements OnInit, OnDestroy {
     this.routeSubscription = this.route.paramMap.subscribe(params => {
       const tripId = params.get('tripId') || 'new';
       console.log('TripContainer: Route params changed, tripId:', tripId);
-      
+
       this.currentTripId.set(tripId);
       this.updateCurrentView();
       this.initializeTripData(tripId);
@@ -89,16 +89,17 @@ export class TripContainerComponent implements OnInit, OnDestroy {
     const currentTrip = this.tripFacade.currentTrip();
     const currentTripId = currentTrip?.id;
     const currentDataSource = this.tripFacade.dataSource();
-    
+
     // For new trips, check if we already have a new trip loaded
     // For existing trips, check if the ID matches
-    const shouldInitialize = tripId === 'new' 
-      ? currentDataSource !== 'draft' || !currentTrip
-      : currentTripId !== tripId || !currentTrip;
-    
+    const shouldInitialize =
+      tripId === 'new'
+        ? currentDataSource !== 'draft' || !currentTrip
+        : currentTripId !== tripId || !currentTrip;
+
     if (shouldInitialize) {
       console.log('TripContainer: Initializing trip:', tripId);
-      
+
       if (tripId === 'new') {
         // Start a new draft trip
         this.tripFacade.startNewDraftTrip('New Trip', 'Plan your perfect trip');
@@ -106,19 +107,22 @@ export class TripContainerComponent implements OnInit, OnDestroy {
       } else {
         // Load existing trip
         this.tripFacade.loadTrip(tripId).subscribe({
-          next: (trip) => {
+          next: trip => {
             if (trip) {
               this.showInitializationToast(tripId);
             } else {
-              this.toastService.showError('Trip not found', 'The requested trip could not be loaded');
+              this.toastService.showError(
+                'Trip not found',
+                'The requested trip could not be loaded',
+              );
               this.router.navigate(['/trip-planning', 'new']);
             }
           },
-          error: (error) => {
+          error: error => {
             console.error('TripContainer: Failed to load trip:', error);
             this.toastService.showError('Load failed', 'Failed to load trip');
             this.router.navigate(['/trip-planning', 'new']);
-          }
+          },
         });
       }
     } else {

@@ -51,7 +51,7 @@
           </div>
         } @else {
           <div class="animate-fade-in-fast">
-            <app-trip-map-view />
+            <app-trip-map-view [trip]="trip()" />
           </div>
         }
       </div>
@@ -118,7 +118,7 @@
         </div>
       } @else {
         <div class="mobile-slide-up">
-          <app-trip-map-view />
+          <app-trip-map-view [trip]="trip()" />
         </div>
       }
     </div>

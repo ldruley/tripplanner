@@ -19,10 +19,11 @@ export interface GetAllTripsQuery extends Query<Trip[]> {
  */
 export interface GetTripByIdQuery extends Query<Trip | null> {
   readonly type: '[Trip] Get Trip By Id';
-  readonly payload: { 
-    tripId: string; 
-    includeStops?: boolean; 
+  readonly payload: {
+    tripId: string;
+    includeStops?: boolean;
     includeBankedLocations?: boolean;
+    includeTravelSegments?: boolean;
   };
 }
 
@@ -31,7 +32,7 @@ export interface GetTripByIdQuery extends Query<Trip | null> {
  */
 export interface GetTripWithRelationsQuery extends Query<Trip | null> {
   readonly type: '[Trip] Get Trip With Relations';
-  readonly payload: { 
+  readonly payload: {
     tripId: string;
   };
 }
@@ -41,7 +42,7 @@ export interface GetTripWithRelationsQuery extends Query<Trip | null> {
  */
 export interface GetBankedLocationsQuery extends Query<TripBankedLocation[]> {
   readonly type: '[Trip] Get Banked Locations';
-  readonly payload: { 
+  readonly payload: {
     tripId: string;
   };
 }
@@ -56,9 +57,9 @@ export interface GetTripCountQuery extends Query<{ count: number }> {
 /**
  * Union type for all trip-related queries
  */
-export type TripQuery = 
-  | GetAllTripsQuery 
-  | GetTripByIdQuery 
+export type TripQuery =
+  | GetAllTripsQuery
+  | GetTripByIdQuery
   | GetTripCountQuery
   | GetTripWithRelationsQuery
   | GetBankedLocationsQuery;

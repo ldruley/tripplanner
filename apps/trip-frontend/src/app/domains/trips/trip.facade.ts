@@ -1,6 +1,13 @@
 import { Injectable, inject, computed } from '@angular/core';
 import { Observable, switchMap, tap, of, catchError } from 'rxjs';
-import { Trip, Stop, Location, LocationForItinerary, TripBankedLocation, UpdateTripWithRoutingRequest } from '@trip-planner/types';
+import {
+  Trip,
+  Stop,
+  Location,
+  LocationForItinerary,
+  TripBankedLocation,
+  UpdateTripWithRoutingRequest,
+} from '@trip-planner/types';
 
 // Command and Query imports
 import { TripCommandService } from './services/trip-command.service';
@@ -22,7 +29,7 @@ import {
   CreateTripWithItineraryCommand,
   ReorderStopsCommand,
   PromoteBankedLocationToStopCommand,
-  UpdateTripWithRoutingCommand
+  UpdateTripWithRoutingCommand,
 } from './commands/trip-commands';
 
 // Query types
@@ -31,7 +38,7 @@ import {
   GetTripByIdQuery,
   GetTripCountQuery,
   GetTripWithRelationsQuery,
-  GetBankedLocationsQuery
+  GetBankedLocationsQuery,
 } from './queries/trip-queries';
 
 // State machine types
@@ -39,13 +46,13 @@ import { TripStatus, TripStateMachineEvent } from './state-machine/trip-states';
 
 /**
  * TripFacade
- * 
+ *
  * Unified domain facade that provides a clean, simplified API for feature modules
- * to interact with the trip domain, abstracting away the underlying CQRS and 
+ * to interact with the trip domain, abstracting away the underlying CQRS and
  * state machine complexity.
- * 
- * This service orchestrates calls to TripCommandService, TripQueryService, 
- * TripStateService, and TripStateMachine to provide high-level, use-case-driven 
+ *
+ * This service orchestrates calls to TripCommandService, TripQueryService,
+ * TripStateService, and TripStateMachine to provide high-level, use-case-driven
  * methods for trip management.
  */
 @Injectable({
@@ -56,7 +63,6 @@ export class TripFacade {
   private readonly queryService = inject(TripQueryService);
   private readonly stateService = inject(TripStateService);
   private readonly stateMachine = inject(TripStateMachine);
-  private readonly matrixEventService = inject(MatrixEventService); // Initialize matrix event service
 
   // Expose reactive state for UI binding
   readonly currentTrip = this.stateService.currentTrip;
@@ -107,7 +113,7 @@ export class TripFacade {
   createTrip(name: string, description?: string): Observable<{ tripId: string }> {
     const command: CreateTripCommand = {
       type: '[Trip] Create Trip',
-      payload: { name, description }
+      payload: { name, description },
     };
     return this.commandService.dispatch(command);
   }
@@ -118,7 +124,7 @@ export class TripFacade {
   updateTripDetails(tripId: string, updates: Partial<Trip>): Observable<void> {
     const command: UpdateTripCommand = {
       type: '[Trip] Update Trip',
-      payload: { tripId, updates }
+      payload: { tripId, updates },
     };
     return this.commandService.dispatch(command);
   }
@@ -136,7 +142,7 @@ export class TripFacade {
   deleteTrip(tripId: string): Observable<void> {
     const command: DeleteTripCommand = {
       type: '[Trip] Delete Trip',
-      payload: { tripId }
+      payload: { tripId },
     };
     return this.commandService.dispatch(command);
   }
@@ -147,7 +153,7 @@ export class TripFacade {
   addStop(tripId: string, location: Location, insertAtIndex?: number): Observable<void> {
     const command: AddStopCommand = {
       type: '[Stop] Add Stop',
-      payload: { tripId, location, insertAtIndex }
+      payload: { tripId, location, insertAtIndex },
     };
     return this.commandService.dispatch(command);
   }
@@ -158,7 +164,7 @@ export class TripFacade {
   removeStop(tripId: string, stopId: string): Observable<void> {
     const command: RemoveStopCommand = {
       type: '[Stop] Remove Stop',
-      payload: { tripId, stopId }
+      payload: { tripId, stopId },
     };
     return this.commandService.dispatch(command);
   }
@@ -169,7 +175,7 @@ export class TripFacade {
   updateStop(tripId: string, stopId: string, updates: Partial<Stop>): Observable<void> {
     const command: UpdateStopCommand = {
       type: '[Stop] Update Stop',
-      payload: { tripId, stopId, updates }
+      payload: { tripId, stopId, updates },
     };
     return this.commandService.dispatch(command);
   }
@@ -180,7 +186,7 @@ export class TripFacade {
   addBankedLocation(tripId: string, location: Location): Observable<void> {
     const command: AddBankedLocationCommand = {
       type: '[BankedLocation] Add Banked Location',
-      payload: { tripId, location }
+      payload: { tripId, location },
     };
     return this.commandService.dispatch(command);
   }
@@ -191,7 +197,7 @@ export class TripFacade {
   removeBankedLocation(tripId: string, locationId: string): Observable<void> {
     const command: RemoveBankedLocationCommand = {
       type: '[BankedLocation] Remove Banked Location',
-      payload: { tripId, locationId }
+      payload: { tripId, locationId },
     };
     return this.commandService.dispatch(command);
   }
@@ -207,11 +213,11 @@ export class TripFacade {
       endDate?: Date;
       matrix?: string;
     },
-    organizedLocations: LocationForItinerary[]
+    organizedLocations: LocationForItinerary[],
   ): Observable<{ tripId: string }> {
     const command: CreateTripWithItineraryCommand = {
       type: '[Trip] Create Trip With Itinerary',
-      payload: { tripData, organizedLocations }
+      payload: { tripData, organizedLocations },
     };
     return this.commandService.dispatch(command);
   }
@@ -221,11 +227,11 @@ export class TripFacade {
    */
   reorderStops(
     tripId: string,
-    stopOrders: Array<{ stopId: string; newOrder: number }>
+    stopOrders: Array<{ stopId: string; newOrder: number }>,
   ): Observable<void> {
     const command: ReorderStopsCommand = {
       type: '[Stop] Reorder Stops',
-      payload: { tripId, stopOrders }
+      payload: { tripId, stopOrders },
     };
     return this.commandService.dispatch(command);
   }
@@ -236,11 +242,11 @@ export class TripFacade {
   promoteBankedLocationToStop(
     tripId: string,
     locationId: string,
-    position?: number
+    position?: number,
   ): Observable<void> {
     const command: PromoteBankedLocationToStopCommand = {
       type: '[BankedLocation] Promote To Stop',
-      payload: { tripId, locationId, position }
+      payload: { tripId, locationId, position },
     };
     return this.commandService.dispatch(command);
   }
@@ -250,11 +256,11 @@ export class TripFacade {
    */
   updateTripWithRouting(
     tripId: string,
-    updateData: UpdateTripWithRoutingRequest
+    updateData: UpdateTripWithRoutingRequest,
   ): Observable<void> {
     const command: UpdateTripWithRoutingCommand = {
       type: '[Trip] Update Trip With Routing',
-      payload: { tripId, updateData }
+      payload: { tripId, updateData },
     };
     return this.commandService.dispatch(command);
   }
@@ -268,7 +274,7 @@ export class TripFacade {
    */
   getAllTrips(): Observable<Trip[]> {
     const query: GetAllTripsQuery = {
-      type: '[Trip] Get All Trips'
+      type: '[Trip] Get All Trips',
     };
     return this.queryService.execute(query);
   }
@@ -277,13 +283,14 @@ export class TripFacade {
    * Get detailed information for a specific trip
    */
   getTripDetails(
-    tripId: string, 
-    includeStops = false, 
-    includeBankedLocations = false
+    tripId: string,
+    includeStops = false,
+    includeTravelSegments = false,
+    includeBankedLocations = false,
   ): Observable<Trip | null> {
     const query: GetTripByIdQuery = {
       type: '[Trip] Get Trip By Id',
-      payload: { tripId, includeStops, includeBankedLocations }
+      payload: { tripId, includeStops, includeBankedLocations, includeTravelSegments },
     };
     return this.queryService.execute(query);
   }
@@ -293,7 +300,7 @@ export class TripFacade {
    */
   getTripCount(): Observable<{ count: number }> {
     const query: GetTripCountQuery = {
-      type: '[Trip] Get Trip Count'
+      type: '[Trip] Get Trip Count',
     };
     return this.queryService.execute(query);
   }
@@ -304,7 +311,7 @@ export class TripFacade {
   getTripWithRelations(tripId: string): Observable<Trip | null> {
     const query: GetTripWithRelationsQuery = {
       type: '[Trip] Get Trip With Relations',
-      payload: { tripId }
+      payload: { tripId },
     };
     return this.queryService.execute(query);
   }
@@ -315,7 +322,7 @@ export class TripFacade {
   getBankedLocations(tripId: string): Observable<TripBankedLocation[]> {
     const query: GetBankedLocationsQuery = {
       type: '[Trip] Get Banked Locations',
-      payload: { tripId }
+      payload: { tripId },
     };
     return this.queryService.execute(query);
   }
@@ -354,7 +361,7 @@ export class TripFacade {
    * This method handles both loading the trip data and setting up the state machine
    */
   loadTrip(tripId: string): Observable<Trip | null> {
-    return this.getTripDetails(tripId, true, true).pipe(
+    return this.getTripDetails(tripId, true, true, true).pipe(
       tap(trip => {
         if (trip) {
           this.stateService.setTrip(trip, 'persisted', false);
@@ -367,7 +374,7 @@ export class TripFacade {
         console.error('Failed to load trip:', error);
         this.stateService.setError('Failed to load trip. Please try again.');
         return of(null);
-      })
+      }),
     );
   }
 
@@ -381,7 +388,7 @@ export class TripFacade {
         console.error('Failed to create and load trip:', error);
         this.stateService.setError('Failed to create trip. Please try again.');
         return of(null);
-      })
+      }),
     );
   }
 
@@ -403,7 +410,7 @@ export class TripFacade {
       updatedAt: new Date(),
       userId: '', // Will be set when persisted
       needsRoutingRecalculation: false,
-      needsTimelineRecalculation: false
+      needsTimelineRecalculation: false,
     };
 
     this.stateService.setTrip(draftTrip, 'draft', true);

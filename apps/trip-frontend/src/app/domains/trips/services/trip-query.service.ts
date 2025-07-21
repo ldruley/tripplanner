@@ -51,6 +51,7 @@ export class TripQueryService {
           getByIdQuery.payload.tripId,
           getByIdQuery.payload.includeStops,
           getByIdQuery.payload.includeBankedLocations,
+          getByIdQuery.payload.includeTravelSegments,
         ) as Observable<TResult>;
       }
 
@@ -120,6 +121,7 @@ export class TripQueryService {
     tripId: string,
     includeStops = false,
     includeBankedLocations = false,
+    includeTravelSegments = false,
   ): Observable<Trip | null> {
     // Check if the requested trip is the current in-memory trip
     const currentTrip = this.tripStateService.currentTrip();
@@ -145,6 +147,7 @@ export class TripQueryService {
     const params = new URLSearchParams();
     if (includeStops) params.append('includeStops', 'true');
     if (includeBankedLocations) params.append('includeBankedLocations', 'true');
+    if (includeTravelSegments) params.append('includeTravelSegments', 'true');
 
     const queryString = params.toString();
     const url = queryString
