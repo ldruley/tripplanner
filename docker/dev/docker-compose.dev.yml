@@ -1,0 +1,61 @@
+version: '3.8'
+
+include:
+  - ../common/docker-compose.base.yml
+
+services:
+  backend:
+    build:
+      context: ../..
+      dockerfile: Dockerfile.backend
+      target: production
+    container_name: trip-planner-backend-prod
+    env_file:
+      - ../../.env
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${DATABASE_USER:-trip_planner_user}:${DATABASE_PASSWORD:-trip_planner_password}@postgres:5432/${DATABASE_NAME:-trip_planner}?schema=public
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost}
+      - HERE_API_KEY=${HERE_API_KEY}
+      - MAPBOX_API_KEY=${MAPBOX_API_KEY}
+      - MAILGUN_API_KEY=${MAILGUN_API_KEY}
+      - MAILGUN_DOMAIN=${MAILGUN_DOMAIN}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - trip-planner-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  frontend:
+    build:
+      context: ../..
+      dockerfile: Dockerfile.frontend
+      target: production
+    container_name: trip-planner-frontend-prod
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - trip-planner-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
