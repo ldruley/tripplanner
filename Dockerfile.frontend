@@ -21,7 +21,7 @@ RUN npx nx run prisma:db:generate
 
 # Build the frontend
 ENV NX_DAEMON=false
-RUN npx nx build trip-frontend --prod --verbose
+RUN npx nx build trip-frontend --configuration=staging --verbose
 
 # Production stage with nginx
 FROM nginx:1.25-alpine AS production
