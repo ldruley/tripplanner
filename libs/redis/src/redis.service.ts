@@ -1,15 +1,18 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import Redis, { RedisOptions } from 'ioredis';
+import { ValidationConfigService } from '@trip-planner/config';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private readonly client: Redis;
 
-  constructor() {
+  constructor(private readonly configService: ValidationConfigService) {
+    const redisConfig = this.configService.getRedisConnectionOptions();
+    
     const options: RedisOptions = {
-      host: process.env['REDIS_HOST'] || 'localhost',
-      port: Number(process.env['REDIS_PORT']) || 6379,
-      db: Number(process.env['REDIS_DB']) || 0,
+      host: redisConfig.host,
+      port: redisConfig.port,
+      db: redisConfig.db,
       maxRetriesPerRequest: null,
     };
 

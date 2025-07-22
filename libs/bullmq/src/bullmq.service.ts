@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Queue, Worker, Job, QueueOptions, WorkerOptions, JobsOptions } from 'bullmq';
 import { Redis } from 'ioredis';
+import { ValidationConfigService } from '@trip-planner/config';
 
 export interface BullMQConfig {
   redis: {
@@ -30,12 +31,14 @@ export class BullMQService implements OnModuleInit, OnModuleDestroy {
   private readonly workers = new Map<string, Worker>();
   private readonly redisConnection: Redis;
 
-  constructor() {
-    // Use same Redis connection as your existing RedisService
+  constructor(private readonly configService: ValidationConfigService) {
+    const redisConfig = this.configService.getRedisConnectionOptions();
+    
+    // Use same Redis connection configuration as RedisService
     this.redisConnection = new Redis({
-      host: process.env['REDIS_HOST'] || 'localhost',
-      port: Number(process.env['REDIS_PORT']) || 6379,
-      db: Number(process.env['REDIS_DB']) || 0,
+      host: redisConfig.host,
+      port: redisConfig.port,
+      db: redisConfig.db,
       maxRetriesPerRequest: null, // Important for BullMQ
       enableReadyCheck: false,
     });

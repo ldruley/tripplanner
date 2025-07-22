@@ -156,6 +156,35 @@ export class ValidationConfigService {
   }
 
   /**
+   * Parse Redis configuration into ioredis-compatible options
+   * Prioritizes REDIS_URL over individual host/port/db settings
+   */
+  getRedisConnectionOptions(): { host: string; port: number; db: number } {
+    const redisConfig = this.getRedis();
+
+    // If REDIS_URL is provided, parse it
+    if (redisConfig.REDIS_URL) {
+      try {
+        const url = new URL(redisConfig.REDIS_URL);
+        return {
+          host: url.hostname,
+          port: url.port ? parseInt(url.port, 10) : 6379,
+          db: url.pathname && url.pathname.length > 1 ? parseInt(url.pathname.slice(1), 10) : 0,
+        };
+      } catch (error) {
+        this.logger.warn(`Invalid REDIS_URL format: ${redisConfig.REDIS_URL}, falling back to individual settings`);
+      }
+    }
+
+    // Fall back to individual settings
+    return {
+      host: redisConfig.REDIS_HOST,
+      port: redisConfig.REDIS_PORT,
+      db: redisConfig.REDIS_DB,
+    };
+  }
+
+  /**
    * Get API keys configuration
    */
   getApiKeys(): ApiKeysConfig {
