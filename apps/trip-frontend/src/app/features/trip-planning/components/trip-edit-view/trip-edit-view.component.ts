@@ -98,8 +98,10 @@ export class TripEditViewComponent implements OnInit {
   // Location handling methods
   onLocationSelected(location: Location): void {
     const tripId = this.tripId();
-    if (tripId === 'new' || !tripId) {
-      this.handleCommandError(new Error('Trip must be saved before adding locations'));
+    const isDraft = this.tripFacade.isDraftTrip();
+    
+    if (!tripId) {
+      this.handleCommandError(new Error('No active trip to add location to'));
       return;
     }
 
@@ -108,7 +110,8 @@ export class TripEditViewComponent implements OnInit {
       .pipe(takeUntilDestroyed())
       .subscribe({
         next: () => {
-          this.toastService.showSuccess('Location added to bank');
+          const message = isDraft ? 'Location added to draft' : 'Location added to bank';
+          this.toastService.showSuccess(message);
           // Switch to bank view on mobile after adding location
           if (window.innerWidth < 768) {
             this.showBankView();
@@ -120,8 +123,10 @@ export class TripEditViewComponent implements OnInit {
 
   onLocationAddedToItinerary(location: Location): void {
     const tripId = this.tripId();
-    if (tripId === 'new' || !tripId) {
-      this.handleCommandError(new Error('Trip must be saved before adding locations'));
+    const isDraft = this.tripFacade.isDraftTrip();
+    
+    if (!tripId) {
+      this.handleCommandError(new Error('No active trip to add location to'));
       return;
     }
 
@@ -130,7 +135,8 @@ export class TripEditViewComponent implements OnInit {
       .pipe(takeUntilDestroyed())
       .subscribe({
         next: () => {
-          this.toastService.showSuccess('Location added to itinerary');
+          const message = isDraft ? 'Location added to draft itinerary' : 'Location added to itinerary';
+          this.toastService.showSuccess(message);
           // Switch to itinerary view on mobile after adding location
           if (window.innerWidth < 768) {
             this.showItineraryView();

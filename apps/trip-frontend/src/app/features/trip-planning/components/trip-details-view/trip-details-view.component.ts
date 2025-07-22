@@ -118,8 +118,10 @@ export class TripDetailsViewComponent implements OnInit {
     }
 
     const tripId = this.tripFacade.tripId();
-    if (!tripId || tripId === 'new') {
-      this.toastService.showError('Trip must be saved before adding locations');
+    const isDraft = this.tripFacade.isDraftTrip();
+    
+    if (!tripId) {
+      this.toastService.showError('No active trip to add location to');
       return;
     }
 
@@ -128,7 +130,8 @@ export class TripDetailsViewComponent implements OnInit {
       .pipe(takeUntilDestroyed())
       .subscribe({
         next: () => {
-          this.toastService.showSuccess(`Added "${favorite.alias || favorite.location.name}" to location bank`);
+          const action = isDraft ? 'Added to draft' : 'Added to location bank';
+          this.toastService.showSuccess(`${action}: "${favorite.alias || favorite.location.name}"`);
         },
         error: (error) => {
           console.error('Failed to add location to bank:', error);
