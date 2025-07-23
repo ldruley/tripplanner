@@ -1,14 +1,11 @@
 version: '3.8'
 
-include:
+include:ech
   - ../common/docker-compose.base.yml
 
 services:
   backend:
-    build:
-      context: ../..
-      dockerfile: Dockerfile.backend
-      target: production
+    image: ghcr.io/spacepanda/trip-planner/backend:latest
     container_name: trip-planner-backend-prod
     env_file:
       - ../../.env
@@ -16,13 +13,7 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://${DATABASE_USER:-trip_planner_user}:${DATABASE_PASSWORD:-trip_planner_password}@postgres:5432/${DATABASE_NAME:-trip_planner}?schema=public
       - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost}
-      - HERE_API_KEY=${HERE_API_KEY}
-      - MAPBOX_API_KEY=${MAPBOX_API_KEY}
-      - MAILGUN_API_KEY=${MAILGUN_API_KEY}
-      - MAILGUN_DOMAIN=${MAILGUN_DOMAIN}
     ports:
       - "3000:3000"
     depends_on:
@@ -41,10 +32,7 @@ services:
       start_period: 60s
 
   frontend:
-    build:
-      context: ../..
-      dockerfile: Dockerfile.frontend
-      target: production
+    image: ghcr.io/spacepanda/trip-planner/frontend:latest
     container_name: trip-planner-frontend-prod
     ports:
       - "80:80"
