@@ -5,7 +5,7 @@ include:
 
 services:
   backend:
-    image: ghcr.io/spacepanda/trip-planner/backend:latest
+    image: ghcr.io/ldruley/trip-planner/backend:latest
     container_name: trip-planner-backend-prod
     env_file:
       - ../../.env
@@ -32,7 +32,7 @@ services:
       start_period: 60s
 
   frontend:
-    image: ghcr.io/spacepanda/trip-planner/frontend:latest
+    image: ghcr.io/ldruley/trip-planner/frontend:latest
     container_name: trip-planner-frontend-prod
     ports:
       - "80:80"
