@@ -220,7 +220,7 @@ export class LocationService {
           apiSource: data.apiSource || null,
           apiSourceId: data.apiSourceId || null,
           category: data.category || null,
-          public: data.public || false,
+          extendedData: (data.extendedData as Prisma.InputJsonValue) || undefined,
         })),
       });
 

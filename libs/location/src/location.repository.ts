@@ -7,6 +7,7 @@ import {
   LocationSearchCriteria,
 } from '@trip-planner/types';
 import {} from './location.types';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class LocationRepository {
@@ -40,6 +41,7 @@ export class LocationRepository {
         apiSourceId: data.apiSourceId || null,
         category: data.category || null,
         public: data.public || false,
+        extendedData: (data.extendedData as Prisma.InputJsonValue) ?? undefined,
       },
     });
 
@@ -210,10 +212,7 @@ export class LocationRepository {
 
     // Build OR conditions for each coordinate pair
     const coordinateConditions = coordinates.map(coord => ({
-      AND: [
-        { latitude: coord.latitude },
-        { longitude: coord.longitude },
-      ],
+      AND: [{ latitude: coord.latitude }, { longitude: coord.longitude }],
     }));
 
     const locations = await client.location.findMany({
@@ -242,10 +241,7 @@ export class LocationRepository {
 
     // Build OR conditions for each API source pair
     const apiSourceConditions = apiSources.map(source => ({
-      AND: [
-        { apiSource: source.apiSource as any },
-        { apiSourceId: source.apiSourceId },
-      ],
+      AND: [{ apiSource: source.apiSource as any }, { apiSourceId: source.apiSourceId }],
     }));
 
     const locations = await client.location.findMany({
@@ -360,7 +356,9 @@ export class LocationRepository {
     if (data.apiSource !== undefined) updateData.apiSource = data.apiSource as any;
     if (data.apiSourceId !== undefined) updateData.apiSourceId = data.apiSourceId;
     if (data.category !== undefined) updateData.category = data.category as any;
-    if (data.public !== undefined) updateData.public = data.public;
+    if (data.extendedData !== undefined) {
+      updateData.extendedData = data.extendedData as Prisma.InputJsonValue;
+    }
 
     const location = await client.location.update({
       where: { id },
