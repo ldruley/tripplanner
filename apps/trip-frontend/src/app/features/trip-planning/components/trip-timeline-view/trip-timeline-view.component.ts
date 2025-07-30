@@ -4,6 +4,7 @@ import { TripFacade } from '../../../../domains/trips';
 import { TripTimezoneService } from '../../services/trip-timezone.service';
 import { Stop, TravelSegment } from '@trip-planner/types';
 import { formatDateInLocationTimezone } from '@trip-planner/date-utils';
+import { DistancePipe } from '../../../shared/pipes/distance.pipe';
 
 interface TimelineEvent {
   id: string;
@@ -16,12 +17,13 @@ interface TimelineEvent {
   subtitle: string;
   description: string;
   time?: string;
+  distanceKm?: number;
 }
 
 @Component({
   selector: 'app-trip-timeline-view',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DistancePipe],
   templateUrl: './trip-timeline-view.component.html',
   styleUrl: './trip-timeline-view.component.css',
 })
@@ -68,6 +70,7 @@ export class TripTimelineViewComponent {
         );
 
         if (segment) {
+          const distance = segment.distance || segment.apiCalculatedDistance;
           const segmentEvent: TimelineEvent = {
             id: `segment-${segment.id}`,
             type: 'segment',
@@ -78,6 +81,7 @@ export class TripTimelineViewComponent {
             title: 'Travel',
             subtitle: this.formatSegmentInfo(segment),
             description: segment.notes || '',
+            distanceKm: distance ? distance / 1000 : undefined,
           };
           events.push(segmentEvent);
         }
@@ -185,15 +189,7 @@ export class TripTimelineViewComponent {
   }
 
   private formatSegmentInfo(segment: TravelSegment): string {
-    const distance = segment.distance || segment.apiCalculatedDistance;
     const duration = segment.duration || segment.apiCalculatedDuration;
-
-    const parts: string[] = [];
-
-    if (distance) {
-      const km = Math.round(distance / 1000);
-      parts.push(`${km} km`);
-    }
 
     if (duration) {
       // Duration is stored in seconds, convert to minutes for display
@@ -201,13 +197,13 @@ export class TripTimelineViewComponent {
       const hours = Math.floor(totalMinutes / 60);
       const minutes = totalMinutes % 60;
       if (hours > 0) {
-        parts.push(`${hours}h ${minutes}m`);
+        return `${hours}h ${minutes}m`;
       } else {
-        parts.push(`${minutes}m`);
+        return `${minutes}m`;
       }
     }
 
-    return parts.length > 0 ? parts.join(' • ') : 'No travel info';
+    return 'No travel info';
   }
 
   onStopDetailsRequested(data: Stop | TravelSegment): void {

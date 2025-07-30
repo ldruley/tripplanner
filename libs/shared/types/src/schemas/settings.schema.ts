@@ -2,24 +2,28 @@ import { z } from 'zod';
 import { extendApi } from '@anatine/zod-openapi';
 import { DistanceUnit } from '@prisma/client';
 import { getTimeZones } from '@vvo/tzdb';
+import { distanceUnitSchema } from './base.schema';
 
 const validTimezones = getTimeZones().map(tz => tz.name);
 
-const timezoneSchema = z.string().refine(
-  value => {
-    return validTimezones.includes(value);
-  },
-  {
-    message: 'Invalid timezone. Must be a valid IANA timezone identifier.',
-  },
-).describe('Valid IANA timezone identifier (e.g., "Europe/London")');
+const timezoneSchema = z
+  .string()
+  .refine(
+    value => {
+      return validTimezones.includes(value);
+    },
+    {
+      message: 'Invalid timezone. Must be a valid IANA timezone identifier.',
+    },
+  )
+  .describe('Valid IANA timezone identifier (e.g., "Europe/London")');
 
 export const UserSettingsSchema = extendApi(
   z.object({
     id: z.string().uuid().describe('Unique identifier for the user settings'),
     userId: z.string().uuid().describe('ID of the user these settings belong to'),
     timezone: timezoneSchema.default('Europe/London'),
-    distanceUnit: z.nativeEnum(DistanceUnit).default(DistanceUnit.MILES).describe('Preferred distance unit (MILES or KILOMETERS)'),
+    distanceUnit: distanceUnitSchema,
     darkMode: z.boolean().default(false).describe('Whether dark mode is enabled'),
     createdAt: z.date().optional().describe('Timestamp when settings were created'),
     updatedAt: z.date().optional().describe('Timestamp when settings were last updated'),

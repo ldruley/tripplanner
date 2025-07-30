@@ -3,17 +3,19 @@ import { Component, input, output } from '@angular/core';
 import { CdkDrag, CdkDragDrop, CdkDropList, CdkDragPlaceholder, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Location, Stop } from '@trip-planner/types';
 import { ItineraryStopComponent } from '../itinerary-stop/itinerary-stop.component';
+import { DistancePipe } from '../../../shared/pipes/distance.pipe';
 
 export interface TravelSegmentData {
   time: string;
   distance: string;
+  distanceKm: number;
 }
 export type MatrixData = Map<string, TravelSegmentData>;
 
 @Component({
   selector: 'app-itinerary-builder',
   standalone: true,
-  imports: [CdkDrag, CdkDropList, CdkDragPlaceholder, ItineraryStopComponent],
+  imports: [CdkDrag, CdkDropList, CdkDragPlaceholder, ItineraryStopComponent, DistancePipe],
   templateUrl: './itinerary-builder.component.html',
   styleUrl: './itinerary-builder.component.css',
 })

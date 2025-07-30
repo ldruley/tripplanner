@@ -8,3 +8,4 @@ export * from './location-list-item/location-list-item.component';
 export * from './location-details/location-details.component';
 export * from './sidebar/sidebar.component';
 export * from './theme-toggle/theme-toggle.component';
+export * from '../pipes';

@@ -163,6 +163,7 @@ export class MatrixCalculationService {
         formattedMap.set(compositeKey, {
           time: this.formatTime(cell.time), // e.g., "15 min"
           distance: this.formatDistance(cell.distance), // e.g., "3.2 km"
+          distanceKm: cell.distance / 1000, // Raw kilometers for pipe usage
         });
       }
     }

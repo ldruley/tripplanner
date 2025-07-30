@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DistanceUnit as PrismaDistanceUnit } from '@prisma/client';
 
 // Base schemas for common data types
 export const nameSchema = z
@@ -75,6 +76,11 @@ export const postalCodeSchema = z
   .nullable()
   .describe('Postal or ZIP code, nullable if not available.');
 
+export const distanceUnitSchema = z
+  .nativeEnum(PrismaDistanceUnit)
+  .default(PrismaDistanceUnit.MILES)
+  .describe('Preferred distance unit (MILES or KILOMETERS)');
+
 export const ErrorResponseSchema = z
   .object({
     success: z
@@ -95,8 +101,12 @@ export const ErrorResponseSchema = z
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
 
 // Common provider schemas
-export const ApiProviderSchema = z.enum(['HERE', 'MAPBOX', 'GOOGLE']).describe('API provider type.');
-export const GeoProviderSchema = z.enum(['mapbox', 'google', 'here']).describe('Geocoding provider type.');
+export const ApiProviderSchema = z
+  .enum(['HERE', 'MAPBOX', 'GOOGLE'])
+  .describe('API provider type.');
+export const GeoProviderSchema = z
+  .enum(['mapbox', 'google', 'here'])
+  .describe('Geocoding provider type.');
 
 // Common response wrapper schemas
 export const createSuccessResponseSchema = <T extends z.ZodType>(dataSchema: T) =>
@@ -122,12 +132,14 @@ export const createPaginatedResponseSchema = <T extends z.ZodType>(itemSchema: T
 // Custom pagination helper for different field names (e.g., 'profiles' instead of 'items')
 export const createCustomPaginatedResponseSchema = <T extends z.ZodType>(
   itemSchema: T,
-  itemsFieldName: string
+  itemsFieldName: string,
 ) =>
   z.object({
     success: z.boolean().default(true).describe('Indicates if the request was successful.'),
     data: z.object({
-      [itemsFieldName]: z.array(itemSchema).describe(`Array of ${itemsFieldName} for the current page.`),
+      [itemsFieldName]: z
+        .array(itemSchema)
+        .describe(`Array of ${itemsFieldName} for the current page.`),
       total: z.number().int().min(0).describe('Total number of items across all pages.'),
       page: z.number().int().min(1).describe('Current page number (1-based).'),
       limit: z.number().int().min(1).max(100).describe('Number of items per page.'),
@@ -147,39 +159,49 @@ export const createEntitySchema = <T extends z.ZodRawShape>(shape: T) =>
 // Helper for creating request schemas (omitting auto-generated fields)
 export const createRequestSchema = <T extends z.ZodObject<any>>(
   baseSchema: T,
-  omitFields: (keyof z.infer<T>)[]
+  omitFields: (keyof z.infer<T>)[],
 ) => {
-  const omitObject = Object.fromEntries(omitFields.map(field => [field, true])) as Record<string, true>;
+  const omitObject = Object.fromEntries(omitFields.map(field => [field, true])) as Record<
+    string,
+    true
+  >;
   return baseSchema.omit(omitObject);
 };
 
 // Common field groups
-export const addressComponentSchema = z.object({
-  address: streetAddressSchema,
-  city: citySchema,
-  state: regionSchema,
-  country: countrySchema,
-  postalCode: postalCodeSchema,
-}).describe('Address component fields.');
+export const addressComponentSchema = z
+  .object({
+    address: streetAddressSchema,
+    city: citySchema,
+    state: regionSchema,
+    country: countrySchema,
+    postalCode: postalCodeSchema,
+  })
+  .describe('Address component fields.');
 
-export const coordinateGroupSchema = z.object({
-  latitude: latitudeSchema,
-  longitude: longitudeSchema,
-}).describe('Geographic coordinate fields.');
+export const coordinateGroupSchema = z
+  .object({
+    latitude: latitudeSchema,
+    longitude: longitudeSchema,
+  })
+  .describe('Geographic coordinate fields.');
 
 // Base location result schema (for use across geocoding, search, etc.)
-export const BaseLocationResultSchema = z.object({
-  latitude: latitudeSchema,
-  longitude: longitudeSchema,
-  name: z.string().describe('Human-readable name of the location.'),
-  fullAddress: fullAddressSchema,
-  streetAddress: streetAddressSchema,
-  city: citySchema,
-  region: regionSchema,
-  country: countrySchema,
-  postalCode: postalCodeSchema,
-  provider: GeoProviderSchema,
-  providerId: z.string().describe('Unique identifier from the provider.'),
-}).describe('Base schema for location search results across different providers.');
+export const BaseLocationResultSchema = z
+  .object({
+    latitude: latitudeSchema,
+    longitude: longitudeSchema,
+    name: z.string().describe('Human-readable name of the location.'),
+    fullAddress: fullAddressSchema,
+    streetAddress: streetAddressSchema,
+    city: citySchema,
+    region: regionSchema,
+    country: countrySchema,
+    postalCode: postalCodeSchema,
+    provider: GeoProviderSchema,
+    providerId: z.string().describe('Unique identifier from the provider.'),
+  })
+  .describe('Base schema for location search results across different providers.');
 
 export type BaseLocationResult = z.infer<typeof BaseLocationResultSchema>;
+export type DistanceUnit = z.infer<typeof distanceUnitSchema>;

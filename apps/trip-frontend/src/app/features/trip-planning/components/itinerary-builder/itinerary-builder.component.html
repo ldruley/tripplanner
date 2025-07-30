@@ -27,7 +27,7 @@
       <div class="travel-connector flex items-center justify-center -my-1">
         @if (getTravelInfoToNextStop(i); as travel) {
           <div class="bg-tp-bg-light-primary dark:bg-tp-bg-secondary border border-tp-border-light dark:border-tp-border rounded px-1.5 py-0.5 text-xs text-tp-text-light-secondary dark:text-tp-text-secondary">
-            {{ travel.time }} / {{ travel.distance }}
+            {{ travel.time }} / {{ travel.distanceKm | distance }}
           </div>
         } @else {
           <div class="bg-tp-bg-light-primary dark:bg-tp-bg-secondary border border-tp-border-light dark:border-tp-border rounded px-1.5 py-0.5 text-xs text-tp-text-light-tertiary dark:text-tp-text-tertiary opacity-75">
