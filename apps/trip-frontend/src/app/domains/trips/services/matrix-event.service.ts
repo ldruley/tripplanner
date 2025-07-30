@@ -1,10 +1,10 @@
 import { Injectable, inject, OnDestroy } from '@angular/core';
 import { debounceTime, takeUntil, Subject, switchMap, catchError, of, Observable, tap, map } from 'rxjs';
 import { TripEventBus } from '../events/trip-event.bus';
-import { 
-  StopAddedEvent, 
-  StopRemovedEvent, 
-  BankedLocationAddedEvent, 
+import {
+  StopAddedEvent,
+  StopRemovedEvent,
+  BankedLocationAddedEvent,
   BankedLocationRemovedEvent,
   MatrixUpdateRequestedEvent,
   MatrixUpdatedEvent
@@ -16,7 +16,7 @@ import { CoordinateMatrix } from '@trip-planner/types';
 
 /**
  * MatrixEventService
- * 
+ *
  * Event-driven service that automatically updates travel matrices when trip
  * locations change. Listens to stop and banked location events and triggers
  * matrix recalculations with debouncing to prevent excessive API calls.
@@ -28,7 +28,7 @@ export class MatrixEventService implements OnDestroy {
   private readonly tripEventBus = inject(TripEventBus);
   private readonly tripFacade = inject(TripFacade);
   private readonly matrixCalculationService = inject(MatrixCalculationService);
-  
+
   private readonly destroy$ = new Subject<void>();
   private readonly DEBOUNCE_TIME = 500; // 500ms debounce to prevent excessive calculations
 
@@ -47,7 +47,7 @@ export class MatrixEventService implements OnDestroy {
    */
   private setupEventListeners(): void {
     console.log('MatrixEventService: Setting up event listeners');
-    
+
     // Listen to stop events
     console.log('MatrixEventService: Setting up [Stop] Added listener');
     this.tripEventBus.on<StopAddedEvent>('[Stop] Added')
@@ -110,10 +110,11 @@ export class MatrixEventService implements OnDestroy {
    */
   private requestMatrixUpdate(tripId: string): void {
     const currentTrip = this.tripFacade.currentTrip();
-    
+
     console.log('MatrixEventService: Matrix update requested for tripId:', tripId);
     console.log('MatrixEventService: Current trip:', currentTrip ? { id: currentTrip.id, state: (currentTrip as any).state } : 'null');
-    
+    console.log('MatrixEventService: Is mobile device:', window.innerWidth < 768);
+
     // Only update if this is the currently active trip
     if (!currentTrip || currentTrip.id !== tripId) {
       console.log('MatrixEventService: Ignoring matrix update request for inactive trip:', tripId, 'Current trip ID:', currentTrip?.id);
@@ -126,7 +127,7 @@ export class MatrixEventService implements OnDestroy {
       ...currentTrip.stops
         .map(stop => stop.location)
         .filter((location): location is Location => !!location),
-      
+
       // Locations from banked locations
       ...currentTrip.bankedLocations
         .map(bankedLocation => bankedLocation.location)
@@ -142,7 +143,7 @@ export class MatrixEventService implements OnDestroy {
     }
 
     console.log('MatrixEventService: Publishing matrix update requested event for tripId:', tripId, 'with', allLocations.length, 'locations');
-    
+
     // Emit matrix update requested event
     this.tripEventBus.publish<MatrixUpdateRequestedEvent>({
       type: '[Trip] Matrix Update Requested',
@@ -155,7 +156,7 @@ export class MatrixEventService implements OnDestroy {
    */
   private calculateMatrixForLocations(tripId: string, locations: Location[]): Observable<void> {
     console.log('MatrixEventService: Calculating matrix for', locations.length, 'locations');
-    
+
     return this.matrixCalculationService.calculateMatrix(locations)
       .pipe(
         catchError(error => {
@@ -165,16 +166,16 @@ export class MatrixEventService implements OnDestroy {
         tap(matrix => {
           if (matrix) {
             // Update trip with new matrix data
-            this.tripFacade.updateTripLocally({ 
+            this.tripFacade.updateTripLocally({
               matrix: this.matrixCalculationService.serializeMatrix(matrix)
             });
-            
+
             // Emit matrix updated event
             this.tripEventBus.publish<MatrixUpdatedEvent>({
               type: '[Trip] Matrix Updated',
               payload: { tripId, matrix }
             });
-            
+
             console.log('MatrixEventService: Matrix successfully updated for trip:', tripId);
           }
         }),
