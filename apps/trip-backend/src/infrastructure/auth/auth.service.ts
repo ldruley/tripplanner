@@ -79,7 +79,7 @@ export class AuthService {
     return {
       access_token: accessToken,
       refresh_token: refreshToken, // Still return for controller to set as cookie
-      expires_in: parseInt(this.configService.get<string>('JWT_EXPIRES_IN')?.replace(/\D/g, '') || '900'), // 15m = 900s
+      expires_in: this.parseExpirationToSeconds(this.configService.get<string>('JWT_EXPIRES_IN') || '15m'),
       token_type: 'Bearer',
     };
   }
@@ -153,7 +153,7 @@ export class AuthService {
       return {
         access_token: newAccessToken,
         refresh_token: newRefreshToken, // Still return for controller to set as cookie
-        expires_in: parseInt(this.configService.get<string>('JWT_EXPIRES_IN')?.replace(/\D/g, '') || '900'),
+        expires_in: this.parseExpirationToSeconds(this.configService.get<string>('JWT_EXPIRES_IN') || '15m'),
         token_type: 'Bearer',
       };
     } catch (error) {
@@ -410,6 +410,22 @@ export class AuthService {
   private isTokenExpired(expiry: Date | null): boolean {
     if (!expiry) return true;
     return new Date() > expiry;
+  }
+
+  private parseExpirationToSeconds(expiration: string): number {
+    const match = expiration.match(/^(\d+)([smhd]?)$/);
+    if (!match) return 900; // Default to 15 minutes if parsing fails
+
+    const value = parseInt(match[1]);
+    const unit = match[2] || 's';
+
+    switch (unit) {
+      case 's': return value;
+      case 'm': return value * 60;
+      case 'h': return value * 60 * 60;
+      case 'd': return value * 60 * 60 * 24;
+      default: return value;
+    }
   }
 
   private async clearUserTokens(
