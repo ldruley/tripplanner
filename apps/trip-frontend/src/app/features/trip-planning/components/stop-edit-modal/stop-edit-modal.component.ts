@@ -1,4 +1,4 @@
-import { Component, input, output, computed, inject, signal, OnInit } from '@angular/core';
+import { Component, input, output, computed, inject, signal, OnInit, DestroyRef } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
@@ -38,6 +38,7 @@ export class StopEditModalComponent implements OnInit {
   private readonly tripFacade = inject(TripFacade);
   private toastService = inject(ToastService);
   private readonly tripTimezoneService = inject(TripTimezoneService);
+  private readonly destroyRef = inject(DestroyRef);
 
   // Component state
   stopForm!: FormGroup;
@@ -231,17 +232,17 @@ export class StopEditModalComponent implements OnInit {
     }
 
     this.tripFacade.updateStop(currentTrip.id, this.stop().id, updateRequest)
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           // Get the updated stop from the current trip state
           const updatedTrip = this.tripFacade.currentTrip();
           const updatedStop = updatedTrip?.stops.find(s => s.id === this.stop().id);
-          
+
           if (updatedStop) {
             this.stopUpdated.emit(updatedStop);
           }
-          
+
           this.toastService.showSuccess('Stop Updated', 'Stop details have been saved successfully.');
           this.onClose();
         },

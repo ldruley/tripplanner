@@ -134,9 +134,12 @@ export class TripEditViewComponent implements OnInit {
       return;
     }
 
-    // Location is already created by backend, add to itinerary directly
-    this.tripFacade.addStop(tripId, location)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+    // For mobile: Remove from bank first, then add to itinerary (same pattern as desktop drag-and-drop)
+    this.tripFacade.removeBankedLocation(tripId, location.id)
+      .pipe(
+        switchMap(() => this.tripFacade.addStop(tripId, location)),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe({
         next: () => {
           const message = isDraft ? 'Location added to draft itinerary' : 'Location added to itinerary';

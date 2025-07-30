@@ -1,4 +1,4 @@
-import { Component, inject, computed, Input, OnInit, signal, ElementRef } from '@angular/core';
+import { Component, inject, computed, Input, OnInit, signal, ElementRef, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ConfirmPopupModule } from 'primeng/confirmpopup';
@@ -32,26 +32,27 @@ export class TripDetailsViewComponent implements OnInit {
   private toastService = inject(ToastService);
   private confirmationService = inject(ConfirmationService);
   private elementRef = inject(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   // Access trip data through facade signals
   trip = this.tripFacade.currentTrip;
   isLoading = this.tripFacade.isLoading;
   error = this.tripFacade.error;
-  
+
   // Computed properties for trip details
   tripName = computed(() => this.trip()?.name || 'Untitled Trip');
   tripDescription = computed(() => this.trip()?.description || '');
   stopCount = computed(() => this.trip()?.stops?.length || 0);
-  
+
   // Favorites state
   favorites = signal<UserFavoriteLocation[]>([]);
   favoritesLoading = signal(false);
   favoritesError = signal<string | null>(null);
-  
+
   // Dropdown state
   isDropdownOpen = signal(false);
   dropdownTriggerElement: HTMLElement | null = null;
-  
+
   // Computed dropdown items
   favoriteDropdownItems = computed(() => {
     return this.favorites().map(favorite => ({
@@ -66,13 +67,13 @@ export class TripDetailsViewComponent implements OnInit {
   ngOnInit(): void {
     this.loadFavorites();
   }
-  
+
   private async loadFavorites(): Promise<void> {
     if (this.currentView !== 'planning') return;
-    
+
     this.favoritesLoading.set(true);
     this.favoritesError.set(null);
-    
+
     try {
       await this.locationService.getUserFavorites().toPromise();
       this.favorites.set(this.locationService.favoritesSignal());
@@ -119,7 +120,7 @@ export class TripDetailsViewComponent implements OnInit {
 
     const tripId = this.tripFacade.tripId();
     const isDraft = this.tripFacade.isDraftTrip();
-    
+
     if (!tripId) {
       this.toastService.showError('No active trip to add location to');
       return;
@@ -127,7 +128,7 @@ export class TripDetailsViewComponent implements OnInit {
 
     // Use trip facade to add location to bank through command pattern
     this.tripFacade.addBankedLocation(tripId, favorite.location)
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           const action = isDraft ? 'Added to draft' : 'Added to location bank';
@@ -139,7 +140,7 @@ export class TripDetailsViewComponent implements OnInit {
         }
       });
   }
-  
+
   // Placeholder methods for future functionality
   onEditTripDetails(): void {
     console.log('Edit trip details clicked');
