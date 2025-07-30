@@ -1,4 +1,4 @@
-<div class="social-container p-4 sm:p-6 md:p-8 max-w-7xl mx-auto bg-tp-bg-light-secondary dark:bg-tp-bg-primary rounded-lg shadow-md">
+<div class="social-container p-4 mt-8 sm:p-6 md:p-8 max-w-7xl mx-auto bg-tp-bg-light-secondary dark:bg-tp-bg-secondary rounded-lg shadow-md">
   <div class="mb-8">
     <h1 class="text-3xl font-bold text-tp-text-light-primary dark:text-tp-text-primary mb-6">Social Hub</h1>
 
@@ -9,7 +9,7 @@
           pInputText
           type="text"
           placeholder="Search for users by name or email..."
-          class="flex-1 p-3 border border-tp-border-light dark:border-tp-border rounded-lg focus:ring-2 focus:ring-tp-orange dark:focus:ring-tp-orange-light dark:bg-tp-bg-secondary"
+          class="flex-1 p-3 border border-tp-border-light dark:border-tp-border rounded-lg focus:ring-2 focus:ring-tp-orange dark:focus:ring-tp-orange-light dark:bg-tp-bg-tertiary"
           [ngModel]="searchQuery()"
           (ngModelChange)="onSearchQueryChange($event)"
         />
@@ -17,7 +17,7 @@
 
       <!-- Search Results -->
       @if (searchQuery().length >= 2) {
-        <div class="search-results bg-tp-bg-light-tertiary dark:bg-tp-bg-tertiary rounded-lg border border-tp-border-light dark:border-tp-border p-4">
+        <div class="search-results bg-tp-bg-light-tertiary dark:bg-tp-bg-tertiary rounded-lg border border-tp-border-light dark:border-tp-border p-4 animate-slide-down">
           <h3 class="text-xl font-semibold mb-4 text-tp-text-light-primary dark:text-tp-text-primary">Search Results</h3>
 
           <div class="search-results-container">
@@ -84,17 +84,46 @@
   </div>
 
   <!-- Tabs Section -->
-  <p-tabs [value]="activeTabIndex()">
-    <p-tablist>
-      <p-tab [value]="0" (click)="activeTabIndex.set(0)">Friends</p-tab>
-      <p-tab [value]="1" (click)="activeTabIndex.set(1)">Pending Requests</p-tab>
-      <p-tab [value]="2" (click)="activeTabIndex.set(2)">Sent Requests</p-tab>
-    </p-tablist>
+  <div class="tabs-container">
+    <!-- Tab Navigation -->
+    <div class="flex border-b border-tp-border-light dark:border-tp-border bg-tp-bg-light-primary dark:bg-tp-bg-primary">
+      <button
+        (click)="activeTabIndex.set(0)"
+        [class.border-tp-orange]="activeTabIndex() === 0"
+        [class.text-tp-orange]="activeTabIndex() === 0"
+        [class.border-transparent]="activeTabIndex() !== 0"
+        [class.text-tp-text-light-secondary]="activeTabIndex() !== 0"
+        [class.dark:text-tp-text-secondary]="activeTabIndex() !== 0"
+        class="px-4 py-3 text-sm font-medium border-b-2 hover:text-tp-text-light-primary dark:hover:text-tp-text-primary hover:border-gray-300 dark:hover:border-gray-600 transition-colors duration-150">
+        Friends
+      </button>
+      <button
+        (click)="activeTabIndex.set(1)"
+        [class.border-tp-orange]="activeTabIndex() === 1"
+        [class.text-tp-orange]="activeTabIndex() === 1"
+        [class.border-transparent]="activeTabIndex() !== 1"
+        [class.text-tp-text-light-secondary]="activeTabIndex() !== 1"
+        [class.dark:text-tp-text-secondary]="activeTabIndex() !== 1"
+        class="px-4 py-3 text-sm font-medium border-b-2 hover:text-tp-text-light-primary dark:hover:text-tp-text-primary hover:border-gray-300 dark:hover:border-gray-600 transition-colors duration-150">
+        Pending Requests
+      </button>
+      <button
+        (click)="activeTabIndex.set(2)"
+        [class.border-tp-orange]="activeTabIndex() === 2"
+        [class.text-tp-orange]="activeTabIndex() === 2"
+        [class.border-transparent]="activeTabIndex() !== 2"
+        [class.text-tp-text-light-secondary]="activeTabIndex() !== 2"
+        [class.dark:text-tp-text-secondary]="activeTabIndex() !== 2"
+        class="px-4 py-3 text-sm font-medium border-b-2 hover:text-tp-text-light-primary dark:hover:text-tp-text-primary hover:border-gray-300 dark:hover:border-gray-600 transition-colors duration-150">
+        Sent Requests
+      </button>
+    </div>
 
-    <p-tabpanels>
+    <!-- Tab Panels -->
+    <div class="tab-content bg-tp-bg-light-tertiary dark:bg-tp-bg-tertiary rounded-b-lg border border-t-0 border-tp-border-light dark:border-tp-border p-6">
       <!-- Friends Tab -->
-      <p-tabpanel [value]="0">
-        <div class="friends-tab mt-4">
+      @if (activeTabIndex() === 0) {
+        <div class="friends-tab animate-fade-in-fast">
           @if (loadingFriends()) {
             <div class="flex items-center justify-center py-12">
               <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-tp-orange"></div>
@@ -102,8 +131,9 @@
             </div>
           } @else if (friends().length > 0) {
             <div class="space-y-4">
-              @for (friendship of friends(); track friendship.id) {
-                <div class="flex items-center justify-between p-4 bg-tp-bg-light-primary dark:bg-tp-bg-secondary rounded-lg shadow-sm border border-tp-border-light dark:border-tp-border hover:shadow-lg transition-shadow duration-300">
+              @for (friendship of friends(); track friendship.id; let i = $index) {
+                <div class="flex items-center justify-between p-4 bg-tp-bg-light-primary dark:bg-tp-bg-secondary rounded-lg shadow-sm border border-tp-border-light dark:border-tp-border hover:shadow-lg transition-shadow duration-300 stagger-item"
+                     [style.animation-delay]="(i * 50) + 'ms'">
                   <div class="flex items-center space-x-4">
                     @if (getUserAvatarUrl(friendship)) {
                       <img
@@ -131,17 +161,17 @@
               }
             </div>
           } @else {
-            <div class="text-center py-12 text-tp-text-light-secondary dark:text-tp-text-secondary">
-              <div class="text-5xl mb-4">👥</div>
+            <div class="text-center py-12 text-tp-text-light-primary dark:text-tp-text-primary animate-fade-in-fast">
+              <i class="pi pi-users !text-4xl text-tp-text-light-secondary dark:text-tp-text-secondary mb-4"></i>
               <p class="text-lg">No friends yet. Start by searching for users above!</p>
             </div>
           }
         </div>
-      </p-tabpanel>
+      }
 
       <!-- Pending Requests Tab -->
-      <p-tabpanel [value]="1">
-        <div class="pending-requests-tab mt-4">
+      @if (activeTabIndex() === 1) {
+        <div class="pending-requests-tab animate-fade-in-fast">
           @if (loadingPendingRequests()) {
             <div class="flex items-center justify-center py-12">
               <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-tp-orange"></div>
@@ -149,8 +179,9 @@
             </div>
           } @else if (pendingRequests().length > 0) {
             <div class="space-y-4">
-              @for (request of pendingRequests(); track request.id) {
-                <div class="flex items-center justify-between p-4 bg-tp-bg-light-primary dark:bg-tp-bg-secondary rounded-lg shadow-sm border border-tp-border-light dark:border-tp-border hover:shadow-lg transition-shadow duration-300">
+              @for (request of pendingRequests(); track request.id; let i = $index) {
+                <div class="flex items-center justify-between p-4 bg-tp-bg-light-primary dark:bg-tp-bg-secondary rounded-lg shadow-sm border border-tp-border-light dark:border-tp-border hover:shadow-lg transition-shadow duration-300 stagger-item"
+                     [style.animation-delay]="(i * 50) + 'ms'">
                   <div class="flex items-center space-x-4">
                     @if (getUserAvatarUrl(request)) {
                       <img
@@ -185,17 +216,17 @@
               }
             </div>
           } @else {
-            <div class="text-center py-12 text-tp-text-light-secondary dark:text-tp-text-secondary">
-              <div class="text-5xl mb-4">📬</div>
+            <div class="text-center py-12 text-tp-text-light-primary dark:text-tp-text-primary animate-fade-in-fast">
+              <i class="pi pi-inbox !text-4xl text-tp-text-light-secondary dark:text-tp-text-secondary mb-4"></i>
               <p class="text-lg">No pending friend requests.</p>
             </div>
           }
         </div>
-      </p-tabpanel>
+      }
 
       <!-- Sent Requests Tab -->
-      <p-tabpanel [value]="2">
-        <div class="sent-requests-tab mt-4">
+      @if (activeTabIndex() === 2) {
+        <div class="sent-requests-tab animate-fade-in-fast">
           @if (loadingSentRequests()) {
             <div class="flex items-center justify-center py-12">
               <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-tp-orange"></div>
@@ -203,8 +234,9 @@
             </div>
           } @else if (sentRequests().length > 0) {
             <div class="space-y-4">
-              @for (request of sentRequests(); track request.id) {
-                <div class="flex items-center justify-between p-4 bg-tp-bg-light-primary dark:bg-tp-bg-secondary rounded-lg shadow-sm border border-tp-border-light dark:border-tp-border hover:shadow-lg transition-shadow duration-300">
+              @for (request of sentRequests(); track request.id; let i = $index) {
+                <div class="flex items-center justify-between p-4 bg-tp-bg-light-primary dark:bg-tp-bg-secondary rounded-lg shadow-sm border border-tp-border-light dark:border-tp-border hover:shadow-lg transition-shadow duration-300 stagger-item"
+                     [style.animation-delay]="(i * 50) + 'ms'">
                   <div class="flex items-center space-x-4">
                     @if (getUserAvatarUrl(request)) {
                       <img
@@ -242,15 +274,15 @@
               }
             </div>
           } @else {
-            <div class="text-center py-12 text-tp-text-light-secondary dark:text-tp-text-secondary">
-              <div class="text-5xl mb-4">📤</div>
+            <div class="text-center py-12 text-tp-text-light-primary dark:text-tp-text-primary animate-fade-in-fast">
+              <i class="pi pi-send !text-4xl text-tp-text-light-secondary dark:text-tp-text-secondary mb-4"></i>
               <p class="text-lg">No sent friend requests.</p>
             </div>
           }
         </div>
-      </p-tabpanel>
-    </p-tabpanels>
-  </p-tabs>
+      }
+    </div>
+  </div>
 </div>
 
 <p-confirmpopup></p-confirmpopup>
