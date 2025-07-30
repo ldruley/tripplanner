@@ -17,13 +17,13 @@
           (tripDataChanged)="onTripDataChanged($event)"
         />
       </div>
-      
+
       <!-- Desktop: Aligned with itinerary column -->
       <div class="hidden md:flex gap-6 transition-all duration-300 ease-in-out">
         <!-- Empty space for bank when visible -->
         <div class="transition-all duration-300 ease-in-out" [ngClass]="{'w-1/3': !isLocationBankEmpty(), 'w-0': isLocationBankEmpty(), 'opacity-0': isLocationBankEmpty(), 'overflow-hidden': isLocationBankEmpty()}">
         </div>
-        
+
         <!-- Trip controls aligned with itinerary -->
         <div class="transition-all duration-300 ease-in-out" [ngClass]="{'w-2/3': !isLocationBankEmpty(), 'w-full': isLocationBankEmpty()}">
           <app-trip-edit-controls
@@ -66,7 +66,7 @@
         <!-- Empty space for bank when visible -->
         <div class="transition-all duration-300 ease-in-out" [ngClass]="{'w-1/3': !isLocationBankEmpty(), 'w-0': isLocationBankEmpty(), 'opacity-0': isLocationBankEmpty(), 'overflow-hidden': isLocationBankEmpty()}">
         </div>
-        
+
         <!-- Location Search aligned with itinerary -->
         <div class="transition-all duration-300 ease-in-out" [ngClass]="{'w-2/3': !isLocationBankEmpty(), 'w-full': isLocationBankEmpty()}">
           <app-location-search
@@ -103,6 +103,21 @@
             (editStopRequested)="onStopEditRequested($event)"
             (itemDroppedFromOtherList)="onLocationDroppedFromBank($event)">
           </app-itinerary-builder>
+
+          <!-- Desktop Save Button -->
+          <div class="mt-6 flex justify-end">
+            <button
+              (click)="handleTripSave()"
+              [disabled]="isLoading()"
+              class="flex items-center gap-2 px-6 py-3 bg-tp-orange hover:bg-tp-orange-dark text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed">
+              @if (isLoading()) {
+                <i class="pi pi-spin pi-spinner text-sm"></i>
+              } @else {
+                <i class="pi pi-save text-sm"></i>
+              }
+              <span>Save Trip</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -150,17 +165,29 @@
       }
     </div>
 
-    <!-- Floating Action Button for Save -->
-    <app-floating-action-button
-      position="bottom-right"
-      size="md"
-      icon="pi pi-save"
-      text="Save Trip"
-      [disabled]="isLoading()"
-      [loading]="isLoading()"
-      ariaLabel="Save trip"
-      (buttonClick)="handleTripSave()">
-    </app-floating-action-button>
+    <!-- Mobile Action Buttons -->
+    <div class="md:hidden fixed bottom-4 right-4 z-40 flex gap-3">
+      <!-- Save Trip Button -->
+      <button
+        (click)="handleTripSave()"
+        [disabled]="isLoading()"
+        class="flex items-center gap-2 px-4 py-3 bg-tp-orange hover:bg-tp-orange/90 text-white font-medium rounded-full shadow-lg hover:shadow-xl transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed button-press hover-lift">
+        @if (isLoading()) {
+          <i class="pi pi-spin pi-spinner text-sm"></i>
+        } @else {
+          <i class="pi pi-save text-sm"></i>
+        }
+        <span class="text-sm">Save</span>
+      </button>
+
+      <!-- Trip Details Button -->
+      <button
+        (click)="openTripDetails()"
+        class="p-3 bg-tp-orange hover:bg-tp-orange/90 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 ease-in-out button-press hover-lift"
+        aria-label="Open trip details">
+        <i class="pi pi-cog text-lg"></i>
+      </button>
+    </div>
 
     <!-- Stop Edit Modal -->
     @if (editingStop()) {

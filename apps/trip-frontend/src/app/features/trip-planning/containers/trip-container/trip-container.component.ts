@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { TripFacade } from '../../../../domains/trips';
+import { MatrixEventService } from '../../../../domains/trips/services/matrix-event.service';
 import { ToastService } from '../../../shared/services';
 import { TripEditViewComponent } from '../../components/trip-edit-view/trip-edit-view.component';
 import { TripDetailsViewComponent } from '../../components/trip-details-view/trip-details-view.component';
@@ -27,6 +28,7 @@ export class TripContainerComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private tripFacade = inject(TripFacade);
   private toastService = inject(ToastService);
+  private matrixEventService = inject(MatrixEventService); // Initialize matrix event service
 
   // Subscriptions
   private routeSubscription?: Subscription;

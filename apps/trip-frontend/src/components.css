@@ -230,3 +230,18 @@
   }
 }
 
+/* PrimeNG DatePicker overlay z-index fix - ensure it appears above all content */
+/* Use high specificity without CSS layers to override PrimeNG defaults */
+.p-datepicker-panel,
+.p-datepicker-panel.p-component,
+body .p-datepicker-panel {
+  z-index: 99999 !important;
+}
+
+/* Ensure all DatePicker overlay variations are covered */
+.p-datepicker-panel .p-datepicker,
+.p-datepicker-panel.p-datepicker-inline,
+.p-overlay .p-datepicker-panel {
+  z-index: 99999 !important;
+}
+

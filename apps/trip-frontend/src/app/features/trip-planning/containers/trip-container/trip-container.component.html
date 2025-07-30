@@ -44,7 +44,7 @@
       <!-- View Wrapper with Simple Transitions -->
       <div class="relative min-h-full">
         @if (currentView() === 'planning') {
-          <app-trip-edit-view />
+          <app-trip-edit-view (openTripDetailsRequested)="openSidePane()" />
         } @else if (currentView() === 'timeline') {
           <div class="animate-fade-in-fast">
             <app-trip-timeline-view />
@@ -111,7 +111,7 @@
     <!-- Mobile View Wrapper with Simple Transitions -->
     <div class="relative min-h-full">
       @if (currentView() === 'planning') {
-        <app-trip-edit-view />
+        <app-trip-edit-view (openTripDetailsRequested)="openSidePane()" />
       } @else if (currentView() === 'timeline') {
         <div class="mobile-slide-up">
           <app-trip-timeline-view />
@@ -124,14 +124,16 @@
     </div>
   </div>
 
-  <!-- Mobile Side Pane Toggle Button -->
-  <button
-    (click)="toggleSidePane()"
-    class="fixed top-4 right-4 z-40 p-3 bg-tp-orange text-white rounded-full shadow-lg
-           hover:bg-tp-orange/90 transition-colors duration-200 button-press hover-lift"
-    aria-label="Toggle trip details">
-    <i class="pi pi-cog text-lg"></i>
-  </button>
+  <!-- Mobile Side Pane Toggle Button (Only show when not in planning view) -->
+  @if (currentView() !== 'planning') {
+    <button
+      (click)="toggleSidePane()"
+      class="fixed top-4 right-4 z-40 p-3 bg-tp-orange text-white rounded-full shadow-lg
+             hover:bg-tp-orange/90 transition-colors duration-200 button-press hover-lift"
+      aria-label="Toggle trip details">
+      <i class="pi pi-cog text-lg"></i>
+    </button>
+  }
 
   <!-- Side Pane Overlay -->
   @if (isSidePaneOpen()) {

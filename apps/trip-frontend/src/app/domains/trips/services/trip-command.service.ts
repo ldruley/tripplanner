@@ -31,7 +31,15 @@ import {
   BankedLocationAddedEvent,
   BankedLocationRemovedEvent
 } from '../events/trip-events';
-import { Trip, Stop, TripBankedLocation } from '@trip-planner/types';
+import { 
+  Trip, 
+  CreateTripRequest, 
+  CreateStopRequest,
+  CreateTripBankedLocationRequest 
+} from '@trip-planner/types';
+import { Stop } from '../../../features/trip-planning/models/stop.model';
+import { TripBankedLocation } from '../../../features/trip-planning/models/trip-banked-location.model';
+import { TempIdUtil } from '../../../core/utils/temp-id.util';
 
 /**
  * TripCommandService
@@ -223,9 +231,10 @@ export class TripCommandService {
       ? command.payload.insertAtIndex
       : currentTrip.stops.length;
 
-    // Create new stop
+    // Create new stop with temp ID for draft trips (no crypto dependency)
+    const tempId = TempIdUtil.generateStopTempId(command.payload.location.id);
     const newStop: Stop = {
-      id: crypto.randomUUID(),
+      id: tempId, // Temp ID for frontend tracking - will be stripped before backend calls
       tripId: currentTrip.id,
       locationId: command.payload.location.id,
       order: targetOrder,
@@ -382,8 +391,9 @@ export class TripCommandService {
     }
 
     // For draft trips, update local state only
+    const tempId = TempIdUtil.generateBankedLocationTempId(command.payload.location.id);
     const bankedLocation: TripBankedLocation = {
-      id: crypto.randomUUID(),
+      id: tempId, // Temp ID for frontend tracking - will be stripped before backend calls
       tripId: currentTrip.id,
       locationId: command.payload.location.id,
       createdAt: new Date(),
@@ -544,10 +554,11 @@ export class TripCommandService {
       bl => bl.locationId !== command.payload.locationId
     );
 
-    // Add as stop
+    // Add as stop with temp ID for draft trips (no crypto dependency)
     const targetOrder = command.payload.position !== undefined ? command.payload.position : currentTrip.stops.length;
+    const tempId = TempIdUtil.generateStopTempId(bankedLocation.location.id);
     const newStop: Stop = {
-      id: crypto.randomUUID(),
+      id: tempId, // Temp ID for frontend tracking - will be stripped before backend calls
       tripId: currentTrip.id,
       locationId: bankedLocation.location.id,
       order: targetOrder,

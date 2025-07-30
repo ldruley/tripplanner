@@ -48,6 +48,9 @@
             styleClass="w-full"
             [inputStyle]="{'width': '100%'}"
             [disabled]="disabled()"
+            appendTo="body"
+            [autoZIndex]="true"
+            [baseZIndex]="10000"
           />
           @if (tripPrimaryTimezone() !== 'UTC') {
             <p class="mt-1 text-xs text-tp-text-light-secondary dark:text-tp-text-secondary">
@@ -146,6 +149,9 @@
             styleClass="w-full"
             [inputStyle]="{'width': '100%'}"
             [disabled]="disabled()"
+            appendTo="body"
+            [autoZIndex]="true"
+            [baseZIndex]="10000"
           />
           <p class="mt-1 text-xs text-tp-text-light-secondary dark:text-tp-text-secondary">
             @if (tripPrimaryTimezone() !== 'UTC') {

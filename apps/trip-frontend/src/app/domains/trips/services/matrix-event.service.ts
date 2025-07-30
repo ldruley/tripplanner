@@ -33,6 +33,7 @@ export class MatrixEventService implements OnDestroy {
   private readonly DEBOUNCE_TIME = 500; // 500ms debounce to prevent excessive calculations
 
   constructor() {
+    console.log('MatrixEventService: Constructor called, setting up event listeners');
     this.setupEventListeners();
   }
 
@@ -45,7 +46,10 @@ export class MatrixEventService implements OnDestroy {
    * Set up event listeners for trip location changes
    */
   private setupEventListeners(): void {
+    console.log('MatrixEventService: Setting up event listeners');
+    
     // Listen to stop events
+    console.log('MatrixEventService: Setting up [Stop] Added listener');
     this.tripEventBus.on<StopAddedEvent>('[Stop] Added')
       .pipe(
         debounceTime(this.DEBOUNCE_TIME),
@@ -67,6 +71,7 @@ export class MatrixEventService implements OnDestroy {
       });
 
     // Listen to banked location events
+    console.log('MatrixEventService: Setting up [BankedLocation] Added listener');
     this.tripEventBus.on<BankedLocationAddedEvent>('[BankedLocation] Added')
       .pipe(
         debounceTime(this.DEBOUNCE_TIME),
@@ -106,9 +111,12 @@ export class MatrixEventService implements OnDestroy {
   private requestMatrixUpdate(tripId: string): void {
     const currentTrip = this.tripFacade.currentTrip();
     
+    console.log('MatrixEventService: Matrix update requested for tripId:', tripId);
+    console.log('MatrixEventService: Current trip:', currentTrip ? { id: currentTrip.id, state: (currentTrip as any).state } : 'null');
+    
     // Only update if this is the currently active trip
     if (!currentTrip || currentTrip.id !== tripId) {
-      console.log('MatrixEventService: Ignoring matrix update request for inactive trip:', tripId);
+      console.log('MatrixEventService: Ignoring matrix update request for inactive trip:', tripId, 'Current trip ID:', currentTrip?.id);
       return;
     }
 
@@ -133,6 +141,8 @@ export class MatrixEventService implements OnDestroy {
       return;
     }
 
+    console.log('MatrixEventService: Publishing matrix update requested event for tripId:', tripId, 'with', allLocations.length, 'locations');
+    
     // Emit matrix update requested event
     this.tripEventBus.publish<MatrixUpdateRequestedEvent>({
       type: '[Trip] Matrix Update Requested',

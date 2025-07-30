@@ -19,6 +19,7 @@ import {
 import { UpdateTripWithRoutingRequest } from '@trip-planner/types';
 import { environment } from '../../../../environments/environment';
 import { ITripServerRepository } from './interfaces/trip-server-repository.interface';
+import { TempIdUtil } from '../../../core/utils/temp-id.util';
 
 @Injectable({
   providedIn: 'root',
@@ -65,6 +66,9 @@ export class TripServerRepository implements ITripServerRepository {
       matrix: updates.matrix,
     };
 
+    // Validate no temp IDs are being sent
+    TempIdUtil.validateNoTempIds(updateRequest, 'updateTrip');
+
     return this.http
       .put<Trip>(`${this.apiUrl}/trips/${tripId}`, updateRequest)
       .pipe(map(response => TripSchema.parse(response)));
@@ -97,6 +101,9 @@ export class TripServerRepository implements ITripServerRepository {
       travelMode: 'DRIVING',
     };
 
+    // Validate no temp IDs are being sent
+    TempIdUtil.validateNoTempIds(createRequest, 'createTripWithItinerary');
+
     return this.http
       .post<Trip>(`${this.apiUrl}/itinerary/trips`, createRequest)
       .pipe(map(response => TripSchema.parse(response)));
@@ -112,6 +119,9 @@ export class TripServerRepository implements ITripServerRepository {
       calculateRouting: false,
       travelMode: 'DRIVING',
     };
+
+    // Validate no temp IDs are being sent
+    TempIdUtil.validateNoTempIds(addStopRequest, 'addStopToTrip');
 
     return this.http
       .post<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/stops`, addStopRequest)
@@ -142,6 +152,9 @@ export class TripServerRepository implements ITripServerRepository {
       travelMode: 'DRIVING',
     };
 
+    // Validate no temp IDs are being sent
+    TempIdUtil.validateNoTempIds(reorderRequest, 'reorderStopsInTrip');
+
     return this.http
       .put<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/stops/reorder`, reorderRequest)
       .pipe(map(response => TripSchema.parse(response)));
@@ -151,9 +164,14 @@ export class TripServerRepository implements ITripServerRepository {
    * Add a location to bank
    */
   addBankedLocationToTrip(tripId: string, location: Location): Observable<TripBankedLocation> {
-    return this.http.post<TripBankedLocation>(`${this.apiUrl}/itinerary/trips/${tripId}/bank`, {
+    const request = {
       locationId: location.id,
-    });
+    };
+
+    // Validate no temp IDs are being sent
+    TempIdUtil.validateNoTempIds(request, 'addBankedLocationToTrip');
+
+    return this.http.post<TripBankedLocation>(`${this.apiUrl}/itinerary/trips/${tripId}/bank`, request);
   }
 
   /**
@@ -171,11 +189,16 @@ export class TripServerRepository implements ITripServerRepository {
     locationId: string,
     position?: number,
   ): Observable<Trip> {
+    const request = {
+      locationId,
+      position,
+    };
+
+    // Validate no temp IDs are being sent
+    TempIdUtil.validateNoTempIds(request, 'promoteBankedLocationToStop');
+
     return this.http
-      .post<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/bank/${locationId}/promote`, {
-        locationId,
-        position,
-      })
+      .post<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}/bank/${locationId}/promote`, request)
       .pipe(map(response => TripSchema.parse(response)));
   }
 
@@ -186,6 +209,9 @@ export class TripServerRepository implements ITripServerRepository {
     tripId: string,
     updateData: UpdateTripWithRoutingRequest,
   ): Observable<Trip> {
+    // Validate no temp IDs are being sent
+    TempIdUtil.validateNoTempIds(updateData, 'updateTripWithRouting');
+
     return this.http
       .put<Trip>(`${this.apiUrl}/itinerary/trips/${tripId}`, updateData)
       .pipe(map(response => TripSchema.parse(response)));

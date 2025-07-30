@@ -91,7 +91,7 @@ export class TripMapViewComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  private initializeMap(center: LngLatLike = [0, 0], zoom: number = 2): void {
+  private initializeMap(center: LngLatLike = [0, 0], zoom = 2): void {
     this.map = new Map({
       container: this.mapContainer.nativeElement,
       style: 'mapbox://styles/mapbox/streets-v12',

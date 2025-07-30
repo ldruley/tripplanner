@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, computed, signal } from '@angular/core';
+import { Component, inject, OnInit, computed, signal, DestroyRef, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs';
@@ -42,6 +42,10 @@ export class TripEditViewComponent implements OnInit {
   private tripFacade = inject(TripFacade);
   private locationFacade = inject(LocationFacade);
   private matrixCalculationService = inject(MatrixCalculationService);
+  private destroyRef = inject(DestroyRef);
+
+  // Output events
+  readonly openTripDetailsRequested = output<void>();
 
   // Use facade signals for reactive state
   trip = this.tripFacade.currentTrip;
@@ -74,7 +78,7 @@ export class TripEditViewComponent implements OnInit {
     if (facadeTripId && !facadeTripId.startsWith('draft-')) {
       return facadeTripId;
     }
-    
+
     // Fallback to extracting trip ID from current URL path
     const url = this.router.url;
     const match = url.match(/\/trip-planning\/([^\/]+)/);
@@ -99,7 +103,7 @@ export class TripEditViewComponent implements OnInit {
   onLocationSelected(location: Location): void {
     const tripId = this.tripId();
     const isDraft = this.tripFacade.isDraftTrip();
-    
+
     if (!tripId) {
       this.handleCommandError(new Error('No active trip to add location to'));
       return;
@@ -107,7 +111,7 @@ export class TripEditViewComponent implements OnInit {
 
     // Location is already created by backend, add to bank directly
     this.tripFacade.addBankedLocation(tripId, location)
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           const message = isDraft ? 'Location added to draft' : 'Location added to bank';
@@ -124,7 +128,7 @@ export class TripEditViewComponent implements OnInit {
   onLocationAddedToItinerary(location: Location): void {
     const tripId = this.tripId();
     const isDraft = this.tripFacade.isDraftTrip();
-    
+
     if (!tripId) {
       this.handleCommandError(new Error('No active trip to add location to'));
       return;
@@ -132,7 +136,7 @@ export class TripEditViewComponent implements OnInit {
 
     // Location is already created by backend, add to itinerary directly
     this.tripFacade.addStop(tripId, location)
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           const message = isDraft ? 'Location added to draft itinerary' : 'Location added to itinerary';
@@ -147,9 +151,10 @@ export class TripEditViewComponent implements OnInit {
   }
 
   onLocationDroppedFromBank(event: { itemData: Location; newIndex: number }): void {
+    const currentTrip = this.trip();
     const tripId = this.tripId();
-    if (tripId === 'new' || !tripId) {
-      this.handleCommandError(new Error('Trip must be saved before moving locations'));
+    if (!currentTrip || !tripId) {
+      this.handleCommandError(new Error('No trip loaded'));
       return;
     }
 
@@ -157,7 +162,7 @@ export class TripEditViewComponent implements OnInit {
     this.tripFacade.removeBankedLocation(tripId, event.itemData.id)
       .pipe(
         switchMap(() => this.tripFacade.addStop(tripId, event.itemData, event.newIndex)),
-        takeUntilDestroyed()
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
         next: () => {
@@ -168,9 +173,10 @@ export class TripEditViewComponent implements OnInit {
   }
 
   onStopDroppedToBank(event: { itemData: any; newIndex: number }): void {
+    const currentTrip = this.trip();
     const tripId = this.tripId();
-    if (tripId === 'new' || !tripId) {
-      this.handleCommandError(new Error('Trip must be saved before moving stops'));
+    if (!currentTrip || !tripId) {
+      this.handleCommandError(new Error('No trip loaded'));
       return;
     }
 
@@ -179,7 +185,7 @@ export class TripEditViewComponent implements OnInit {
     console.log('Stop dropped to bank:', event.itemData);
     if (event.itemData.id) {
       this.tripFacade.removeStop(tripId, event.itemData.id)
-        .pipe(takeUntilDestroyed())
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: () => {
             this.toastService.showSuccess('Stop moved back to bank');
@@ -190,16 +196,17 @@ export class TripEditViewComponent implements OnInit {
   }
 
   onLocationRemovedFromBank(event: { itemData: Location; newIndex: number }): void {
+    const currentTrip = this.trip();
     const tripId = this.tripId();
-    if (tripId === 'new' || !tripId) {
-      this.handleCommandError(new Error('Trip must be saved before removing locations'));
+    if (!currentTrip || !tripId) {
+      this.handleCommandError(new Error('No trip loaded'));
       return;
     }
 
     // Handle removing a location from the bank
     console.log('Location removed from bank:', event.itemData);
     this.tripFacade.removeBankedLocation(tripId, event.itemData.id)
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.toastService.showSuccess('Location removed from bank');
@@ -213,9 +220,10 @@ export class TripEditViewComponent implements OnInit {
   }
 
   onItineraryReorder(stops: any[]): void {
+    const currentTrip = this.trip();
     const tripId = this.tripId();
-    if (tripId === 'new' || !tripId) {
-      this.handleCommandError(new Error('Trip must be saved before reordering stops'));
+    if (!currentTrip || !tripId) {
+      this.handleCommandError(new Error('No trip loaded'));
       return;
     }
 
@@ -226,7 +234,7 @@ export class TripEditViewComponent implements OnInit {
     }));
 
     this.tripFacade.reorderStops(tripId, stopOrders)
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           // No toast needed for reordering as it's immediate visual feedback
@@ -236,14 +244,15 @@ export class TripEditViewComponent implements OnInit {
   }
 
   onStopRemoved(stopId: string): void {
+    const currentTrip = this.trip();
     const tripId = this.tripId();
-    if (tripId === 'new' || !tripId) {
-      this.handleCommandError(new Error('Trip must be saved before removing stops'));
+    if (!currentTrip || !tripId) {
+      this.handleCommandError(new Error('No trip loaded'));
       return;
     }
 
     this.tripFacade.removeStop(tripId, stopId)
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.toastService.showSuccess('Stop removed from itinerary');
@@ -267,14 +276,15 @@ export class TripEditViewComponent implements OnInit {
   }
 
   onStopUpdated(updatedStop: Stop): void {
+    const currentTrip = this.trip();
     const tripId = this.tripId();
-    if (tripId === 'new' || !tripId) {
-      this.handleCommandError(new Error('Trip must be saved before updating stops'));
+    if (!currentTrip || !tripId) {
+      this.handleCommandError(new Error('No trip loaded'));
       return;
     }
 
     this.tripFacade.updateStop(tripId, updatedStop.id, updatedStop)
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.toastService.showSuccess('Stop updated');
@@ -355,7 +365,7 @@ export class TripEditViewComponent implements OnInit {
           matrix: currentTrip.matrix
         },
         organizedLocations
-      ).pipe(takeUntilDestroyed())
+      ).pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: result => {
           this.toastService.clear(loadingKey);
@@ -368,7 +378,7 @@ export class TripEditViewComponent implements OnInit {
           // Navigate to the actual trip ID
           const currentPath = this.router.url;
           const targetPath = currentPath.replace('/new', `/${result.tripId}`);
-          
+
           this.router.navigateByUrl(targetPath).then(
             (success) => {
               console.log('TripEditView: Navigation success:', success);
@@ -391,7 +401,7 @@ export class TripEditViewComponent implements OnInit {
         description: currentTrip.description,
         startDate: currentTrip.startDate,
         endDate: currentTrip.endDate
-      }).pipe(takeUntilDestroyed())
+      }).pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.toastService.clear(loadingKey);
@@ -408,6 +418,11 @@ export class TripEditViewComponent implements OnInit {
         }
       });
     }
+  }
+
+  // Open trip details (mobile only)
+  openTripDetails(): void {
+    this.openTripDetailsRequested.emit();
   }
 
   // Error handling helper method

@@ -52,7 +52,7 @@
           ]
         },
         "staging": {
-          "optimization": true,
+          "optimization": false,
           "outputHashing": "all",
           "sourceMap": false,
           "fileReplacements": [

@@ -15,6 +15,7 @@ import { TripQueryService } from './services/trip-query.service';
 import { TripStateService } from './state/trip-state.service';
 import { TripStateMachine } from './state-machine/trip-state.machine';
 import { MatrixEventService } from './services/matrix-event.service';
+import { MatrixCalculationService } from '../../features/trip-planning/services/matrix-calculation.service';
 
 // Command types
 import {
@@ -63,6 +64,7 @@ export class TripFacade {
   private readonly queryService = inject(TripQueryService);
   private readonly stateService = inject(TripStateService);
   private readonly stateMachine = inject(TripStateMachine);
+  private readonly matrixCalculationService = inject(MatrixCalculationService);
 
   // Expose reactive state for UI binding
   readonly currentTrip = this.stateService.currentTrip;
@@ -366,6 +368,21 @@ export class TripFacade {
         if (trip) {
           this.stateService.setTrip(trip, 'persisted', false);
           this.stateMachine.initializeState('persisted', trip.id);
+
+          // Deserialize and set persisted matrix data if available
+          if (trip.matrix) {
+            try {
+              console.log('TripFacade: Deserializing persisted matrix data for trip:', trip.id);
+              const deserializedMatrix = this.matrixCalculationService.deserializeMatrix(trip.matrix);
+              this.matrixCalculationService.setPersistedMatrix(deserializedMatrix);
+            } catch (error) {
+              console.warn('TripFacade: Failed to deserialize matrix data:', error);
+              // Continue without matrix data rather than failing the entire load
+            }
+          } else {
+            console.log('TripFacade: No matrix data found for trip:', trip.id);
+            this.matrixCalculationService.setPersistedMatrix(null);
+          }
         } else {
           this.stateService.clearState();
         }
