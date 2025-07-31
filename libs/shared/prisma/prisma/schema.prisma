@@ -306,6 +306,7 @@ enum StopType {
 enum TripParticipantRole {
   PARTICIPANT
   EDITOR
+  OWNER
 }
 
 enum FriendshipStatus {

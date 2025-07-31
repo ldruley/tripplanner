@@ -6,19 +6,34 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   UnauthorizedException,
   UseGuards,
+  HttpCode,
 } from '@nestjs/common';
+import { ApiOperation, ApiParam, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard, CurrentUser } from '@trip-planner/auth';
 import { SafeUser } from '@trip-planner/types';
-import { CreateTripDto, UpdateTripDto, TripSearchDto } from '@trip-planner/shared/dtos';
+import {
+  CreateTripDto,
+  UpdateTripDto,
+  TripSearchDto,
+  AddParticipantToTripDto,
+  UpdateParticipantRoleDto,
+  TripParticipantListResponseDto,
+  TripParticipantDto
+} from '@trip-planner/shared/dtos';
 import { TripService } from './trip.service';
+import { TripParticipantService } from './trip-participant.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('trips')
 export class TripController {
-  constructor(private readonly tripService: TripService) {}
+  constructor(
+    private readonly tripService: TripService,
+    private readonly tripParticipantService: TripParticipantService
+  ) {}
 
   @Post()
   async createTrip(@CurrentUser() user: SafeUser, @Body() createTripDto: CreateTripDto) {
@@ -116,5 +131,76 @@ export class TripController {
       exists,
       belongs,
     };
+  }
+
+  // Participant management endpoints
+
+  @Get(':id/participants')
+  @ApiOperation({ summary: 'Get all participants for a trip' })
+  @ApiParam({ name: 'id', description: 'Trip ID' })
+  @ApiResponse({ status: 200, description: 'Participants retrieved successfully', type: TripParticipantListResponseDto })
+  @ApiResponse({ status: 403, description: 'Access denied' })
+  @ApiResponse({ status: 404, description: 'Trip not found' })
+  async getParticipants(
+    @Param('id') tripId: string,
+    @CurrentUser() user: SafeUser
+  ) {
+    return this.tripParticipantService.getParticipants(tripId, user.id);
+  }
+
+  @Post(':id/participants')
+  @ApiOperation({ summary: 'Add a participant to a trip' })
+  @ApiParam({ name: 'id', description: 'Trip ID' })
+  @ApiBody({ type: AddParticipantToTripDto })
+  @ApiResponse({ status: 201, description: 'Participant added successfully', type: TripParticipantDto })
+  @ApiResponse({ status: 403, description: 'Permission denied' })
+  @ApiResponse({ status: 404, description: 'Trip not found' })
+  @ApiResponse({ status: 409, description: 'User is already a participant' })
+  async addParticipant(
+    @Param('id') tripId: string,
+    @Body() dto: AddParticipantToTripDto,
+    @CurrentUser() user: SafeUser
+  ) {
+    return this.tripParticipantService.addParticipant(tripId, dto, user.id);
+  }
+
+  @Put(':id/participants/:userId')
+  @ApiOperation({ summary: 'Update a participant\'s role' })
+  @ApiParam({ name: 'id', description: 'Trip ID' })
+  @ApiParam({ name: 'userId', description: 'User ID of the participant' })
+  @ApiBody({ type: UpdateParticipantRoleDto })
+  @ApiResponse({ status: 200, description: 'Participant role updated successfully', type: TripParticipantDto })
+  @ApiResponse({ status: 403, description: 'Permission denied' })
+  @ApiResponse({ status: 404, description: 'Trip or participant not found' })
+  async updateParticipantRole(
+    @Param('id') tripId: string,
+    @Param('userId') userId: string,
+    @Body() dto: UpdateParticipantRoleDto,
+    @CurrentUser() user: SafeUser
+  ) {
+    return this.tripParticipantService.updateParticipantRole(tripId, userId, dto, user.id);
+  }
+
+  @Delete(':id/participants/:userId')
+  @ApiOperation({ summary: 'Remove a participant from a trip' })
+  @ApiParam({ name: 'id', description: 'Trip ID' })
+  @ApiParam({ name: 'userId', description: 'User ID of the participant' })
+  @ApiResponse({ status: 204, description: 'Participant removed successfully' })
+  @ApiResponse({ status: 403, description: 'Permission denied' })
+  @ApiResponse({ status: 404, description: 'Trip or participant not found' })
+  @HttpCode(204)
+  async removeParticipant(
+    @Param('id') tripId: string,
+    @Param('userId') userId: string,
+    @CurrentUser() user: SafeUser
+  ) {
+    return this.tripParticipantService.removeParticipant(tripId, userId, user.id);
+  }
+
+  @Get('participated')
+  @ApiOperation({ summary: 'Get trips the current user participates in' })
+  @ApiResponse({ status: 200, description: 'Participated trips retrieved successfully' })
+  async getUserParticipatedTrips(@CurrentUser() user: SafeUser) {
+    return this.tripParticipantService.getUserParticipatedTrips(user.id);
   }
 }

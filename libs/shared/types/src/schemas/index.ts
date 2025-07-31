@@ -20,3 +20,4 @@ export * from './user-favorite-location.schema';
 export * from './friendship.schema';
 export * from './batching.schema';
 export * from './itinerary.schema';
+export * from './trip-participant.schema';

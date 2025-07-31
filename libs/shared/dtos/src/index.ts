@@ -14,3 +14,4 @@ export * from './itinerary.dto';
 export * from './banking.dto';
 export * from './user-favorite-location.dto';
 export * from './friendship.dto';
+export * from './trip-participant.dto';
