@@ -4,7 +4,8 @@ import { TripFacade } from '../../../../domains/trips';
 import { TripTimezoneService } from '../../services/trip-timezone.service';
 import { Stop, TravelSegment } from '@trip-planner/types';
 import { formatDateInLocationTimezone } from '@trip-planner/date-utils';
-import { DistancePipe } from '../../../shared/pipes/distance.pipe';
+import { DistancePipe, LocationTimePipe } from '../../../shared/pipes';
+import { TimezoneTooltipDirective } from '../../../shared/directives';
 
 interface TimelineEvent {
   id: string;
@@ -17,13 +18,14 @@ interface TimelineEvent {
   subtitle: string;
   description: string;
   time?: string;
+  timeDate?: Date;
   distanceKm?: number;
 }
 
 @Component({
   selector: 'app-trip-timeline-view',
   standalone: true,
-  imports: [CommonModule, DistancePipe],
+  imports: [CommonModule, DistancePipe, LocationTimePipe, TimezoneTooltipDirective],
   templateUrl: './trip-timeline-view.component.html',
   styleUrl: './trip-timeline-view.component.css',
 })
@@ -48,6 +50,7 @@ export class TripTimelineViewComponent {
 
     sortedStops.forEach((stop, index) => {
       // Add stop event
+      const arrivalDate = stop.plannedArrivalTime || stop.calculatedArrivalTime;
       const stopEvent: TimelineEvent = {
         id: `stop-${stop.id}`,
         type: 'stop',
@@ -59,6 +62,7 @@ export class TripTimelineViewComponent {
         subtitle: this.formatStopTiming(stop),
         description: stop.notes || '',
         time: this.formatStopTime(stop),
+        timeDate: arrivalDate || undefined,
       };
       events.push(stopEvent);
 
@@ -113,6 +117,13 @@ export class TripTimelineViewComponent {
       return data.travelMode || undefined;
     }
     return undefined;
+  }
+
+  getStopLocation(data: Stop | TravelSegment) {
+    if ('location' in data) {
+      return data.location;
+    }
+    return null;
   }
 
   private getStopIcon(stop: Stop): string {

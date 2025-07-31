@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 
 import { Stop } from '@trip-planner/types';
 import { CdkDragHandle } from '@angular/cdk/drag-drop';
-import { ButtonComponent } from '../../../shared/components';
+import { ButtonComponent, LocationTimePipe } from '../../../shared/components';
+import { TimezoneTooltipDirective } from '../../../shared/directives';
 import { TripTimezoneService } from '../../services/trip-timezone.service';
 
 // import { TravelSegmentData } from '../../models/matrix.model';
@@ -11,7 +12,7 @@ import { TripTimezoneService } from '../../services/trip-timezone.service';
 @Component({
   selector: 'app-itinerary-stop',
   standalone: true,
-  imports: [CommonModule, CdkDragHandle, ButtonComponent],
+  imports: [CommonModule, CdkDragHandle, ButtonComponent, LocationTimePipe, TimezoneTooltipDirective],
   templateUrl: './itinerary-stop.component.html',
   styleUrls: ['./itinerary-stop.component.css'],
 })
@@ -31,41 +32,7 @@ export class ItineraryStopComponent {
     return location ? this.tripTimezoneService.getLocationTimezoneDisplayName(location) : 'UTC';
   });
 
-  plannedArrivalTimeInLocation = computed(() => {
-    const stop = this.stop();
-    if (!stop.plannedArrivalTime || !stop.location) return null;
 
-    return this.tripTimezoneService.formatDateTimeWithTimezone(
-      stop.plannedArrivalTime,
-      stop.location,
-      'HH:mm',
-      false,
-    );
-  });
-
-  calculatedArrivalTimeInLocation = computed(() => {
-    const stop = this.stop();
-    if (!stop.calculatedArrivalTime || !stop.location) return null;
-
-    return this.tripTimezoneService.formatDateTimeWithTimezone(
-      stop.calculatedArrivalTime,
-      stop.location,
-      'HH:mm',
-      false,
-    );
-  });
-
-  calculatedDepartureTimeInLocation = computed(() => {
-    const stop = this.stop();
-    if (!stop.calculatedDepartureTime || !stop.location) return null;
-
-    return this.tripTimezoneService.formatDateTimeWithTimezone(
-      stop.calculatedDepartureTime,
-      stop.location,
-      'HH:mm',
-      false,
-    );
-  });
 
   hasTimingInfo = computed(() => {
     const stop = this.stop();
@@ -76,38 +43,20 @@ export class ItineraryStopComponent {
     );
   });
 
-  displayArrivalTime = computed(() => {
-    const plannedTime = this.plannedArrivalTimeInLocation();
-    const calculatedTime = this.calculatedArrivalTimeInLocation();
-    
-    if (plannedTime && calculatedTime) {
-      return `${plannedTime} (${calculatedTime})`;
-    }
-    
-    return plannedTime || calculatedTime;
-  });
-
-  hasPlannedAndCalculatedArrival = computed(() => {
-    const plannedTime = this.plannedArrivalTimeInLocation();
-    const calculatedTime = this.calculatedArrivalTimeInLocation();
-    return !!(plannedTime && calculatedTime);
-  });
-
   arrivalTimeDisplay = computed(() => {
-    const plannedTime = this.plannedArrivalTimeInLocation();
-    const calculatedTime = this.calculatedArrivalTimeInLocation();
-    
+    const stop = this.stop();
+
     return {
-      planned: plannedTime,
-      calculated: calculatedTime,
-      hasPlanned: !!plannedTime,
-      hasCalculated: !!calculatedTime,
-      hasBoth: !!(plannedTime && calculatedTime)
+      planned: stop.plannedArrivalTime,
+      calculated: stop.calculatedArrivalTime,
+      hasPlanned: !!stop.plannedArrivalTime,
+      hasCalculated: !!stop.calculatedArrivalTime,
+      hasBoth: !!(stop.plannedArrivalTime && stop.calculatedArrivalTime)
     };
   });
 
   displayDepartureTime = computed(() => {
-    return this.calculatedDepartureTimeInLocation();
+    return this.stop().calculatedDepartureTime;
   });
 
   onRemoveClicked(): void {
