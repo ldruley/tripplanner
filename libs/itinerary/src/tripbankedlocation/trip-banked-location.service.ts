@@ -1,6 +1,6 @@
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService, PrismaClientOrTransaction } from '@trip-planner/prisma';
-import { TripService, TripPermissionService, TripPermission } from '@trip-planner/trip';
+import { TripService } from '@trip-planner/trip';
 import { LocationService } from '@trip-planner/location';
 import { StopService } from '@trip-planner/stop';
 import { TripBankedLocationRepository } from './trip-banked-location.repository';
@@ -12,7 +12,6 @@ import {
   CreateStopRequest,
   Stop,
 } from '@trip-planner/types';
-import { StopCoordinationService } from '../stop-coordination.service';
 import { OrderManagementService } from '../order-management.service';
 
 @Injectable()
@@ -22,11 +21,9 @@ export class TripBankedLocationService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly tripService: TripService,
-    private readonly tripPermissionService: TripPermissionService,
     private readonly locationService: LocationService,
     private readonly stopService: StopService,
     private readonly tripBankedLocationRepository: TripBankedLocationRepository,
-    private readonly stopCoordinationService: StopCoordinationService,
     private readonly orderManagementService: OrderManagementService,
   ) {}
 
@@ -69,12 +66,9 @@ export class TripBankedLocationService {
     this.logger.debug(`Adding location to bank for trip ${tripId} by user ${userId}`);
 
     const executeTransaction = async (client: PrismaClientOrTransaction) => {
-      // Step 1: Validate trip permissions
-      await this.tripPermissionService.requirePermission(tripId, userId, TripPermission.EDIT);
-
       let location: Location;
 
-      // Step 2: Get or create location based on input type
+      // Get or create location based on input type
       if (typeof locationDataOrId === 'string') {
         // Input is locationId
         const existingLocation = await this.locationService.findById(locationDataOrId, client);
@@ -92,7 +86,7 @@ export class TripBankedLocationService {
         this.logger.debug(`Created/found location ${location.id} for ${locationDataOrId.name}`);
       }
 
-      // Step 3: Check if location is already banked for this trip
+      // Check if location is already banked for this trip
       const existingBankedLocation = await this.tripBankedLocationRepository.exists(
         tripId,
         location.id as string,
@@ -103,7 +97,7 @@ export class TripBankedLocationService {
         throw new BadRequestException(`Location ${location.name} is already banked for this trip`);
       }
 
-      // Step 4: Create the banked location
+      // Create the banked location
       const bankedLocationData: CreateTripBankedLocationRequest = {
         tripId,
         locationId: location.id as string,
@@ -138,10 +132,7 @@ export class TripBankedLocationService {
     );
 
     return await this.prismaService.$transaction(async prismaClient => {
-      // Step 1: Validate trip permissions
-      await this.tripPermissionService.requirePermission(tripId, userId, TripPermission.EDIT);
-
-      // Step 2: Check if location exists in bank
+      // Check if location exists in bank
       const bankedLocation = await this.tripBankedLocationRepository.findByTripAndLocation(
         tripId,
         locationId,
@@ -153,7 +144,7 @@ export class TripBankedLocationService {
         throw new NotFoundException(`Location ${locationId} is not banked for trip ${tripId}`);
       }
 
-      // Step 3: Remove the banked location
+      // Remove the banked location
       await this.tripBankedLocationRepository.delete(tripId, locationId, prismaClient);
 
       this.logger.log(
@@ -178,10 +169,7 @@ export class TripBankedLocationService {
 
     const client = prismaClient || this.prismaService;
 
-    // Step 1: Validate trip permissions
-    await this.tripPermissionService.requirePermission(tripId, userId, TripPermission.READ);
-
-    // Step 2: Get banked locations with location details
+    // Get banked locations with location details
     const bankedLocations = await this.tripBankedLocationRepository.findByTripId(
       tripId,
       true,
@@ -215,10 +203,7 @@ export class TripBankedLocationService {
 
     return await this.prismaService.$transaction(
       async (transactionClient: PrismaClientOrTransaction) => {
-        // Step 1: Validate trip permissions
-        await this.tripPermissionService.requirePermission(tripId, userId, TripPermission.EDIT);
-
-        // Step 2: Check if location exists in bank
+        // Check if location exists in bank
         const bankedLocation = await this.tripBankedLocationRepository.findByTripAndLocation(
           tripId,
           locationId,
@@ -230,7 +215,7 @@ export class TripBankedLocationService {
           throw new NotFoundException(`Location ${locationId} is not banked for trip ${tripId}`);
         }
 
-        // Step 3: Check if location is already a stop in the trip
+        // Check if location is already a stop in the trip
         const existingStop = await this.stopService.findByTripAndLocation(
           tripId,
           locationId,
@@ -243,12 +228,16 @@ export class TripBankedLocationService {
           );
         }
 
-        // Step 4: Determine insertion order
+        // Determine insertion order
         let insertOrder: number;
         if (insertAtOrder !== undefined) {
           insertOrder = insertAtOrder;
           // Make room for the new stop by reordering existing stops using OrderManagementService
-          const trip = await this.tripService.findById(tripId, { includeStops: true }, transactionClient);
+          const trip = await this.tripService.findById(
+            tripId,
+            { includeStops: true },
+            transactionClient,
+          );
           if (trip && trip.stops) {
             const { updates } = this.orderManagementService.createInsertionOrderUpdates(
               trip.stops,
@@ -264,7 +253,7 @@ export class TripBankedLocationService {
           insertOrder = await this.stopService.getNextOrderForTrip(tripId, transactionClient);
         }
 
-        // Step 5: Create the stop
+        // Create the stop
         const stopData: CreateStopRequest = {
           tripId,
           locationId,
@@ -275,7 +264,7 @@ export class TripBankedLocationService {
 
         const stop = await this.stopService.create(stopData, transactionClient);
 
-        // Step 6: Remove from bank
+        // Remove from bank
         await this.tripBankedLocationRepository.delete(tripId, locationId, transactionClient);
 
         this.logger.log(
@@ -286,5 +275,4 @@ export class TripBankedLocationService {
       },
     );
   }
-
 }

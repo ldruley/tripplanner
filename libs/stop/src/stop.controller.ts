@@ -1,9 +1,9 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard, CurrentUser } from '@trip-planner/auth';
-import { SafeUser } from '@trip-planner/types';
+import { SafeUser, TripPermission } from '@trip-planner/types';
 import { UpdateStopDto, StopSearchDto } from '@trip-planner/shared/dtos';
 import { StopService } from './stop.service';
-import { TripPermissionService, TripPermission } from '@trip-planner/trip';
+import { TripPermissionService } from '@trip-planner/trip';
 
 @UseGuards(JwtAuthGuard)
 @Controller('stops')

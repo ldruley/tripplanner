@@ -3,7 +3,7 @@ import { TripParticipantRole } from '@prisma/client';
 import { TripParticipantRepository } from './trip-participant.repository';
 import { TripRepository } from './trip.repository';
 import { TripPermissionService } from './trip-permission.service';
-import { TripPermission } from './trip-permission.constants';
+import { TripPermission } from '@trip-planner/types';
 import {
   TripParticipant,
   AddParticipantToTrip,

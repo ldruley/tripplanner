@@ -14,9 +14,9 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@trip-planner/auth';
 import { CurrentUser } from '@trip-planner/auth';
-import { SafeUser } from '@trip-planner/types';
+import { SafeUser, TripPermission } from '@trip-planner/types';
 import { ItineraryService } from './itinerary.service';
-import { TripPermissionService, TripPermission } from '@trip-planner/trip';
+import { TripPermissionService } from '@trip-planner/trip';
 import {
   CreateTripFromOrderedListDto,
   AddStopToTripDto,

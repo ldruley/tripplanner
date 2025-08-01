@@ -2,7 +2,7 @@ import { Injectable, Logger, ForbiddenException, NotFoundException } from '@nest
 import { TripParticipantRole } from '@prisma/client';
 import { TripRepository } from './trip.repository';
 import { TripParticipantRepository } from './trip-participant.repository';
-import { TripPermission, getRolePermissions } from './trip-permission.constants';
+import { TripPermission, getRolePermissions } from '@trip-planner/types';
 
 /**
  * Interface for user permissions result

@@ -26,7 +26,7 @@ import {
 import { TripService } from './trip.service';
 import { TripParticipantService } from './trip-participant.service';
 import { TripPermissionService } from './trip-permission.service';
-import { TripPermission } from './trip-permission.constants';
+import { TripPermission } from '@trip-planner/types';
 
 @UseGuards(JwtAuthGuard)
 @Controller('trips')

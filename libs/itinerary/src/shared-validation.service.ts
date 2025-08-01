@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException, BadRequestException, UnauthorizedException, Logger } from '@nestjs/common';
 import { CreateTripFromOrderedListDto } from '@trip-planner/shared/dtos';
 import { PrismaClientOrTransaction } from '@trip-planner/prisma';
-import { TripService, TripPermissionService, TripPermission } from '@trip-planner/trip';
+import { TripService, TripPermissionService } from '@trip-planner/trip';
 import { StopService } from '@trip-planner/stop';
 import { LocationService } from '@trip-planner/location';
-import { Trip, Stop, Location, CoordinateMatrix, toCoordinateKey, TripFindOptions } from '@trip-planner/types';
+import { Trip, Stop, Location, CoordinateMatrix, toCoordinateKey, TripFindOptions, TripPermission } from '@trip-planner/types';
 
 export interface TripValidationResult {
   trip: Trip;
