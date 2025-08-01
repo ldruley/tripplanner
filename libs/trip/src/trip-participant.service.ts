@@ -2,11 +2,13 @@ import { Injectable, Logger, ForbiddenException, NotFoundException, ConflictExce
 import { TripParticipantRole } from '@prisma/client';
 import { TripParticipantRepository } from './trip-participant.repository';
 import { TripRepository } from './trip.repository';
-import { 
-  TripParticipant, 
-  AddParticipantToTrip, 
+import { TripPermissionService } from './trip-permission.service';
+import { TripPermission } from './trip-permission.constants';
+import {
+  TripParticipant,
+  AddParticipantToTrip,
   UpdateParticipantRole,
-  TripParticipantListResponse 
+  TripParticipantListResponse
 } from '@trip-planner/types';
 
 @Injectable()
@@ -15,7 +17,8 @@ export class TripParticipantService {
 
   constructor(
     private tripParticipantRepository: TripParticipantRepository,
-    private tripRepository: TripRepository
+    private tripRepository: TripRepository,
+    private tripPermissionService: TripPermissionService
   ) {}
 
   async addParticipant(
@@ -23,14 +26,8 @@ export class TripParticipantService {
     data: AddParticipantToTrip,
     requesterId: string
   ): Promise<TripParticipant> {
-    // Verify trip exists
-    const trip = await this.tripRepository.findById(tripId);
-    if (!trip) {
-      throw new NotFoundException(`Trip with ID ${tripId} not found`);
-    }
-
-    // Check if requester has permission to add participants
-    await this.validateParticipantManagementPermission(tripId, requesterId);
+    // Check if requester has permission to manage participants
+    await this.tripPermissionService.requirePermission(tripId, requesterId, TripPermission.MANAGE_PARTICIPANTS);
 
     // Check if user is already a participant
     const existingParticipant = await this.tripParticipantRepository.findParticipant(tripId, data.userId);
@@ -59,11 +56,8 @@ export class TripParticipantService {
     userId: string,
     requesterId: string
   ): Promise<void> {
-    // Verify trip exists
-    const trip = await this.tripRepository.findById(tripId);
-    if (!trip) {
-      throw new NotFoundException(`Trip with ID ${tripId} not found`);
-    }
+    // Check if requester has permission to manage participants
+    await this.tripPermissionService.requirePermission(tripId, requesterId, TripPermission.MANAGE_PARTICIPANTS);
 
     // Check if participant exists
     const participant = await this.tripParticipantRepository.findParticipant(tripId, userId);
@@ -75,9 +69,6 @@ export class TripParticipantService {
     if (participant.role === TripParticipantRole.OWNER) {
       throw new ForbiddenException('Cannot remove trip owner. Transfer ownership first.');
     }
-
-    // Check permissions
-    await this.validateParticipantManagementPermission(tripId, requesterId);
 
     // Remove the participant
     await this.tripParticipantRepository.removeParticipant(tripId, userId);
@@ -91,11 +82,8 @@ export class TripParticipantService {
     data: UpdateParticipantRole,
     requesterId: string
   ): Promise<TripParticipant> {
-    // Verify trip exists
-    const trip = await this.tripRepository.findById(tripId);
-    if (!trip) {
-      throw new NotFoundException(`Trip with ID ${tripId} not found`);
-    }
+    // Check if requester has permission to manage participants
+    await this.tripPermissionService.requirePermission(tripId, requesterId, TripPermission.MANAGE_PARTICIPANTS);
 
     // Check if participant exists
     const participant = await this.tripParticipantRepository.findParticipant(tripId, userId);
@@ -107,9 +95,6 @@ export class TripParticipantService {
     if (participant.role === TripParticipantRole.OWNER || data.role === TripParticipantRole.OWNER) {
       throw new ForbiddenException('Cannot modify or assign OWNER role. Use ownership transfer instead.');
     }
-
-    // Check permissions
-    await this.validateParticipantManagementPermission(tripId, requesterId);
 
     // Update the participant role
     const updatedParticipant = await this.tripParticipantRepository.updateParticipantRole(
@@ -123,8 +108,8 @@ export class TripParticipantService {
   }
 
   async getParticipants(tripId: string, requesterId: string): Promise<TripParticipantListResponse> {
-    // Verify trip exists and user has access
-    await this.validateTripAccess(tripId, requesterId);
+    // Check if requester has read access to the trip
+    await this.tripPermissionService.requirePermission(tripId, requesterId, TripPermission.READ);
 
     const participants = await this.tripParticipantRepository.findParticipantsByTripId(tripId);
 
@@ -146,36 +131,5 @@ export class TripParticipantService {
     return this.tripParticipantRepository.isUserParticipant(tripId, userId);
   }
 
-  // Helper methods for permission validation
 
-  private async validateTripAccess(tripId: string, userId: string): Promise<void> {
-    const trip = await this.tripRepository.findById(tripId);
-    if (!trip) {
-      throw new NotFoundException(`Trip with ID ${tripId} not found`);
-    }
-
-    // Check if user is trip owner or participant
-    const isOwner = trip.userId === userId;
-    const isParticipant = await this.tripParticipantRepository.isUserParticipant(tripId, userId);
-
-    if (!isOwner && !isParticipant) {
-      throw new ForbiddenException('You do not have access to this trip');
-    }
-  }
-
-  private async validateParticipantManagementPermission(tripId: string, userId: string): Promise<void> {
-    const trip = await this.tripRepository.findById(tripId);
-    if (!trip) {
-      throw new NotFoundException(`Trip with ID ${tripId} not found`);
-    }
-
-    // Only trip owner and EDITOR participants can manage participants
-    const isOwner = trip.userId === userId;
-    const userRole = await this.tripParticipantRepository.getUserRoleInTrip(tripId, userId);
-    const canManage = isOwner || userRole === TripParticipantRole.EDITOR;
-
-    if (!canManage) {
-      throw new ForbiddenException('You do not have permission to manage participants for this trip');
-    }
-  }
 }

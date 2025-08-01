@@ -141,6 +141,14 @@ export class StopService {
     return await this.stopRepository.findByTripAndLocation(tripId, locationId, prismaClient);
   }
 
+  async getTripId(stopId: string, prismaClient?: PrismaClientOrTransaction): Promise<string> {
+    const stop = await this.stopRepository.findById(stopId, prismaClient);
+    if (!stop) {
+      throw new NotFoundException(`Stop with ID ${stopId} not found`);
+    }
+    return stop.tripId;
+  }
+
   /**
    * Search for stops based on criteria.
    * @param criteria - Search criteria including tripId, locationId, etc.
@@ -267,54 +275,6 @@ export class StopService {
     }
 
     return changes;
-  }
-
-  /**
-   * Bulk update multiple stops for a trip.
-   * @param request - Contains tripId and array of stop updates.
-   * @param prismaClient - Optional Prisma client for transaction management.
-   * @return List of updated stops.
-   */
-  async bulkUpdate(
-    request: BulkStopUpdateRequest,
-    prismaClient?: PrismaClientOrTransaction,
-  ): Promise<Stop[]> {
-    const { tripId, updates } = request;
-
-    if (updates.length === 0) {
-      throw new BadRequestException('Updates array cannot be empty');
-    }
-
-    // Validate all updates
-    for (const update of updates) {
-      if (!!update.plannedDuration && update.plannedDuration < 0) {
-        throw new BadRequestException(
-          `Planned duration must be non-negative for stop ${update.id}`,
-        );
-      }
-    }
-
-    // Verify all stops exist and belong to the trip
-    const existingStops = await this.stopRepository.findByTripId(tripId, prismaClient);
-    const existingStopIds = existingStops.map(stop => stop.id);
-
-    const invalidIds = updates.map(update => update.id).filter(id => !existingStopIds.includes(id));
-
-    if (invalidIds.length > 0) {
-      throw new BadRequestException(`Invalid stop IDs: ${invalidIds.join(', ')}`);
-    }
-
-    this.logger.debug(`Bulk updating ${updates.length} stops for trip ${tripId}`);
-
-    const updatedStops: Stop[] = [];
-
-    for (const update of updates) {
-      const { id, ...updateData } = update;
-      const updatedStop = await this.stopRepository.update(id, updateData, prismaClient);
-      updatedStops.push(updatedStop);
-    }
-
-    return updatedStops;
   }
 
   /**

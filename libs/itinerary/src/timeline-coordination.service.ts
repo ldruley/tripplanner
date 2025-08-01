@@ -156,7 +156,7 @@ export class TimelineCoordinationService {
     forceRecalculate = false,
   ): Promise<void> {
     // Get current trip data
-    const trip = await this.tripService.findById(tripId, true, false, true, prismaClient);
+    const trip = await this.tripService.findById(tripId, { includeStops: true, includeTravelSegments: true }, prismaClient);
 
     if (!trip.stops || trip.stops.length === 0) {
       this.logger.debug(`No stops found for trip ${tripId}, skipping timeline calculation`);
@@ -225,7 +225,7 @@ export class TimelineCoordinationService {
     tripId: string,
     prismaClient: PrismaClientOrTransaction,
   ): Promise<boolean> {
-    const trip = await this.tripService.findById(tripId, true, false, true, prismaClient);
+    const trip = await this.tripService.findById(tripId, { includeStops: true, includeTravelSegments: true }, prismaClient);
 
     if (!trip.stops || trip.stops.length === 0) {
       this.logger.debug(`No stops found for trip ${tripId}, skipping timeline validation`);

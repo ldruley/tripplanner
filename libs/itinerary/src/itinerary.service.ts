@@ -16,6 +16,7 @@ import {
   TimelineCalculationResult,
   SegmentRoutingData,
   UpdateTripWithRoutingSchema,
+  TripFindOptions,
 } from '@trip-planner/types';
 import { TravelMode } from '@prisma/client';
 import { TravelSegmentService } from '@trip-planner/travel-segment';
@@ -138,7 +139,8 @@ export class ItineraryService {
     this.logger.debug(`[REFACTORED BATCHING] Created trip ${createdTrip.id}`);
     
     // Fetch the complete trip with all relations
-    const trip = await this.tripService.findById(createdTrip.id!, true, true, true, prismaClient);
+    const fullOptions: TripFindOptions = { includeStops: true, includeBankedLocations: true, includeTravelSegments: true };
+    const trip = await this.tripService.findById(createdTrip.id!, fullOptions, prismaClient);
     if (!trip) {
       throw new Error(`Failed to fetch created trip ${createdTrip.id}`);
     }
@@ -337,7 +339,8 @@ export class ItineraryService {
     tripId: string,
     prismaClient: PrismaClientOrTransaction,
   ): Promise<Trip> {
-    const completeTrip = await this.tripService.findById(tripId, true, true, true, prismaClient);
+    const fullOptions: TripFindOptions = { includeStops: true, includeBankedLocations: true, includeTravelSegments: true };
+    const completeTrip = await this.tripService.findById(tripId, fullOptions, prismaClient);
     
     this.logger.log(
       `[REFACTORED BATCHING] Successfully created trip ${tripId} with ${completeTrip.stops?.length || 0} stops using batched operations`,
@@ -699,11 +702,10 @@ export class ItineraryService {
           await this.tripService.update(tripId, updateData, prismaClient);
 
           // Step 2: Get the updated trip with complete data structure
+          const fullOptions: TripFindOptions = { includeStops: true, includeBankedLocations: true, includeTravelSegments: true };
           const tripWithStops = await this.tripService.findById(
             tripId,
-            true,
-            true,
-            true,
+            fullOptions,
             prismaClient,
           );
 
@@ -813,7 +815,8 @@ export class ItineraryService {
       );
 
       this.logger.log(`Successfully promoted location ${locationId} to stop for trip ${tripId}`);
-      return this.tripService.findById(tripId, true, true, true);
+      const fullOptions: TripFindOptions = { includeStops: true, includeBankedLocations: true, includeTravelSegments: true };
+      return this.tripService.findById(tripId, fullOptions);
     } catch (error) {
       this.logger.error(
         `Failed to promote location ${locationId} to stop for trip ${tripId}:`,
@@ -881,7 +884,7 @@ export class ItineraryService {
       const needsPolylines = await this.routingIntegrationService.needsPolylineGeneration(tripId);
       
       // Get trip with segments to count polylines
-      const trip = await this.tripService.findById(tripId, false, false, true);
+      const trip = await this.tripService.findById(tripId, { includeTravelSegments: true });
       const segmentsWithPolylines = trip?.travelSegments?.filter(segment => !!segment.polyline).length || 0;
 
       const status = {

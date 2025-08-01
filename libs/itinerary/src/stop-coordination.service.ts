@@ -17,12 +17,17 @@ import {
   RemoveStopFromTripDto,
   ItineraryReorderStopsDto,
 } from '@trip-planner/shared/dtos';
-import { CreateStopRequest, Trip } from '@trip-planner/types';
+import { CreateStopRequest, Trip, TripFindOptions } from '@trip-planner/types';
 import { TravelMode } from '@prisma/client';
 
 @Injectable()
 export class StopCoordinationService {
   private readonly logger = new Logger(StopCoordinationService.name);
+  private readonly FULL_TRIP_OPTIONS: TripFindOptions = { 
+    includeStops: true, 
+    includeBankedLocations: true, 
+    includeTravelSegments: true 
+  };
 
   constructor(
     private readonly tripService: TripService,
@@ -54,7 +59,7 @@ export class StopCoordinationService {
     );
 
     // Step 1: Load trip with full data
-    const trip = await this.tripService.findById(data.tripId, true, true, true, prismaClient);
+    const trip = await this.tripService.findById(data.tripId, this.FULL_TRIP_OPTIONS, prismaClient);
     if (!trip) {
       throw new NotFoundException(`Trip ${data.tripId} not found`);
     }
@@ -74,7 +79,7 @@ export class StopCoordinationService {
     );
 
     // Step 3: Return the complete updated trip
-    return await this.tripService.findById(data.tripId, true, true, true, prismaClient);
+    return await this.tripService.findById(data.tripId, this.FULL_TRIP_OPTIONS, prismaClient);
   }
 
   /**
@@ -134,7 +139,7 @@ export class StopCoordinationService {
     );
 
     // Step 7: Return final trip state
-    return await this.tripService.findById(data.tripId, true, true, true, prismaClient);
+    return await this.tripService.findById(data.tripId, this.FULL_TRIP_OPTIONS, prismaClient);
   }
 
   /**
@@ -211,7 +216,7 @@ export class StopCoordinationService {
     await this.tripService.refreshMatrixOnStopAddition(tripId, prismaClient);
 
     // Reload trip with updated matrix
-    const updatedTrip = await this.tripService.findById(tripId, true, true, true, prismaClient);
+    const updatedTrip = await this.tripService.findById(tripId, this.FULL_TRIP_OPTIONS, prismaClient);
 
     if (!updatedTrip) {
       throw new Error(`Failed to reload trip ${tripId} after stop creation`);
@@ -303,6 +308,6 @@ export class StopCoordinationService {
     );
 
     // Return the complete updated trip
-    return await this.tripService.findById(data.tripId, true, true, true, prismaClient);
+    return await this.tripService.findById(data.tripId, this.FULL_TRIP_OPTIONS, prismaClient);
   }
 }

@@ -9,9 +9,11 @@ import {
   CoordinateMatrixSchema,
   MatrixQuery,
   toCoordinateKey,
+  TripFindOptions,
 } from '@trip-planner/types';
 import { TripRepository } from './trip.repository';
 import { MatrixRoutingService } from '@trip-planner/matrix-routing';
+import { TripPermissionService } from './trip-permission.service';
 
 @Injectable()
 export class TripService {
@@ -20,6 +22,7 @@ export class TripService {
   constructor(
     private readonly tripRepository: TripRepository,
     private readonly matrixRoutingService: MatrixRoutingService,
+    private readonly tripPermissionService: TripPermissionService,
   ) {}
 
   /**
@@ -50,7 +53,7 @@ export class TripService {
           // Validate if it's already an object
           CoordinateMatrixSchema.parse(data.matrix);
         }
-      } catch (error) {
+      } catch {
         throw new BadRequestException('Invalid matrix format provided');
       }
     }
@@ -61,28 +64,18 @@ export class TripService {
   }
 
   /**
-   * Find a trip by its ID.
+   * Find a trip by its ID with options for including related data.
    * @param id - Trip ID to search for.
-   * @param includeStops - Whether to include stops in the result.
-   * @param includeBankedLocations - Whether to include banked locations in the result.
-   * @param includeTravelSegments - Whether to include travel segments in the result.
+   * @param options - Options specifying what related data to include.
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return The trip with optional relations.
    */
   async findById(
     id: string,
-    includeStops = false,
-    includeBankedLocations = false,
-    includeTravelSegments = false,
+    options: TripFindOptions = {},
     prismaClient?: PrismaClientOrTransaction,
   ): Promise<Trip> {
-    const trip = await this.tripRepository.findById(
-      id,
-      includeStops,
-      includeBankedLocations,
-      includeTravelSegments,
-      prismaClient,
-    );
+    const trip = await this.tripRepository.findById(id, options, prismaClient);
 
     if (!trip) {
       throw new NotFoundException(`Trip with ID ${id} not found`);
@@ -92,40 +85,108 @@ export class TripService {
   }
 
   /**
-   * Find trips by user ID.
+   * Convenience method to find a trip with minimal data (for validation/existence checking).
+   * @param id - Trip ID to search for.
+   * @param prismaClient - Optional Prisma client for transaction management.
+   * @return The basic trip data.
+   */
+  async findBasicById(id: string, prismaClient?: PrismaClientOrTransaction): Promise<Trip> {
+    return this.findById(id, {}, prismaClient);
+  }
+
+  /**
+   * Convenience method to find a trip with all related data included.
+   * @param id - Trip ID to search for.
+   * @param prismaClient - Optional Prisma client for transaction management.
+   * @return The complete trip with all relations.
+   */
+  async findFullById(id: string, prismaClient?: PrismaClientOrTransaction): Promise<Trip> {
+    const fullOptions: TripFindOptions = {
+      includeStops: true,
+      includeBankedLocations: true,
+      includeTravelSegments: true,
+      includeParticipants: true,
+    };
+    return this.findById(id, fullOptions, prismaClient);
+  }
+
+  /**
+   * Find trips by user ID (includes both owned and participated trips).
    * @param userId - User ID to search for trips.
    * @param includeStops - Whether to include stops in the result.
    * @param includeBankedLocations - Whether to include banked locations in the result.
    * @param includeTravelSegments - Whether to include travel segments in the result.
+   * @param includeParticipatingTrips - Whether to include trips where the user is a participant.
    * @param prismaClient - Optional Prisma client for transaction management.
-   * @return List of trips for the specified user.
+   * @return List of trips accessible to the specified user.
    */
   async findByUserId(
     userId: string,
     includeStops = false,
     includeBankedLocations = false,
     includeTravelSegments = false,
+    includeParticipatingTrips = false,
     prismaClient?: PrismaClientOrTransaction,
   ): Promise<Trip[]> {
-    return await this.tripRepository.findByUserId(
+    // Get trips owned by user
+    const ownedTrips = await this.tripRepository.findByUserId(
       userId,
       includeStops,
       includeBankedLocations,
       includeTravelSegments,
       prismaClient,
     );
+
+    if (!includeParticipatingTrips) {
+      return ownedTrips; // If not including participating trips, return only owned trips
+    }
+
+    // Get trips where user is a participant
+    const { participatedTripIds } =
+      await this.tripPermissionService.getUserAccessibleTripIds(userId);
+
+    // Fetch participated trips (excluding ones already owned)
+    const ownedTripIds = new Set(ownedTrips.map(trip => trip.id));
+    const participatedOnlyIds = participatedTripIds.filter(id => !ownedTripIds.has(id));
+
+    let participatedTrips: Trip[] = [];
+    if (participatedOnlyIds.length > 0) {
+      participatedTrips = await this.tripRepository.findByIds(
+        participatedOnlyIds,
+        includeStops,
+        includeBankedLocations,
+        includeTravelSegments,
+        prismaClient,
+      );
+    }
+
+    // Combine and return all accessible trips
+    return [...ownedTrips, ...participatedTrips];
   }
 
   /**
-   * Search for trips based on criteria.
+   * Search for trips based on criteria (includes accessible trips only).
    * @param criteria - Search criteria including userId, name, etc.
    * @param prismaClient - Optional Prisma client for transaction management.
-   * @return List of trips matching the criteria.
+   * @return List of trips matching the criteria that user can access.
    */
   async search(
     criteria: TripSearchCriteria,
     prismaClient?: PrismaClientOrTransaction,
   ): Promise<Trip[]> {
+    // If userId is specified, get all accessible trips for that user
+    if (criteria.userId) {
+      const { allAccessibleTripIds } = await this.tripPermissionService.getUserAccessibleTripIds(
+        criteria.userId,
+      );
+
+      // TODO: Modify criteria to search only within accessible trips
+      // This would need to be added to the repository search method
+      // For now, do the search and then filter results
+      const allResults = await this.tripRepository.search(criteria, prismaClient);
+      return allResults.filter(trip => allAccessibleTripIds.includes(trip.id));
+    }
+
     return await this.tripRepository.search(criteria, prismaClient);
   }
 
@@ -147,14 +208,18 @@ export class TripService {
     }
 
     // Verify trip exists
-    await this.findById(id, false, false, false, prismaClient);
+    await this.findById(id, {}, prismaClient);
 
     this.logger.debug(`Updating trip ${id}`);
 
     await this.tripRepository.update(id, data, prismaClient);
 
     // Return the updated trip with all relations
-    return await this.findById(id, true, true, true, prismaClient);
+    return await this.findById(
+      id,
+      { includeStops: true, includeBankedLocations: true, includeTravelSegments: true },
+      prismaClient,
+    );
   }
 
   /**
@@ -164,7 +229,7 @@ export class TripService {
    */
   async delete(id: string, prismaClient?: PrismaClientOrTransaction): Promise<void> {
     // Verify trip exists
-    await this.findById(id, false, false, false, prismaClient);
+    await this.findById(id, {}, prismaClient);
 
     this.logger.debug(`Deleting trip ${id}`);
 
@@ -189,7 +254,7 @@ export class TripService {
    */
   async validateTripExists(id: string, prismaClient?: PrismaClientOrTransaction): Promise<boolean> {
     try {
-      await this.findById(id, false, false, false, prismaClient);
+      await this.findById(id, {}, prismaClient);
       return true;
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -197,22 +262,6 @@ export class TripService {
       }
       throw error;
     }
-  }
-
-  /**
-   * Validate if a trip belongs to a specific user.
-   * @param tripId - Trip ID to check.
-   * @param userId - User ID to validate against.
-   * @param prismaClient - Optional Prisma client for transaction management.
-   * @return True if the trip belongs to the user, false otherwise.
-   */
-  async validateTripBelongsToUser(
-    tripId: string,
-    userId: string,
-    prismaClient?: PrismaClientOrTransaction,
-  ): Promise<boolean> {
-    const trip = await this.tripRepository.findById(tripId, false, false, false, prismaClient);
-    return trip?.userId === userId;
   }
 
   /**
@@ -233,12 +282,16 @@ export class TripService {
     this.logger.debug(`Updating matrix for trip ${tripId}`);
 
     // Verify trip exists
-    await this.findById(tripId, false, false, false, prismaClient);
+    await this.findById(tripId, {}, prismaClient);
 
     await this.tripRepository.updateMatrix(tripId, validatedMatrix, prismaClient);
 
     // Return the updated trip
-    return await this.findById(tripId, true, true, true, prismaClient);
+    return await this.findById(
+      tripId,
+      { includeStops: true, includeBankedLocations: true, includeTravelSegments: true },
+      prismaClient,
+    );
   }
 
   /**
@@ -251,7 +304,7 @@ export class TripService {
     tripId: string,
     prismaClient?: PrismaClientOrTransaction,
   ): Promise<CoordinateMatrix | null> {
-    const trip = await this.findById(tripId, false, false, false, prismaClient);
+    const trip = await this.findById(tripId, {}, prismaClient);
 
     if (!trip?.matrix) {
       return null;
@@ -283,7 +336,11 @@ export class TripService {
       return true;
     }
 
-    const trip = await this.findById(tripId, true, true, false, prismaClient);
+    const trip = await this.findById(
+      tripId,
+      { includeStops: true, includeBankedLocations: true },
+      prismaClient,
+    );
 
     if (!trip) {
       return false;
@@ -313,10 +370,12 @@ export class TripService {
     if (trip.stops) {
       for (const stop of trip.stops) {
         if (stop.location) {
-          coordinateKeys.add(toCoordinateKey({
-            lat: stop.location.latitude,
-            lng: stop.location.longitude
-          }));
+          coordinateKeys.add(
+            toCoordinateKey({
+              lat: stop.location.latitude,
+              lng: stop.location.longitude,
+            }),
+          );
         }
       }
     }
@@ -325,10 +384,12 @@ export class TripService {
     if (trip.bankedLocations) {
       for (const banked of trip.bankedLocations) {
         if (banked.location) {
-          coordinateKeys.add(toCoordinateKey({
-            lat: banked.location.latitude,
-            lng: banked.location.longitude
-          }));
+          coordinateKeys.add(
+            toCoordinateKey({
+              lat: banked.location.latitude,
+              lng: banked.location.longitude,
+            }),
+          );
         }
       }
     }
@@ -357,7 +418,13 @@ export class TripService {
   ): Promise<Partial<Trip>> {
     this.logger.debug(`Refreshing matrix for trip ${tripId}`);
 
-    const trip = inMemoryTrip || await this.findById(tripId, true, true, false, prismaClient);
+    const trip =
+      inMemoryTrip ||
+      (await this.findById(
+        tripId,
+        { includeStops: true, includeBankedLocations: true },
+        prismaClient,
+      ));
 
     if (!trip) {
       throw new NotFoundException(`Trip with ID ${tripId} not found`);
@@ -366,24 +433,32 @@ export class TripService {
     // DEBUG: Log trip data and collections
     this.logger.debug(`DEBUG refreshTripMatrix - Trip ID: ${tripId}`);
     this.logger.debug(`DEBUG refreshTripMatrix - Trip stops count: ${trip.stops?.length || 0}`);
-    this.logger.debug(`DEBUG refreshTripMatrix - Trip banked locations count: ${trip.bankedLocations?.length || 0}`);
-    
+    this.logger.debug(
+      `DEBUG refreshTripMatrix - Trip banked locations count: ${trip.bankedLocations?.length || 0}`,
+    );
+
     if (trip.stops) {
       trip.stops.forEach((stop, index) => {
-        this.logger.debug(`DEBUG refreshTripMatrix - Stop ${index}: id=${stop.id}, order=${stop.order}, location=${stop.location ? `${stop.location.latitude},${stop.location.longitude}` : 'null'}`);
+        this.logger.debug(
+          `DEBUG refreshTripMatrix - Stop ${index}: id=${stop.id}, order=${stop.order}, location=${stop.location ? `${stop.location.latitude},${stop.location.longitude}` : 'null'}`,
+        );
       });
     }
-    
+
     if (trip.bankedLocations) {
       trip.bankedLocations.forEach((banked, index) => {
-        this.logger.debug(`DEBUG refreshTripMatrix - Banked ${index}: id=${banked.id}, location=${banked.location ? `${banked.location.latitude},${banked.location.longitude}` : 'null'}`);
+        this.logger.debug(
+          `DEBUG refreshTripMatrix - Banked ${index}: id=${banked.id}, location=${banked.location ? `${banked.location.latitude},${banked.location.longitude}` : 'null'}`,
+        );
       });
     }
 
     // Collect all locations from stops and banked locations
     const coordinates: { lat: number; lng: number }[] = [];
 
-    this.logger.debug(`Trip ${tripId} has ${trip.stops?.length || 0} stops and ${trip.bankedLocations?.length || 0} banked locations`);
+    this.logger.debug(
+      `Trip ${tripId} has ${trip.stops?.length || 0} stops and ${trip.bankedLocations?.length || 0} banked locations`,
+    );
 
     // Add stops
     if (trip.stops) {
@@ -391,9 +466,11 @@ export class TripService {
         if (stop.location) {
           coordinates.push({
             lat: stop.location.latitude,
-            lng: stop.location.longitude
+            lng: stop.location.longitude,
           });
-          this.logger.debug(`Added stop ${stop.id} coordinates: ${stop.location.latitude}, ${stop.location.longitude}`);
+          this.logger.debug(
+            `Added stop ${stop.id} coordinates: ${stop.location.latitude}, ${stop.location.longitude}`,
+          );
         } else {
           this.logger.warn(`Stop ${stop.id} has no location data`);
         }
@@ -406,19 +483,25 @@ export class TripService {
         if (banked.location) {
           coordinates.push({
             lat: banked.location.latitude,
-            lng: banked.location.longitude
+            lng: banked.location.longitude,
           });
-          this.logger.debug(`Added banked location ${banked.id} coordinates: ${banked.location.latitude}, ${banked.location.longitude}`);
+          this.logger.debug(
+            `Added banked location ${banked.id} coordinates: ${banked.location.latitude}, ${banked.location.longitude}`,
+          );
         } else {
           this.logger.warn(`Banked location ${banked.id} has no location data`);
         }
       }
     }
 
-    this.logger.debug(`Trip ${tripId} matrix refresh: collected ${coordinates.length} total coordinates`);
+    this.logger.debug(
+      `Trip ${tripId} matrix refresh: collected ${coordinates.length} total coordinates`,
+    );
 
     // DEBUG: Log final coordinates array
-    this.logger.debug(`DEBUG refreshTripMatrix - Final coordinates array (${coordinates.length} items):`);
+    this.logger.debug(
+      `DEBUG refreshTripMatrix - Final coordinates array (${coordinates.length} items):`,
+    );
     coordinates.forEach((coord, index) => {
       this.logger.debug(`DEBUG refreshTripMatrix - Coordinate ${index}: ${coord.lat},${coord.lng}`);
     });
@@ -440,23 +523,35 @@ export class TripService {
 
     const newMatrix = await this.matrixRoutingService.getMatrixRouting(matrixQuery);
 
-    this.logger.debug(`Trip ${tripId} received matrix with ${Object.keys(newMatrix).length} coordinate keys`);
+    this.logger.debug(
+      `Trip ${tripId} received matrix with ${Object.keys(newMatrix).length} coordinate keys`,
+    );
 
     // DEBUG: Log detailed matrix response
     this.logger.debug(`DEBUG refreshTripMatrix - Matrix service response:`);
-    this.logger.debug(`DEBUG refreshTripMatrix - Matrix dimensions: ${Object.keys(newMatrix).length}x${Object.keys(newMatrix).length}`);
-    this.logger.debug(`DEBUG refreshTripMatrix - Matrix coordinate keys: ${Object.keys(newMatrix).join(', ')}`);
-    
+    this.logger.debug(
+      `DEBUG refreshTripMatrix - Matrix dimensions: ${Object.keys(newMatrix).length}x${Object.keys(newMatrix).length}`,
+    );
+    this.logger.debug(
+      `DEBUG refreshTripMatrix - Matrix coordinate keys: ${Object.keys(newMatrix).join(', ')}`,
+    );
+
     // Log first few entries to verify structure
     const matrixKeys = Object.keys(newMatrix);
     matrixKeys.slice(0, Math.min(3, matrixKeys.length)).forEach(key => {
       const destinations = Object.keys(newMatrix[key] || {});
-      this.logger.debug(`DEBUG refreshTripMatrix - Matrix[${key}] has ${destinations.length} destinations: ${destinations.join(', ')}`);
+      this.logger.debug(
+        `DEBUG refreshTripMatrix - Matrix[${key}] has ${destinations.length} destinations: ${destinations.join(', ')}`,
+      );
     });
 
     // DEBUG: Final verification before updating trip matrix
-    this.logger.debug(`DEBUG refreshTripMatrix - About to call updateTripMatrix with matrix containing ${Object.keys(newMatrix).length} coordinate keys`);
-    this.logger.debug(`DEBUG refreshTripMatrix - Matrix keys being passed: ${Object.keys(newMatrix).join(', ')}`);
+    this.logger.debug(
+      `DEBUG refreshTripMatrix - About to call updateTripMatrix with matrix containing ${Object.keys(newMatrix).length} coordinate keys`,
+    );
+    this.logger.debug(
+      `DEBUG refreshTripMatrix - Matrix keys being passed: ${Object.keys(newMatrix).join(', ')}`,
+    );
 
     // Update the trip with new matrix
     return await this.updateTripMatrix(tripId, newMatrix, prismaClient);
@@ -489,9 +584,15 @@ export class TripService {
     needsRecalculation: boolean,
     prismaClient?: PrismaClientOrTransaction,
   ): Promise<void> {
-    this.logger.debug(`Updating timeline recalculation flag for trip ${tripId} to ${needsRecalculation}`);
+    this.logger.debug(
+      `Updating timeline recalculation flag for trip ${tripId} to ${needsRecalculation}`,
+    );
 
-    await this.tripRepository.updateTimelineRecalculationFlag(tripId, needsRecalculation, prismaClient);
+    await this.tripRepository.updateTimelineRecalculationFlag(
+      tripId,
+      needsRecalculation,
+      prismaClient,
+    );
   }
 
   /**
@@ -505,9 +606,15 @@ export class TripService {
     needsRecalculation: boolean,
     prismaClient?: PrismaClientOrTransaction,
   ): Promise<void> {
-    this.logger.debug(`Updating routing recalculation flag for trip ${tripId} to ${needsRecalculation}`);
+    this.logger.debug(
+      `Updating routing recalculation flag for trip ${tripId} to ${needsRecalculation}`,
+    );
 
-    await this.tripRepository.updateRoutingRecalculationFlag(tripId, needsRecalculation, prismaClient);
+    await this.tripRepository.updateRoutingRecalculationFlag(
+      tripId,
+      needsRecalculation,
+      prismaClient,
+    );
   }
 
   /**
@@ -523,8 +630,15 @@ export class TripService {
     needsTimelineRecalculation: boolean,
     prismaClient?: PrismaClientOrTransaction,
   ): Promise<void> {
-    this.logger.debug(`Updating dirty flags for trip ${tripId}: routing=${needsRoutingRecalculation}, timeline=${needsTimelineRecalculation}`);
+    this.logger.debug(
+      `Updating dirty flags for trip ${tripId}: routing=${needsRoutingRecalculation}, timeline=${needsTimelineRecalculation}`,
+    );
 
-    await this.tripRepository.updateTripDirtyFlags(tripId, needsRoutingRecalculation, needsTimelineRecalculation, prismaClient);
+    await this.tripRepository.updateTripDirtyFlags(
+      tripId,
+      needsRoutingRecalculation,
+      needsTimelineRecalculation,
+      prismaClient,
+    );
   }
 }

@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { extendApi } from '@anatine/zod-openapi';
 import { uuidSchema } from './base.schema';
 import { TripParticipantRole } from '@prisma/client';
+import { SafeUserSchema } from './user.schema';
+import { ProfileSchema } from './profile.schema';
 
 export const TripParticipantRoleSchema = z.nativeEnum(TripParticipantRole);
 
@@ -69,8 +71,53 @@ export const TripParticipantListResponseSchema = extendApi(
   },
 );
 
+/**
+ * Extended trip participant schema that includes user and profile data
+ * (used when participants are included in trip queries)
+ */
+export const TripParticipantWithUserSchema = extendApi(
+  TripParticipantSchema.extend({
+    user: SafeUserSchema.extend({
+      profile: ProfileSchema.optional(),
+    }),
+  }),
+  {
+    title: 'Trip Participant with User Data',
+    description: 'Trip participant with nested user and profile information',
+    example: {
+      id: '550e8400-e29b-41d4-a716-446655440001',
+      tripId: '550e8400-e29b-41d4-a716-446655440002',
+      userId: '550e8400-e29b-41d4-a716-446655440003',
+      role: 'PARTICIPANT',
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+      user: {
+        id: '550e8400-e29b-41d4-a716-446655440003',
+        email: 'participant@example.com',
+        role: 'USER',
+        emailVerified: true,
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
+        profile: {
+          id: '550e8400-e29b-41d4-a716-446655440004',
+          firstName: 'John',
+          lastName: 'Doe',
+          displayName: 'John Doe',
+          avatarUrl: null,
+          status: 'ACTIVE',
+          lastSignInAt: '2024-01-01T00:00:00Z',
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+          onboardingCompleted: true,
+        },
+      },
+    },
+  },
+);
+
 // Type exports
 export type TripParticipant = z.infer<typeof TripParticipantSchema>;
+export type TripParticipantWithUser = z.infer<typeof TripParticipantWithUserSchema>;
 export type AddParticipantToTrip = z.infer<typeof AddParticipantToTripSchema>;
 export type UpdateParticipantRole = z.infer<typeof UpdateParticipantRoleSchema>;
 export type TripParticipantListResponse = z.infer<typeof TripParticipantListResponseSchema>;

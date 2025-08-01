@@ -6,6 +6,7 @@ import { TripRepository } from './trip.repository';
 import { TripController } from './trip.controller';
 import { TripParticipantService } from './trip-participant.service';
 import { TripParticipantRepository } from './trip-participant.repository';
+import { TripPermissionService } from './trip-permission.service';
 
 @Module({
   imports: [PrismaModule, MatrixRoutingModule],
@@ -15,12 +16,14 @@ import { TripParticipantRepository } from './trip-participant.repository';
     TripRepository,
     TripParticipantService,
     TripParticipantRepository,
+    TripPermissionService,
   ],
   exports: [
     TripService,
     TripRepository,
     TripParticipantService,
     TripParticipantRepository,
+    TripPermissionService,
   ],
 })
 export class TripModule {}

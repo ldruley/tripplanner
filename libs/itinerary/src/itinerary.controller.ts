@@ -16,6 +16,7 @@ import { JwtAuthGuard } from '@trip-planner/auth';
 import { CurrentUser } from '@trip-planner/auth';
 import { SafeUser } from '@trip-planner/types';
 import { ItineraryService } from './itinerary.service';
+import { TripPermissionService, TripPermission } from '@trip-planner/trip';
 import {
   CreateTripFromOrderedListDto,
   AddStopToTripDto,
@@ -24,7 +25,6 @@ import {
   UpdateTripRoutingDto,
   UpdateTripWithRoutingDto,
   AddLocationToBankDto,
-  RemoveLocationFromBankDto,
   PromoteLocationToStopDto,
   TripBankedLocationDto,
 } from '@trip-planner/shared/dtos';
@@ -38,7 +38,10 @@ import { TravelMode } from '@prisma/client';
 export class ItineraryController {
   private readonly logger = new Logger(ItineraryController.name);
 
-  constructor(private readonly itineraryService: ItineraryService) {}
+  constructor(
+    private readonly itineraryService: ItineraryService,
+    private readonly tripPermissionService: TripPermissionService,
+  ) {}
 
   @Post('trips')
   @ApiOperation({
@@ -48,7 +51,7 @@ export class ItineraryController {
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'Trip created successfully',
-    type: Object, // Trip type would be defined in OpenAPI
+    type: Object,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
@@ -71,7 +74,7 @@ export class ItineraryController {
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'Stop added successfully',
-    type: Object, // Trip type would be defined in OpenAPI
+    type: Object,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
@@ -91,6 +94,9 @@ export class ItineraryController {
     @Body() data: Omit<AddStopToTripDto, 'tripId'>,
   ): Promise<Trip> {
     this.logger.log(`Adding stop to trip ${tripId} for user ${user.id}`);
+
+    await this.tripPermissionService.requirePermission(tripId, user.id, TripPermission.EDIT);
+
     const fullData: AddStopToTripDto = { ...data, tripId };
     return await this.itineraryService.addStopToTripWithBatching(user.id, fullData);
   }
@@ -100,7 +106,7 @@ export class ItineraryController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Stop removed successfully',
-    type: Object, // Trip type would be defined in OpenAPI
+    type: Object,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -119,6 +125,8 @@ export class ItineraryController {
   ): Promise<Trip> {
     this.logger.log(`Removing stop ${stopId} from trip ${tripId} for user ${user.id}`);
 
+    await this.tripPermissionService.requirePermission(tripId, user.id, TripPermission.EDIT);
+
     const data: RemoveStopFromTripDto = {
       tripId,
       stopId,
@@ -134,7 +142,7 @@ export class ItineraryController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Stops reordered successfully',
-    type: Object, // Trip type would be defined in OpenAPI
+    type: Object,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
@@ -154,6 +162,9 @@ export class ItineraryController {
     @Body() data: Omit<ItineraryReorderStopsDto, 'tripId'>,
   ): Promise<Trip> {
     this.logger.log(`Reordering stops in trip ${tripId} for user ${user.id}`);
+
+    await this.tripPermissionService.requirePermission(tripId, user.id, TripPermission.EDIT);
+
     const fullData: ItineraryReorderStopsDto = { ...data, tripId };
     return await this.itineraryService.reorderStopsWithBatching(user.id, fullData);
   }
@@ -163,7 +174,7 @@ export class ItineraryController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Trip updated successfully',
-    type: Object, // Trip type would be defined in OpenAPI
+    type: Object,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
@@ -183,6 +194,9 @@ export class ItineraryController {
     @Body() data: UpdateTripWithRoutingDto,
   ): Promise<Trip> {
     this.logger.log(`Updating trip ${tripId} with routing for user ${user.id}`);
+
+    await this.tripPermissionService.requirePermission(tripId, user.id, TripPermission.EDIT);
+
     return await this.itineraryService.updateTripWithRouting(user.id, tripId, data);
   }
 
@@ -191,7 +205,7 @@ export class ItineraryController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Routing updated successfully',
-    type: Object, // Trip type would be defined in OpenAPI
+    type: Object,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -207,6 +221,9 @@ export class ItineraryController {
     @Body() data: Omit<UpdateTripRoutingDto, 'tripId'>,
   ): Promise<Trip> {
     this.logger.log(`Updating routing for trip ${tripId} for user ${user.id}`);
+
+    await this.tripPermissionService.requirePermission(tripId, user.id, TripPermission.EDIT);
+
     const fullData: UpdateTripRoutingDto = { ...data, tripId };
     return await this.itineraryService.updateTripRouting(user.id, fullData);
   }
@@ -225,13 +242,19 @@ export class ItineraryController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'Unauthorized',
   })
-  async getTripRoutingSummary(@Param('tripId') tripId: string): Promise<{
+  async getTripRoutingSummary(
+    @CurrentUser() user: SafeUser,
+    @Param('tripId') tripId: string,
+  ): Promise<{
     totalDistanceMeters: number;
     totalDurationSeconds: number;
     hasCompleteRouting: boolean;
     segmentCount: number;
   }> {
-    this.logger.log(`Getting routing summary for trip ${tripId}`);
+    this.logger.log(`Getting routing summary for trip ${tripId} by user ${user.id}`);
+
+    await this.tripPermissionService.requirePermission(tripId, user.id, TripPermission.READ);
+
     return await this.itineraryService.getTripRoutingSummary(tripId);
   }
 
@@ -250,10 +273,14 @@ export class ItineraryController {
     description: 'Unauthorized',
   })
   async isRoutingNeeded(
+    @CurrentUser() user: SafeUser,
     @Param('tripId') tripId: string,
     @Query('forceRecalculate') forceRecalculate = false,
   ): Promise<{ routingNeeded: boolean }> {
-    this.logger.log(`Checking if routing is needed for trip ${tripId}`);
+    this.logger.log(`Checking if routing is needed for trip ${tripId} by user ${user.id}`);
+
+    await this.tripPermissionService.requirePermission(tripId, user.id, TripPermission.READ);
+
     const routingNeeded = await this.itineraryService.isRoutingNeeded(tripId, forceRecalculate);
     return { routingNeeded };
   }
@@ -273,11 +300,15 @@ export class ItineraryController {
     description: 'Unauthorized',
   })
   async calculateRoutingIfNeeded(
+    @CurrentUser() user: SafeUser,
     @Param('tripId') tripId: string,
     @Query('travelMode') travelMode: TravelMode = TravelMode.DRIVING,
     @Query('forceRecalculate') forceRecalculate = false,
   ): Promise<{ updated: boolean; trip: Trip | null }> {
-    this.logger.log(`Calculating routing if needed for trip ${tripId}`);
+    this.logger.log(`Calculating routing if needed for trip ${tripId} by user ${user.id}`);
+
+    await this.tripPermissionService.requirePermission(tripId, user.id, TripPermission.EDIT);
+
     const trip = await this.itineraryService.calculateRoutingIfNeeded(
       tripId,
       travelMode,
@@ -313,6 +344,9 @@ export class ItineraryController {
     this.logger.log(
       `Adding location ${data.locationId} to bank for trip ${tripId} for user ${user.id}`,
     );
+
+    await this.tripPermissionService.requirePermission(tripId, user.id, TripPermission.EDIT);
+
     return await this.itineraryService.addLocationToBank(user.id, tripId, data.locationId);
   }
 
@@ -338,6 +372,9 @@ export class ItineraryController {
     this.logger.log(
       `Removing location ${locationId} from bank for trip ${tripId} for user ${user.id}`,
     );
+
+    await this.tripPermissionService.requirePermission(tripId, user.id, TripPermission.EDIT);
+
     return await this.itineraryService.removeLocationFromBank(user.id, tripId, locationId);
   }
 
@@ -361,6 +398,9 @@ export class ItineraryController {
     @Param('tripId') tripId: string,
   ): Promise<any[]> {
     this.logger.log(`Getting banked locations for trip ${tripId} for user ${user.id}`);
+
+    await this.tripPermissionService.requirePermission(tripId, user.id, TripPermission.READ);
+
     return await this.itineraryService.getBankedLocations(user.id, tripId);
   }
 
@@ -369,7 +409,7 @@ export class ItineraryController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Location promoted to stop successfully',
-    type: Object, // Trip type would be defined in OpenAPI
+    type: Object,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
@@ -392,6 +432,9 @@ export class ItineraryController {
     this.logger.log(
       `Promoting location ${locationId} to stop for trip ${tripId} for user ${user.id}`,
     );
+
+    await this.tripPermissionService.requirePermission(tripId, user.id, TripPermission.EDIT);
+
     return await this.itineraryService.promoteLocationToStop(
       user.id,
       tripId,
@@ -401,14 +444,15 @@ export class ItineraryController {
   }
 
   @Post('trips/:tripId/generate-polylines')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Generate polylines for trip visualization',
-    description: 'Generate detailed routing with polylines for map visualization. Used when trips have matrix routing data but need visual route paths.'
+    description:
+      'Generate detailed routing with polylines for map visualization. Used when trips have matrix routing data but need visual route paths.',
   })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Polylines generated successfully',
-    type: Object, // Trip type would be defined in OpenAPI
+    type: Object,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
@@ -428,13 +472,16 @@ export class ItineraryController {
     @Body() data: { travelMode?: TravelMode; forceRecalculate?: boolean } = {},
   ): Promise<Trip> {
     this.logger.log(`Generating polylines for trip ${tripId} for user ${user.id}`);
+
+    await this.tripPermissionService.requirePermission(tripId, user.id, TripPermission.EDIT);
+
     return await this.itineraryService.generatePolylines(user.id, tripId, data);
   }
 
   @Get('trips/:tripId/polyline-status')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Check polyline status for a trip',
-    description: 'Check if a trip needs polyline generation for map visualization'
+    description: 'Check if a trip needs polyline generation for map visualization',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -458,6 +505,9 @@ export class ItineraryController {
     segmentsWithPolylines: number;
   }> {
     this.logger.log(`Getting polyline status for trip ${tripId} for user ${user.id}`);
+
+    await this.tripPermissionService.requirePermission(tripId, user.id, TripPermission.READ);
+
     return await this.itineraryService.getPolylineStatus(user.id, tripId);
   }
 }

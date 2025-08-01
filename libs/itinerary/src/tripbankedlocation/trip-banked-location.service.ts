@@ -1,6 +1,6 @@
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService, PrismaClientOrTransaction } from '@trip-planner/prisma';
-import { TripService } from '@trip-planner/trip';
+import { TripService, TripPermissionService, TripPermission } from '@trip-planner/trip';
 import { LocationService } from '@trip-planner/location';
 import { StopService } from '@trip-planner/stop';
 import { TripBankedLocationRepository } from './trip-banked-location.repository';
@@ -22,6 +22,7 @@ export class TripBankedLocationService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly tripService: TripService,
+    private readonly tripPermissionService: TripPermissionService,
     private readonly locationService: LocationService,
     private readonly stopService: StopService,
     private readonly tripBankedLocationRepository: TripBankedLocationRepository,
@@ -68,16 +69,8 @@ export class TripBankedLocationService {
     this.logger.debug(`Adding location to bank for trip ${tripId} by user ${userId}`);
 
     const executeTransaction = async (client: PrismaClientOrTransaction) => {
-      // Step 1: Validate trip ownership
-      const tripBelongsToUser = await this.tripService.validateTripBelongsToUser(
-        tripId,
-        userId,
-        client,
-      );
-
-      if (!tripBelongsToUser) {
-        throw new NotFoundException(`Trip ${tripId} not found or not owned by user`);
-      }
+      // Step 1: Validate trip permissions
+      await this.tripPermissionService.requirePermission(tripId, userId, TripPermission.EDIT);
 
       let location: Location;
 
@@ -145,16 +138,8 @@ export class TripBankedLocationService {
     );
 
     return await this.prismaService.$transaction(async prismaClient => {
-      // Step 1: Validate trip ownership
-      const tripBelongsToUser = await this.tripService.validateTripBelongsToUser(
-        tripId,
-        userId,
-        prismaClient,
-      );
-
-      if (!tripBelongsToUser) {
-        throw new NotFoundException(`Trip ${tripId} not found or not owned by user`);
-      }
+      // Step 1: Validate trip permissions
+      await this.tripPermissionService.requirePermission(tripId, userId, TripPermission.EDIT);
 
       // Step 2: Check if location exists in bank
       const bankedLocation = await this.tripBankedLocationRepository.findByTripAndLocation(
@@ -193,16 +178,8 @@ export class TripBankedLocationService {
 
     const client = prismaClient || this.prismaService;
 
-    // Step 1: Validate trip ownership
-    const tripBelongsToUser = await this.tripService.validateTripBelongsToUser(
-      tripId,
-      userId,
-      client,
-    );
-
-    if (!tripBelongsToUser) {
-      throw new NotFoundException(`Trip ${tripId} not found or not owned by user`);
-    }
+    // Step 1: Validate trip permissions
+    await this.tripPermissionService.requirePermission(tripId, userId, TripPermission.READ);
 
     // Step 2: Get banked locations with location details
     const bankedLocations = await this.tripBankedLocationRepository.findByTripId(
@@ -238,16 +215,8 @@ export class TripBankedLocationService {
 
     return await this.prismaService.$transaction(
       async (transactionClient: PrismaClientOrTransaction) => {
-        // Step 1: Validate trip ownership
-        const tripBelongsToUser = await this.tripService.validateTripBelongsToUser(
-          tripId,
-          userId,
-          transactionClient,
-        );
-
-        if (!tripBelongsToUser) {
-          throw new NotFoundException(`Trip ${tripId} not found or not owned by user`);
-        }
+        // Step 1: Validate trip permissions
+        await this.tripPermissionService.requirePermission(tripId, userId, TripPermission.EDIT);
 
         // Step 2: Check if location exists in bank
         const bankedLocation = await this.tripBankedLocationRepository.findByTripAndLocation(
@@ -279,7 +248,7 @@ export class TripBankedLocationService {
         if (insertAtOrder !== undefined) {
           insertOrder = insertAtOrder;
           // Make room for the new stop by reordering existing stops using OrderManagementService
-          const trip = await this.tripService.findById(tripId, true, false, false, transactionClient);
+          const trip = await this.tripService.findById(tripId, { includeStops: true }, transactionClient);
           if (trip && trip.stops) {
             const { updates } = this.orderManagementService.createInsertionOrderUpdates(
               trip.stops,

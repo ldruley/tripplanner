@@ -6,6 +6,7 @@ import {
   TripSearchCriteria,
   TripServiceUpdateRequest,
   CoordinateMatrix,
+  TripFindOptions,
 } from '@trip-planner/types';
 
 @Injectable()
@@ -47,25 +48,83 @@ export class TripRepository {
   }
 
   /**
-   * Find a trip by its ID.
+   * Find a trip by its ID with options for including related data.
    * @param id - Trip ID to search for.
-   * @param includeStops - Whether to include stops in the result.
-   * @param includeBankedLocations - Whether to include banked locations in the result.
-   * @param includeTravelSegments - Whether to include travel segments in the result.
+   * @param options - Options specifying what related data to include.
    * @param prismaClient - Optional Prisma client for transaction management.
    * @return The trip or null if not found.
    */
   async findById(
     id: string,
-    includeStops = false,
-    includeBankedLocations = false,
-    includeTravelSegments = false,
+    options: TripFindOptions = {},
     prismaClient?: PrismaClientOrTransaction,
   ): Promise<Trip | null> {
     const client = prismaClient || this.prisma;
 
     return client.trip.findUnique({
       where: { id },
+      include: {
+        stops: options.includeStops
+          ? {
+              include: {
+                location: true,
+              },
+              orderBy: {
+                order: 'asc',
+              },
+            }
+          : false,
+        bankedLocations: options.includeBankedLocations
+          ? {
+              include: {
+                location: true,
+              },
+              orderBy: {
+                createdAt: 'desc',
+              },
+            }
+          : false,
+        travelSegments: options.includeTravelSegments
+          ? {
+              orderBy: [{ originStop: { order: 'asc' } }, { destinationStop: { order: 'asc' } }],
+            }
+          : false,
+        tripParticipants: options.includeParticipants
+          ? {
+              include: {
+                user: {
+                  include: {
+                    profile: true,
+                  },
+                },
+              },
+              orderBy: [{ role: 'asc' }, { createdAt: 'asc' }],
+            }
+          : false,
+      },
+    }) as unknown as Trip | null;
+  }
+
+  /**
+   * Find trips by user ID.
+   * @param userId - User ID to search for trips.
+   * @param includeStops - Whether to include stops in the result.
+   * @param includeBankedLocations - Whether to include banked locations in the result.
+   * @param includeTravelSegments - Whether to include travel segments in the result.
+   * @param prismaClient - Optional Prisma client for transaction management.
+   * @return List of trips for the specified user.
+   */
+  async findByUserId(
+    userId: string,
+    includeStops = false,
+    includeBankedLocations = false,
+    includeTravelSegments = false,
+    prismaClient?: PrismaClientOrTransaction,
+  ): Promise<Trip[]> {
+    const client = prismaClient || this.prisma;
+
+    return client.trip.findMany({
+      where: { userId },
       include: {
         stops: includeStops
           ? {
@@ -93,29 +152,36 @@ export class TripRepository {
             }
           : false,
       },
-    }) as unknown as Trip | null;
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    }) as unknown as Trip[];
   }
 
   /**
-   * Find trips by user ID.
-   * @param userId - User ID to search for trips.
+   * Find trips by an array of trip IDs.
+   * @param tripIds - Array of trip IDs to search for.
    * @param includeStops - Whether to include stops in the result.
    * @param includeBankedLocations - Whether to include banked locations in the result.
    * @param includeTravelSegments - Whether to include travel segments in the result.
    * @param prismaClient - Optional Prisma client for transaction management.
-   * @return List of trips for the specified user.
+   * @return List of trips for the specified IDs.
    */
-  async findByUserId(
-    userId: string,
+  async findByIds(
+    tripIds: string[],
     includeStops = false,
     includeBankedLocations = false,
     includeTravelSegments = false,
     prismaClient?: PrismaClientOrTransaction,
   ): Promise<Trip[]> {
+    if (tripIds.length === 0) {
+      return [];
+    }
+
     const client = prismaClient || this.prisma;
 
     return client.trip.findMany({
-      where: { userId },
+      where: { id: { in: tripIds } },
       include: {
         stops: includeStops
           ? {

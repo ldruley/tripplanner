@@ -16,6 +16,7 @@ import {
   ComprehensiveStopUpdate,
   BatchExecutionPlan,
   BatchResult,
+  TripFindOptions,
 } from '@trip-planner/types';
 import {
   AddStopToTripDto,
@@ -74,7 +75,7 @@ export class UnifiedBatchingService {
 
     // Step 1: Load current trip data (or use provided trip data)
     const trip =
-      tripData || (await this.tripService.findById(tripId, true, true, true, prismaClient));
+      tripData || (await this.tripService.findById(tripId, { includeStops: true, includeBankedLocations: true, includeTravelSegments: true }, prismaClient));
     if (!trip || !trip.stops || trip.stops.length === 0) {
       throw new Error(`Trip ${tripId} not found or has no stops`);
     }

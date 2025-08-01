@@ -1,30 +1,17 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Put,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard, CurrentUser } from '@trip-planner/auth';
 import { SafeUser } from '@trip-planner/types';
-import {
-  CreateStopDto,
-  UpdateStopDto,
-  ReorderStopsDto,
-  BulkStopUpdateDto,
-  StopSearchDto,
-} from '@trip-planner/shared/dtos';
+import { UpdateStopDto, StopSearchDto } from '@trip-planner/shared/dtos';
 import { StopService } from './stop.service';
+import { TripPermissionService, TripPermission } from '@trip-planner/trip';
 
 @UseGuards(JwtAuthGuard)
 @Controller('stops')
 export class StopController {
-  constructor(private readonly stopService: StopService) {}
+  constructor(
+    private readonly stopService: StopService,
+    private readonly tripPermissionService: TripPermissionService,
+  ) {}
 
   @Get(':id')
   async getStop(
@@ -33,7 +20,9 @@ export class StopController {
     @Query('includeLocation') includeLocation?: string,
   ) {
     const includeLocationFlag = includeLocation === 'true';
-    return await this.stopService.findById(id, includeLocationFlag);
+    const stop = await this.stopService.findById(id, includeLocationFlag);
+    await this.tripPermissionService.requirePermission(stop.tripId, user.id, TripPermission.READ);
+    return stop;
   }
 
   @Get('trip/:tripId')
@@ -43,6 +32,7 @@ export class StopController {
     @Query('includeLocations') includeLocations?: string,
   ) {
     const includeLocationsFlag = includeLocations === 'true';
+    await this.tripPermissionService.requirePermission(tripId, user.id, TripPermission.READ);
     return await this.stopService.findByTripId(tripId, includeLocationsFlag);
   }
 
@@ -57,27 +47,9 @@ export class StopController {
     @Param('id') id: string,
     @Body() updateStopDto: UpdateStopDto,
   ) {
+    const tripId = await this.stopService.getTripId(id);
+    await this.tripPermissionService.requirePermission(tripId, user.id, TripPermission.EDIT);
     return await this.stopService.update(id, updateStopDto);
-  }
-
-  @Put(':id/calculated-times')
-  async updateCalculatedTimes(
-    @CurrentUser() user: SafeUser,
-    @Param('id') id: string,
-    @Body()
-    body: {
-      calculatedArrivalTime?: string;
-      calculatedDepartureTime?: string;
-    },
-  ) {
-    const arrivalTime = body.calculatedArrivalTime
-      ? new Date(body.calculatedArrivalTime)
-      : undefined;
-    const departureTime = body.calculatedDepartureTime
-      ? new Date(body.calculatedDepartureTime)
-      : undefined;
-
-    return await this.stopService.updateCalculatedTimes(id, arrivalTime, departureTime);
   }
 
   @Get('trip/:tripId/next-order')
@@ -88,14 +60,9 @@ export class StopController {
 
   @Get('trip/:tripId/count')
   async getStopCount(@CurrentUser() user: SafeUser, @Param('tripId') tripId: string) {
+    await this.tripPermissionService.requirePermission(tripId, user.id, TripPermission.READ);
     const count = await this.stopService.getStopCount(tripId);
     return { count };
-  }
-
-  @Get(':id/validate')
-  async validateStop(@CurrentUser() user: SafeUser, @Param('id') id: string) {
-    const exists = await this.stopService.validateStopExists(id);
-    return { exists };
   }
 
   @Get(':stopId/belongs-to-trip/:tripId')
@@ -104,6 +71,7 @@ export class StopController {
     @Param('stopId') stopId: string,
     @Param('tripId') tripId: string,
   ) {
+    await this.tripPermissionService.requirePermission(tripId, user.id, TripPermission.READ);
     const belongs = await this.stopService.validateStopBelongsToTrip(stopId, tripId);
     return { belongs };
   }

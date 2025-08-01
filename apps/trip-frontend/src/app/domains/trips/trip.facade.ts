@@ -423,6 +423,7 @@ export class TripFacade {
       stops: [],
       bankedLocations: [],
       travelSegments: [],
+      tripParticipants: [],
       createdAt: new Date(),
       updatedAt: new Date(),
       userId: '', // Will be set when persisted

@@ -3,6 +3,7 @@ import { extendApi } from '@anatine/zod-openapi';
 import { StopSchema } from './stop.schema';
 import { TravelSegmentSchema } from './travel-segment.schema';
 import { TripBankedLocationSchema } from './trip-banked-location.schema';
+import { TripParticipantWithUserSchema } from './trip-participant.schema';
 import { uuidSchema } from './base.schema';
 
 export const TripSchema = extendApi(
@@ -37,6 +38,10 @@ export const TripSchema = extendApi(
       .optional()
       .default([])
       .describe('Travel segments between stops'),
+    tripParticipants: z
+      .array(TripParticipantWithUserSchema)
+      .optional()
+      .describe('Trip participants with their user and profile data'),
   }),
   {
     title: 'Trip',
@@ -56,6 +61,7 @@ export const TripSchema = extendApi(
       stops: [],
       bankedLocations: [],
       travelSegments: [],
+      tripParticipants: [],
     },
   },
 );
@@ -150,3 +156,21 @@ export type CreateTripRequest = z.infer<typeof CreateTripRequestSchema>;
 export type UpdateTripRequest = z.infer<typeof UpdateTripRequestSchema>;
 export type TripServiceUpdateRequest = z.infer<typeof TripServiceUpdateRequestSchema>;
 export type TripSearchCriteria = z.infer<typeof TripSearchCriteriaSchema>;
+
+/**
+ * Options for controlling what related data to include when finding a trip.
+ * All options default to false to maintain current behavior.
+ */
+export interface TripFindOptions {
+  /** Include stops with their location data, ordered by stop order */
+  includeStops?: boolean;
+  
+  /** Include banked locations with their location data */
+  includeBankedLocations?: boolean;
+  
+  /** Include travel segments between stops */
+  includeTravelSegments?: boolean;
+  
+  /** Include trip participants with their user data and roles */
+  includeParticipants?: boolean;
+}

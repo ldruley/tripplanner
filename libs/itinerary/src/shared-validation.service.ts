@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException, BadRequestException, UnauthorizedException, Logger } from '@nestjs/common';
 import { CreateTripFromOrderedListDto } from '@trip-planner/shared/dtos';
 import { PrismaClientOrTransaction } from '@trip-planner/prisma';
-import { TripService } from '@trip-planner/trip';
+import { TripService, TripPermissionService, TripPermission } from '@trip-planner/trip';
 import { StopService } from '@trip-planner/stop';
 import { LocationService } from '@trip-planner/location';
-import { Trip, Stop, Location, CoordinateMatrix, toCoordinateKey } from '@trip-planner/types';
+import { Trip, Stop, Location, CoordinateMatrix, toCoordinateKey, TripFindOptions } from '@trip-planner/types';
 
 export interface TripValidationResult {
   trip: Trip;
@@ -36,6 +36,7 @@ export class SharedValidationService {
 
   constructor(
     private readonly tripService: TripService,
+    private readonly tripPermissionService: TripPermissionService,
     private readonly stopService: StopService,
     private readonly locationService: LocationService,
   ) {}
@@ -52,22 +53,11 @@ export class SharedValidationService {
     const errors: string[] = [];
 
     try {
-      const tripBelongsToUser = await this.tripService.validateTripBelongsToUser(
-        tripId,
-        userId,
-        prismaClient,
-      );
+      // Check if user has read permission for the trip
+      await this.tripPermissionService.requirePermission(tripId, userId, TripPermission.READ);
 
-      if (!tripBelongsToUser) {
-        errors.push(`Trip ${tripId} not found or not owned by user ${userId}`);
-        return {
-          trip: null as any,
-          isValid: false,
-          errors,
-        };
-      }
-
-      const trip = await this.tripService.findById(tripId, true, true, true, prismaClient);
+      const fullOptions: TripFindOptions = { includeStops: true, includeBankedLocations: true, includeTravelSegments: true };
+      const trip = await this.tripService.findById(tripId, fullOptions, prismaClient);
       if (!trip) {
         errors.push(`Trip ${tripId} not found`);
         return {
@@ -217,7 +207,7 @@ export class SharedValidationService {
     for (let i = 0; i < sortedStops.length - 1; i++) {
       const originStop = sortedStops[i];
       const destinationStop = sortedStops[i + 1];
-      
+
       if (!originStop.location || !destinationStop.location) {
         errors.push(`Stop ${originStop.id} or ${destinationStop.id} missing location data`);
         continue;
@@ -334,7 +324,7 @@ export class SharedValidationService {
     if (locationIds && locationIds.length > 0) {
       const locationPromises = locationIds.map(id => this.validateLocationExists(id, prismaClient));
       const locationValidations = await Promise.all(locationPromises);
-      
+
       for (const validation of locationValidations) {
         if (!validation.isValid) {
           allErrors.push(...validation.errors);

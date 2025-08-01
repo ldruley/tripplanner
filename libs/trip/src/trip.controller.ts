@@ -8,13 +8,12 @@ import {
   Post,
   Put,
   Query,
-  UnauthorizedException,
   UseGuards,
   HttpCode,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard, CurrentUser } from '@trip-planner/auth';
-import { SafeUser } from '@trip-planner/types';
+import { SafeUser, TripFindOptions } from '@trip-planner/types';
 import {
   CreateTripDto,
   UpdateTripDto,
@@ -26,13 +25,16 @@ import {
 } from '@trip-planner/shared/dtos';
 import { TripService } from './trip.service';
 import { TripParticipantService } from './trip-participant.service';
+import { TripPermissionService } from './trip-permission.service';
+import { TripPermission } from './trip-permission.constants';
 
 @UseGuards(JwtAuthGuard)
 @Controller('trips')
 export class TripController {
   constructor(
     private readonly tripService: TripService,
-    private readonly tripParticipantService: TripParticipantService
+    private readonly tripParticipantService: TripParticipantService,
+    private readonly tripPermissionService: TripPermissionService
   ) {}
 
   @Post()
@@ -48,17 +50,16 @@ export class TripController {
     @Query('includeBankedLocations') includeBankedLocations?: string,
     @Query('includeTravelSegments') includeTravelSegments?: string,
   ) {
-    const trip = await this.tripService.findById(
-      id,
-      includeStops === 'true',
-      includeBankedLocations === 'true',
-      includeTravelSegments === 'true',
-    );
+    // Check if user has read permission
+    await this.tripPermissionService.requirePermission(id, user.id, TripPermission.READ);
 
-    // Ensure user owns the trip
-    if (trip.userId !== user.id) {
-      throw new UnauthorizedException('Unauthorized access to trip');
-    }
+    const options: TripFindOptions = {
+      includeStops: includeStops === 'true',
+      includeBankedLocations: includeBankedLocations === 'true',
+      includeTravelSegments: includeTravelSegments === 'true',
+    };
+
+    const trip = await this.tripService.findById(id, options);
 
     return trip;
   }
@@ -95,22 +96,16 @@ export class TripController {
     @Param('id') id: string,
     @Body() updateTripDto: UpdateTripDto,
   ) {
-    // Verify user owns the trip
-    const belongs = await this.tripService.validateTripBelongsToUser(id, user.id);
-    if (!belongs) {
-      throw new UnauthorizedException('Unauthorized access to trip');
-    }
+    // Check if user has edit permission
+    await this.tripPermissionService.requirePermission(id, user.id, TripPermission.EDIT);
 
     return await this.tripService.update(id, updateTripDto);
   }
 
   @Delete(':id')
   async deleteTrip(@CurrentUser() user: SafeUser, @Param('id') id: string) {
-    // Verify user owns the trip
-    const belongs = await this.tripService.validateTripBelongsToUser(id, user.id);
-    if (!belongs) {
-      throw new UnauthorizedException('Unauthorized access to trip');
-    }
+    // Check if user has delete permission (only owners can delete)
+    await this.tripPermissionService.requirePermission(id, user.id, TripPermission.DELETE);
 
     await this.tripService.delete(id);
     return { message: 'Trip deleted successfully' };
@@ -125,11 +120,11 @@ export class TripController {
   @Get(':id/validate')
   async validateTrip(@CurrentUser() user: SafeUser, @Param('id') id: string) {
     const exists = await this.tripService.validateTripExists(id);
-    const belongs = exists ? await this.tripService.validateTripBelongsToUser(id, user.id) : false;
+    const hasAccess = exists ? await this.tripPermissionService.hasAccess(id, user.id) : false;
 
     return {
       exists,
-      belongs,
+      hasAccess,
     };
   }
 
